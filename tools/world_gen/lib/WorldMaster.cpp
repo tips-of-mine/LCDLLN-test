@@ -225,6 +225,7 @@ namespace tools::world_gen
 			d.id = GetStr(c, "id"); d.name = GetStr(c, "name", d.id); d.cell = GetStr(c, "cell");
 			d.kind = GetStr(c, "kind"); d.race = GetStr(c, "race"); d.state = GetStr(c, "state", "intact");
 			d.faction = GetStr(c, "faction", "neutre"); d.startFor = GetStrArray(c, "start_for");
+			d.services = GetStrArray(c, "services");
 			d.source = GetStr(c, "source"); d.description = GetStr(c, "description", d.name);
 			if (d.id.empty() || !ids.insert(d.id).second) { err = "master: id de ville vide ou duplique '" + d.id + "'"; return false; }
 			if (!ParseCellId(d.cell, d.n, d.e)) { err = "master: cellule invalide pour '" + d.id + "'"; return false; }

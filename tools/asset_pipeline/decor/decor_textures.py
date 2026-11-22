@@ -578,6 +578,217 @@ TEXTURES.update({
 })
 
 
+# ------------------------------------------------------- enseignes des services
+# Ordre = case de l'atlas T_Decor_Sign_Pictos (8 x 4 cases de 256 px, ligne par
+# ligne depuis le haut). Les identifiants sont ceux des services du lore
+# (villes[].services) ; le nom affiché vient des catalogues de langue du client
+# (clé service.<id>), au survol ou au clic du panneau : aucun texte dans la texture.
+SIGN_SERVICES = ["auberge", "ecurie", "cimetiere", "forgeron", "potions", "armes", "armures", "temple",
+                 "guilde", "infirmerie", "marche", "banque", "prison", "ecole_magie", "bibliotheque", "port",
+                 "arene"]
+
+
+def _rot(pts, ang, cx=0.5, cy=0.5):
+    ca, sa = math.cos(ang), math.sin(ang)
+    return [(cx + x * ca - y * sa, cy + x * sa + y * ca) for x, y in pts]
+
+
+def _picto(name, S):
+    """Masque L (S x S) du pictogramme `name`, tracé en coordonnées unitaires."""
+    img = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(img)
+    F, B = 255, 0
+
+    def P(pts, c=F):
+        d.polygon([(x * S, y * S) for x, y in pts], fill=c)
+
+    def E(x0, y0, x1, y1, c=F, w=0):
+        if w:
+            d.ellipse([x0 * S, y0 * S, x1 * S, y1 * S], outline=c, width=int(w * S))
+        else:
+            d.ellipse([x0 * S, y0 * S, x1 * S, y1 * S], fill=c)
+
+    def R(x0, y0, x1, y1, c=F):
+        d.rectangle([x0 * S, y0 * S, x1 * S, y1 * S], fill=c)
+
+    def L(x0, y0, x1, y1, w, c=F):
+        d.line([x0 * S, y0 * S, x1 * S, y1 * S], fill=c, width=int(w * S))
+        for x, y in ((x0, y0), (x1, y1)):
+            E(x - w / 2, y - w / 2, x + w / 2, y + w / 2, c)
+
+    def A(x0, y0, x1, y1, a0, a1, w, c=F):
+        d.arc([x0 * S, y0 * S, x1 * S, y1 * S], a0, a1, fill=c, width=int(w * S))
+
+    def sword(ang, length=0.62):
+        k = length / 0.62
+        o = 0.10                       # croisement à mi-lame
+        loc = [(-0.03, -0.36), (0.0, -0.44), (0.03, -0.36), (0.03, 0.10), (-0.03, 0.10)]
+        P(_rot([(x * k, (y + o) * k) for x, y in loc], ang))
+        P(_rot([(-0.12 * k, (0.10 + o) * k), (0.12 * k, (0.10 + o) * k), (0.12 * k, (0.145 + o) * k), (-0.12 * k, (0.145 + o) * k)], ang))
+        P(_rot([(-0.022 * k, (0.145 + o) * k), (0.022 * k, (0.145 + o) * k), (0.022 * k, (0.27 + o) * k), (-0.022 * k, (0.27 + o) * k)], ang))
+        cx, cy = _rot([(0.0, (0.30 + o) * k)], ang)[0]
+        E(cx - 0.035, cy - 0.035, cx + 0.035, cy + 0.035)
+
+    def spear(ang):
+        P(_rot([(-0.016, -0.30), (0.016, -0.30), (0.016, 0.40), (-0.016, 0.40)], ang))
+        P(_rot([(-0.05, -0.30), (0.0, -0.44), (0.05, -0.30), (0.0, -0.26)], ang))
+
+    if name == "auberge":              # chope moussante
+        R(0.30, 0.34, 0.62, 0.80)
+        E(0.30, 0.76, 0.62, 0.84)
+        E(0.54, 0.40, 0.80, 0.70, F, 0.06)
+        for x in (0.27, 0.37, 0.47, 0.55):
+            E(x, 0.22, x + 0.13, 0.36)
+        for y in (0.46, 0.66):
+            R(0.30, y, 0.62, y + 0.018, B)
+    elif name == "ecurie":             # fer à cheval
+        A(0.22, 0.18, 0.78, 0.80, 140, 400, 0.10)
+        for x, y in ((0.27, 0.66), (0.73, 0.66)):
+            R(x - 0.065, y + 0.03, x + 0.065, y + 0.09)
+        for a in (160, 200, 240, 300, 340, 380):
+            r = math.radians(a)
+            x, y = 0.5 + 0.235 * math.cos(r), 0.49 + 0.26 * math.sin(r)
+            E(x - 0.016, y - 0.016, x + 0.016, y + 0.016, B)
+    elif name == "cimetiere":          # stèle
+        R(0.33, 0.40, 0.67, 0.80)
+        E(0.33, 0.22, 0.67, 0.58)
+        R(0.20, 0.80, 0.80, 0.86)
+        for y in (0.46, 0.53, 0.60):
+            R(0.40, y, 0.60, y + 0.022, B)
+    elif name == "forgeron":           # enclume et marteau
+        P([(0.10, 0.47), (0.28, 0.43), (0.84, 0.43), (0.84, 0.55), (0.68, 0.57), (0.61, 0.66), (0.72, 0.74),
+           (0.72, 0.82), (0.28, 0.82), (0.28, 0.74), (0.39, 0.66), (0.34, 0.57), (0.26, 0.55)])
+        L(0.56, 0.34, 0.80, 0.12, 0.045)
+        P(_rot([(-0.11, -0.05), (0.11, -0.05), (0.11, 0.05), (-0.11, 0.05)], math.radians(-42), 0.53, 0.30))
+    elif name == "potions":            # fiole ronde
+        E(0.28, 0.40, 0.72, 0.84)
+        R(0.44, 0.22, 0.56, 0.46)
+        R(0.40, 0.20, 0.60, 0.25)
+        R(0.45, 0.12, 0.55, 0.20)
+        A(0.33, 0.45, 0.67, 0.79, 200, 250, 0.03, B)
+        R(0.30, 0.58, 0.70, 0.60, B)
+    elif name == "armes":              # deux épées croisées
+        sword(math.radians(40))
+        sword(math.radians(-40))
+    elif name == "armures":            # heaume
+        R(0.30, 0.32, 0.70, 0.80)
+        E(0.30, 0.16, 0.70, 0.48)
+        R(0.34, 0.44, 0.47, 0.49, B)
+        R(0.53, 0.44, 0.66, 0.49, B)
+        for x in (0.40, 0.46, 0.54, 0.60):
+            for y in (0.60, 0.67):
+                E(x - 0.012, y - 0.012, x + 0.012, y + 0.012, B)
+    elif name == "temple":             # soleil rayonnant
+        E(0.36, 0.36, 0.64, 0.64)
+        for k in range(12):
+            a = 2 * math.pi * k / 12
+            a0, a1 = a - 0.11, a + 0.11
+            P([(0.5 + 0.19 * math.cos(a0), 0.5 + 0.19 * math.sin(a0)),
+               (0.5 + 0.36 * math.cos(a), 0.5 + 0.36 * math.sin(a)),
+               (0.5 + 0.19 * math.cos(a1), 0.5 + 0.19 * math.sin(a1))])
+    elif name == "guilde":             # bannière sur hampe
+        L(0.32, 0.16, 0.32, 0.86, 0.035)
+        E(0.29, 0.10, 0.35, 0.16)
+        P([(0.34, 0.20), (0.74, 0.20), (0.74, 0.60), (0.54, 0.51), (0.34, 0.60)])
+        P([(0.54, 0.27), (0.61, 0.36), (0.54, 0.45), (0.47, 0.36)], B)
+    elif name == "infirmerie":         # mortier et pilon
+        L(0.52, 0.48, 0.72, 0.15, 0.06)
+        E(0.67, 0.10, 0.77, 0.20)
+        d.pieslice([0.24 * S, 0.26 * S, 0.76 * S, 0.80 * S], 0, 180, fill=F)
+        R(0.22, 0.49, 0.78, 0.55)
+        R(0.40, 0.78, 0.60, 0.85)
+    elif name == "marche":             # balance
+        L(0.50, 0.24, 0.50, 0.80, 0.035)
+        P([(0.36, 0.86), (0.64, 0.86), (0.58, 0.80), (0.42, 0.80)])
+        L(0.18, 0.28, 0.82, 0.28, 0.03)
+        E(0.47, 0.17, 0.53, 0.23)
+        for cx in (0.20, 0.80):
+            L(cx, 0.28, cx - 0.09, 0.56, 0.012)
+            L(cx, 0.28, cx + 0.09, 0.56, 0.012)
+            d.pieslice([(cx - 0.11) * S, 0.50 * S, (cx + 0.11) * S, 0.64 * S], 0, 180, fill=F)
+    elif name == "banque":             # piles de pièces
+        for x0, n in ((0.22, 5), (0.52, 3)):
+            for k in range(n):
+                y = 0.78 - k * 0.075
+                R(x0, y - 0.035, x0 + 0.26, y + 0.035)
+                E(x0, y + 0.0, x0 + 0.26, y + 0.07)
+                E(x0, y - 0.07, x0 + 0.26, y)
+                R(x0 + 0.02, y + 0.034, x0 + 0.24, y + 0.040, B)
+    elif name == "prison":             # fenêtre à barreaux
+        R(0.22, 0.20, 0.78, 0.82)
+        R(0.28, 0.26, 0.72, 0.76, B)
+        for x in (0.34, 0.44, 0.56, 0.66):
+            R(x - 0.018, 0.26, x + 0.018, 0.76)
+        R(0.28, 0.49, 0.72, 0.53)
+    elif name == "ecole_magie":        # boule de cristal sur pied
+        E(0.28, 0.16, 0.72, 0.60)
+        A(0.34, 0.22, 0.66, 0.54, 200, 260, 0.025, B)
+        for cx, cy, r in ((0.58, 0.32, 0.05), (0.46, 0.44, 0.03)):
+            P([(cx, cy - r), (cx + r * 0.25, cy - r * 0.25), (cx + r, cy), (cx + r * 0.25, cy + r * 0.25),
+               (cx, cy + r), (cx - r * 0.25, cy + r * 0.25), (cx - r, cy), (cx - r * 0.25, cy - r * 0.25)], B)
+        P([(0.36, 0.56), (0.64, 0.56), (0.70, 0.78), (0.74, 0.84), (0.26, 0.84), (0.30, 0.78)])
+    elif name == "bibliotheque":       # livre ouvert
+        P([(0.49, 0.36), (0.30, 0.28), (0.14, 0.30), (0.14, 0.72), (0.30, 0.70), (0.49, 0.78)])
+        P([(0.51, 0.36), (0.70, 0.28), (0.86, 0.30), (0.86, 0.72), (0.70, 0.70), (0.51, 0.78)])
+        for k in range(4):
+            y = 0.40 + k * 0.08
+            L(0.20, y - 0.02, 0.43, y + 0.03, 0.012, B)
+            L(0.57, y + 0.03, 0.80, y - 0.02, 0.012, B)
+    elif name == "port":               # ancre
+        E(0.45, 0.10, 0.55, 0.20, F, 0.03)
+        L(0.50, 0.21, 0.50, 0.80, 0.05)
+        L(0.35, 0.30, 0.65, 0.30, 0.04)
+        A(0.20, 0.40, 0.80, 0.86, 15, 165, 0.05)
+        for s in (-1, 1):
+            x = 0.5 + s * 0.29
+            P([(x - 0.06, 0.60), (x + 0.06, 0.60), (x, 0.50)] if s < 0 else [(x - 0.06, 0.60), (x + 0.06, 0.60), (x, 0.50)])
+    elif name == "arene":              # lances croisées et rondache
+        spear(math.radians(35))
+        spear(math.radians(-35))
+        E(0.32, 0.38, 0.68, 0.74)
+        E(0.36, 0.42, 0.64, 0.70, B, 0.02)
+        E(0.46, 0.52, 0.54, 0.60, B)
+    else:
+        raise KeyError(name)
+    return img
+
+
+def sign_pictos(name="Sign_Pictos", seed=81, cols=8, rows=4, tile=256, ss=4):
+    """Atlas des enseignes : bois teinté sombre, filet peint, pictogramme crème usé."""
+    h, w = rows * tile, cols * tile
+    grain = fbm(h, w, seed, 6, 4, aspect=(0.25, 8.0))      # fil horizontal
+    fine = fbm(h, w, seed + 1, 4, 32)
+    wear = fbm(h, w, seed + 2, 4, 64)
+    wood = colorize(np.clip(grain * 0.8 + fine * 0.2, 0, 1), [(0, (40, 30, 22)), (0.5, (66, 50, 36)), (1, (92, 72, 52))])
+    icon = np.zeros((h, w), np.float32)
+    frame = np.zeros((h, w), np.float32)
+    for i, svc in enumerate(SIGN_SERVICES):
+        r, c = divmod(i, cols)
+        m = _picto(svc, tile * ss).resize((tile, tile), Image.LANCZOS)
+        icon[r * tile:(r + 1) * tile, c * tile:(c + 1) * tile] = np.asarray(m, np.float32) / 255.0
+    yy, xx = np.mgrid[0:h, 0:w]
+    ty, tx = (yy % tile) / tile, (xx % tile) / tile
+    edge = np.minimum(np.minimum(tx, 1 - tx), np.minimum(ty, 1 - ty))
+    frame = ((edge > 0.035) & (edge < 0.06)).astype(np.float32)
+    keep = np.clip((wear - 0.16) * 8.0, 0, 1)                 # écaillage de la peinture
+    paint_icon = icon * keep
+    paint_frame = frame * keep
+    col = wood.copy()
+    col = col * (1 - paint_frame[..., None]) + np.array([150, 112, 58], np.float32) * paint_frame[..., None]
+    cream = colorize(fine, [(0, (196, 176, 132)), (1, (232, 214, 172))])
+    col = col * (1 - paint_icon[..., None]) + cream * paint_icon[..., None]
+    col *= (0.88 + 0.12 * fine)[..., None]
+    hgt = 0.45 * grain + 0.15 * fine + 0.25 * paint_icon + 0.15 * paint_frame
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt.astype(np.float32), 3.0))
+    o = orm(hgt.astype(np.float32), 0.82)
+    o[..., 1] = np.clip(o[..., 1].astype(np.float32) - paint_icon * 40, 0, 255).astype(np.uint8)
+    save(f"T_Decor_{name}_ORM.png", o)
+
+
+TEXTURES["Sign_Pictos"] = sign_pictos
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

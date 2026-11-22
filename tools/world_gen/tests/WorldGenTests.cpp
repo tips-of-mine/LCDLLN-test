@@ -787,6 +787,25 @@ namespace
 		for (const std::string& m : sf.meshPaths)
 			if (m.rfind("meshes/props/Crop_", 0) == 0) crops = true; // parcelles de cultures (atelier décors)
 		Check(okScatter && crops, "champs : cultures autour d'une ville");
+		// Atelier décors : un panneau à pictogramme par service de Kendrhir (master,
+		// clé services), à moins de 9 m d'un bâtiment de la ville (devant sa façade).
+		{
+			const char* expected[] = { "auberge", "forgeron", "marche", "temple", "banque" };
+			int found = 0, nearOk = 0, signs = 0;
+			for (const char* svc : expected)
+				for (const std::string& m : sf.meshPaths)
+					if (m == std::string("meshes/props/Sign_Service_") + svc + ".gltf") ++found;
+			for (const auto& in : sf.instances)
+			{
+				if (sf.meshPaths[in.meshIndex].find("/Sign_Service_") == std::string::npos) continue;
+				++signs;
+				for (const auto& p : pls)
+					if (p.displayName.find(suffix) != std::string::npos
+						&& std::hypot(p.worldPosition.x - in.x, p.worldPosition.z - in.z) < 9.0) { ++nearOk; break; }
+			}
+			Check(okScatter && found == 5, "enseignes : panneaux des services de Kendrhir");
+			Check(signs >= 10 && nearOk == signs, "enseignes : chaque panneau devant un batiment de la ville");
+		}
 		// FORET.1 — densité forestière écrite (Kendrhir est en forêt) et
 		// cadrée sur la cellule ; plus aucun arbre de forêt dans scatter.bin.
 		engine::world::instances::ForestMask fm;

@@ -541,5 +541,22 @@
   "options.account.password_need_login": "Vuelve a la pantalla de inicio de sesion para cambiar tu contrasena.",
   "options.account.email_hint": "El cambio de email estara disponible en una futura version.",
   "options.account.signed_out": "Sesion local cerrada (contrasena eliminada).",
-  "common.close": "Cerrar"
+  "common.close": "Cerrar",
+  "service.auberge": "Posada",
+  "service.ecurie": "Establo",
+  "service.cimetiere": "Cementerio",
+  "service.forgeron": "Herrero",
+  "service.potions": "Pociones",
+  "service.armes": "Armas",
+  "service.armures": "Armaduras",
+  "service.temple": "Templo",
+  "service.guilde": "Gremio",
+  "service.infirmerie": "Enfermeria",
+  "service.marche": "Mercado",
+  "service.banque": "Banco",
+  "service.prison": "Prision",
+  "service.ecole_magie": "Escuela de magia",
+  "service.bibliotheque": "Biblioteca",
+  "service.port": "Puerto",
+  "service.arene": "Arena"
 }

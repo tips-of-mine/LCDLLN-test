@@ -230,6 +230,7 @@ namespace tools::world_gen
 		}
 
 		double YawFacing(Vec2 f) { return std::atan2(-f.x, -f.z) * 180.0 / kPi; }
+		double YawAlong(Vec2 d) { return std::atan2(-d.z, d.x) * 180.0 / kPi; }     ///< axe X local vers d
 		Vec2 Dir(double angleRad) { return { std::cos(angleRad), std::sin(angleRad) }; }
 
 		void AddProp(World& w, const std::string& mesh, Vec2 p, double yaw, double scale, uint8_t flags,
@@ -240,6 +241,89 @@ namespace tools::world_gen
 			s.position = p; s.yawDeg = yaw; s.scale = scale; s.flags = flags; s.cullClass = cull;
 			s.collisionRadius = collisionRadius; s.yOffset = yOffset;
 			w.scatter.push_back(std::move(s));
+		}
+
+		/// Services qui ont un panneau Sign_Service_<id> (atelier décors ; ordre et liste
+		/// de tools/asset_pipeline/decor/decor_textures.py SIGN_SERVICES). Le cimetière
+		/// (enclos à part) et le port (quai) n'ont pas de panneau de façade.
+		bool HasFacadeSign(const std::string& svc)
+		{
+			static const char* kSigns[] = { "auberge", "ecurie", "forgeron", "potions", "armes", "armures", "temple",
+				"guilde", "infirmerie", "marche", "banque", "prison", "ecole_magie", "bibliotheque", "arene" };
+			for (const char* k : kSigns)
+				if (svc == k) return true;
+			return false;
+		}
+
+		/// Affinité d'un service pour un modèle de bâtiment (plus petit = préféré) :
+		/// l'auberge va à la taverne, la forge à la forge, la prison à la caserne, les
+		/// commerces aux échoppes ; les autres au bâtiment libre le plus proche de la place.
+		int ServiceAffinity(const std::string& svc, const BuildingPlacementDef& b)
+		{
+			const bool tavern = b.templateType == "tavern";
+			if (svc == "auberge") return tavern ? 0 : 99;
+			if (tavern) return 99;                     // la taverne ne porte que l'auberge
+			const std::string& v = b.variantId;
+			auto has = [&](const char* k) { return v.find(k) != std::string::npos; };
+			if (svc == "forgeron") return has("forge") ? 0 : 2;
+			if (has("forge")) return 50;               // une forge ne sert qu'au forgeron
+			if (svc == "prison") return has("caserne") ? 0 : 2;
+			if (svc == "armes" || svc == "armures" || svc == "potions" || svc == "marche")
+				return has("echoppe") ? 0 : 1;
+			if (svc == "banque" || svc == "guilde" || svc == "ecole_magie" || svc == "bibliotheque" || svc == "temple")
+				return (has("manoir") || has("grande_maison") || has("maison_haute")) ? 0 : 1;
+			return 1;
+		}
+
+		/// Enseignes de service (atelier décors, décision du 22/11/2026) : un panneau à
+		/// pictogramme, sans texte, devant le bâtiment de chaque service de la ville ; le
+		/// client affiche le nom du service dans la langue du joueur au survol ou au clic.
+		/// Le panneau est sur potence, perpendiculaire à la façade, à côté de la porte.
+		/// \param firstBuilding indice du premier bâtiment posé pour cette ville.
+		void PlaceServiceSigns(World& w, const CityDef& c, size_t firstBuilding)
+		{
+			std::vector<std::string> todo;
+			for (const std::string& s : c.services)
+				if (HasFacadeSign(s) && std::find(todo.begin(), todo.end(), s) == todo.end()) todo.push_back(s);
+			if (todo.empty()) return;
+			std::vector<size_t> cand;
+			for (size_t i = firstBuilding; i < w.buildings.size(); ++i)
+				if (w.buildings[i].cityId == c.id && w.buildings[i].templateType != "ruine") cand.push_back(i);
+			auto dist = [&](size_t i) {
+				const Vec2 p = w.buildings[i].position;
+				return std::hypot(p.x - c.center.x, p.z - c.center.z);
+			};
+			std::sort(cand.begin(), cand.end(), [&](size_t a, size_t b) { return dist(a) < dist(b); });
+			std::vector<bool> used(cand.size(), false);
+			// L'auberge et la forge d'abord (bâtiments dédiés), puis l'ordre du lore.
+			std::stable_sort(todo.begin(), todo.end(), [](const std::string& a, const std::string& b) {
+				auto rank = [](const std::string& s) { return s == "auberge" ? 0 : (s == "forgeron" ? 1 : 2); };
+				return rank(a) < rank(b);
+			});
+			for (const std::string& svc : todo)
+			{
+				int best = -1, bestAff = 99;
+				for (size_t k = 0; k < cand.size(); ++k)
+				{
+					if (used[k]) continue;
+					const int aff = ServiceAffinity(svc, w.buildings[cand[k]]);
+					if (aff < bestAff) { bestAff = aff; best = static_cast<int>(k); }
+				}
+				if (best < 0 || bestAff >= 50) continue;   // plus de bâtiment disponible
+				used[best] = true;
+				const BuildingPlacementDef& b = w.buildings[cand[best]];
+				Vec2 f{ b.doorPoint.x - b.position.x, b.doorPoint.z - b.position.z };
+				const double l = std::hypot(f.x, f.z);
+				if (l < 1e-6) continue;
+				f = f * (1.0 / l);
+				const Vec2 side{ -f.z, f.x };
+				const double off = std::min(std::max(b.halfW * 0.55, 1.2), std::max(0.6, b.halfW - 0.2));
+				// Origine du mesh au milieu de la potence : poteau à 0,15 m de la façade.
+				const Vec2 p = b.position + f * (b.halfD + 0.6) + side * off;
+				if (w.IsWater(p)) continue;
+				AddProp(w, "Sign_Service_" + svc, p, YawAlong(f), 1.0, kSolid, 1, 0.5);
+				w.Occupy(p, 0.7);
+			}
 		}
 
 		/// Vrai si un disque reste exploitable (hors eau, hors rivière, pente faible).
@@ -531,6 +615,7 @@ namespace tools::world_gen
 		{
 			SettlementLayout L;
 			L.cityId = c.id;
+			const size_t firstBuilding = w.buildings.size();
 			// v1.0.136 : Camp de l'Oracle bâti selon le plan (Oracle.cpp), pas de village générique.
 			if (c.layout == "oracle")
 			{
@@ -1053,6 +1138,10 @@ namespace tools::world_gen
 						w.Occupy(p, 1.6);
 						break;
 					}
+
+			// --- Enseignes de service (atelier décors) : villes du lore habitées.
+			if (c.procedural.empty() && c.state != "ruine")
+				PlaceServiceSigns(w, c, firstBuilding);
 
 			// --- Point de départ (villes de départ) : sur la place, face à l'auberge.
 			{

@@ -6,6 +6,7 @@
 // nommées. La documentation de chaque fonction est dans Engine.h.
 
 #include "src/client/app/Engine.h"
+#include "src/client/world/ServiceSigns.h"
 #include "src/client/app/EngineHelpers.h"
 #include "src/client/render/ImGuiOverlay.h"
 
@@ -466,6 +467,7 @@ namespace engine
 				|| m_craftingVisible || m_advancedCombatVisible
 				|| m_weatherVisible;
 			RenderInteractableMarkersImGui(out, ivw, ivh, fg, worldOverlaysHidden);
+			RenderServiceSignTooltipImGui(out, ivw, ivh, fg, worldOverlaysHidden);
 			// TD.4 — Plaques de nom au-dessus des avatars joueurs distants.
 			// Source : `m_uiModelBinding.GetModel().remoteEntities` (peuple par
 			// ApplySnapshot, cf. TD.1) ; le serveur expose `playerClientId` ≠ 0
@@ -1755,6 +1757,62 @@ namespace engine
 
 
 	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderServiceSignTooltipImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden)
+	{
+		const double now = ImGui::GetTime();
+		if (worldOverlaysHidden || m_dialogueActive)
+		{
+			m_pinnedServiceSign.clear();
+			return;
+		}
+		// Panneau épinglé par un clic : son nom reste au-dessus du panneau 4 s.
+		if (!m_pinnedServiceSign.empty())
+		{
+			float sx = 0.0f, sy = 0.0f;
+			if (now > m_pinnedServiceSignUntil
+				|| !WorldToScreenPx(out.viewProjMatrix.m, m_pinnedServiceSignPos.x, m_pinnedServiceSignPos.y + 0.55f,
+					m_pinnedServiceSignPos.z, ivw, ivh, sx, sy))
+				m_pinnedServiceSign.clear();
+			else
+			{
+				const std::string name = m_authUi.UiTranslate(engine::client::ServiceNameKey(m_pinnedServiceSign));
+				const ImVec2 ts = ImGui::CalcTextSize(name.c_str());
+				const float pad = 5.0f;
+				const ImVec2 a(sx - ts.x * 0.5f - pad, sy - ts.y - pad * 2.0f), b(sx + ts.x * 0.5f + pad, sy);
+				fg->AddRectFilled(a, b, IM_COL32(20, 18, 16, 210), 4.0f);
+				fg->AddRect(a, b, IM_COL32(196, 150, 72, 255), 4.0f);
+				fg->AddText(ImVec2(a.x + pad, a.y + pad), IM_COL32(236, 220, 180, 255), name.c_str());
+			}
+		}
+		if (m_visibleServiceSigns.empty() || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow))
+			return;
+		// Survol : panneau sous le curseur (le plus proche de la caméra s'ils se recouvrent).
+		static thread_local std::vector<engine::client::ServiceSignScreen> screen;
+		static thread_local std::vector<size_t> source;
+		screen.clear();
+		source.clear();
+		const float fovY = out.camera.fovYDeg * 3.14159265f / 180.0f;
+		for (size_t i = 0; i < m_visibleServiceSigns.size(); ++i)
+		{
+			const VisibleServiceSign& sgn = m_visibleServiceSigns[i];
+			float sx = 0.0f, sy = 0.0f;
+			if (!WorldToScreenPx(out.viewProjMatrix.m, sgn.pos.x, sgn.pos.y, sgn.pos.z, ivw, ivh, sx, sy)) continue;
+			screen.push_back({ sx, sy, engine::client::ServiceSignPickRadiusPx(sgn.distM, static_cast<float>(ivh), fovY), sgn.distM });
+			source.push_back(i);
+		}
+		const ImVec2 mouse = ImGui::GetIO().MousePos;
+		const int hit = engine::client::PickServiceSign(screen, mouse.x, mouse.y);
+		if (hit < 0) return;
+		const VisibleServiceSign& sgn = m_visibleServiceSigns[source[static_cast<size_t>(hit)]];
+		ImGui::SetTooltip("%s", m_authUi.UiTranslate(engine::client::ServiceNameKey(sgn.key)).c_str());
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+		{
+			m_pinnedServiceSign = sgn.key;
+			m_pinnedServiceSignPos = sgn.pos;
+			m_pinnedServiceSignUntil = now + 4.0;
+		}
+	}
+
 	void Engine::RenderInteractableMarkersImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden)
 	{
 		if (!worldOverlaysHidden)

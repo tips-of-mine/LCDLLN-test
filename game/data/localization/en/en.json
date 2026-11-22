@@ -541,5 +541,22 @@
   "options.account.password_need_login": "Return to the login screen to change your password.",
   "options.account.email_hint": "Email change will be offered in a future version.",
   "options.account.signed_out": "Local session cleared (password cleared).",
-  "common.close": "Close"
+  "common.close": "Close",
+  "service.auberge": "Inn",
+  "service.ecurie": "Stables",
+  "service.cimetiere": "Graveyard",
+  "service.forgeron": "Blacksmith",
+  "service.potions": "Potions",
+  "service.armes": "Weapons",
+  "service.armures": "Armour",
+  "service.temple": "Temple",
+  "service.guilde": "Guild",
+  "service.infirmerie": "Infirmary",
+  "service.marche": "Market",
+  "service.banque": "Bank",
+  "service.prison": "Prison",
+  "service.ecole_magie": "School of Magic",
+  "service.bibliotheque": "Library",
+  "service.port": "Harbour",
+  "service.arene": "Arena"
 }

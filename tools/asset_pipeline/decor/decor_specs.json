@@ -5050,6 +5050,363 @@
       "billboard": false,
       "replaces": null,
       "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_Front_Brick8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Sign_Service_auberge",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3200,
+      "budget": "prop",
+      "exact": true,
+      "picto": 0,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_ecurie",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3201,
+      "budget": "prop",
+      "exact": true,
+      "picto": 1,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_cimetiere",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3202,
+      "budget": "prop",
+      "exact": true,
+      "picto": 2,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_forgeron",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3203,
+      "budget": "prop",
+      "exact": true,
+      "picto": 3,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_potions",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3204,
+      "budget": "prop",
+      "exact": true,
+      "picto": 4,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_armes",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3205,
+      "budget": "prop",
+      "exact": true,
+      "picto": 5,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_armures",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3206,
+      "budget": "prop",
+      "exact": true,
+      "picto": 6,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_temple",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3207,
+      "budget": "prop",
+      "exact": true,
+      "picto": 7,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_guilde",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3208,
+      "budget": "prop",
+      "exact": true,
+      "picto": 8,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_infirmerie",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3209,
+      "budget": "prop",
+      "exact": true,
+      "picto": 9,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_marche",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3210,
+      "budget": "prop",
+      "exact": true,
+      "picto": 10,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_banque",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3211,
+      "budget": "prop",
+      "exact": true,
+      "picto": 11,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_prison",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3212,
+      "budget": "prop",
+      "exact": true,
+      "picto": 12,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_ecole_magie",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3213,
+      "budget": "prop",
+      "exact": true,
+      "picto": 13,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_bibliotheque",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3214,
+      "budget": "prop",
+      "exact": true,
+      "picto": 14,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_port",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3215,
+      "budget": "prop",
+      "exact": true,
+      "picto": 15,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "Sign_Service_arene",
+      "num": 193,
+      "family": "objets",
+      "builder": "sign_service",
+      "seed": 3216,
+      "budget": "prop",
+      "exact": true,
+      "picto": 16,
+      "width_m": [
+        0.9,
+        1.1
+      ],
+      "height_m": [
+        2.5,
+        2.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
     }
   ]
 }

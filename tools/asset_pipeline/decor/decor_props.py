@@ -1311,6 +1311,50 @@ def p_statue_niche(spec, lod):
     return m.out()
 
 
+# ================================================================ enseignes
+# Panneau de service sur potence (atelier décors, décision du 22/11/2026) : un
+# pictogramme peint par service, sans texte ; le nom du service s'affiche dans la
+# langue du joueur au survol ou au clic (client). Case de l'atlas = spec["picto"]
+# (ordre SIGN_SERVICES de decor_textures.py, 8 x 4 cases).
+def _board(part, x0, x1, z0, z1, t, tile, cols=8, rows=4):
+    r, c = divmod(tile, cols)
+    u0, u1 = c / cols + 0.004, (c + 1) / cols - 0.004
+    v1, v0 = 1 - r / rows - 0.004, 1 - (r + 1) / rows + 0.004
+    y0, y1 = -t / 2, t / 2
+    quads = [  # face avant (-Y) puis arrière (+Y, U inversé pour lire le pictogramme à l'endroit)
+        ([(x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1)], [(u0, v0), (u1, v0), (u1, v1), (u0, v1)]),
+        ([(x1, y1, z0), (x0, y1, z0), (x0, y1, z1), (x1, y1, z1)], [(u0, v0), (u1, v0), (u1, v1), (u0, v1)]),
+    ]
+    for pts, uv in quads:
+        i = len(part.v)
+        part.v += [Vector(q) for q in pts]
+        part.f.append((i, i + 1, i + 2, i + 3))
+        part.uv.append(uv)
+        part.cn.append(None)
+    part.smooth = False
+
+
+def p_sign_service(spec, lod):
+    m = M()
+    wood, iron = m.p("Wood_Dark"), m.p("Iron")
+    H, arm = 2.6, 0.95
+    box(wood, (-0.06, -0.06, 0.0), (0.06, 0.06, H))                   # poteau
+    box(wood, (0.06, -0.04, H - 0.30), (arm, 0.04, H - 0.22))          # potence
+    if lod < 2:
+        a, b = Vector((0.06, 0, H - 0.75)), Vector((0.55, 0, H - 0.27))
+        cyl(wood, a, b, 0.03, 0.03, 4, False)                          # jambe de force
+        box(wood, (-0.08, -0.08, H), (0.08, 0.08, H + 0.04))           # chapeau
+    bx0, bx1, bz1 = 0.22, 0.86, H - 0.42
+    bz0 = bz1 - 0.64
+    for x in (bx0 + 0.06, bx1 - 0.06):                                 # tiges de suspension
+        cyl(iron, (x, 0, bz1), (x, 0, H - 0.30), 0.008, 0.008, S(lod, 6), False)
+    box(wood, (bx0, -0.018, bz0), (bx1, 0.018, bz1))                   # chant du panneau
+    _board(m.p("Sign_Pictos"), bx0, bx1, bz0, bz1, 0.04, int(spec["picto"]))
+    if lod == 0:
+        box(iron, (bx0 - 0.01, -0.024, bz1 - 0.02), (bx1 + 0.01, 0.024, bz1 + 0.01))
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

@@ -541,5 +541,22 @@
   "options.account.password_need_login": "Volte ao ecra de inicio de sessao para alterar a sua palavra-passe.",
   "options.account.email_hint": "A alteracao de email sera disponibilizada numa versao futura.",
   "options.account.signed_out": "Sessao local terminada (palavra-passe removida).",
-  "common.close": "Fechar"
+  "common.close": "Fechar",
+  "service.auberge": "Estalagem",
+  "service.ecurie": "Estabulo",
+  "service.cimetiere": "Cemiterio",
+  "service.forgeron": "Ferreiro",
+  "service.potions": "Pocoes",
+  "service.armes": "Armas",
+  "service.armures": "Armaduras",
+  "service.temple": "Templo",
+  "service.guilde": "Guilda",
+  "service.infirmerie": "Enfermaria",
+  "service.marche": "Mercado",
+  "service.banque": "Banco",
+  "service.prison": "Prisao",
+  "service.ecole_magie": "Escola de magia",
+  "service.bibliotheque": "Biblioteca",
+  "service.port": "Porto",
+  "service.arene": "Arena"
 }

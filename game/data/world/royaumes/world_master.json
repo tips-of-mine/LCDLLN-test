@@ -664,6 +664,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] INFERE",
       "description": "Hameau agricole aux portes de Lhynn ; l'ancien Marn et le capitaine Rendal y accueillent les nouveaux venus."
@@ -676,6 +677,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armures", "ecurie", "cimetiere"],
       "start_for": [
         "legions_imperiales"
       ],
@@ -690,6 +692,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "armes", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.62 (nom [DÉCISION] v1.0.93, ancien nom Ambermead) ; cellule [DÉCISION] v1.0.72 (N003_W008, déplacée depuis N003_W010)",
       "description": "Ferme à blé de la Première Province, au nord-est de Haeldorf, entre Gredhaim et Dys : grain et fourrage pour la garnison."
@@ -702,6 +705,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "armes", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.62 (nom [DÉCISION] v1.0.93, ancien nom Greyhedge) ; cellule [DÉCISION] v1.0.72 (N001_W008, déplacée depuis N001_W009)",
       "description": "Ferme à haies vives à l'est de Lhynn, sur le chemin de Haeldorf à la Via Magna."
@@ -714,6 +718,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lumiere",
+      "services": ["auberge", "potions", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [
         "lumiere"
       ],
@@ -728,6 +733,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lumiere",
+      "services": ["auberge", "armes", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.64 (nom [DÉCISION] v1.0.93, ancien nom Brightholm) ; cellule [INFÉRÉ], région de départ d'Orhendal",
       "description": "Commanderie rurale de l'Ordre de la Lumière à l'est d'Orhendal : domaine agricole et haras tenus par des frères convers, qui nourrissent et remontent Altenberg."
@@ -740,6 +746,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lumiere",
+      "services": ["auberge", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.64 (nom [DÉCISION] v1.0.93, ancien nom Whitesheaf) ; cellule [INFÉRÉ], région de départ d'Orhendal",
       "description": "Ferme à blé au nord d'Orhendal : grain des novices et pain d'autel de la cathédrale d'Altenberg."
@@ -752,6 +759,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lumiere",
+      "services": ["auberge", "armes", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.64 (nom [DÉCISION] v1.0.93, ancien nom Lambsfold) ; cellule [INFÉRÉ], région de départ d'Orhendal",
       "description": "Bergerie au sud d'Orhendal, au-dessus de la longue plage : laine blanche des habits et capuches de l'Ordre."
@@ -764,6 +772,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "justice",
+      "services": ["auberge", "armes", "ecurie", "cimetiere"],
       "start_for": [
         "justice"
       ],
@@ -778,6 +787,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "justice",
+      "services": ["auberge", "potions", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.66 (nom [DÉCISION] v1.0.93, ancien nom Tithemead) ; cellule [INFÉRÉ], région de départ d'Ordhrann",
       "description": "Ferme de la dîme au nord d'Ordhrann, sur la rive est du fleuve : blé, foin et chevaux de remonte pour les garnisons de Syzygie."
@@ -790,6 +800,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "justice",
+      "services": ["auberge", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.66 (nom [DÉCISION] v1.0.93, ancien nom Wardholt) ; cellule [INFÉRÉ], région de départ d'Ordhrann",
       "description": "Hameau de garnison à palissade à l'est d'Ordhrann, au fond d'une crevasse en cul-de-sac ouverte vers l'ouest (la route s'y arrête) : poste de garde de l'Ordre de la Justice, mineurs, bûcherons et charbonniers ; une mine s'ouvre au fond de la crevasse [DÉCISION v1.0.72]."
@@ -802,6 +813,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "dragons",
+      "services": ["auberge", "potions", "ecurie", "cimetiere"],
       "start_for": [
         "dragons"
       ],
@@ -816,6 +828,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "dragons",
+      "services": ["auberge", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.68 (nom [DÉCISION] v1.0.93, ancien nom Cragfold) ; cellule [DÉCISION] v1.0.76 (S004_W002, déplacée d'une case vers l'est depuis S004_W003 ; hors de la région de départ 3×3 de Drakhenhal, dont elle reste la bergerie)",
       "description": "Hameau de bergers à l'est de Drakhenhal : bergeries de pierre sèche, chèvres, moutons et bœufs de montagne dont une part monte au Palais pour nourrir les dragons de l'Ordre."
@@ -828,6 +841,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "dragons",
+      "services": ["auberge", "armes", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.68 (nom [DÉCISION] v1.0.93, ancien nom Bridlecrag) ; cellule [DÉCISION] v1.0.76 (S004_W006, déplacée d'une case vers l'ouest depuis S004_W005 ; hors de la région de départ 3×3 de Drakhenhal, dont elle reste le haras)",
       "description": "Haras de montagne à l'ouest de Drakhenhal, aux confins des neiges éternelles : chevaux au pied sûr, mulets et poneys des écuyers, selliers et bourreliers."
@@ -840,6 +854,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "dzorak",
+      "services": ["auberge", "potions", "ecurie", "cimetiere"],
       "start_for": [
         "dzorak"
       ],
@@ -854,6 +869,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "dzorak",
+      "services": ["auberge", "armes", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.67 (nom à valider) ; cellule [INFÉRÉ], région de départ de Grakhul",
       "description": "Kraal d'éleveurs à palissade de pieux au sud de Grakhul : chèvres, bœufs et ânes de bât, peaux tannées et viande séchée pour Grakhul et Ghulvathan."
@@ -866,6 +882,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "dzorak",
+      "services": ["auberge", "potions", "armes", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.67 (nom à valider) ; cellule [INFÉRÉ], région de départ de Grakhul",
       "description": "Kraal de chasseurs et de charbonniers à la lisière est de Grakhul : gibier fumé, peaux et bois des palissades."
@@ -878,6 +895,7 @@
       "race": "nains",
       "state": "intact",
       "faction": "naine",
+      "services": ["auberge", "forgeron", "ecurie", "cimetiere"],
       "start_for": [
         "naine"
       ],
@@ -892,6 +910,7 @@
       "race": "nains",
       "state": "intact",
       "faction": "naine",
+      "services": ["auberge", "potions", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.69 (nom à valider) ; cellule [INFÉRÉ], région de départ de Durnhalde ; nom [DÉCISION] v1.0.94 (ancien nom Eisenkehl)",
       "description": "Hameau minier au sud-est de Durnhalde, à l'est de Kholbrakh : mines de fer étayées, terrils et treuils ; le minerai part à dos de mulet vers les forges de Ghrunke Dash."
@@ -904,6 +923,7 @@
       "race": "nains",
       "state": "intact",
       "faction": "naine",
+      "services": ["auberge", "potions", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.69 (nom à valider) ; cellule [INFÉRÉ], région de départ de Durnhalde ; nom [DÉCISION] v1.0.94 (ancien nom Kohlbrand)",
       "description": "Hameau de houilleurs et de fondeurs au sud de Durnhalde : puits de charbon, meules de coke et bas fourneaux qui fument jour et nuit."
@@ -916,6 +936,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "elfe",
+      "services": ["auberge", "armes", "ecurie", "cimetiere"],
       "start_for": [
         "elfe"
       ],
@@ -931,6 +952,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "port", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T3",
       "description": "Haazheel Thorn s'y rend pour prêter hommage à l'Empereur."
@@ -944,6 +966,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lumiere",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "port", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T4",
       "description": "Pages 23-24 — siège officiel : 'Le siège de l'Ordre des Chevaliers de la Lumière'."
@@ -956,6 +979,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "justice",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T4",
       "description": "Syzygie (alias Cité d'Aurore, Sysigie), capitale de la principauté de Syzygie ; pages 38-39 (BD-T4) — Parsifal y arrive au lever du jour."
@@ -968,6 +992,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T4",
       "description": "La ville est aussi orthographiée 'Dis' dans le texte du tome 4 (dialogue page 17)."
@@ -980,6 +1005,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T8",
       "description": "'Voilà, Fratus, tout est fini, nous sommes prêts à les recevoir.' — lieutenant à Fratus."
@@ -992,6 +1018,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T2",
       "description": "Immense ville-tour construite autour d'un pic rocheux, s'enroulant comme 'un serpent de pierre'. Les plus belles demeures sont vers les hauteurs."
@@ -1004,6 +1031,7 @@
       "race": "humains",
       "state": "reconstruction",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T1 ; nom [DÉCISION] v1.0.94 (ancien nom Kendrhir Vale)",
       "description": "Cité des Grands Mages — prise par la horde de Ghorghor Bey puis dévastée par la tempête de Wismerhill à la fin du tome 1 ; en reconstruction : quartiers en ruine, brèches dans les murs, maisons et quartiers en chantier."
@@ -1016,6 +1044,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "cimetiere"],
       "start_for": [],
       "source": "[GD] fiche lore horker (notes BD-T6 déplacées vers city_horkher en v1.0.54) ; nom [DÉCISION] v1.0.93 (ancien nom Horker au master, Harrowdale au lore) ; description [DÉCISION] v1.0.94 ; faction empire_hynn [GD] v1.0.103 (Via Magna impériale [HS], faction_empire au lore)",
       "description": "Cité marchande de la Via Magna (étape de la route 000120) : bois de chauffe, petit gibier, miel et sel gemme ; à ne pas confondre avec Horkher, le comté de George d'Horkher au nord de Moork."
@@ -1028,6 +1057,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T5",
       "description": "Siège de Haazheel Thorn — grande ville fortifiée avec hautes murailles de bois/pierre."
@@ -1040,6 +1070,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "arene", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T2",
       "description": "Première cité visitée par Wismerhill et ses compagnons dans le Tome 2."
@@ -1053,6 +1084,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "port", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] HS",
       "description": "Royaume du sud. Puissance indépendante suffisamment importante pour envoyer des espionnes dans l'Empire."
@@ -1077,6 +1109,7 @@
       "race": "neutre",
       "state": "camp",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "ecurie", "temple", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T3",
       "layout": "oracle",
@@ -1090,6 +1123,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "elfe",
+      "services": ["auberge", "armes", "ecurie", "temple", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T1",
       "description": "La Colline aux Murmures, relevee de ses cendres par les elfes sylvains : point de depart des enfants de la foret."
@@ -1102,6 +1136,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "dzorak",
+      "services": ["auberge", "armes", "ecurie", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] INFERE ; nom [DÉCISION] v1.0.93 (ancien nom Leviathan Jungle, Leviathan)",
       "description": "Kraal fortifie au coeur des Territoires orcques, ou les clans de Dzorak forgent leurs jeunes guerriers."
@@ -1114,6 +1149,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "marche", "ecurie", "temple", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T5",
       "description": "Village d'Orkhs (petits humanoïdes au museau porcin) — paisible, hommes partis à la guerre."
@@ -1126,6 +1162,7 @@
       "race": "nains",
       "state": "intact",
       "faction": "naine",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T3",
       "description": "'Les portes de la ville étaient d'acier et semblaient imprenables.'"
@@ -1138,6 +1175,7 @@
       "race": "nains",
       "state": "intact",
       "faction": "naine",
+      "services": ["auberge", "forgeron", "marche", "ecurie", "guilde", "infirmerie", "prison", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T9, BD-T11 (v1.0.55 : cellule du proprietaire) ; nom [DÉCISION] v1.0.94 (ancien nom Forteresse d'Heureux)",
       "description": "Ancienne forteresse naine reconvertie en refuge pour les concubines de Wismerhill."
@@ -1150,6 +1188,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "dzorak",
+      "services": ["auberge", "forgeron", "marche", "ecurie", "guilde", "infirmerie", "prison", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T11",
       "description": "Wismerhill ordonne à Goristroy de faire remonter les troupes vers Hoengardt."
@@ -1162,6 +1201,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T1",
       "description": "Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey."
@@ -1174,6 +1214,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "forgeron", "ecurie", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T1 ; nom [DÉCISION] v1.0.93 (ancien nom Moorgate)",
       "description": "Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey (est des Marches) ; nom repris des lieux non utilisés."
@@ -1186,6 +1227,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "forgeron", "marche", "ecurie", "temple", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T1 ; nom [DÉCISION] v1.0.93 (ancien nom Dunfold)",
       "description": "Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey (sud des Marches) ; nom repris des lieux non utilisés."
@@ -1222,6 +1264,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "forgeron", "marche", "ecurie", "guilde", "infirmerie", "prison", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T1",
       "description": "Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey."
@@ -1234,6 +1277,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T1",
       "description": "Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey."
@@ -1246,6 +1290,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "forgeron", "marche", "ecurie", "guilde", "infirmerie", "prison", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] BD-T3",
       "description": "Wismerhill y passe l'automne. La succube l'enchante chaque soir."
@@ -1270,6 +1315,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "ecurie", "guilde", "cimetiere"],
       "start_for": [],
       "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Crossroads)",
       "description": "Khrozrad"
@@ -1282,6 +1328,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "forgeron", "marche", "ecurie", "banque", "guilde", "cimetiere"],
       "start_for": [],
       "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Highfall)",
       "description": "Hagfhal"
@@ -1294,6 +1341,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armes", "forgeron", "ecurie", "temple", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Farwatch)",
       "description": "Farvhenn"
@@ -1306,6 +1354,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "guilde", "cimetiere"],
       "start_for": [],
       "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Shadowfen)",
       "description": "Shaddrek"
@@ -1318,6 +1367,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "forgeron", "ecurie", "banque", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Clearwater)",
       "description": "Klehrwath"
@@ -1331,6 +1381,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "port", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Equiton)",
       "description": "Port de la baie et tête de la ligne maritime du sud."
@@ -1343,6 +1394,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T6 (description reprise de horker en v1.0.94) ; cellule [INFÉRÉ] lore v1.0.52",
       "description": "Comté dirigé par George d'Horkher, au nord de Moork : sur ses cartes (BD-T6 p.35, 37), Horkher en haut, Moork en bas, route directe ; ville aux couleurs jaune, or et rouge."
@@ -1355,6 +1407,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "potions", "armures", "marche", "ecurie", "temple", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Darkwater)",
       "description": "Village de Mhordaal."
@@ -1367,6 +1420,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "ecurie", "temple", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Westmoor)",
       "description": "Village de Vestmhor."
@@ -1379,6 +1433,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "forgeron", "ecurie", "guilde", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Northgate)",
       "description": "Village de Nhorgast."
@@ -1391,6 +1446,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "ecurie", "banque", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Southport)",
       "description": "Village de Suthvarn."
@@ -1403,6 +1459,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "armes", "forgeron", "marche", "ecurie", "temple", "banque", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Ebonvale)",
       "description": "Village d'Ebhrazul."
@@ -1415,6 +1472,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "forgeron", "ecurie", "temple", "banque", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Greyhaven)",
       "description": "Village de Grhaevan."
@@ -1427,6 +1485,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "marche", "ecurie", "banque", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Saltwick)",
       "description": "Village de Saelvik."
@@ -1439,6 +1498,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "justice",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "prison", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Verdansur)",
       "description": "Ville de Vaerdhun, perchée au sommet d'une haute colline ; deux rivières naissent à son pied, l'une vers le sud, l'autre vers le nord-est [DÉCISION v1.0.72]."
@@ -1451,6 +1511,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "ecurie", "banque", "guilde", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Coldport)",
       "description": "Village de Kholdvar."
@@ -1464,6 +1525,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "port", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Ashwick)",
       "description": "Ville d'Askhvir."
@@ -1476,6 +1538,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "armes", "armures", "ecurie", "temple", "banque", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Voidmark)",
       "description": "Village de Vozmarkh."
@@ -1488,6 +1551,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "potions", "armes", "forgeron", "marche", "ecurie", "temple", "banque", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Duskmere)",
       "description": "Village de Dhazkmer."
@@ -1500,6 +1564,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "potions", "armures", "forgeron", "ecurie", "temple", "banque", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Nightward)",
       "description": "Village de Nakhtvar."
@@ -1512,6 +1577,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "justice",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Justfall)",
       "description": "Ville d'Iustarn."
@@ -1524,6 +1590,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "potions", "armes", "armures", "marche", "ecurie", "temple", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Blackmoor)",
       "description": "Village de Vlakmorh."
@@ -1536,6 +1603,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armures", "ecurie", "temple", "banque", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Rivercross)",
       "description": "Village de Rhivkhar."
@@ -1548,6 +1616,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armures", "forgeron", "ecurie", "banque", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Hillwatch)",
       "description": "Village de Hilvakh."
@@ -1560,6 +1629,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armes", "armures", "ecurie", "temple", "banque", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Deepmoor)",
       "description": "Village de Dhemorr."
@@ -1572,6 +1642,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "ecurie", "temple", "guilde", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Runecroft)",
       "description": "Village de Runhkar."
@@ -1584,6 +1655,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "marche", "ecurie", "temple", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Shadehold)",
       "description": "Village de Shezhold."
@@ -1597,6 +1669,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "prison", "port", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Brookend)",
       "description": "Ville de Brokhendt."
@@ -1609,6 +1682,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Stonehaven)",
       "description": "Ville de Stohnvar."
@@ -1621,6 +1695,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armes", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Millend)",
       "description": "Hameau de Mhillenz."
@@ -1633,6 +1708,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "justice",
+      "services": ["auberge", "potions", "armes", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Trueford)",
       "description": "Hameau de Treuvhal."
@@ -1645,6 +1721,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armes", "forgeron", "ecurie", "port", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Hayfen)",
       "description": "Hameau de Haevrin."
@@ -1657,6 +1734,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Greypool)",
       "description": "Hameau de Ghrepol."
@@ -1669,6 +1747,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "elfe",
+      "services": ["auberge", "potions", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Northfen) ; race et faction [DÉCISION] v1.0.94 (hameau elfe)",
       "description": "Hameau elfe de Nhorvaël."
@@ -1682,6 +1761,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "ecurie", "port", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Saltfen)",
       "description": "Hameau de Zaltheim."
@@ -1694,6 +1774,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Harrowbrook)",
       "description": "Hameau de Harndrecht."
@@ -1706,6 +1787,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Ashhollow)",
       "description": "Hameau d'Aeskhol."
@@ -1719,6 +1801,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "justice",
+      "services": ["auberge", "potions", "ecurie", "port", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Orderfen)",
       "description": "Hameau d'Ostrevan."
@@ -1731,6 +1814,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armes", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Frosthollow)",
       "description": "Hameau de Frhozhol."
@@ -1743,6 +1827,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "potions", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Grimfen)",
       "description": "Hameau de Ghrimfeth."
@@ -1755,6 +1840,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Dustfen)",
       "description": "Hameau de Dhuzmar."
@@ -1767,6 +1853,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "armes", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Nightfield)",
       "description": "Hameau de Nykhfeld."
@@ -1779,6 +1866,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Arcanefield)",
       "description": "Hameau d'Arkhanyra."
@@ -1791,6 +1879,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armes", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Mossy Rock)",
       "description": "Hameau de Mhozrak."
@@ -1803,6 +1892,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Clearfen)",
       "description": "Hameau de Klaerhin."
@@ -1815,6 +1905,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Claybury)",
       "description": "Hameau de Khlaybur."
@@ -1827,6 +1918,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Millford)",
       "description": "Hameau de Melvhord."
@@ -1839,6 +1931,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Scalebrook)",
       "description": "Hameau de Skhaldrach."
@@ -1852,6 +1945,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "prison", "port", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Deepbrook)",
       "description": "Ville de Dyprokh."
@@ -1864,6 +1958,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armures", "forgeron", "ecurie", "temple", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Coldhollow)",
       "description": "Village de bûcherons au pied des monts de l'extrême nord."
@@ -1876,6 +1971,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Fernhill)",
       "description": "Hameau de bergers sur les collines du nord-est."
@@ -1888,6 +1984,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Draketon)",
       "description": "Hameau fortifié au pied des sommets enneigés, face aux Géants de froid."
@@ -1900,6 +1997,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "marche", "ecurie", "temple", "banque", "guilde", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Stonebridge)",
       "description": "Village côtier du nord-est."
@@ -1913,6 +2011,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "prison", "port", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Riverfold)",
       "description": "Ville portuaire à l'embouchure de la rivière de Rhivkhar, sur la côte orientale."
@@ -1925,6 +2024,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Greyfield)",
       "description": "Village de la côte orientale, en lisière de forêt."
@@ -1937,6 +2037,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armures", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Dustfield)",
       "description": "Hameau des terres arides de la côte orientale."
@@ -1949,6 +2050,7 @@
       "race": "nains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armures", "forgeron", "marche", "ecurie", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Ironbrook)",
       "description": "Village minier nain sur la côte des montagnes de l'est."
@@ -1961,6 +2063,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armes", "armures", "forgeron", "ecurie", "temple", "banque", "guilde", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Fairbrook)",
       "description": "Village agricole des confins du Midi."
@@ -1973,6 +2076,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Thistle Creek)",
       "description": "Hameau des confins du Midi, entre les terres arides et les montagnes."
@@ -1985,6 +2089,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "elfe",
+      "services": ["auberge", "armes", "armures", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.70 (nom [DÉCISION] v1.0.93, ancien nom Greenbough) ; cellule [INFÉRÉ], région de départ de Syllaërin",
       "description": "Hameau de cueilleurs et d'herboristes au sud-ouest de Northind : maisons de bois entre les racines, séchoirs à herbes et à champignons ; rien ne s'y cueille sans un chant."
@@ -1997,6 +2102,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "elfe",
+      "services": ["auberge", "potions", "armes", "forgeron", "ecurie", "cimetiere"],
       "start_for": [],
       "source": "[GD] v1.0.70 (nom [DÉCISION] v1.0.93, ancien nom Fernhollow) ; cellule [INFÉRÉ], région de départ de Syllaërin",
       "description": "Hameau de facteurs d'arcs et de forestiers à l'ouest de Northind, au creux d'un vallon de fougères : chaque arbre abattu pour un arc y est replanté."
@@ -2009,6 +2115,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[DÉCISION] v1.0.73 (ville moyenne) ; nom, race (Elfes des bois) et faction [GD] à valider ; cellule N007_E002 retenue contre N007_E001 (relief plus doux, lac et rivière à 3 cases, 3 cases d'Arkhanyra et d'Askhvir) ; nom [DÉCISION] v1.0.93 (ancien nom Hazelgate)",
       "description": "Comptoir des Elfes des bois à la lisière de la forêt elfique, face aux plaines d'Arkhanyra : marché aux herbes, aux arcs et à la soie d'araignée où les humains commercent sans entrer dans la forêt [GD v1.0.73, à valider]."
@@ -2021,6 +2128,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "cimetiere"],
       "start_for": [],
       "source": "[DÉCISION] v1.0.73 (ville moyenne, N009_W001) ; nom, race et faction [GD] à valider ; nom [DÉCISION] v1.0.93 (ancien nom Fellwatch)",
       "description": "Ville de bûcherons et de guet à la lisière, dans les Terres des Gigantomorphes : palissade de troncs, scieries et tour de guet tournée vers les géants du nord ; le bois part vers la côte et la reconstruction de Kendrhir, jamais pris côté forêt elfique [GD v1.0.73, à valider]."
@@ -2033,6 +2141,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[DÉCISION] v1.0.73 (ville moyenne, S001_W007) ; nom, race et faction [GD] à valider ; nom [DÉCISION] v1.0.93 (ancien nom Hollowgate)",
       "description": "Ville minière et relais de la Via Magna dans la plaine, au pied sud-est de la chaîne qui la sépare de Gredhaim : l'entrée sud de la Mine de la Traverse s'ouvre au nord-ouest ; forges, entrepôts de minerai et auberges de rouliers [GD v1.0.73, à valider]."
@@ -2046,6 +2155,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "prison", "port", "cimetiere"],
       "start_for": [],
       "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N017_W010) ; nom, race, taille et faction [GD] à valider ; port, départ de la ligne maritime du Nord ; nom [DÉCISION] v1.0.93 (ancien nom Brinehaven)",
       "description": "Port franc de l'Île de la Trêve, à la pointe sud-est du fer à cheval : comptoir des armateurs neutres, quais et quartiers séparés pour l'Empire, la Lune Noire et les indépendants ; la Trêve y interdit le combat dans l'enceinte [GD v1.0.74, à valider]."
@@ -2058,6 +2168,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
+      "services": ["auberge", "armes", "armures", "forgeron", "marche", "ecurie", "guilde", "cimetiere"],
       "start_for": [],
       "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N022_W010) ; nom, race, taille et faction [GD] à valider ; nom [DÉCISION] v1.0.93 (ancien nom Duskmoor)",
       "description": "Comptoir fortifié de la Lune Noire au bout du bras nord, face à la baie : palissade noire, débarcadère et quartier des Dzoraks et des envoyés de la Légion [GD v1.0.74, à valider]."
@@ -2071,6 +2182,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "armes", "armures", "ecurie", "port", "cimetiere"],
       "start_for": [],
       "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N019_W010) ; nom, race, taille et faction [GD] à valider ; îlot central relié par navette ; nom [DÉCISION] v1.0.93 (ancien nom Truceholm)",
       "description": "Hameau de l'îlot central de la baie, autour de la Pierre de la Trêve où les envoyés de toutes les factions jurent la paix des comptoirs ; ponton de la navette de Brenhaval [GD v1.0.74, à valider]."
@@ -2083,6 +2195,7 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
+      "services": ["auberge", "potions", "armes", "forgeron", "ecurie", "temple", "banque", "guilde", "infirmerie", "cimetiere"],
       "start_for": [],
       "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N021_W014) ; nom, race, taille et faction [GD] à valider ; nom [DÉCISION] v1.0.93 (ancien nom Lanternhold)",
       "description": "Comptoir fortifié de l'Empire sur le bras ouest : fanal sur la falaise, chapelle des Chevaliers de la Lumière et de la Justice, entrepôts de bois de marine [GD v1.0.74, à valider]."
@@ -2096,6 +2209,7 @@
       "race": "nains",
       "state": "intact",
       "faction": "neutre",
+      "services": ["auberge", "forgeron", "marche", "ecurie", "temple", "banque", "infirmerie", "cimetiere"],
       "secret": true,
       "start_for": [],
       "source": "[DÉCISION] v1.0.107 (lot 32 du propriétaire, 12/11/2026 : ville au fond d'un gouffre caché de Deathtrap Canyon, point de résurrection) ; nom, peuple (Ghaurdes), taille et race [GD] à valider ; SECRÈTE : hors de la carte publique, sans route (relief gouffre_des_revenus)",

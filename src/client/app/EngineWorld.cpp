@@ -13,6 +13,7 @@
 // XZ) : seules les cases proches sont visitées, puis filtrage distance + frustum.
 
 #include "src/client/app/Engine.h"
+#include "src/client/world/ServiceSigns.h"
 
 #include "src/client/render/DeferredPipeline.h"
 #include "src/client/render/InstanceBatch.h"
@@ -50,6 +51,7 @@ namespace engine
 			LOG_WARN(Render, "[Scatter] mesh introuvable ou vide '{}' (instances ignorees)", meshPath);
 			return false;
 		}
+		entry.serviceKey = engine::client::ServiceKeyFromMeshPath(meshPath);
 		// Niveaux de détail optionnels (atelier décors) : <base>_LOD1/_LOD2/_BB.gltf à
 		// côté du mesh. Absents pour les meshes historiques -> comportement inchangé.
 		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
@@ -500,6 +502,8 @@ namespace engine
 		static thread_local std::vector<DrawRef> refs;
 		refs.clear();
 		size_t visibleTotal = 0, itemTotal = 0;
+		m_visibleServiceSigns.clear();
+		const float signMaxM = static_cast<float>(m_cfg.GetDouble("client.service_sign.max_distance_m", 40.0));
 		for (uint32_t li = 0; li < static_cast<uint32_t>(layers.size()); ++li)
 		{
 			const ScatterLayer& layer = layers[li];
@@ -526,6 +530,11 @@ namespace engine
 				}
 				const float ddx = it.center.x - eyeL.x, ddy = it.center.y - eyeL.y, ddz = it.center.z - eyeL.z;
 				const float distM = std::sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
+				// Enseigne de service : centre du panneau (au-dessus du centre de la boîte,
+				// le poteau descend jusqu'au sol), repère de rendu.
+				if (!m_scatterMeshes[it.meshId].serviceKey.empty() && distM <= signMaxM)
+					m_visibleServiceSigns.push_back({ engine::math::Vec3{ it.center.x + layer.offsetX, it.center.y + 0.45f,
+						it.center.z + layer.offsetZ }, distM, m_scatterMeshes[it.meshId].serviceKey });
 				for (const PropPart& part : ScatterPartsForDistance(m_scatterMeshes[it.meshId], distM))
 				{
 					engine::render::MeshAsset* mesh = part.mesh.Get();

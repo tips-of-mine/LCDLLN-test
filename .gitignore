@@ -44,3 +44,4 @@ game/data/zones/enfers_*/
 game/data/instances/zone_enfers_*/
 game/data/world/enfers/*
 !game/data/world/enfers/world_master.json
+__pycache__/

@@ -541,5 +541,22 @@
   "options.account.password_need_login": "Revenez a l'ecran connexion pour modifier le mot de passe.",
   "options.account.email_hint": "La modification d'e-mail sera proposee dans une prochaine version.",
   "options.account.signed_out": "Session locale effacee (mot de passe oublie).",
-  "common.close": "Fermer"
+  "common.close": "Fermer",
+  "service.auberge": "Auberge",
+  "service.ecurie": "Ecurie",
+  "service.cimetiere": "Cimetiere",
+  "service.forgeron": "Forgeron",
+  "service.potions": "Potions",
+  "service.armes": "Armes",
+  "service.armures": "Armures",
+  "service.temple": "Temple",
+  "service.guilde": "Guilde",
+  "service.infirmerie": "Infirmerie",
+  "service.marche": "Marche",
+  "service.banque": "Banque",
+  "service.prison": "Prison",
+  "service.ecole_magie": "Ecole de magie",
+  "service.bibliotheque": "Bibliotheque",
+  "service.port": "Port",
+  "service.arene": "Arene"
 }

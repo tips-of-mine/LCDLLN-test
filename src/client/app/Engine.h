@@ -384,6 +384,10 @@ namespace engine
 #endif
 #if defined(_WIN32)
 		// --- Sous-étapes de RenderInGameImGuiFrame() (définies dans EngineUpdateUi.cpp) ---
+		/// Enseignes de service (atelier décors) : nom du service, traduit dans la langue
+		/// du joueur, en info-bulle au survol du panneau ; un clic l'épingle au-dessus du
+		/// panneau quelques secondes. Main thread, frame ImGui ouverte.
+		void RenderServiceSignTooltipImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden);
 		/// Marqueurs flottants des interactibles (nom, « [E] » à portée, liens PNJ), projetés sur l'écran. Main thread, frame ImGui ouverte.
 		void RenderInteractableMarkersImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden);
 		/// Plaques de nom au-dessus des avatars et mobs distants (masquées sous un menu modal). Main thread, frame ImGui ouverte.
@@ -1201,12 +1205,30 @@ namespace engine
 			/// [1] = <mesh>_LOD2.gltf, [2] = <mesh>_BB.gltf (billboard). Vide = niveau
 			/// absent : le rendu retombe sur le niveau plus détaillé disponible.
 			std::vector<PropPart> lodParts[3];
+			/// Enseigne de service (atelier décors) : identifiant du service tiré du nom
+			/// du mesh (Sign_Service_<id>), vide pour tout autre décor.
+			std::string serviceKey;
 			engine::math::Vec3 localMin{ 0.0f, 0.0f, 0.0f };
 			engine::math::Vec3 localMax{ 0.0f, 0.0f, 0.0f };
 			bool attempted = false; ///< chargement déjà tenté (succès ou échec mémorisé)
 			bool valid = false;
 		};
 		std::vector<ScatterMeshGpu> m_scatterMeshes;
+		/// Enseigne de service visible à la frame précédente (atelier décors) : centre du
+		/// panneau dans le repère de rendu et identifiant du service.
+		struct VisibleServiceSign
+		{
+			engine::math::Vec3 pos{ 0.0f, 0.0f, 0.0f };
+			float distM = 0.0f;
+			std::string key;
+		};
+		/// Remplie par RecordScatterGeometry (panneaux à moins de
+		/// client.service_sign.max_distance_m, 40 m), lue par RenderServiceSignTooltipImGui.
+		std::vector<VisibleServiceSign> m_visibleServiceSigns;
+		/// Panneau cliqué : son nom reste affiché au-dessus du panneau quelques secondes.
+		std::string m_pinnedServiceSign;
+		engine::math::Vec3 m_pinnedServiceSignPos{ 0.0f, 0.0f, 0.0f };
+		double m_pinnedServiceSignUntil = 0.0;
 		/// Seuils (m) LOD1 / LOD2 / billboard du décor instancié (world.scatter.*).
 		float m_scatterLodM[3] = { 30.0f, 70.0f, 110.0f };
 		/// Cache de matériaux du rendu instancié (nom de matériau glTF -> index bindless).

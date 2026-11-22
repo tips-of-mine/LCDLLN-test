@@ -3569,6 +3569,204 @@ def p_doll_rag(spec, lod):
     return m.out()
 
 
+# ======================================================================= Tome 6
+def p_bunting_garland(spec, lod):
+    """Guirlande de fanions sur deux mâts (n° 195) : portée 8 m, mâts 4,5 m, corde en
+    chaînette, fanions triangulaires de quatre couleurs alternées."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for x in (-4.0, 4.0):
+        cyl(d, (x, 0, 0), (x, 0, 4.5), 0.07, 0.05, S(lod, 6))
+    n = {0: 24, 1: 12, 2: 6}[lod]
+    sag = 1.0
+    pts = [Vector((-4.0 + 8.0 * k / n, 0, 4.4 - sag * math.sin(math.pi * k / n))) for k in range(n + 1)]
+    if lod < 2:
+        API["tube"](m.p("Rope"), pts, [0.012] * len(pts), 4, 0.5)
+    cols = ("Cloth_Red", "Cloth_Ochre", "Cloth_Blue", "Cloth_Green")
+    nf = {0: 16, 1: 10, 2: 6}[lod]
+    for k in range(nf):
+        t0, t1 = (k + 0.15) / nf, (k + 0.85) / nf
+        a = Vector((-4.0 + 8.0 * t0, 0, 4.4 - sag * math.sin(math.pi * t0)))
+        b = Vector((-4.0 + 8.0 * t1, 0, 4.4 - sag * math.sin(math.pi * t1)))
+        c = (a + b) / 2 - Vector((0, 0, 0.42))
+        p = m.p(cols[k % 4])
+        i = len(p.v)
+        p.v += [a, b, c]
+        p.f.append((i, i + 1, i + 2))
+        p.uv.append([(0, 1), (1, 1), (0.5, 0)])
+        p.cn.append(None)
+    return m.out()
+
+
+def p_bookcase_tall(spec, lod):
+    """Grande bibliothèque murale (n° 196), 2,4 x 0,5 x 3 m : montants, six tablettes,
+    rangées de livres de hauteurs variées, corniche."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for x in (-1.2, 0.0, 1.2):
+        box(d, (x - 0.04, -0.25, 0), (x + 0.04, 0.25, 2.9))
+    box(d, (-1.2, 0.22, 0), (1.2, 0.25, 2.9))
+    zs = [0.08 + 0.47 * k for k in range(7)]
+    for z in zs:
+        box(d, (-1.2, -0.25, z - 0.04), (1.2, 0.25, z))
+    box(d, (-1.28, -0.3, 2.9), (1.28, 0.3, 3.0))
+    b = m.p("Book_Covers")
+    rng = random.Random(spec["seed"])
+    for z in zs[:-1]:
+        for half in (-1, 1):
+            x = 0.04 if half > 0 else -1.16
+            end = 1.16 if half > 0 else -0.04
+            step = {0: 1, 1: 2, 2: 6}[lod]
+            while x < end - 0.03:
+                wd = rng.uniform(0.03, 0.07) * step
+                if x + wd > end:
+                    break
+                if rng.random() < 0.08 and lod == 0:
+                    x += wd
+                    continue
+                hgt = rng.uniform(0.26, 0.4)
+                box(b, (x, -0.21, z), (x + wd - 0.004, rng.uniform(0.0, 0.05), z + hgt), uv=2.0)
+                x += wd
+    return m.out()
+
+
+def p_desk_scribe(spec, lod):
+    """Pupitre de scribe incliné (n° 197), 1,1 x 0,7 x 1,1 m : plateau en pente,
+    rebord porte-plume, tablette basse, livre ouvert et encrier."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for x in (-0.5, 0.5):
+        for y in (-0.3, 0.3):
+            h = 0.85 if y < 0 else 1.05
+            box(d, (x - 0.035, y - 0.035, 0), (x + 0.035, y + 0.035, h))
+    box(d, (-0.5, -0.3, 0.18), (0.5, 0.3, 0.21))
+    xf = Matrix.Translation((0, 0, 0.95)) @ Matrix.Rotation(math.radians(18), 4, "X")
+    box(d, (-0.55, -0.36, -0.02), (0.55, 0.36, 0.02), xf=xf)
+    box(d, (-0.55, -0.4, -0.02), (0.55, -0.36, 0.05), xf=xf)
+    if lod < 2:
+        box(m.p("Paper"), (-0.32, -0.2, 0.02), (0.32, 0.2, 0.035), xf=xf)
+        lathe_at(m.p("Glass_Green"), 0.42, 0.25, [(0.03, 1.09), (0.035, 1.12), (0.015, 1.16)], S(lod, 8))
+    return m.out()
+
+
+def p_paper_stack(spec, lod):
+    """Piles de documents (n° 198) : _1 trois liasses ficelées, _2 pile haute et rouleaux."""
+    m = M()
+    p = m.p("Paper")
+    rng = random.Random(spec["seed"])
+    tall = spec["id"].endswith("_2")
+    piles = [(-0.18, 0.0, 0.28), (0.12, 0.05, 0.18), (0.0, -0.22, 0.12)] if not tall else [(0.0, 0.0, 0.55)]
+    for cx, cy, h in piles:
+        z = 0.0
+        while z < h:
+            dz = rng.uniform(0.02, 0.05) if lod < 2 else h
+            xf = Matrix.Translation((cx + rng.uniform(-0.01, 0.01), cy, z)) @ Matrix.Rotation(rng.uniform(-0.12, 0.12), 4, "Z")
+            box(p, (-0.15, -0.11, 0), (0.15, 0.11, min(dz, h - z)), uv=3.0, xf=xf)
+            z += dz
+        if lod == 0 and not tall:
+            box(m.p("Rope"), (cx - 0.01, cy - 0.12, 0), (cx + 0.01, cy + 0.12, h + 0.005))
+    if tall:
+        for k in range({0: 3, 1: 2, 2: 1}[lod]):
+            y = -0.25 - 0.07 * k
+            cyl(p, (-0.2, y, 0.035), (0.2, y, 0.035), 0.035, 0.035, S(lod, 8))
+    return m.out()
+
+
+def p_curtain_drape(spec, lod):
+    """Tenture de velours drapée (n° 199), 2,4 x 3,5 m : tringle, plis verticaux,
+    embrasses relevant le pan sur les côtés, frange au sol."""
+    m = M()
+    cyl(m.p("Brass"), (-1.25, 0.0, 3.45), (1.25, 0.0, 3.45), 0.025, 0.025, S(lod, 8))
+    c = m.p("Cloth_Red")
+    nx = {0: 24, 1: 14, 2: 6}[lod]
+    nz = {0: 8, 1: 5, 2: 2}[lod]
+    i0 = len(c.v)
+    for j in range(nz + 1):
+        z = 3.4 * (1 - j / nz)
+        for k in range(nx + 1):
+            u = k / nx
+            side = abs(u - 0.5) * 2
+            pinch = max(0.0, side - 0.55) * (1 - abs(z - 1.2) / 2.2) if z < 3.4 else 0
+            x = (-1.2 + 2.4 * u) * (1 - 0.35 * max(0.0, pinch))
+            y = -0.06 * math.sin(k * math.pi / 2 * (24 / nx) ** 0) - 0.04 * pinch
+            c.v.append(Vector((x, y, z)))
+    for j in range(nz):
+        for k in range(nx):
+            a = i0 + j * (nx + 1) + k
+            c.f.append((a, a + 1, a + nx + 2, a + nx + 1))
+            c.uv.append([(k / nx, 1 - j / nz), ((k + 1) / nx, 1 - j / nz), ((k + 1) / nx, 1 - (j + 1) / nz), (k / nx, 1 - (j + 1) / nz)])
+            c.cn.append(None)
+    if lod < 2:
+        for x in (-0.9, 0.9):
+            cyl(m.p("Cloth_Ochre"), (x * 1.0, -0.12, 1.2), (x * 1.0, 0.04, 1.2), 0.05, 0.05, 6)
+    return m.out()
+
+
+def p_pyre_stake(spec, lod):
+    """Bûcher à poteau (n° 200) : fagots et bûches en cercle Ø 2 m, poteau de 3 m au
+    centre, corde."""
+    m = M()
+    w = m.p("Bark_Broad")
+    rng = random.Random(spec["seed"])
+    n = {0: 22, 1: 12, 2: 6}[lod]
+    for k in range(n):
+        a = 2 * math.pi * k / n + rng.uniform(-0.1, 0.1)
+        r0, r1 = 0.95, rng.uniform(0.05, 0.25)
+        z1 = rng.uniform(0.6, 0.95)
+        cyl(w, (r0 * math.cos(a), r0 * math.sin(a), 0.05), (r1 * math.cos(a), r1 * math.sin(a), z1), 0.07, 0.06, S(lod, 6))
+    if lod < 2:
+        for k in range(8):
+            a = 2 * math.pi * k / 8 + 0.3
+            c = Vector((0.6 * math.cos(a), 0.6 * math.sin(a), 0.12))
+            dd = Vector((-math.sin(a), math.cos(a), 0)) * 0.4
+            cyl(w, c - dd, c + dd, 0.09, 0.09, S(lod, 6))
+    cyl(m.p("Wood_Dark"), (0, 0, 0), (0, 0, 3.0), 0.11, 0.09, S(lod, 8))
+    if lod < 2:
+        cyl(m.p("Rope"), (0, 0, 1.5), (0, 0, 1.65), 0.125, 0.125, S(lod, 8), False)
+    return m.out()
+
+
+def p_map_table(spec, lod):
+    """Table de campagne pliante avec carte déroulée (n° 201), 1,8 x 1 x 0,85 m :
+    tréteaux en X, plateau, carte imaginaire lestée de pierres, dague, bougeoir."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for x in (-0.7, 0.7):
+        for s in (-1, 1):
+            cyl(d, (x, -0.42 * s, 0), (x, 0.42 * s, 0.8), 0.03, 0.03, S(lod, 6))
+    box(d, (-0.9, -0.5, 0.8), (0.9, 0.5, 0.85))
+    p = m.p("Parchment_Map")
+    _quad(p, (-0.62, -0.4, 0.856), (0.62, -0.4, 0.856), (0.62, 0.4, 0.856), (-0.62, 0.4, 0.856))
+    if lod < 2:
+        cyl(p, (-0.66, -0.4, 0.875), (-0.66, 0.4, 0.875), 0.022, 0.022, S(lod, 8))
+        for x, y in ((0.55, 0.33), (0.55, -0.33)):
+            lathe_at(m.p("Rock_Grey"), x, y, [(0.04, 0.85), (0.05, 0.88), (0.001, 0.91)], 6)
+        candle(m, Vector((-0.8, 0.38, 0.85)), 0.16, 0.025, lod)
+    return m.out()
+
+
+def p_wardrobe_painted(spec, lod):
+    """Armoire peinte (n° 202), 1,6 x 0,6 x 2,2 m : caisse, deux portes à panneaux,
+    corniche, pieds tournés, poignées de laiton."""
+    m = M()
+    w = m.p("Wood_Painted")
+    box(w, (-0.8, -0.3, 0.15), (0.8, 0.3, 2.05))
+    box(w, (-0.86, -0.36, 2.05), (0.86, 0.36, 2.2))
+    box(w, (-0.84, -0.34, 0.12), (0.84, 0.34, 0.2))
+    for x in (-0.72, 0.72):
+        for y in (-0.24, 0.24):
+            lathe_at(m.p("Wood_Dark"), x, y, [(0.05, 0.0), (0.07, 0.06), (0.04, 0.12)], S(lod, 8))
+    if lod < 2:
+        o = m.p("Wood_Dark")
+        for x0, x1 in ((-0.74, -0.04), (0.04, 0.74)):
+            for z0, z1 in ((0.3, 1.0), (1.15, 1.95)):
+                box(o, (x0 + 0.06, -0.32, z0), (x1 - 0.06, -0.3, z1))
+        box(o, (-0.01, -0.32, 0.2), (0.01, -0.3, 2.05))
+        for x in (-0.09, 0.09):
+            lathe_at(m.p("Brass"), x, -0.32, [(0.001, 1.04), (0.02, 1.06), (0.001, 1.1)], 6)
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

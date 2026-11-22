@@ -1092,6 +1092,54 @@
       "nom": "Tombes anciennes (cailloux, croix de bois, stèles)",
       "tome": 0,
       "placement_prevu": ""
+    },
+    {
+      "num": 195,
+      "nom": "Guirlande de fanions sur mâts",
+      "tome": 6,
+      "placement_prevu": "places de marché des villes"
+    },
+    {
+      "num": 196,
+      "nom": "Grande bibliothèque murale",
+      "tome": 6,
+      "placement_prevu": "intérieurs (catalogue) : bibliothèques, écoles de magie"
+    },
+    {
+      "num": 197,
+      "nom": "Pupitre de scribe incliné",
+      "tome": 6,
+      "placement_prevu": "intérieurs (catalogue) : bibliothèques, administrations"
+    },
+    {
+      "num": 198,
+      "nom": "Piles de documents et parchemins",
+      "tome": 6,
+      "placement_prevu": "champs de bataille (devant la tente de commandement) ; intérieurs"
+    },
+    {
+      "num": 199,
+      "nom": "Tenture de velours drapée",
+      "tome": 6,
+      "placement_prevu": "intérieurs (catalogue) : salles de banquet, chambres"
+    },
+    {
+      "num": 200,
+      "nom": "Bûcher à poteau",
+      "tome": 6,
+      "placement_prevu": "champs de bataille"
+    },
+    {
+      "num": 201,
+      "nom": "Table de campagne avec carte déroulée",
+      "tome": 6,
+      "placement_prevu": "champs de bataille (tente de commandement)"
+    },
+    {
+      "num": 202,
+      "nom": "Armoire peinte",
+      "tome": 6,
+      "placement_prevu": "intérieurs (catalogue) : chambres"
     }
   ]
 }

@@ -9191,6 +9191,186 @@
       "billboard": false,
       "replaces": null,
       "ref": "T5-P003-C2 (décor)"
+    },
+    {
+      "id": "Bunting_Garland_1",
+      "num": 195,
+      "family": "objets",
+      "builder": "bunting_garland",
+      "seed": 19501,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        8.1,
+        8.2
+      ],
+      "height_m": [
+        4.5,
+        4.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T6-P037 ; T6-P039 ; T6-P041"
+    },
+    {
+      "id": "Bookcase_Tall_1",
+      "num": 196,
+      "family": "objets",
+      "builder": "bookcase_tall",
+      "seed": 19502,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.5,
+        2.6
+      ],
+      "height_m": [
+        3.0,
+        3.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T6-P027 ; T6-P028 ; T6-P029"
+    },
+    {
+      "id": "Desk_Scribe_1",
+      "num": 197,
+      "family": "objets",
+      "builder": "desk_scribe",
+      "seed": 19503,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.1,
+        1.1
+      ],
+      "height_m": [
+        1.1,
+        1.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T6-P027 ; T6-P028"
+    },
+    {
+      "id": "Paper_Stack_1",
+      "num": 198,
+      "family": "objets",
+      "builder": "paper_stack",
+      "seed": 19504,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.5,
+        0.6
+      ],
+      "height_m": [
+        0.28,
+        0.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T6-P025 ; T6-P028"
+    },
+    {
+      "id": "Paper_Stack_2",
+      "num": 198,
+      "family": "objets",
+      "builder": "paper_stack",
+      "seed": 19505,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.4,
+        0.45
+      ],
+      "height_m": [
+        0.55,
+        0.56
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T6-P025 ; T6-P028"
+    },
+    {
+      "id": "Curtain_Drape_1",
+      "num": 199,
+      "family": "objets",
+      "builder": "curtain_drape",
+      "seed": 19506,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.5,
+        2.5
+      ],
+      "height_m": [
+        3.45,
+        3.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T6-P019 ; T6-P025 ; T6-P031 ; T6-P049 ; T6-P051"
+    },
+    {
+      "id": "Pyre_Stake_1",
+      "num": 200,
+      "family": "objets",
+      "builder": "pyre_stake",
+      "seed": 19507,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.0,
+        2.2
+      ],
+      "height_m": [
+        3.0,
+        3.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T6-P008"
+    },
+    {
+      "id": "Map_Table_1",
+      "num": 201,
+      "family": "objets",
+      "builder": "map_table",
+      "seed": 19508,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.8,
+        1.8
+      ],
+      "height_m": [
+        1.0,
+        1.05
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T6-P036 ; T6-P048"
+    },
+    {
+      "id": "Wardrobe_Painted_1",
+      "num": 202,
+      "family": "objets",
+      "builder": "wardrobe_painted",
+      "seed": 19509,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.7,
+        1.75
+      ],
+      "height_m": [
+        2.2,
+        2.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T6-P017 ; T6-P018"
     }
   ]
 }

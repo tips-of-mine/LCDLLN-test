@@ -990,6 +990,17 @@ namespace tools::world_gen
 							if (!w.IsOccupied(hp, 0.5)) AddProp(w, "Hedge_Trimmed_1", hp, 0.0, 1.0, kSolid, 1, 0.7);
 						}
 				}
+				// Guirlandes de fanions sur mâts (atelier décors T6, pl.37-41) : deux en travers
+				// de la place des villes, mâts posés hors des étals et des statues.
+				if (town)
+					for (int k = 0; k < 2; ++k)
+					{
+						const Vec2 radial = Dir(k * kPi + 0.9);
+						const Vec2 gp = c.center + radial * (Rp * 0.5);
+						const Vec2 along{ -radial.z, radial.x };
+						if (!w.IsOccupied(gp + along * 4.0, 0.4) && !w.IsOccupied(gp - along * 4.0, 0.4))
+							AddProp(w, "Bunting_Garland_1", gp, YawAlong(along), 1.0, 0, 0);
+					}
 				// Braseros-vasques sur fût (atelier décors T3, pl.28) aux grandes places.
 				if (c.kind == "capitale" || c.kind == "grande_ville")
 					for (int k = 0; k < 4; ++k)

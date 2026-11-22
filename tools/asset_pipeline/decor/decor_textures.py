@@ -964,6 +964,50 @@ TEXTURES.update({
     "Mirror": lambda: flat("Mirror", 105, (190, 196, 200), 0.05, 0.05, metallic=0.9),
 })
 
+
+def parchment_map(name="Parchment_Map", seed=108, size=1024):
+    """Carte imaginaire sur parchemin (T6 pl.36, 48) : côtes et courbes de niveau à
+    l'encre, rivières, points de villes, cadre. Aucune géographie de la BD, aucun texte."""
+    h = w = size
+    n = fbm(h, w, seed, 5, 3, tile=False)
+    m = fbm(h, w, seed + 7, 4, 24)
+    col = np.zeros((h, w, 3), np.float32) + np.array([208, 186, 140], np.float32)
+    col *= (0.86 + 0.18 * m)[..., None]
+    ink = np.array([62, 44, 30], np.float32)
+    land = n > 0.5
+    col[land] *= 0.93
+    for lvl, wd in ((0.5, 0.008), (0.6, 0.004), (0.7, 0.004)):
+        line = np.abs(n - lvl) < wd
+        col[line] = ink
+    rng = np.random.default_rng(seed)
+    for _ in range(3):
+        x, y = rng.uniform(0.2, 0.8, 2) * size
+        a = rng.uniform(0, 6.28)
+        for _ in range(400):
+            a += rng.normal(0, 0.15)
+            x, y = x + 1.5 * np.cos(a), y + 1.5 * np.sin(a)
+            if not (2 <= x < size - 2 and 2 <= y < size - 2):
+                break
+            col[int(y) - 1:int(y) + 1, int(x) - 1:int(x) + 1] = [70, 80, 96]
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    for _ in range(9):
+        cx, cy = rng.uniform(0.12, 0.88, 2) * size
+        col[(xx - cx) ** 2 + (yy - cy) ** 2 < 36] = [120, 30, 26]
+    edge = np.minimum(np.minimum(xx, w - 1 - xx), np.minimum(yy, h - 1 - yy)) / size
+    col[(edge > 0.03) & (edge < 0.036)] = ink
+    col *= (0.75 + 0.25 * np.clip(edge * 10, 0, 1))[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(m, 0.5))
+    save(f"T_Decor_{name}_ORM.png", orm(m, 0.9, 0.0, 0.15))
+
+
+TEXTURES.update({
+    "Cloth_Green": lambda: flat("Cloth_Green", 106, (52, 92, 58), 0.9, 0.16, (1.0, 8.0)),
+    "Wood_Painted": lambda: planks("Wood_Painted", 107, [(0, (44, 78, 66)), (0.5, (60, 102, 86)), (1, (84, 124, 104))], 0.3),
+    "Parchment_Map": parchment_map,
+})
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

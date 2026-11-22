@@ -481,6 +481,11 @@ namespace tools::world_gen
 				Piece(w, "Stakes_Chevaux_1", c - v * 12.0 + u * (k * 4.2), 0.0, a, 1.0, true);
 			Piece(w, "Ballista_1", c + u * 9.0 + v * 6.0, 0.0, a + 90.0, 1.0, true);
 			Piece(w, "Tent_Striped_1", c - u * 14.0 - v * 4.0, 0.0, a, 1.0, true);   // tente de commandement (T4, pl.39)
+			// Atelier décors T6 (pl.8, 36, 48) : table de campagne à carte et liasses devant la
+			// tente de commandement ; bûcher à poteau à l'écart.
+			Piece(w, "Map_Table_1", c - u * 9.5 - v * 4.0, 0.0, a + 90.0, 1.0, true);
+			Piece(w, "Paper_Stack_1", c - u * 9.5 - v * 5.6, 0.0, a, 1.0, false);
+			Piece(w, "Pyre_Stake_1", c + u * 15.0 - v * 3.0, 0.0, a, 1.0, true);
 			for (int k = 0; k < 4; ++k)
 			{
 				const double b = rng.Next() * 2.0 * kPi;

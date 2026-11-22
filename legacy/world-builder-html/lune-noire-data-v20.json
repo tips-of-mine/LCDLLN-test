@@ -361019,6 +361019,155 @@
       "placement": "",
       "generated": true,
       "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_195",
+      "num": 195,
+      "name": "Guirlande de fanions sur mâts",
+      "tome": 6,
+      "family": "objets",
+      "meshes": [
+        "Bunting_Garland_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T6-P037",
+        "T6-P039",
+        "T6-P041"
+      ],
+      "placement": "places de marché des villes",
+      "generated": true,
+      "source": "[BD] T6"
+    },
+    {
+      "id": "decor_196",
+      "num": 196,
+      "name": "Grande bibliothèque murale",
+      "tome": 6,
+      "family": "objets",
+      "meshes": [
+        "Bookcase_Tall_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T6-P027",
+        "T6-P028",
+        "T6-P029"
+      ],
+      "placement": "intérieurs (catalogue) : bibliothèques, écoles de magie",
+      "generated": false,
+      "source": "[BD] T6"
+    },
+    {
+      "id": "decor_197",
+      "num": 197,
+      "name": "Pupitre de scribe incliné",
+      "tome": 6,
+      "family": "objets",
+      "meshes": [
+        "Desk_Scribe_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T6-P027",
+        "T6-P028"
+      ],
+      "placement": "intérieurs (catalogue) : bibliothèques, administrations",
+      "generated": false,
+      "source": "[BD] T6"
+    },
+    {
+      "id": "decor_198",
+      "num": 198,
+      "name": "Piles de documents et parchemins",
+      "tome": 6,
+      "family": "objets",
+      "meshes": [
+        "Paper_Stack_1",
+        "Paper_Stack_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T6-P025",
+        "T6-P028"
+      ],
+      "placement": "champs de bataille (devant la tente de commandement) ; intérieurs",
+      "generated": true,
+      "source": "[BD] T6"
+    },
+    {
+      "id": "decor_199",
+      "num": 199,
+      "name": "Tenture de velours drapée",
+      "tome": 6,
+      "family": "objets",
+      "meshes": [
+        "Curtain_Drape_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T6-P019",
+        "T6-P025",
+        "T6-P031",
+        "T6-P049",
+        "T6-P051"
+      ],
+      "placement": "intérieurs (catalogue) : salles de banquet, chambres",
+      "generated": false,
+      "source": "[BD] T6"
+    },
+    {
+      "id": "decor_200",
+      "num": 200,
+      "name": "Bûcher à poteau",
+      "tome": 6,
+      "family": "objets",
+      "meshes": [
+        "Pyre_Stake_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T6-P008"
+      ],
+      "placement": "champs de bataille",
+      "generated": true,
+      "source": "[BD] T6"
+    },
+    {
+      "id": "decor_201",
+      "num": 201,
+      "name": "Table de campagne avec carte déroulée",
+      "tome": 6,
+      "family": "objets",
+      "meshes": [
+        "Map_Table_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T6-P036",
+        "T6-P048"
+      ],
+      "placement": "champs de bataille (tente de commandement)",
+      "generated": true,
+      "source": "[BD] T6"
+    },
+    {
+      "id": "decor_202",
+      "num": 202,
+      "name": "Armoire peinte",
+      "tome": 6,
+      "family": "objets",
+      "meshes": [
+        "Wardrobe_Painted_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T6-P017",
+        "T6-P018"
+      ],
+      "placement": "intérieurs (catalogue) : chambres",
+      "generated": false,
+      "source": "[BD] T6"
     }
   ]
 }

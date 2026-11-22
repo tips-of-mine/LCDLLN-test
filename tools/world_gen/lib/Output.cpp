@@ -437,6 +437,13 @@ namespace tools::world_gen
 				if (u == 2) { t = { 0.05, 0.95, 0.0, 0.0, 0.0 }; }
 				else if (u == 1) { t.grass *= 0.6; t.dirt += 0.35; t.grassMask *= 0.6; }
 			}
+			// v1.0.136 — peinture (Camp de l'Oracle) : roche pâle du rocher, pierre blanche des escaliers.
+			const int pi = w.paint.IndexX(p.x), pj = w.paint.IndexZ(p.z);
+			if (w.paint.InBounds(pi, pj) && w.paint.At(pi, pj) != 0)
+			{
+				const uint8_t pv = w.paint.At(pi, pj);
+				return pv == 2 ? SplatTexel{ 0.0, 0.0, 0.05, 0.95, 0.0 } : SplatTexel{ 0.0, 0.0, 0.45, 0.55, 0.0 };
+			}
 			// Berges de rivière.
 			const int vi = w.riverDist.IndexX(p.x), vj = w.riverDist.IndexZ(p.z);
 			if (w.riverDist.InBounds(vi, vj) && w.riverDist.At(vi, vj) < 4.0f)
@@ -1290,9 +1297,29 @@ namespace tools::world_gen
 			mf::ComputeBounds(r);
 			f.roads.push_back(std::move(r));
 		};
-		// Réseau inter-villes (polylignes globales complètes).
+		// v1.0.136 — centres des camps de l'Oracle : les routes s'arrêtent au chemin de ronde
+		// (comme sur le terrain, cf. BuildOracleCamp), pas de tracé sur le rocher.
+		std::vector<Vec2> oracleCenters;
+		for (const CityDef& c : g.cities)
+			if (c.layout == "oracle") oracleCenters.push_back(c.center);
+		auto insideOracle = [&](Vec2 p) {
+			for (const Vec2& o : oracleCenters)
+				if (std::hypot(p.x - o.x, p.z - o.z) < kOracleRoadStopM) return true;
+			return false;
+		};
+		// Réseau inter-villes (polylignes globales complètes, coupées aux camps de l'Oracle).
 		for (const Road& rd : g.roads)
-			addRoad(rd.points, rd.major ? mf::MapRoadKind::Major : (rd.path ? mf::MapRoadKind::Path : mf::MapRoadKind::Road), rd.widthM);
+		{
+			const mf::MapRoadKind kind = rd.major ? mf::MapRoadKind::Major : (rd.path ? mf::MapRoadKind::Path : mf::MapRoadKind::Road);
+			if (oracleCenters.empty()) { addRoad(rd.points, kind, rd.widthM); continue; }
+			std::vector<Vec2> piece;
+			for (const Vec2& p : rd.points)
+			{
+				if (insideOracle(p)) { addRoad(piece, kind, rd.widthM); piece.clear(); continue; }
+				piece.push_back(p);
+			}
+			addRoad(piece, kind, rd.widthM);
+		}
 		for (const World* w : cells)
 		{
 			// Chemins locaux de la cellule (les tronçons de routes globales y sont

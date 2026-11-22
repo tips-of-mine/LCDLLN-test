@@ -53,6 +53,7 @@ namespace tools::world_gen
 			if (c.kind == "ville") return 16;
 			if (c.kind == "forteresse") return 10;
 			if (c.kind == "village") return 10;
+			if (c.layout == "oracle") return 20; // v1.0.136 : foule des pèlerins de l'Oracle
 			if (c.kind == "camp") return 6;
 			return 5;
 		}
@@ -465,6 +466,8 @@ namespace tools::world_gen
 			std::vector<Vec2> doors;
 			for (const BuildingPlacementDef& b : w.buildings)
 				if (b.cityId == c.id && !b.isInn) doors.push_back(b.doorPoint);
+			// v1.0.136 : entrées des tentes (Camp de l'Oracle, sans bâtiment).
+			doors.insert(doors.end(), L->homeDoors.begin(), L->homeDoors.end());
 			if (doors.empty()) doors.push_back(L->nodes[0].p);
 
 			if (ruin)

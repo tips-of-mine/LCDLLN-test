@@ -196,6 +196,9 @@ namespace tools::world_gen
 		/// Vrai si un cimetière est réellement bâti pour cette agglomération (villes du
 		/// lore et hameaux, sauf `graveyards.without_graveyard` du master, v1.0.111).
 		bool hasGraveyard = false;
+		/// v1.0.136 — entrées des tentes (Camp de l'Oracle : pas de bâtiment) : domiciles des
+		/// villageois en plus des portes des bâtiments de la ville (Population.cpp).
+		std::vector<Vec2> homeDoors;
 		Vec2 startSpot;                     ///< point de départ joueur (si ville de départ)
 		double startYawDeg = 0.0;
 	};
@@ -443,6 +446,10 @@ namespace tools::world_gen
 		Grid<float>  roadDist;      ///< distance à la chaussée la plus proche (m)
 		Grid<float>  riverDist;     ///< distance au lit de rivière le plus proche (m)
 		Grid<uint8_t> urban;        ///< 1 = emprise urbaine, 2 = place/rue
+		/// v1.0.136 — peinture du splat (vide sauf besoin) : 1 = roche de l'Oracle (roche +
+		/// neige pâle), 2 = pierre blanche (escaliers, paliers) ; prioritaire sur le reste du
+		/// splat (Output.cpp, ComputeSplat). Grille vide = aucune peinture.
+		Grid<uint8_t> paint;
 		/// FORET.1 — densité forestière (0..255) de la cellule, kForestMaskResolution²
 		/// texels sur terrainSizeM (BuildForestMask) ; écrite dans terrain_forest.frms.
 		std::vector<uint8_t> forestMask;
@@ -632,6 +639,11 @@ namespace tools::world_gen
 	/// toit. Effet de bord : w.scatter, w.lakes (vasques), w.height (douves, terrasses, ravine),
 	/// w.pointLights (feu des phares), occupation, w.report.landmarks. Après les agglomérations.
 	void BuildLandmarks(World& w);
+	/// v1.0.135 — PETITS LIEUX DE DÉCOR sur les terres ouvertes (~1 par 1,5 km²) : cercles
+	/// de pierres levées, ruines, campements abandonnés, champs clôturés. Treillis global
+	/// déterministe, loin des routes, villes, eaux et reliefs posés. Effet de bord :
+	/// w.scatter, occupation, w.report.microLandmarks. Après les ponts, avant la forêt.
+	void BuildMicroLandmarks(World& w);
 	/// Rues, lots, bâtiments, remparts, mobilier, graphe PNJ. Settlements.cpp
 	/// Champs clôturés hors les murs, état `reconstruction` ; v1.0.107 : torches,
 	/// éboulis, lumières (w.pointLights) et zone sombre (w.ambianceZones) des gouffres ;
@@ -639,6 +651,20 @@ namespace tools::world_gen
 	/// cimetière isolé dans une cellule qui n'en a aucun (`fill_empty_cells`).
 	/// Effet de bord : w.scatter, bâtiments, occupation fine de la cellule.
 	void BuildSettlements(World& w);
+	/// v1.0.136 — Camp de l'Oracle bâti selon le plan (ville de `layout` « oracle »), appelé par
+	/// BuildSettlements à la place de la mise en page générique : plaine aplanie, rocher
+	/// octogonal à facettes sculpté dans le terrain, 8 escaliers blancs et portes fermées,
+	/// 5 tentes pyramidales, océan de tentes en anneaux, menhirs bleus, chemin du sud-ouest
+	/// bordé d'échoppes, services en tentes et étals (auberge, potions, armes, armures, temple,
+	/// cimetière, 5 écuries), lumières bleues. Routes arrêtées au chemin de ronde du pied du
+	/// rocher. Aucun bâtiment (buildings.bin). \param c ville (son rayon devient celui de la
+	/// plaine, 650 m) ; \param L mise en page à remplir (graphe PNJ, étals, auberge, cimetière,
+	/// entrées des tentes). Effet de bord : w.height, w.paint, w.urban, w.roads, w.roadDist,
+	/// w.scatter, w.pointLights, occupation. Oracle.cpp
+	void BuildOracleCamp(World& w, CityDef& c, SettlementLayout& L);
+	/// Rayon (m) du chemin de ronde du Camp de l'Oracle : les routes s'y arrêtent, sur le
+	/// terrain (BuildOracleCamp) comme sur la carte (BuildMapFeatures). v1.0.136.
+	inline constexpr double kOracleRoadStopM = 215.0;
 	/// Arbres, sous-bois, rochers, herbes. Vegetation.cpp
 	/// Aux Enfers (v1.0.83) : seulement arbres morts et rochers (ni herbe, ni fleur,
 	/// ni broussaille). Effet de bord : remplit w.scatter.

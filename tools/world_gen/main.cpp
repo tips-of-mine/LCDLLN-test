@@ -80,6 +80,7 @@ int main(int argc, char** argv)
 	std::printf("  portails        : %llu (relies a une autre carte)\n", static_cast<unsigned long long>(rep.portals));
 	std::printf("  ponts           : %llu (routes x cours d'eau, v1.0.129)\n", static_cast<unsigned long long>(rep.bridges));
 	std::printf("  lieux batis     : %llu (tours, chateaux, phares, cascades, ponts, v1.0.132)\n", static_cast<unsigned long long>(rep.landmarks));
+	std::printf("  petits lieux    : %llu (pierres levees, ruines, camps, champs, v1.0.135)\n", static_cast<unsigned long long>(rep.microLandmarks));
 	for (const std::string& f : rep.writtenFiles) std::printf("  ecrit : %s\n", f.c_str());
 	for (const std::string& wmsg : rep.warnings) std::printf("  [avertissement] %s\n", wmsg.c_str());
 	return 0;

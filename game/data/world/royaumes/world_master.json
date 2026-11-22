@@ -1079,6 +1079,7 @@
       "faction": "neutre",
       "start_for": [],
       "source": "[BD] BD-T3",
+      "layout": "oracle",
       "description": "'La nuit répandait ses ténèbres sur l'océan de tentes qui venait se briser au pied de l'Oracle.'"
     },
     {
@@ -10984,9 +10985,9 @@
         "cull_distance_m": 140.0
       },
       "scatter": {
-        "_comment": "Distances de culling du decor instancie (scatter.bin) par classe : large = arbres/bati, medium = buissons/rochers/mobilier, small = fleurs/herbes. Reglage a chaud (relu chaque frame).",
-        "cull_large_m": 150.0,
-        "cull_medium_m": 80.0,
+        "_comment": "Distances de culling du decor instancie (scatter.bin) par classe : large = arbres/bati, medium = buissons/rochers/mobilier, small = fleurs/herbes. Reglage a chaud (relu chaque frame). v1.0.135 : large 150 -> 190 m, medium 80 -> 100 m (moins de vide a l'horizon).",
+        "cull_large_m": 190.0,
+        "cull_medium_m": 100.0,
         "cull_small_m": 42.0
       },
       "forest": {

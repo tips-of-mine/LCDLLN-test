@@ -236,6 +236,9 @@ namespace tools::world_gen
 			// départ ne peut pas l'être (les nouveaux personnages doivent la voir).
 			d.secret = GetBool(c, "secret", false);
 			if (d.secret && !d.startFor.empty()) { err = "master: la ville de depart '" + d.id + "' ne peut pas etre secrete"; return false; }
+			// Mise en page dédiée (v1.0.136) : vide (générique) ou « oracle ».
+			d.layout = GetStr(c, "layout");
+			if (!d.layout.empty() && d.layout != "oracle") { err = "master: layout inconnu pour '" + d.id + "' : " + d.layout; return false; }
 			out.cities.push_back(std::move(d));
 		}
 		// Une seule ville de départ par faction (v1.0.61 : start_for porte des

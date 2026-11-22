@@ -935,6 +935,9 @@ namespace tools::world_gen
 						{
 							const Vec2 cp = bp.doorPoint + side * 5.0 - dir * 0.5;
 							if (!w.IsOccupied(cp, 1.8)) { AddProp(w, "Crucible_Hanging_1", cp, YawFacing(side), 1.0, kSolid, 1, 1.2); w.Occupy(cp, 1.8); }
+							// Grand engrenage sur chevalet (atelier décors T9, pl.8-9, 15).
+							const Vec2 gp = bp.doorPoint - side * 5.2 - dir * 0.5;
+							if (!w.IsOccupied(gp, 1.6)) { AddProp(w, "Gear_Large_1", gp, YawFacing(side), 1.0, kSolid, 1, 1.3); w.Occupy(gp, 1.6); }
 						}
 						AddProp(w, "Workbench", bp.doorPoint - side * 2.4, YawFacing(side), 1.0, kSolid, 1, 0.9);
 						AddProp(w, "Whetstone", bp.doorPoint + side * 3.6 - dir * 0.8, rng.Range(0, 360), 1.0, 0, 2);
@@ -1049,6 +1052,11 @@ namespace tools::world_gen
 				{
 					const Vec2 sp = b.position + side * (b.halfW + 1.6) + front * (b.halfD * 0.3);
 					if (!w.IsOccupied(sp, 1.0) && rng.Chance(0.6)) { AddProp(w, "Frame_Scaffold_1", sp, b.yawDeg + 90.0, 1.0, kSolid, 1, 1.0); w.Occupy(sp, 1.0); }
+				}
+				// Grue de chantier en bois (atelier décors T9, pl.9, 15) de l'autre côté, bras vers le mur.
+				{
+					const Vec2 cp = b.position - side * (b.halfW + 2.2);
+					if (!w.IsOccupied(cp, 1.4) && rng.Chance(0.5)) { AddProp(w, "Crane_Wood_1", cp, YawAlong(side), 1.0, kSolid, 0, 1.3); w.Occupy(cp, 1.4); }
 				}
 				const Vec2 pile = b.doorPoint + side * (rng.Chance(0.5) ? 2.6 : -2.6);
 				if (!w.IsOccupied(pile, 0.6)) AddProp(w, bricks[rng.Below(4)], pile, rng.Range(0, 360), 1.0, kSolid, 1, 0.5);

@@ -361291,6 +361291,43 @@
       "placement": "champs de bataille",
       "generated": true,
       "source": "[BD] T8"
+    },
+    {
+      "id": "decor_210",
+      "num": 210,
+      "name": "Grand engrenage sur chevalet",
+      "tome": 9,
+      "family": "objets",
+      "meshes": [
+        "Gear_Large_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T9-P008",
+        "T9-P009",
+        "T9-P015"
+      ],
+      "placement": "forges des villes naines",
+      "generated": true,
+      "source": "[BD] T9"
+    },
+    {
+      "id": "decor_211",
+      "num": 211,
+      "name": "Grue de chantier en bois",
+      "tome": 9,
+      "family": "objets",
+      "meshes": [
+        "Crane_Wood_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T9-P009",
+        "T9-P015"
+      ],
+      "placement": "chantiers de reconstruction",
+      "generated": true,
+      "source": "[BD] T9"
     }
   ]
 }

@@ -1182,6 +1182,18 @@
       "nom": "Levée de terre étayée de planches",
       "tome": 8,
       "placement_prevu": "champs de bataille"
+    },
+    {
+      "num": 210,
+      "nom": "Grand engrenage sur chevalet",
+      "tome": 9,
+      "placement_prevu": "forges des villes naines"
+    },
+    {
+      "num": 211,
+      "nom": "Grue de chantier en bois",
+      "tome": 9,
+      "placement_prevu": "chantiers de reconstruction"
     }
   ]
 }

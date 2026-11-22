@@ -3960,6 +3960,56 @@ def p_earthwork_plank(spec, lod):
     return m.out()
 
 
+# ======================================================================= Tome 9
+def p_gear_large(spec, lod):
+    """Grand engrenage de bois cerclé de fer sur chevalet (n° 210), Ø 2,6 m : roue dentée
+    debout, axe, deux montants en A, pignon de renvoi."""
+    m = M()
+    d, i = m.p("Wood_Dark"), m.p("Iron")
+    R, zc = 1.15, 1.45
+    n = S(lod, 24)
+    cyl(d, (0, -0.12, zc), (0, 0.12, zc), R, R, n)
+    cyl(i, (0, -0.13, zc), (0, 0.13, zc), R + 0.02, R + 0.02, n, cap=False)
+    teeth = {0: 20, 1: 12, 2: 0}[lod]
+    for k in range(teeth):
+        a = 2 * math.pi * k / teeth
+        xf = Matrix.Translation((0, 0, zc)) @ Matrix.Rotation(-a, 4, "Y")
+        box(d, (R - 0.02, -0.1, -0.07), (R + 0.16, 0.1, 0.07), xf=xf)
+    cyl(i, (0, -0.45, zc), (0, 0.45, zc), 0.08, 0.08, S(lod, 8))
+    for y in (-0.38, 0.38):
+        for sx in (-1, 1):
+            cyl(d, (sx * 0.8, y, 0), (0, y, zc + 0.1), 0.06, 0.06, S(lod, 6))
+        box(d, (-0.9, y - 0.06, 0), (0.9, y + 0.06, 0.12))
+    if lod < 2:
+        cyl(d, (1.55, -0.1, 0.7), (1.55, 0.1, 0.7), 0.35, 0.35, S(lod, 12))
+        box(d, (1.4, -0.3, 0), (1.7, 0.3, 0.4))
+    return m.out()
+
+
+def p_crane_wood(spec, lod):
+    """Grue de chantier en bois (n° 211), H 6,5 m : mât sur croix de base, bras incliné
+    haubané, poulie, corde et crochet, contrepoids de pierres."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for a in (0, math.pi / 2):
+        box(d, (-1.4, -0.12, 0), (1.4, 0.12, 0.25), xf=Matrix.Rotation(a, 4, "Z"))
+    cyl(d, (0, 0, 0), (0, 0, 6.0), 0.16, 0.13, S(lod, 8))
+    for k in range(4):
+        a = math.pi / 2 * k + math.pi / 4
+        cyl(d, (1.1 * math.cos(a), 1.1 * math.sin(a), 0.2), (0, 0, 2.2), 0.06, 0.06, S(lod, 6), False)
+    tip = Vector((3.8, 0, 6.4))
+    cyl(d, (0, 0, 4.2), tip, 0.1, 0.08, S(lod, 6))
+    cyl(d, (0, 0, 6.0), (-1.4, 0, 5.4), 0.08, 0.08, S(lod, 6))
+    box(m.p("Rock_Grey"), (-1.8, -0.35, 4.9), (-1.1, 0.35, 5.5))
+    r = m.p("Rope")
+    cyl(r, (0, 0, 6.0), tip, 0.015, 0.015, 4, False)
+    cyl(r, tip, (3.8, 0, 2.6), 0.015, 0.015, 4, False)
+    if lod < 2:
+        cyl(m.p("Iron"), (3.8, -0.08, 6.3), (3.8, 0.08, 6.3), 0.14, 0.14, S(lod, 10))
+        API["tube"](m.p("Iron"), [Vector((3.8, 0, 2.6)), Vector((3.8, 0, 2.35)), Vector((3.95, 0, 2.3)), Vector((4.0, 0, 2.42))], [0.025] * 4, 5, 0.5)
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

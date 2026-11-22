@@ -1282,6 +1282,2574 @@
       "billboard": false,
       "replaces": null,
       "ref": "T2-P013-C6"
+    },
+    {
+      "id": "Wall_Plaster_WoodGrid",
+      "num": 20,
+      "family": "objets",
+      "builder": "wall_woodgrid",
+      "seed": 3001,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1.0,
+        0.0,
+        3.12,
+        -0.31,
+        0.09
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": "Wall_Plaster_WoodGrid",
+      "ref": "T1-P032-C6"
+    },
+    {
+      "id": "Prop_Support",
+      "num": 23,
+      "family": "objets",
+      "builder": "support",
+      "seed": 3002,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.1,
+        0.1,
+        1.21,
+        2.92,
+        -0.12,
+        1.92
+      ],
+      "width_m": [
+        0.2,
+        0.2
+      ],
+      "height_m": [
+        2.92,
+        2.92
+      ],
+      "billboard": false,
+      "replaces": "Prop_Support",
+      "ref": "T1-P032-C6 (étai de chantier)"
+    },
+    {
+      "id": "Prop_Brick1",
+      "num": 24,
+      "family": "objets",
+      "builder": "brick",
+      "seed": 3003,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.17,
+        0.18,
+        -0.11,
+        0.1,
+        -0.13,
+        0.12
+      ],
+      "width_m": [
+        0.35,
+        0.35
+      ],
+      "height_m": [
+        0.1,
+        0.1
+      ],
+      "billboard": false,
+      "replaces": "Prop_Brick1",
+      "ref": "T1-P015-C1 ; T1-P052-C3"
+    },
+    {
+      "id": "Prop_Brick2",
+      "num": 24,
+      "family": "objets",
+      "builder": "brick",
+      "seed": 3004,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.19,
+        0.21,
+        -0.11,
+        0.13,
+        -0.11,
+        0.11
+      ],
+      "width_m": [
+        0.4,
+        0.4
+      ],
+      "height_m": [
+        0.13,
+        0.13
+      ],
+      "billboard": false,
+      "replaces": "Prop_Brick2",
+      "ref": "T1-P015-C1 ; T1-P052-C3"
+    },
+    {
+      "id": "Prop_Brick3",
+      "num": 24,
+      "family": "objets",
+      "builder": "brick",
+      "seed": 3005,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.18,
+        0.2,
+        -0.11,
+        0.13,
+        -0.11,
+        0.11
+      ],
+      "width_m": [
+        0.38,
+        0.38
+      ],
+      "height_m": [
+        0.13,
+        0.13
+      ],
+      "billboard": false,
+      "replaces": "Prop_Brick3",
+      "ref": "T1-P015-C1 ; T1-P052-C3"
+    },
+    {
+      "id": "Prop_Brick4",
+      "num": 24,
+      "family": "objets",
+      "builder": "brick",
+      "seed": 3006,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.13,
+        0.13,
+        -0.11,
+        0.13,
+        -0.11,
+        0.1
+      ],
+      "width_m": [
+        0.26,
+        0.26
+      ],
+      "height_m": [
+        0.13,
+        0.13
+      ],
+      "billboard": false,
+      "replaces": "Prop_Brick4",
+      "ref": "T1-P015-C1 ; T1-P052-C3"
+    },
+    {
+      "id": "Prop_ExteriorBorder_Corner",
+      "num": 25,
+      "family": "objets",
+      "builder": "ext_border",
+      "seed": 3007,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.7,
+        0.0,
+        0.0,
+        0.13,
+        -0.0,
+        0.7
+      ],
+      "width_m": [
+        0.7,
+        0.7
+      ],
+      "height_m": [
+        0.13,
+        0.13
+      ],
+      "billboard": false,
+      "replaces": "Prop_ExteriorBorder_Corner",
+      "ref": "T1-P016-C1"
+    },
+    {
+      "id": "Prop_ExteriorBorder_Straight1",
+      "num": 25,
+      "family": "objets",
+      "builder": "ext_border",
+      "seed": 3008,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1.0,
+        0.0,
+        0.13,
+        0.0,
+        0.7
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        0.13,
+        0.13
+      ],
+      "billboard": false,
+      "replaces": "Prop_ExteriorBorder_Straight1",
+      "ref": "T1-P019-C1"
+    },
+    {
+      "id": "Prop_ExteriorBorder_Straight2",
+      "num": 25,
+      "family": "objets",
+      "builder": "ext_border",
+      "seed": 3009,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1.0,
+        0.0,
+        0.13,
+        0.0,
+        0.7
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        0.13,
+        0.13
+      ],
+      "billboard": false,
+      "replaces": "Prop_ExteriorBorder_Straight2",
+      "ref": "T1-P020-C7"
+    },
+    {
+      "id": "Balcony_Cross_Straight",
+      "num": 28,
+      "family": "objets",
+      "builder": "balcony",
+      "seed": 3010,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1.0,
+        -0.11,
+        1.12,
+        0.9,
+        1.1
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        1.12,
+        1.12
+      ],
+      "billboard": false,
+      "replaces": "Balcony_Cross_Straight",
+      "ref": "T1-P034-C5"
+    },
+    {
+      "id": "Balcony_Simple_Corner",
+      "num": 28,
+      "family": "objets",
+      "builder": "balcony",
+      "seed": 3011,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1.1,
+        -0.11,
+        1.12,
+        -1.1,
+        1.0
+      ],
+      "width_m": [
+        2.1,
+        2.1
+      ],
+      "height_m": [
+        1.12,
+        1.12
+      ],
+      "billboard": false,
+      "replaces": "Balcony_Simple_Corner",
+      "ref": "T1-P041-C2"
+    },
+    {
+      "id": "Balcony_Simple_Straight",
+      "num": 28,
+      "family": "objets",
+      "builder": "balcony",
+      "seed": 3012,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1.0,
+        -0.11,
+        1.12,
+        0.9,
+        1.1
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        1.12,
+        1.12
+      ],
+      "billboard": false,
+      "replaces": "Balcony_Simple_Straight",
+      "ref": "T1-P034-C5"
+    },
+    {
+      "id": "Door_1_Flat",
+      "num": 29,
+      "family": "objets",
+      "builder": "door",
+      "seed": 3013,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.05,
+        1.07,
+        0.04,
+        2.13,
+        -0.06,
+        0.06
+      ],
+      "width_m": [
+        1.12,
+        1.12
+      ],
+      "height_m": [
+        2.13,
+        2.13
+      ],
+      "billboard": false,
+      "replaces": "Door_1_Flat",
+      "ref": "T1-P034-C2 ; T1-P035-C5,C7 ; T1-P051-C3"
+    },
+    {
+      "id": "Door_1_Round",
+      "num": 29,
+      "family": "objets",
+      "builder": "door",
+      "seed": 3014,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.05,
+        1.07,
+        0.03,
+        2.35,
+        -0.06,
+        0.06
+      ],
+      "width_m": [
+        1.12,
+        1.12
+      ],
+      "height_m": [
+        2.35,
+        2.35
+      ],
+      "billboard": false,
+      "replaces": "Door_1_Round",
+      "ref": "T1-P034-C2 ; T1-P035-C5,C7 ; T1-P051-C3"
+    },
+    {
+      "id": "Door_2_Flat",
+      "num": 29,
+      "family": "objets",
+      "builder": "door",
+      "seed": 3015,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.04,
+        1.07,
+        0.04,
+        2.14,
+        -0.13,
+        0.13
+      ],
+      "width_m": [
+        1.11,
+        1.11
+      ],
+      "height_m": [
+        2.14,
+        2.14
+      ],
+      "billboard": false,
+      "replaces": "Door_2_Flat",
+      "ref": "T1-P034-C2 ; T1-P035-C5,C7 ; T1-P051-C3"
+    },
+    {
+      "id": "Door_2_Round",
+      "num": 29,
+      "family": "objets",
+      "builder": "door",
+      "seed": 3016,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.04,
+        1.07,
+        0.03,
+        2.36,
+        -0.13,
+        0.13
+      ],
+      "width_m": [
+        1.11,
+        1.11
+      ],
+      "height_m": [
+        2.36,
+        2.36
+      ],
+      "billboard": false,
+      "replaces": "Door_2_Round",
+      "ref": "T1-P034-C2 ; T1-P035-C5,C7 ; T1-P051-C3"
+    },
+    {
+      "id": "Door_4_Flat",
+      "num": 29,
+      "family": "objets",
+      "builder": "door",
+      "seed": 3017,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.05,
+        1.07,
+        0.04,
+        2.13,
+        -0.12,
+        0.09
+      ],
+      "width_m": [
+        1.12,
+        1.12
+      ],
+      "height_m": [
+        2.13,
+        2.13
+      ],
+      "billboard": false,
+      "replaces": "Door_4_Flat",
+      "ref": "T1-P034-C2 ; T1-P035-C5,C7 ; T1-P051-C3"
+    },
+    {
+      "id": "Door_4_Round",
+      "num": 29,
+      "family": "objets",
+      "builder": "door",
+      "seed": 3018,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.04,
+        1.07,
+        0.03,
+        2.36,
+        -0.12,
+        0.09
+      ],
+      "width_m": [
+        1.11,
+        1.11
+      ],
+      "height_m": [
+        2.36,
+        2.36
+      ],
+      "billboard": false,
+      "replaces": "Door_4_Round",
+      "ref": "T1-P034-C2 ; T1-P035-C5,C7 ; T1-P051-C3"
+    },
+    {
+      "id": "Door_8_Flat",
+      "num": 29,
+      "family": "objets",
+      "builder": "door",
+      "seed": 3019,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.05,
+        1.07,
+        0.04,
+        2.13,
+        -0.11,
+        0.09
+      ],
+      "width_m": [
+        1.12,
+        1.12
+      ],
+      "height_m": [
+        2.13,
+        2.13
+      ],
+      "billboard": false,
+      "replaces": "Door_8_Flat",
+      "ref": "T1-P034-C2 ; T1-P035-C5,C7 ; T1-P051-C3"
+    },
+    {
+      "id": "Door_8_Round",
+      "num": 29,
+      "family": "objets",
+      "builder": "door",
+      "seed": 3020,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.06,
+        1.09,
+        0.03,
+        2.36,
+        -0.11,
+        0.09
+      ],
+      "width_m": [
+        1.15,
+        1.15
+      ],
+      "height_m": [
+        2.36,
+        2.36
+      ],
+      "billboard": false,
+      "replaces": "Door_8_Round",
+      "ref": "T1-P034-C2 ; T1-P035-C5,C7 ; T1-P051-C3"
+    },
+    {
+      "id": "DoorFrame_Flat_Brick",
+      "num": 29,
+      "family": "objets",
+      "builder": "door_frame",
+      "seed": 3021,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.79,
+        0.79,
+        -0.0,
+        2.37,
+        -0.3,
+        0.2
+      ],
+      "width_m": [
+        1.58,
+        1.58
+      ],
+      "height_m": [
+        2.37,
+        2.37
+      ],
+      "billboard": false,
+      "replaces": "DoorFrame_Flat_Brick",
+      "ref": "T1-P035-C5"
+    },
+    {
+      "id": "DoorFrame_Flat_WoodDark",
+      "num": 29,
+      "family": "objets",
+      "builder": "door_frame",
+      "seed": 3022,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.79,
+        0.79,
+        -0.01,
+        2.3,
+        -0.24,
+        0.15
+      ],
+      "width_m": [
+        1.58,
+        1.58
+      ],
+      "height_m": [
+        2.3,
+        2.3
+      ],
+      "billboard": false,
+      "replaces": "DoorFrame_Flat_WoodDark",
+      "ref": "T1-P035-C5"
+    },
+    {
+      "id": "DoorFrame_Round_Brick",
+      "num": 29,
+      "family": "objets",
+      "builder": "door_frame",
+      "seed": 3023,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.8,
+        0.8,
+        -0.0,
+        2.58,
+        -0.3,
+        0.18
+      ],
+      "width_m": [
+        1.6,
+        1.6
+      ],
+      "height_m": [
+        2.58,
+        2.58
+      ],
+      "billboard": false,
+      "replaces": "DoorFrame_Round_Brick",
+      "ref": "T1-P035-C5"
+    },
+    {
+      "id": "DoorFrame_Round_WoodDark",
+      "num": 29,
+      "family": "objets",
+      "builder": "door_frame",
+      "seed": 3024,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.7,
+        0.7,
+        -0.01,
+        2.55,
+        -0.24,
+        0.3
+      ],
+      "width_m": [
+        1.4,
+        1.4
+      ],
+      "height_m": [
+        2.55,
+        2.55
+      ],
+      "billboard": false,
+      "replaces": "DoorFrame_Round_WoodDark",
+      "ref": "T1-P035-C5"
+    },
+    {
+      "id": "Stall_Cart_Empty",
+      "num": 37,
+      "family": "objets",
+      "builder": "stall_cart",
+      "seed": 3025,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -2.11,
+        0.91,
+        -0.0,
+        2.63,
+        -0.53,
+        0.53
+      ],
+      "width_m": [
+        3.02,
+        3.02
+      ],
+      "height_m": [
+        2.63,
+        2.63
+      ],
+      "billboard": false,
+      "replaces": "Stall_Cart_Empty",
+      "ref": "T1-P016-C6"
+    },
+    {
+      "id": "Stall_Empty",
+      "num": 37,
+      "family": "objets",
+      "builder": "stall",
+      "seed": 3026,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.92,
+        0.92,
+        -0.0,
+        2.62,
+        -0.46,
+        0.47
+      ],
+      "width_m": [
+        1.84,
+        1.84
+      ],
+      "height_m": [
+        2.62,
+        2.62
+      ],
+      "billboard": false,
+      "replaces": "Stall_Empty",
+      "ref": "T1-P016-C6 ; T2-P008-C1"
+    },
+    {
+      "id": "Prop_Wagon",
+      "num": 38,
+      "family": "objets",
+      "builder": "wagon",
+      "seed": 3027,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.98,
+        0.97,
+        0.0,
+        1.53,
+        -3.15,
+        0.87
+      ],
+      "width_m": [
+        1.95,
+        1.95
+      ],
+      "height_m": [
+        1.53,
+        1.53
+      ],
+      "billboard": false,
+      "replaces": "Prop_Wagon",
+      "ref": "T1-P023-C1,C2 ; T1-P030-C4"
+    },
+    {
+      "id": "Cage_Small",
+      "num": 39,
+      "family": "objets",
+      "builder": "cage",
+      "seed": 3028,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.43,
+        0.42,
+        -0.04,
+        0.76,
+        -0.42,
+        0.46
+      ],
+      "width_m": [
+        0.85,
+        0.85
+      ],
+      "height_m": [
+        0.76,
+        0.76
+      ],
+      "billboard": false,
+      "replaces": "Cage_Small",
+      "ref": "T1-P019-C5,C9"
+    },
+    {
+      "id": "Table_Large",
+      "num": 43,
+      "family": "objets",
+      "builder": "table_large",
+      "seed": 3029,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.42,
+        1.42,
+        0.0,
+        0.81,
+        -0.54,
+        0.55
+      ],
+      "width_m": [
+        2.84,
+        2.84
+      ],
+      "height_m": [
+        0.81,
+        0.81
+      ],
+      "billboard": false,
+      "replaces": "Table_Large",
+      "ref": "T1-P029-C3 ; T1-P036-C5 ; T1-P037-C1"
+    },
+    {
+      "id": "Bench",
+      "num": 44,
+      "family": "objets",
+      "builder": "bench",
+      "seed": 3030,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.39,
+        1.39,
+        -0.01,
+        0.53,
+        -0.26,
+        0.27
+      ],
+      "width_m": [
+        2.78,
+        2.78
+      ],
+      "height_m": [
+        0.53,
+        0.53
+      ],
+      "billboard": false,
+      "replaces": "Bench",
+      "ref": "T1-P037-C1"
+    },
+    {
+      "id": "Chair_1",
+      "num": 45,
+      "family": "objets",
+      "builder": "chair",
+      "seed": 3031,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.29,
+        0.29,
+        -0.0,
+        1.12,
+        -0.29,
+        0.26
+      ],
+      "width_m": [
+        0.58,
+        0.58
+      ],
+      "height_m": [
+        1.12,
+        1.12
+      ],
+      "billboard": false,
+      "replaces": "Chair_1",
+      "ref": "T1-P038-C2"
+    },
+    {
+      "id": "Stool",
+      "num": 45,
+      "family": "objets",
+      "builder": "stool",
+      "seed": 3032,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.24,
+        0.24,
+        -0.01,
+        0.58,
+        -0.24,
+        0.24
+      ],
+      "width_m": [
+        0.48,
+        0.48
+      ],
+      "height_m": [
+        0.58,
+        0.58
+      ],
+      "billboard": false,
+      "replaces": "Stool",
+      "ref": "T1-P038-C2"
+    },
+    {
+      "id": "Bed_Twin1",
+      "num": 47,
+      "family": "objets",
+      "builder": "bed",
+      "seed": 3033,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.94,
+        0.94,
+        0.0,
+        0.81,
+        -1.21,
+        1.21
+      ],
+      "width_m": [
+        1.88,
+        1.88
+      ],
+      "height_m": [
+        0.81,
+        0.81
+      ],
+      "billboard": false,
+      "replaces": "Bed_Twin1",
+      "ref": "T1-P036-C1"
+    },
+    {
+      "id": "Bed_Twin2",
+      "num": 47,
+      "family": "objets",
+      "builder": "bed",
+      "seed": 3034,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.94,
+        0.94,
+        0.0,
+        0.76,
+        -1.21,
+        1.21
+      ],
+      "width_m": [
+        1.88,
+        1.88
+      ],
+      "height_m": [
+        0.76,
+        0.76
+      ],
+      "billboard": false,
+      "replaces": "Bed_Twin2",
+      "ref": "T1-P037-C8"
+    },
+    {
+      "id": "Chest_Wood",
+      "num": 48,
+      "family": "objets",
+      "builder": "chest",
+      "seed": 3035,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.64,
+        0.64,
+        -0.02,
+        0.69,
+        -0.38,
+        0.38
+      ],
+      "width_m": [
+        1.28,
+        1.28
+      ],
+      "height_m": [
+        0.69,
+        0.69
+      ],
+      "billboard": false,
+      "replaces": "Chest_Wood",
+      "ref": "T1-P036-C1 ; T1-P023-C1"
+    },
+    {
+      "id": "Barrel",
+      "num": 49,
+      "family": "objets",
+      "builder": "barrel",
+      "seed": 3036,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.35,
+        0.35,
+        0.0,
+        0.9,
+        -0.35,
+        0.35
+      ],
+      "width_m": [
+        0.7,
+        0.7
+      ],
+      "height_m": [
+        0.9,
+        0.9
+      ],
+      "billboard": false,
+      "replaces": "Barrel",
+      "ref": "T1-P016-C6 ; T1-P036-C3"
+    },
+    {
+      "id": "Barrel_Holder",
+      "num": 49,
+      "family": "objets",
+      "builder": "barrel_holder",
+      "seed": 3037,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.68,
+        0.68,
+        -0.01,
+        1.25,
+        -0.35,
+        0.39
+      ],
+      "width_m": [
+        1.36,
+        1.36
+      ],
+      "height_m": [
+        1.25,
+        1.25
+      ],
+      "billboard": false,
+      "replaces": "Barrel_Holder",
+      "ref": "T1-P037-C1 ; T1-P039-C1"
+    },
+    {
+      "id": "CandleStick_Stand",
+      "num": 50,
+      "family": "objets",
+      "builder": "candlestick_stand",
+      "seed": 3038,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.37,
+        0.37,
+        -0.01,
+        1.3,
+        -0.37,
+        0.37
+      ],
+      "width_m": [
+        0.74,
+        0.74
+      ],
+      "height_m": [
+        1.3,
+        1.3
+      ],
+      "billboard": false,
+      "replaces": "CandleStick_Stand",
+      "ref": "T1-P037-C1"
+    },
+    {
+      "id": "CandleStick_Triple",
+      "num": 50,
+      "family": "objets",
+      "builder": "candlestick_triple",
+      "seed": 3039,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.22,
+        0.22,
+        -0.0,
+        0.46,
+        -0.07,
+        0.07
+      ],
+      "width_m": [
+        0.44,
+        0.44
+      ],
+      "height_m": [
+        0.46,
+        0.46
+      ],
+      "billboard": false,
+      "replaces": "CandleStick_Triple",
+      "ref": "T1-P037-C1"
+    },
+    {
+      "id": "Candle_1",
+      "num": 51,
+      "family": "objets",
+      "builder": "candle",
+      "seed": 3040,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.05,
+        0.05,
+        0.0,
+        0.13,
+        -0.06,
+        0.05
+      ],
+      "width_m": [
+        0.1,
+        0.1
+      ],
+      "height_m": [
+        0.13,
+        0.13
+      ],
+      "billboard": false,
+      "replaces": "Candle_1",
+      "ref": "T1-P037-C7"
+    },
+    {
+      "id": "Candle_2",
+      "num": 51,
+      "family": "objets",
+      "builder": "candle",
+      "seed": 3041,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.05,
+        0.05,
+        0.0,
+        0.25,
+        -0.05,
+        0.05
+      ],
+      "width_m": [
+        0.1,
+        0.1
+      ],
+      "height_m": [
+        0.25,
+        0.25
+      ],
+      "billboard": false,
+      "replaces": "Candle_2",
+      "ref": "T1-P039-C3"
+    },
+    {
+      "id": "CandleStick",
+      "num": 51,
+      "family": "objets",
+      "builder": "candlestick",
+      "seed": 3042,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.18,
+        0.08,
+        0.0,
+        0.16,
+        -0.09,
+        0.09
+      ],
+      "width_m": [
+        0.26,
+        0.26
+      ],
+      "height_m": [
+        0.16,
+        0.16
+      ],
+      "billboard": false,
+      "replaces": "CandleStick",
+      "ref": "T1-P037-C7"
+    },
+    {
+      "id": "Banner_1",
+      "num": 52,
+      "family": "objets",
+      "builder": "banner",
+      "seed": 3043,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.0,
+        1.61,
+        -1.55,
+        0.84,
+        -0.09,
+        0.1
+      ],
+      "width_m": [
+        1.61,
+        1.61
+      ],
+      "height_m": [
+        0.84,
+        0.84
+      ],
+      "billboard": false,
+      "replaces": "Banner_1",
+      "ref": "T1-P033-C7 (motifs neutres)"
+    },
+    {
+      "id": "Banner_2",
+      "num": 52,
+      "family": "objets",
+      "builder": "banner",
+      "seed": 3044,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.0,
+        1.61,
+        -1.23,
+        0.84,
+        -0.09,
+        0.1
+      ],
+      "width_m": [
+        1.61,
+        1.61
+      ],
+      "height_m": [
+        0.84,
+        0.84
+      ],
+      "billboard": false,
+      "replaces": "Banner_2",
+      "ref": "T1-P035-C5 (motifs neutres)"
+    },
+    {
+      "id": "Banner_1_Cloth",
+      "num": 52,
+      "family": "objets",
+      "builder": "banner_cloth",
+      "seed": 3045,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.41,
+        0.4,
+        -2.25,
+        -0.0,
+        -0.03,
+        0.02
+      ],
+      "width_m": [
+        0.81,
+        0.81
+      ],
+      "height_m": [
+        -0.0,
+        -0.0
+      ],
+      "billboard": false,
+      "replaces": "Banner_1_Cloth",
+      "ref": "T1-P033-C7"
+    },
+    {
+      "id": "Banner_2_Cloth",
+      "num": 52,
+      "family": "objets",
+      "builder": "banner_cloth",
+      "seed": 3046,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.41,
+        0.4,
+        -1.93,
+        -0.0,
+        -0.03,
+        0.02
+      ],
+      "width_m": [
+        0.81,
+        0.81
+      ],
+      "height_m": [
+        -0.0,
+        -0.0
+      ],
+      "billboard": false,
+      "replaces": "Banner_2_Cloth",
+      "ref": "T1-P035-C5"
+    },
+    {
+      "id": "Shield_Wooden",
+      "num": 54,
+      "family": "objets",
+      "builder": "shield",
+      "seed": 3047,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.31,
+        0.31,
+        -0.31,
+        0.31,
+        -0.0,
+        0.18
+      ],
+      "width_m": [
+        0.62,
+        0.62
+      ],
+      "height_m": [
+        0.31,
+        0.31
+      ],
+      "billboard": false,
+      "replaces": "Shield_Wooden",
+      "ref": "T1-P036-C1 ; T1-P046-C3 (sans blason)"
+    },
+    {
+      "id": "WeaponStand",
+      "num": 55,
+      "family": "objets",
+      "builder": "weapon_stand",
+      "seed": 3048,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.69,
+        0.69,
+        -0.0,
+        1.11,
+        -0.49,
+        0.49
+      ],
+      "width_m": [
+        1.38,
+        1.38
+      ],
+      "height_m": [
+        1.11,
+        1.11
+      ],
+      "billboard": false,
+      "replaces": "WeaponStand",
+      "ref": "T1-P036-C2"
+    },
+    {
+      "id": "Torch_Metal",
+      "num": 56,
+      "family": "objets",
+      "builder": "torch_metal",
+      "seed": 3049,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.11,
+        0.11,
+        -0.28,
+        0.37,
+        0.0,
+        0.39
+      ],
+      "width_m": [
+        0.22,
+        0.22
+      ],
+      "height_m": [
+        0.37,
+        0.37
+      ],
+      "billboard": false,
+      "replaces": "Torch_Metal",
+      "ref": "T1-P033-C1"
+    },
+    {
+      "id": "Potion_1",
+      "num": 59,
+      "family": "objets",
+      "builder": "potion",
+      "seed": 3050,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.06,
+        0.06,
+        -0.0,
+        0.14,
+        -0.06,
+        0.06
+      ],
+      "width_m": [
+        0.12,
+        0.12
+      ],
+      "height_m": [
+        0.14,
+        0.14
+      ],
+      "billboard": false,
+      "replaces": "Potion_1",
+      "ref": "T1-P039-C2"
+    },
+    {
+      "id": "Potion_2",
+      "num": 59,
+      "family": "objets",
+      "builder": "potion",
+      "seed": 3051,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.06,
+        0.06,
+        -0.0,
+        0.26,
+        -0.06,
+        0.06
+      ],
+      "width_m": [
+        0.12,
+        0.12
+      ],
+      "height_m": [
+        0.26,
+        0.26
+      ],
+      "billboard": false,
+      "replaces": "Potion_2",
+      "ref": "T1-P039-C2"
+    },
+    {
+      "id": "Potion_4",
+      "num": 59,
+      "family": "objets",
+      "builder": "potion",
+      "seed": 3052,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.07,
+        0.07,
+        -0.0,
+        0.2,
+        -0.07,
+        0.07
+      ],
+      "width_m": [
+        0.14,
+        0.14
+      ],
+      "height_m": [
+        0.2,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Potion_4",
+      "ref": "T1-P039-C2"
+    },
+    {
+      "id": "Bottle_1",
+      "num": 59,
+      "family": "objets",
+      "builder": "bottle",
+      "seed": 3053,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.06,
+        0.06,
+        0.0,
+        0.37,
+        -0.06,
+        0.06
+      ],
+      "width_m": [
+        0.12,
+        0.12
+      ],
+      "height_m": [
+        0.37,
+        0.37
+      ],
+      "billboard": false,
+      "replaces": "Bottle_1",
+      "ref": "T1-P039-C2"
+    },
+    {
+      "id": "SmallBottle",
+      "num": 59,
+      "family": "objets",
+      "builder": "bottle",
+      "seed": 3054,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.03,
+        0.03,
+        0.0,
+        0.12,
+        -0.02,
+        0.02
+      ],
+      "width_m": [
+        0.06,
+        0.06
+      ],
+      "height_m": [
+        0.12,
+        0.12
+      ],
+      "billboard": false,
+      "replaces": "SmallBottle",
+      "ref": "T1-P039-C2"
+    },
+    {
+      "id": "SmallBottles_1",
+      "num": 59,
+      "family": "objets",
+      "builder": "small_bottles",
+      "seed": 3055,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.11,
+        0.1,
+        0.0,
+        0.15,
+        -0.03,
+        0.03
+      ],
+      "width_m": [
+        0.21,
+        0.21
+      ],
+      "height_m": [
+        0.15,
+        0.15
+      ],
+      "billboard": false,
+      "replaces": "SmallBottles_1",
+      "ref": "T1-P039-C2"
+    },
+    {
+      "id": "Shelf_Small_Bottles",
+      "num": 59,
+      "family": "objets",
+      "builder": "shelf_bottles",
+      "seed": 3056,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.57,
+        0.57,
+        -0.02,
+        0.63,
+        0.01,
+        0.29
+      ],
+      "width_m": [
+        1.14,
+        1.14
+      ],
+      "height_m": [
+        0.63,
+        0.63
+      ],
+      "billboard": false,
+      "replaces": "Shelf_Small_Bottles",
+      "ref": "T2-P023-C6"
+    },
+    {
+      "id": "Book_5",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_flat",
+      "seed": 3057,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.12,
+        0.09,
+        -0.03,
+        0.03,
+        -0.14,
+        0.14
+      ],
+      "width_m": [
+        0.21,
+        0.21
+      ],
+      "height_m": [
+        0.03,
+        0.03
+      ],
+      "billboard": false,
+      "replaces": "Book_5",
+      "ref": "T1-P039-C3"
+    },
+    {
+      "id": "Book_7",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_flat",
+      "seed": 3058,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.13,
+        0.12,
+        -0.03,
+        0.03,
+        -0.17,
+        0.17
+      ],
+      "width_m": [
+        0.25,
+        0.25
+      ],
+      "height_m": [
+        0.03,
+        0.03
+      ],
+      "billboard": false,
+      "replaces": "Book_7",
+      "ref": "T1-P039-C3"
+    },
+    {
+      "id": "Book_Simplified_Single",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_standing",
+      "seed": 3059,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.03,
+        0.04,
+        -0.0,
+        0.27,
+        -0.12,
+        0.09
+      ],
+      "width_m": [
+        0.07,
+        0.07
+      ],
+      "height_m": [
+        0.27,
+        0.27
+      ],
+      "billboard": false,
+      "replaces": "Book_Simplified_Single",
+      "ref": "T1-P039-C3"
+    },
+    {
+      "id": "Book_Stack_1",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_stack",
+      "seed": 3060,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.15,
+        0.14,
+        0.0,
+        0.21,
+        -0.11,
+        0.12
+      ],
+      "width_m": [
+        0.29,
+        0.29
+      ],
+      "height_m": [
+        0.21,
+        0.21
+      ],
+      "billboard": false,
+      "replaces": "Book_Stack_1",
+      "ref": "T1-P039-C3"
+    },
+    {
+      "id": "Book_Stack_2",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_stack",
+      "seed": 3061,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.14,
+        0.13,
+        -0.0,
+        0.2,
+        -0.1,
+        0.13
+      ],
+      "width_m": [
+        0.27,
+        0.27
+      ],
+      "height_m": [
+        0.2,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Book_Stack_2",
+      "ref": "T1-P039-C3"
+    },
+    {
+      "id": "BookGroup_Medium_1",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_group",
+      "seed": 3062,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.54,
+        0.52,
+        -0.0,
+        0.29,
+        -0.16,
+        0.09
+      ],
+      "width_m": [
+        1.06,
+        1.06
+      ],
+      "height_m": [
+        0.29,
+        0.29
+      ],
+      "billboard": false,
+      "replaces": "BookGroup_Medium_1",
+      "ref": "T1-P039-C3 ; T2-P025-C5"
+    },
+    {
+      "id": "BookGroup_Medium_2",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_group",
+      "seed": 3063,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.55,
+        0.55,
+        -0.0,
+        0.29,
+        -0.16,
+        0.09
+      ],
+      "width_m": [
+        1.1,
+        1.1
+      ],
+      "height_m": [
+        0.29,
+        0.29
+      ],
+      "billboard": false,
+      "replaces": "BookGroup_Medium_2",
+      "ref": "T1-P039-C3 ; T2-P025-C5"
+    },
+    {
+      "id": "BookGroup_Medium_3",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_group",
+      "seed": 3064,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.53,
+        0.51,
+        -0.0,
+        0.29,
+        -0.16,
+        0.09
+      ],
+      "width_m": [
+        1.04,
+        1.04
+      ],
+      "height_m": [
+        0.29,
+        0.29
+      ],
+      "billboard": false,
+      "replaces": "BookGroup_Medium_3",
+      "ref": "T1-P039-C3 ; T2-P025-C5"
+    },
+    {
+      "id": "BookGroup_Small_1",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_group",
+      "seed": 3065,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.17,
+        0.12,
+        -0.0,
+        0.29,
+        -0.12,
+        0.1
+      ],
+      "width_m": [
+        0.29,
+        0.29
+      ],
+      "height_m": [
+        0.29,
+        0.29
+      ],
+      "billboard": false,
+      "replaces": "BookGroup_Small_1",
+      "ref": "T1-P039-C3 ; T2-P025-C5"
+    },
+    {
+      "id": "BookGroup_Small_2",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_group",
+      "seed": 3066,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.1,
+        0.12,
+        -0.0,
+        0.28,
+        -0.13,
+        0.1
+      ],
+      "width_m": [
+        0.22,
+        0.22
+      ],
+      "height_m": [
+        0.28,
+        0.28
+      ],
+      "billboard": false,
+      "replaces": "BookGroup_Small_2",
+      "ref": "T1-P039-C3 ; T2-P025-C5"
+    },
+    {
+      "id": "BookGroup_Small_3",
+      "num": 60,
+      "family": "objets",
+      "builder": "book_group",
+      "seed": 3067,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.1,
+        0.14,
+        -0.0,
+        0.28,
+        -0.13,
+        0.1
+      ],
+      "width_m": [
+        0.24,
+        0.24
+      ],
+      "height_m": [
+        0.28,
+        0.28
+      ],
+      "billboard": false,
+      "replaces": "BookGroup_Small_3",
+      "ref": "T1-P039-C3 ; T2-P025-C5"
+    },
+    {
+      "id": "Pot_1",
+      "num": 60,
+      "family": "objets",
+      "builder": "pot",
+      "seed": 3068,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.27,
+        0.27,
+        -0.02,
+        0.2,
+        -0.24,
+        0.24
+      ],
+      "width_m": [
+        0.54,
+        0.54
+      ],
+      "height_m": [
+        0.2,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pot_1",
+      "ref": "T1-P039-C3"
+    },
+    {
+      "id": "Pot_1_Lid",
+      "num": 60,
+      "family": "objets",
+      "builder": "pot_lid",
+      "seed": 3069,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.27,
+        0.27,
+        -0.02,
+        0.26,
+        -0.24,
+        0.24
+      ],
+      "width_m": [
+        0.54,
+        0.54
+      ],
+      "height_m": [
+        0.26,
+        0.26
+      ],
+      "billboard": false,
+      "replaces": "Pot_1_Lid",
+      "ref": "T1-P039-C3"
+    },
+    {
+      "id": "Mug",
+      "num": 62,
+      "family": "objets",
+      "builder": "mug",
+      "seed": 3070,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.07,
+        0.12,
+        -0.0,
+        0.18,
+        -0.07,
+        0.07
+      ],
+      "width_m": [
+        0.19,
+        0.19
+      ],
+      "height_m": [
+        0.18,
+        0.18
+      ],
+      "billboard": false,
+      "replaces": "Mug",
+      "ref": "T1-P036-C3,C5"
+    },
+    {
+      "id": "Table_Plate",
+      "num": 62,
+      "family": "objets",
+      "builder": "plate",
+      "seed": 3071,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.17,
+        0.17,
+        -0.0,
+        0.02,
+        -0.17,
+        0.17
+      ],
+      "width_m": [
+        0.34,
+        0.34
+      ],
+      "height_m": [
+        0.02,
+        0.02
+      ],
+      "billboard": false,
+      "replaces": "Table_Plate",
+      "ref": "T1-P036-C5"
+    },
+    {
+      "id": "Prop_Wagon_Loaded",
+      "num": 38,
+      "family": "objets",
+      "builder": "wagon_loaded",
+      "seed": 3072,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.8,
+        2.2
+      ],
+      "height_m": [
+        1.1,
+        1.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P023-C1,C2 (chariot chargé)"
+    },
+    {
+      "id": "Cage_Large",
+      "num": 39,
+      "family": "objets",
+      "builder": "cage",
+      "seed": 3073,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.0,
+        2.4
+      ],
+      "height_m": [
+        2.0,
+        2.4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P020-C3 (prisonnier debout)"
+    },
+    {
+      "id": "Coop_1",
+      "num": 31,
+      "family": "objets",
+      "builder": "coop",
+      "seed": 3074,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.8,
+        2.4
+      ],
+      "height_m": [
+        1.3,
+        1.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P017-C1..C4"
+    },
+    {
+      "id": "Hut_Branch_1",
+      "num": 32,
+      "family": "objets",
+      "builder": "hut_branch",
+      "seed": 3075,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.2,
+        4.0
+      ],
+      "height_m": [
+        2.8,
+        3.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P021-C1"
+    },
+    {
+      "id": "Tent_Awning_1",
+      "num": 33,
+      "family": "objets",
+      "builder": "tent_awning",
+      "seed": 3076,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.5,
+        5.5
+      ],
+      "height_m": [
+        2.3,
+        2.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P021-C1 ; T1-P023-C1"
+    },
+    {
+      "id": "Tent_Pavilion_1",
+      "num": 34,
+      "family": "objets",
+      "builder": "tent_pavilion",
+      "seed": 3077,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.8,
+        6.2
+      ],
+      "height_m": [
+        3.8,
+        4.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P030-C5 (sans blason)"
+    },
+    {
+      "id": "Tent_Striped_1",
+      "num": 170,
+      "family": "objets",
+      "builder": "tent_striped",
+      "seed": 3078,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        5.5,
+        6.5
+      ],
+      "height_m": [
+        4.8,
+        5.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P041-C1,C3 (rayures neutres)"
+    },
+    {
+      "id": "Trough_Stone_1",
+      "num": 35,
+      "family": "objets",
+      "builder": "trough",
+      "seed": 3079,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.8,
+        2.2
+      ],
+      "height_m": [
+        0.6,
+        0.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C5"
+    },
+    {
+      "id": "Campfire_Spit_1",
+      "num": 36,
+      "family": "objets",
+      "builder": "campfire_spit",
+      "seed": 3080,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.2,
+        1.6
+      ],
+      "height_m": [
+        1.1,
+        1.4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P012-C8 ; T1-P013-C6"
+    },
+    {
+      "id": "Brazier_Pole_1",
+      "num": 40,
+      "family": "objets",
+      "builder": "brazier_pole",
+      "seed": 3081,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.9,
+        1.4
+      ],
+      "height_m": [
+        3.0,
+        3.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P019-C1 ; T1-P020-C7"
+    },
+    {
+      "id": "Pike_Stake_1",
+      "num": 41,
+      "family": "objets",
+      "builder": "pike_stake",
+      "seed": 3082,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.05,
+        0.2
+      ],
+      "height_m": [
+        2.5,
+        3.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P024-C6 (sans tête)"
+    },
+    {
+      "id": "Debris_Wheel_1",
+      "num": 42,
+      "family": "objets",
+      "builder": "debris_wheel",
+      "seed": 3083,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.3,
+        2.2
+      ],
+      "height_m": [
+        0.1,
+        0.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P050-C1"
+    },
+    {
+      "id": "Palisade_Stake_1",
+      "num": 26,
+      "family": "objets",
+      "builder": "palisade_stake",
+      "seed": 3084,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.9,
+        2.1
+      ],
+      "height_m": [
+        2.1,
+        2.7
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P030-C5 ; T1-P042-C2"
+    },
+    {
+      "id": "Palisade_Rampart_1",
+      "num": 27,
+      "family": "objets",
+      "builder": "palisade_rampart",
+      "seed": 3085,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        3.9,
+        4.1
+      ],
+      "height_m": [
+        8.5,
+        9.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P043-C1 (échelles)"
+    },
+    {
+      "id": "Door_Palace_1",
+      "num": 30,
+      "family": "objets",
+      "builder": "door_palace",
+      "seed": 3086,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        3.9,
+        4.1
+      ],
+      "height_m": [
+        5.8,
+        6.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P028-C1 (gardes)"
+    },
+    {
+      "id": "Throne_Wood_1",
+      "num": 46,
+      "family": "objets",
+      "builder": "throne_wood",
+      "seed": 3087,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.85,
+        1.05
+      ],
+      "height_m": [
+        2.0,
+        2.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C3 ; T1-P020-C5"
+    },
+    {
+      "id": "Trophy_Skull_1",
+      "num": 53,
+      "family": "objets",
+      "builder": "trophy_skull",
+      "seed": 3088,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.7,
+        1.0
+      ],
+      "height_m": [
+        0.5,
+        0.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P036-C1"
+    },
+    {
+      "id": "Fireplace_Arch_1",
+      "num": 57,
+      "family": "objets",
+      "builder": "fireplace_arch",
+      "seed": 3089,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.9,
+        2.3
+      ],
+      "height_m": [
+        1.7,
+        1.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P035-C1"
+    },
+    {
+      "id": "Carpet_Runner_1",
+      "num": 58,
+      "family": "objets",
+      "builder": "carpet_runner",
+      "seed": 3090,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.9,
+        2.1
+      ],
+      "height_m": [
+        0.01,
+        0.03
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P028-C5,C6"
+    },
+    {
+      "id": "Alembic_1",
+      "num": 59,
+      "family": "objets",
+      "builder": "alembic",
+      "seed": 3091,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.5,
+        0.8
+      ],
+      "height_m": [
+        0.6,
+        0.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P039-C2"
+    },
+    {
+      "id": "CrystalBall_1",
+      "num": 61,
+      "family": "objets",
+      "builder": "crystal_ball",
+      "seed": 3092,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.3,
+        0.45
+      ],
+      "height_m": [
+        1.1,
+        1.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P031-C1 ; T1-P039-C2"
+    },
+    {
+      "id": "DrinkingHorn_1",
+      "num": 63,
+      "family": "objets",
+      "builder": "drinking_horn",
+      "seed": 3093,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.3,
+        0.45
+      ],
+      "height_m": [
+        0.2,
+        0.35
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P020-C7"
+    },
+    {
+      "id": "SiegeTower_1",
+      "num": 64,
+      "family": "objets",
+      "builder": "siege_tower",
+      "seed": 3094,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        5.0,
+        6.0
+      ],
+      "height_m": [
+        15,
+        18
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P042-C1 (fantassins)"
+    },
+    {
+      "id": "Catapult_1",
+      "num": 65,
+      "family": "objets",
+      "builder": "catapult",
+      "seed": 3095,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        5.8,
+        6.4
+      ],
+      "height_m": [
+        2.8,
+        3.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P030-C5 ; T1-P042-C3"
+    },
+    {
+      "id": "Mantlet_1",
+      "num": 66,
+      "family": "objets",
+      "builder": "mantlet",
+      "seed": 3096,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.4,
+        2.6
+      ],
+      "height_m": [
+        1.8,
+        2.1
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P030-C4 ; T1-P042-C2"
+    },
+    {
+      "id": "SiegeLadder_1",
+      "num": 67,
+      "family": "objets",
+      "builder": "siege_ladder",
+      "seed": 3097,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.6,
+        0.8
+      ],
+      "height_m": [
+        0.1,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P043-C1,C2 (10 m, posée au sol)"
+    },
+    {
+      "id": "Portcullis_1",
+      "num": 68,
+      "family": "objets",
+      "builder": "portcullis",
+      "seed": 3098,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        3.9,
+        4.1
+      ],
+      "height_m": [
+        5.0,
+        6.1
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P010-C2"
+    },
+    {
+      "id": "Window_Great_1",
+      "num": 69,
+      "family": "objets",
+      "builder": "window_great",
+      "seed": 3099,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        2.9,
+        3.1
+      ],
+      "height_m": [
+        5.5,
+        6.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P028-C2 ; T1-P032-C1"
+    },
+    {
+      "id": "Statue_Niche_1",
+      "num": 70,
+      "family": "objets",
+      "builder": "statue_niche",
+      "seed": 3100,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.5,
+        1.7
+      ],
+      "height_m": [
+        3.1,
+        3.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P028-C2 (figure neutre)"
     }
   ]
 }

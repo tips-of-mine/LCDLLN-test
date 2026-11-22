@@ -1015,20 +1015,38 @@ namespace tools::world_gen
 			{
 				const char* bucheron[] = { "Anvil_Log", "Axe_Bronze", "Prop_Wagon", "Barrel", "Crate_Wooden" };
 				const char* mine[] = { "Pickaxe_Bronze", "Prop_Wagon", "Crate_Wooden", "Bucket_Metal", "Barrel" };
-				const char* bandit[] = { "Prop_Wagon", "Chest_Wood", "Cage_Small", "Barrel", "Crate_Wooden" };
-				const char** set = c.procedural == "mine" ? mine : (c.procedural == "bandits" ? bandit : bucheron);
-				for (int k = 0; k < 10; ++k)
+				// Bandits (BD T1 pl.11-15, horde) : huttes de branchages, braseros sur perche,
+				// grande cage, chariot chargé, auvent de toile (atelier décors).
+				const char* bandit[] = { "Prop_Wagon", "Chest_Wood", "Cage_Small", "Barrel", "Crate_Wooden",
+					"Hut_Branch_1", "Brazier_Pole_1", "Cage_Large", "Prop_Wagon_Loaded", "Tent_Awning_1" };
+				const bool isBandit = c.procedural == "bandits";
+				const char** set = c.procedural == "mine" ? mine : (isBandit ? bandit : bucheron);
+				const uint32_t setN = isBandit ? 10u : 5u;
+				for (int k = 0; k < (isBandit ? 14 : 10); ++k)
 				{
 					const Vec2 p = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * rng.Range(R * 0.25, R * 0.8);
 					if (w.IsOccupied(p, 1.4) || w.IsWater(p)) continue;
-					const char* mesh = set[rng.Below(5)];
-					const bool big = std::string(mesh) == "Prop_Wagon";
+					const char* mesh = set[rng.Below(setN)];
+					const std::string ms(mesh);
+					const bool big = ms == "Prop_Wagon" || ms == "Prop_Wagon_Loaded" || ms == "Hut_Branch_1"
+						|| ms == "Tent_Awning_1" || ms == "Cage_Large";
 					AddProp(w, mesh, p, rng.Range(0, 360), 1.0, kSolid, 1, big ? 1.4 : 0.5);
 					w.Occupy(p, big ? 2.0 : 0.8);
 				}
 				// Feu de camp (chaudron sur la place).
 				AddProp(w, "Cauldron", c.center, 0.0, 1.2, kSolid, 0, 0.8);
 			}
+			// Basse-cour des hameaux et villages (BD T1 pl.8-9) : poulailler et abreuvoir.
+			if ((c.kind == "hameau" || c.kind == "village") && c.procedural.empty())
+				for (const char* mesh : { "Coop_1", "Trough_Stone_1" })
+					for (int t = 0; t < 12; ++t)
+					{
+						const Vec2 p = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * rng.Range(R * 0.45, R * 0.85);
+						if (w.IsOccupied(p, 1.6) || w.IsWater(p)) continue;
+						AddProp(w, mesh, p, rng.Range(0, 360), 1.0, kSolid, 1, 1.1);
+						w.Occupy(p, 1.6);
+						break;
+					}
 
 			// --- Point de départ (villes de départ) : sur la place, face à l'auberge.
 			{

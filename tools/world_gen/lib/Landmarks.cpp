@@ -433,6 +433,31 @@ namespace tools::world_gen
 					0.0, rng.Next() * 360.0, 1.0, k < 2);
 			}
 			Piece(w, "Torch_Metal", c - d * 3.0, 0.0, 0.0, 1.0, false);
+			// Atelier décors (BD T1 pl.4-6, 13, 15) : abri de toile et feu à broche.
+			const Vec2 side{ -d.z, d.x };
+			Piece(w, rng.Next() < 0.5 ? "Tent_Awning_1" : "Tent_Pavilion_1", c + side * 7.0, 0.0, a + 90.0, 1.0, true);
+			Piece(w, "Campfire_Spit_1", c - side * 3.2, 0.0, rng.Next() * 360.0, 1.0, false);
+		}
+
+		/// Champ de bataille abandonné (BD T1 pl.36-44) : débris de chariot, piques,
+		/// mantelets, échelle d'assaut, palissade de pieux et un engin de siège.
+		/// Effet de bord : w.scatter.
+		void BuildBattlefield(World& w, Vec2 c, LandmarkRng& rng)
+		{
+			const double a = rng.Next() * 360.0;
+			const Vec2 u{ std::cos(a * kPi / 180.0), std::sin(a * kPi / 180.0) }, v{ -u.z, u.x };
+			Piece(w, rng.Next() < 0.6 ? "Catapult_1" : "SiegeTower_1", c, 0.0, a, 1.0, true);
+			for (int k = -2; k <= 2; ++k)   // ligne de palissade de campagne
+				Piece(w, "Palisade_Stake_1", c + v * 14.0 + u * (k * 2.0), 0.0, a, 1.0, true);
+			for (int k = 0; k < 4; ++k)
+				Piece(w, "Mantlet_1", c + u * (-10.0 + k * 6.5) - v * (8.0 + rng.Next() * 3.0), 0.0, a + 180.0 + (rng.Next() - 0.5) * 30.0, 1.0, true);
+			static const char* debris[] = { "Debris_Wheel_1", "Pike_Stake_1", "Pike_Stake_1", "SiegeLadder_1", "Shield_Wooden", "Prop_Brick2" };
+			for (int k = 0; k < 9; ++k)
+			{
+				const double b = rng.Next() * 2.0 * kPi;
+				const Vec2 p = c + Vec2{ std::cos(b), std::sin(b) } * (6.0 + rng.Next() * 16.0);
+				Piece(w, debris[static_cast<int>(rng.Next() * 6.0) % 6], p, 0.0, rng.Next() * 360.0, 1.0, false);
+			}
 		}
 
 		/// Champ clôturé (rectangle de clôtures, une entrée) avec caisses de récolte.
@@ -503,9 +528,10 @@ namespace tools::world_gen
 				if (calm) continue;
 				LandmarkRng rng{ Mix64(h + 3) };
 				const double t = rng.Next();
-				if (t < 0.28) BuildStandingStones(w, c, rng);
-				else if (t < 0.55) BuildSmallRuin(w, c, rng);
-				else if (t < 0.75) BuildCamp(w, c, rng);
+				if (t < 0.24) BuildStandingStones(w, c, rng);
+				else if (t < 0.46) BuildSmallRuin(w, c, rng);
+				else if (t < 0.64) BuildCamp(w, c, rng);
+				else if (t < 0.78) BuildBattlefield(w, c, rng); // atelier décors (BD T1)
 				else BuildFencedField(w, c, rng);
 				w.Occupy(c, 24.0);
 				++w.report.microLandmarks;

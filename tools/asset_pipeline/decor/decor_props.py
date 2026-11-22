@@ -3767,6 +3767,113 @@ def p_wardrobe_painted(spec, lod):
     return m.out()
 
 
+# ======================================================================= Tome 7
+def p_obelisk_ruined(spec, lod):
+    """Obélisque de grès de nécropole (n° 203) : _1 debout, fût brisé en biseau à 5,5 m ;
+    _2 tronçon resté sur son socle, le reste couché dans le sable."""
+    m = M()
+    o = m.p("Rock_Ochre")
+    box(o, (-0.9, -0.9, 0), (0.9, 0.9, 0.5))
+    box(o, (-0.7, -0.7, 0.5), (0.7, 0.7, 0.8))
+    standing = spec["id"].endswith("_1")
+    top = 5.5 if standing else 1.6
+
+    def shaft(part, z0, z1, h0, h1, xf=None, cut=0.0):
+        c = [(-h0, -h0, z0), (h0, -h0, z0), (h0, h0, z0), (-h0, h0, z0),
+             (-h1, -h1, z1 - cut), (h1, -h1, z1 + cut), (h1, h1, z1 + cut * 0.4), (-h1, h1, z1 - cut * 0.6)]
+        c = [Vector(v) for v in c]
+        if xf is not None:
+            c = [xf @ v for v in c]
+        for f in ((0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7), (4, 5, 6, 7)):
+            _quad(part, *[c[k] for k in f])
+
+    shaft(o, 0.8, top, 0.5, 0.5 - 0.03 * top, cut=0.25)
+    if not standing:
+        xf = Matrix.Translation((0.6, 0.0, 0.35)) @ Matrix.Rotation(math.radians(88), 4, "Y") @ Matrix.Rotation(0.2, 4, "Z")
+        shaft(o, 0.0, 4.2, 0.45, 0.3, xf=xf, cut=0.15)
+        if lod < 2:
+            xf2 = Matrix.Translation((4.75, 0.3, 0.25)) @ Matrix.Rotation(math.radians(90), 4, "Y")
+            shaft(o, 0.0, 0.9, 0.3, 0.001, xf=xf2)   # pyramidion tombé
+    return m.out()
+
+
+def p_colossus_feet(spec, lod):
+    """Pieds d'un colosse brisé sur leur socle (n° 204), socle 4,4 x 3 m, H 3,4 m :
+    deux pieds nus, jambes rompues à mi-mollet, éclats au pied du socle. Aucun visage
+    (statues neutres, décision Q18)."""
+    m = M()
+    o = m.p("Rock_Ochre")
+    box(o, (-2.2, -1.5, 0), (2.2, 1.5, 0.9))
+    box(o, (-2.35, -1.65, 0), (2.35, 1.65, 0.25))
+    i0 = len(o.v)
+    for sx, h in ((-0.85, 3.4), (0.85, 2.5)):
+        box(o, (sx - 0.55, -0.3, 0.9), (sx + 0.55, 0.85, 1.5))           # talon, cou-de-pied
+        box(o, (sx - 0.55, -1.2, 0.9), (sx + 0.55, -0.3, 1.18))          # avant-pied
+        lathe_at(o, sx, 0.35, [(0.6, 0.9), (0.62, 1.6), (0.55, 2.2), (0.62, h - 0.3), (0.55, h)], S(lod, 10))
+        if lod < 2:
+            for k in range(5):
+                x = sx - 0.42 + 0.21 * k
+                cyl(o, (x, -1.2, 1.0), (x, -1.45, 1.0), 0.11 - 0.01 * abs(k - 1), 0.09, S(lod, 6))
+    _jitter(o, i0, 0.03, spec["seed"] % 11)
+    if lod < 2:
+        for k in range(4):
+            _stone(m.p("Rock_Ochre"), Vector((-1.8 + 1.2 * k, -2.2 + 0.2 * k, 0)), 0.45, 0.35, spec["seed"] + k, lod)
+    return m.out()
+
+
+def p_mausoleum_small(spec, lod):
+    """Petit mausolée de pierre (n° 205), 3 x 4 x 4,2 m : socle, murs, pilastres, porte
+    de bronze sous arc, fronton, toit à deux pans de dalles, marches."""
+    m = M()
+    w, c = m.p("Stone_Wall"), m.p("Stone_Carved")
+    box(c, (-1.7, -2.2, 0), (1.7, 2.2, 0.4))
+    box(c, (-1.0, -2.75, 0), (1.0, -2.2, 0.2))
+    box(c, (-1.0, -2.5, 0.2), (1.0, -2.2, 0.4))
+    box(w, (-1.5, -2.0, 0.4), (1.5, 2.0, 3.0))
+    for x in (-1.55, -0.75, 0.75, 1.55):
+        box(c, (x - 0.12, -2.12, 0.4), (x + 0.12, -1.95, 3.0))
+    box(c, (-1.65, -2.15, 3.0), (1.65, 2.15, 3.2))
+    _arch_band(c, -0.55, 0.55, 2.0, 0.55, 0.12, 0.14, lod, y0=(-2.08, -1.96))
+    box(m.p("Brass"), (-0.55, -2.03, 0.4), (0.55, -2.0, 2.0))
+    r = m.p("Stone_Carved")
+    for sg in (-1, 1):
+        _quad(r, (sg * 1.75, -2.25, 3.2), (sg * 1.75, 2.25, 3.2), (0, 2.25, 4.2), (0, -2.25, 4.2))
+        if sg > 0:
+            r.f[-1] = tuple(reversed(r.f[-1]))
+    for y in (-2.25, 2.25):
+        tri = (Vector((-1.75, y, 3.2)), Vector((1.75, y, 3.2)), Vector((0, y, 4.2)))
+        i = len(r.v)
+        r.v += list(tri)
+        r.f.append((i, i + 1, i + 2) if y > 0 else (i, i + 2, i + 1))
+        r.uv.append([(0, 0), (1, 0), (0.5, 1)])
+        r.cn.append(None)
+    return m.out()
+
+
+def p_stair_spiral(spec, lod):
+    """Escalier de pierre en colimaçon (n° 206), Ø 2,6 m, H 3,2 m : noyau central,
+    marches en éventail (un tour), main courante de corde au LOD0."""
+    m = M()
+    c = m.p("Stone_Carved")
+    cyl(c, (0, 0, 0), (0, 0, 3.4), 0.18, 0.18, S(lod, 10))
+    n = 16
+    for k in range(n):
+        a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1.15) / n
+        z = 0.2 * (k + 1)
+        pts = [Vector((0.15 * math.cos(a0), 0.15 * math.sin(a0), z)), Vector((1.3 * math.cos(a0), 1.3 * math.sin(a0), z)),
+               Vector((1.3 * math.cos(a1), 1.3 * math.sin(a1), z)), Vector((0.15 * math.cos(a1), 0.15 * math.sin(a1), z))]
+        low = [p - Vector((0, 0, 0.18)) for p in pts]
+        _quad(c, *pts)
+        _quad(c, low[3], low[2], low[1], low[0])
+        if lod < 2:
+            _quad(c, low[0], low[1], pts[1], pts[0])
+            _quad(c, low[1], low[2], pts[2], pts[1])
+    if lod == 0:
+        rail = [Vector((1.25 * math.cos(2 * math.pi * t / 24), 1.25 * math.sin(2 * math.pi * t / 24), 0.9 + 2.8 * t / 24)) for t in range(25)]
+        API["tube"](m.p("Rope"), rail, [0.025] * 25, 4, 0.5)
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

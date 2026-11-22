@@ -361168,6 +361168,78 @@
       "placement": "intérieurs (catalogue) : chambres",
       "generated": false,
       "source": "[BD] T6"
+    },
+    {
+      "id": "decor_203",
+      "num": 203,
+      "name": "Obélisque de grès brisé",
+      "tome": 7,
+      "family": "objets",
+      "meshes": [
+        "Obelisk_Ruined_1",
+        "Obelisk_Ruined_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T7-P045",
+        "T7-P046",
+        "T7-P047"
+      ],
+      "placement": "désert : vestiges très rares (BushesFor desert)",
+      "generated": true,
+      "source": "[BD] T7"
+    },
+    {
+      "id": "decor_204",
+      "num": 204,
+      "name": "Pieds d'un colosse brisé sur socle",
+      "tome": 7,
+      "family": "objets",
+      "meshes": [
+        "Colossus_Feet_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T7-P046"
+      ],
+      "placement": "désert : vestiges très rares (BushesFor desert)",
+      "generated": true,
+      "source": "[BD] T7"
+    },
+    {
+      "id": "decor_205",
+      "num": 205,
+      "name": "Petit mausolée de pierre",
+      "tome": 7,
+      "family": "objets",
+      "meshes": [
+        "Mausoleum_Small_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T7-P046",
+        "T7-P047"
+      ],
+      "placement": "cimetières des capitales et grandes villes",
+      "generated": true,
+      "source": "[BD] T7"
+    },
+    {
+      "id": "decor_206",
+      "num": 206,
+      "name": "Escalier de pierre en colimaçon",
+      "tome": 7,
+      "family": "objets",
+      "meshes": [
+        "Stair_Spiral_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T7-P019"
+      ],
+      "placement": "intérieurs (catalogue) : tours, donjons",
+      "generated": false,
+      "source": "[BD] T7"
     }
   ]
 }

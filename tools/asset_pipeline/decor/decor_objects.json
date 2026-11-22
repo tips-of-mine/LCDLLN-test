@@ -1140,6 +1140,30 @@
       "nom": "Armoire peinte",
       "tome": 6,
       "placement_prevu": "intérieurs (catalogue) : chambres"
+    },
+    {
+      "num": 203,
+      "nom": "Obélisque de grès brisé",
+      "tome": 7,
+      "placement_prevu": "désert : vestiges très rares (BushesFor desert)"
+    },
+    {
+      "num": 204,
+      "nom": "Pieds d'un colosse brisé sur socle",
+      "tome": 7,
+      "placement_prevu": "désert : vestiges très rares (BushesFor desert)"
+    },
+    {
+      "num": 205,
+      "nom": "Petit mausolée de pierre",
+      "tome": 7,
+      "placement_prevu": "cimetières des capitales et grandes villes"
+    },
+    {
+      "num": 206,
+      "nom": "Escalier de pierre en colimaçon",
+      "tome": 7,
+      "placement_prevu": "intérieurs (catalogue) : tours, donjons"
     }
   ]
 }

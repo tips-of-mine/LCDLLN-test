@@ -120,7 +120,10 @@ namespace tools::world_gen
 			static const std::vector<Species> dry = { { "Bush_Common", 1, 0.5, 0.8, 0 }, { "Plant_7", 1, 0.8, 1.3, 0 } };
 			static const std::vector<Species> desert = { { "Bush_Common", 1, 0.5, 0.8, 0 }, { "Plant_7", 1, 0.8, 1.3, 0 },
 				{ "Ground_Cracked_1", 0.5, 0.8, 1.3, 0 }, { "Skull_Beast_1", 0.03, 0.8, 1.15, 1.0 },
-				{ "Termite_Mound_1", 0.04, 0.8, 1.2, 0.8 } };   // T5 (n° 183, hypothèse)
+				{ "Termite_Mound_1", 0.04, 0.8, 1.2, 0.8 },   // T5 (n° 183, hypothèse)
+				// T7 (n° 203-204, pl.45-47) : vestiges de nécropole ensablée, très rares.
+				{ "Obelisk_Ruined_1", 0.006, 0.9, 1.1, 1.0 }, { "Obelisk_Ruined_2", 0.006, 0.9, 1.1, 1.0 },
+				{ "Colossus_Feet_1", 0.003, 0.9, 1.1, 2.5 } };
 			if (c == '~' || c == ':' || c == 'l') return desert;   // désert, terres arides
 			if (c == 'V' || c == '^' || c == 'M') return dry;
 			if (c == 'T' || c == 'R' || c == 'L' || c == 't' || c == '%' || c == '&') return forest;

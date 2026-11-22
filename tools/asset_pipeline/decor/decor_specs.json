@@ -9371,6 +9371,106 @@
       "billboard": false,
       "replaces": null,
       "ref": "T6-P017 ; T6-P018"
+    },
+    {
+      "id": "Obelisk_Ruined_1",
+      "num": 203,
+      "family": "objets",
+      "builder": "obelisk_ruined",
+      "seed": 20301,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.8,
+        1.8
+      ],
+      "height_m": [
+        5.5,
+        5.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T7-P045 ; T7-P046 ; T7-P047"
+    },
+    {
+      "id": "Obelisk_Ruined_2",
+      "num": 203,
+      "family": "objets",
+      "builder": "obelisk_ruined",
+      "seed": 20302,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        6.3,
+        6.8
+      ],
+      "height_m": [
+        1.6,
+        1.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T7-P045 ; T7-P046 ; T7-P047"
+    },
+    {
+      "id": "Colossus_Feet_1",
+      "num": 204,
+      "family": "objets",
+      "builder": "colossus_feet",
+      "seed": 20303,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.7,
+        4.8
+      ],
+      "height_m": [
+        3.4,
+        3.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T7-P046"
+    },
+    {
+      "id": "Mausoleum_Small_1",
+      "num": 205,
+      "family": "objets",
+      "builder": "mausoleum_small",
+      "seed": 20304,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        3.5,
+        3.5
+      ],
+      "height_m": [
+        4.2,
+        4.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T7-P046 ; T7-P047"
+    },
+    {
+      "id": "Stair_Spiral_1",
+      "num": 206,
+      "family": "objets",
+      "builder": "stair_spiral",
+      "seed": 20305,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.6,
+        2.7
+      ],
+      "height_m": [
+        3.6,
+        3.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T7-P019"
     }
   ]
 }

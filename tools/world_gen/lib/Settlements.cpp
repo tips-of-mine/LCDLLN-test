@@ -1249,6 +1249,19 @@ namespace tools::world_gen
 					for (const double sg : { -1.0, 1.0 })
 						AddProp(w, "Urn_Stone_1", gy + sd * (1.6 * sg), 0.0, 1.0, kSolid, 1, 0.35);
 				}
+				// Petit mausolée de pierre (atelier décors T7, pl.46-47) au fond des cimetières des
+				// grandes villes, porte tournée vers la ville.
+				if (c.kind == "capitale" || c.kind == "grande_ville")
+				{
+					const Vec2 tv{ c.center.x - gy.x, c.center.z - gy.z };
+					const double tl = std::max(1e-6, std::hypot(tv.x, tv.z));
+					const Vec2 mp = gy - Vec2{ tv.x / tl, tv.z / tl } * 7.0;
+					if (!w.IsWater(mp) && !w.IsOccupied(mp, 2.5))
+					{
+						AddProp(w, "Mausoleum_Small_1", mp, YawFacing(mp - c.center), 1.0, kSolid, 0, 2.4);   // porte en +Z glTF
+						w.Occupy(mp, 2.5);
+					}
+				}
 				PlaceOldGraves(w, gy, c.center - gy, GraveCountFor(c), rng);
 				w.Occupy(gy, 2.5);
 			}

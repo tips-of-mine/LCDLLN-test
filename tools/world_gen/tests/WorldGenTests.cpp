@@ -4421,7 +4421,7 @@ namespace
 		for (const ScatterDef& s : w->scatter)
 		{
 			const double d = dist(s.position);
-			if (s.mesh.find("Overhang_Roof_Plaster") != std::string::npos && (s.flags & 1u) && d > 235.0 && d < 355.0) ++tents;
+			if (s.mesh.find("Tent_Pilgrim_") != std::string::npos && (s.flags & 1u) && d > 220.0 && d < 432.0) ++tents;
 			if (s.mesh.find("Stairs_Exterior_Straight") != std::string::npos && d < 210.0) ++stairs;
 			if (s.mesh.find("Door_2_Round") != std::string::npos && d < 170.0) ++doors;
 			if (s.mesh.find("Pebble_Square_5") != std::string::npos && s.scale >= 12.0 && d > 420.0 && d < 560.0) ++stones;
@@ -4437,7 +4437,8 @@ namespace
 		std::fprintf(stderr, "  oracle : maisons %d, tentes %d, marches %d, portes %d, menhirs %d (%d lueurs), echoppes SO %d\n",
 			houses, tents, stairs, doors, stones, blueStones, stallsSw);
 		Check(houses == 0, "oracle v1.0.136 : aucune maison europeenne dans le camp");
-		Check(tents >= 40, "oracle v1.0.136 : ocean de tentes (40 tentes au moins)");
+		// Retour propriétaire du 23/11/2026 : « pas assez de tentes autour » -> quinze rangs.
+		Check(tents >= 1200, "oracle : ocean de tentes de pelerins (1200 tentes au moins)");
 		Check(stairs == 8 * 33 && doors == 8, "oracle v1.0.136 : 8 escaliers et 8 portes");
 		Check(stones >= 18 && blueStones >= 9, "oracle v1.0.136 : menhirs bleus sur le grand cercle");
 		Check(stallsSw >= 8, "oracle v1.0.136 : echoppes des faux devins le long du chemin du sud-ouest");

@@ -10,15 +10,15 @@
 //      Stairs_Exterior_Straight, jusqu'à un palier et une PORTE fermée (façade de pierre, porte
 //      ronde, rosace) ; la porte du SO, au bout du chemin des échoppes, est « la » porte de la BD ;
 //   5. cinq TENTES PYRAMIDALES au pied du rocher (l'une est le temple) ;
-//   4. l'« océan de tentes » : six rangs de tentes de pèlerins en anneaux concentriques
-//      (≈ 0,6 à 1,3 rayon du rocher au-delà de son pied), fanions, feux et bagages ;
+//   4. l'« océan de tentes » : quinze rangs de tentes de pèlerins (Tent_Pilgrim_*) en anneaux
+//      concentriques, du chemin de ronde jusqu'à ≈ 425 m, fanions, feux et bagages ;
 //   6. une vingtaine de MENHIRS bleus sur un grand cercle (≈ 440-540 m) ;
 //   3. au SUD-OUEST, le chemin d'arrivée (Passe des Dragons) bordé des échoppes des faux devins ;
 //   9. les services du camp, en tentes et en étals : auberge (grand pavillon), potions, armes,
 //      armures, temple, cimetière, cinq écuries (enclos).
 // Les routes du lore qui arrivaient au centre s'arrêtent au chemin de ronde du pied du rocher.
-// Pas de mesh de tente : panneaux Overhang_Roof_Plaster inclinés (tente à deux pans, pyramide à
-// quatre pans). Pas de matériau bleu : roche de l'Oracle en couches « roche » et « neige » (pâle)
+// Tentes de pèlerins modélisées (atelier décors, 23/11/2026) ; pavillon de l'auberge, échoppes et
+// tentes pyramidales en panneaux Overhang_Roof_Plaster inclinés (deux ou quatre pans). Pas de matériau bleu : roche de l'Oracle en couches « roche » et « neige » (pâle)
 // du splat, lumières ponctuelles bleues (portes, flancs, couronne, menhirs).
 
 #include "WorldGenContext.h"
@@ -588,46 +588,6 @@ namespace tools::world_gen
 			Chain(L, pts, 0);
 		}
 
-		// --- 4. L'« océan de tentes » : six rangs en deux anneaux, entrées tournées vers le rocher.
-		int tents = 0;
-		{
-			static const double kRows[6] = { 248.0, 266.0, 284.0, 306.0, 324.0, 342.0 };
-			for (double row : kRows)
-			{
-				const int slots = static_cast<int>(2.0 * kPi * row / 10.0);
-				for (int k = 0; k < slots; ++k)
-				{
-					if (!rng.Chance(0.62)) continue;
-					const double a = (k + rng.Range(-0.3, 0.3)) * 2.0 * kPi / slots;
-					const Vec2 t = o + Dir(a) * (row + rng.Range(-2.5, 2.5));
-					const Vec2 u = Dir(a + rng.Range(-0.2, 0.2)); // faîtage radial
-					const bool longTent = rng.Chance(0.3);
-					const double s = longTent ? 1.6 : rng.Range(1.45, 1.8);
-					const int pairs = longTent ? 2 : 1;
-					const double hz = pairs * s + 0.6, hx = 2.4;
-					if (!w.InPlayableBounds(t, 40.0) || RoadGap(w, t) < hz + 2.0 || w.IsOccupiedRect(t, hx, hz, YawFacing(u))) continue;
-					const double theta = rng.Range(52.0, 58.0);
-					const Vec2 door = RidgeTent(w, t, u, s, pairs, theta, true);
-					w.OccupyRect(t, hx, hz, YawFacing(u));
-					L.homeDoors.push_back(door);
-					++tents;
-					const Vec2 side{ -u.z, u.x };
-					if (rng.Chance(0.22)) // fanion au mât du bout de la tente
-						Prop(w, rng.Chance(0.5) ? "Banner_1" : "Banner_2", t + u * (pairs * s), YawFacing(side), 0.8, 0, 1, 0.0, 2.0 * s * std::sin(theta * kPi / 180.0) + 1.1);
-					if (rng.Chance(0.16)) // feu, bagages
-					{
-						static const char* kCamp[] = { "Cauldron", "Barrel", "Crate_Wooden", "Bag", "Bucket_Wooden_1", "Pot_1" };
-						const Vec2 q = t + side * (rng.Chance(0.5) ? 3.4 : -3.4);
-						if (!w.IsOccupied(q, 0.6) && RoadGap(w, q) > 1.5)
-						{
-							Prop(w, kCamp[rng.Below(6)], q, rng.Range(0.0, 360.0), 1.0, kSolid, 1, 0.45);
-							w.Occupy(q, 0.6);
-						}
-					}
-				}
-			}
-		}
-
 		// --- Cimetière de Ralilde Sombremorne : hors des tentes, à l'ouest du chemin d'arrivée.
 		{
 			Vec2 gy = o + Dir(aMain + 0.95) * 398.0;
@@ -638,7 +598,7 @@ namespace tools::world_gen
 			}
 			L.hasGraveyard = true;
 			L.graveyard = gy;
-			w.Occupy(gy, 6.0);
+			w.Occupy(gy, 9.0); // marge : l'océan de tentes est posé après
 			for (int k = 0; k < 6; ++k)
 			{
 				const Vec2 p = gy + Dir(k * kPi / 3.0 + 0.3) * 3.0;
@@ -706,6 +666,54 @@ namespace tools::world_gen
 			if (made < 5) w.Warn("camp de l'Oracle : " + std::to_string(made) + " ecurie(s) posee(s) sur 5");
 		}
 
+		// --- 4. L'« océan de tentes » : rangs serrés en deux anneaux (chemin de ronde -> allée,
+		//     allée -> avant les menhirs), entrées tournées vers le rocher ; posé après le
+		//     cimetière et les écuries (même couronne de rayons), qu'il contourne. Retour propriétaire du
+		//     23/11/2026 (« pas assez de tentes autour ») : quinze rangs au lieu de six, tentes de
+		//     pèlerins modélisées (Tent_Pilgrim_*, faîtage selon X local, entrée en -X) au lieu
+		//     des panneaux de toit ; tentes longues de familles avec leur feu.
+		int tents = 0;
+		{
+			static const char* kTents[4] = { "Tent_Pilgrim_1", "Tent_Pilgrim_2", "Tent_Pilgrim_3", "Tent_Pilgrim_Long_1" };
+			std::vector<double> rows;
+			for (double r = kRingR + 14.0; r <= kAlleyR - 9.0; r += 12.5) rows.push_back(r);
+			for (double r = kAlleyR + 9.0; r <= 425.0; r += 12.5) rows.push_back(r);
+			for (double row : rows)
+			{
+				const int slots = static_cast<int>(2.0 * kPi * row / 7.5);
+				const double phase = rng.Range(0.0, 1.0);
+				for (int k = 0; k < slots; ++k)
+				{
+					if (!rng.Chance(0.82)) continue;
+					const double a = (k + phase + rng.Range(-0.25, 0.25)) * 2.0 * kPi / slots;
+					const Vec2 t = o + Dir(a) * (row + rng.Range(-2.0, 2.0));
+					const Vec2 u = Dir(a + rng.Range(-0.25, 0.25)); // faîtage radial (vers l'extérieur)
+					const int kind = rng.Chance(0.12) ? 3 : static_cast<int>(rng.Below(3));
+					const double hz = kind == 3 ? 3.2 : 2.0, hx = kind == 3 ? 1.9 : 1.6; // hz : le long du faîtage
+					if (!w.InPlayableBounds(t, 40.0) || RoadGap(w, t) < hz + 1.5 || w.IsOccupiedRect(t, hx, hz, YawFacing(u))) continue;
+					// X local du mesh le long de u : l'entrée (-X) regarde le rocher.
+					Prop(w, kTents[kind], t, YawAlong(u), rng.Range(0.92, 1.08), kSolid, 0, kind == 3 ? 2.2 : 1.5);
+					w.OccupyRect(t, hx, hz, YawFacing(u));
+					L.homeDoors.push_back(t - u * (hz + 1.0));
+					++tents;
+					const Vec2 side{ -u.z, u.x };
+					if (rng.Chance(0.18)) // fanion au mât arrière
+						Prop(w, rng.Chance(0.5) ? "Banner_1" : "Banner_2", t + u * (hz - 0.3), YawFacing(side), 0.8, 0, 1, 0.0, 2.6);
+					if (rng.Chance(kind == 3 ? 0.6 : 0.14)) // feu (familles), bagages
+					{
+						static const char* kCamp[] = { "Bonfire_Stack_1", "Cauldron", "Barrel", "Crate_Wooden", "Bag", "Bucket_Wooden_1", "Pot_1", "PackSaddle_1" };
+						const Vec2 q = t + side * (rng.Chance(0.5) ? 3.0 : -3.0);
+						if (!w.IsOccupied(q, 0.6) && RoadGap(w, q) > 1.5)
+						{
+							const int pick = kind == 3 ? 0 : static_cast<int>(1 + rng.Below(7));
+							Prop(w, kCamp[pick], q, rng.Range(0.0, 360.0), 1.0, kSolid, 1, 0.45);
+							w.Occupy(q, 0.6);
+						}
+					}
+				}
+			}
+		}
+
 		// --- 6. Menhirs bleus sur le grand cercle (dalles dressées, lueur bleue d'un sur deux).
 		{
 			int stones = 0;
@@ -733,6 +741,6 @@ namespace tools::world_gen
 		c.radiusM = kPlainR;
 		L.startSpot = parvis + swDir * 4.0;
 		L.startYawDeg = YawFacing(swDir * -1.0);
-		if (tents < 40) w.Warn("camp de l'Oracle : seulement " + std::to_string(tents) + " tentes");
+		if (tents < 1200) w.Warn("camp de l'Oracle : seulement " + std::to_string(tents) + " tentes");
 	}
 }

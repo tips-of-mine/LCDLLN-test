@@ -1206,6 +1206,12 @@
       "nom": "Bélier de siège couvert sur roues",
       "tome": 10,
       "placement_prevu": "champs de bataille"
+    },
+    {
+      "num": 214,
+      "nom": "Tente de pèlerin à deux pans",
+      "tome": 0,
+      "placement_prevu": "Camp de l'Oracle : océan de tentes (quinze rangs)"
     }
   ]
 }

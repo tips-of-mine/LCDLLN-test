@@ -81,9 +81,12 @@ namespace engine
 			// requête, et seulement quand un pas tombe.
 			if (!swimming)
 			{
+				// Semelle réelle : au repos le centre est à sol + height / 2 (la hauteur de
+				// la capsule inclut ses demi-sphères), soit `radius` plus haut que `foot`.
+				const float soleY = center.y - capsule.height * 0.5f;
 				engine::gameplay::IWorldCollider::WaterQuery wq;
-				const engine::math::Vec3 probe(foot.x, foot.y + 0.05f, foot.z);
-				if (m_cellCollider.QueryWater(probe, wq) && wq.inWater && wq.surfaceY > foot.y + kShallowWaterMinDepthM)
+				const engine::math::Vec3 probe(foot.x, soleY + 0.05f, foot.z);
+				if (m_cellCollider.QueryWater(probe, wq) && wq.inWater && wq.surfaceY > soleY + kShallowWaterMinDepthM)
 					ctx.inShallowWater = true;
 			}
 		}

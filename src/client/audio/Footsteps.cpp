@@ -85,6 +85,20 @@ namespace engine::audio
 			return "step_water";
 		if (ctx.heightAboveTerrain > 0.3f)
 			return "step_wood"; // plancher d'un bâtiment, pont, quai
+		using engine::world::GroundClass;
+		switch (ctx.ground)
+		{
+		case GroundClass::Grass: return "step_grass";
+		case GroundClass::Dirt: return "step_dirt";
+		case GroundClass::PackedEarth: return "step_packed_earth";
+		case GroundClass::Gravel: return "step_gravel";
+		case GroundClass::Rock: return "step_rock";
+		case GroundClass::Snow: return "step_snow_crunch";
+		case GroundClass::Sand: return "step_sand";
+		case GroundClass::Mud: return "step_mud_squelch";
+		case GroundClass::Marble: return "step_marble";
+		case GroundClass::Unknown: break;
+		}
 		switch (ctx.layer)
 		{
 		case GroundLayer::Grass: return "step_grass";

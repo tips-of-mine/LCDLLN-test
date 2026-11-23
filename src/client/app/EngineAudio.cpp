@@ -36,6 +36,9 @@ namespace engine
 
 	void Engine::UpdateFootstepAudio(float dt)
 	{
+		/// SND.2b — profondeur d'eau (m) au-dessus de la semelle à partir de laquelle
+		/// un pas fait un clapotis plutôt que le son du sol.
+		constexpr float kShallowWaterMinDepthM = 0.04f;
 		if (!m_audioEngine.IsDeviceReady())
 			return;
 		const engine::math::Vec3 vel = m_characterController.GetVelocity();
@@ -67,10 +70,22 @@ namespace engine
 				const engine::world::cells::CellPoint mn = engine::world::cells::CellMinCorner(cell);
 				const int layer = tile.surface->LayerAt(gx, gz, mn.x, mn.z, engine::world::cells::kCellSizeMeters);
 				ctx.layer = static_cast<engine::audio::GroundLayer>(layer);
+				// SND.2b — nature du sol (route, rue, sable, boue, marbre…) si la
+				// cellule a une carte des sols.
+				ctx.ground = tile.surface->GroundAt(gx, gz);
 				break;
 			}
 			if (m_cellHeights->IsLoadedAt(foot.x, foot.z))
 				ctx.heightAboveTerrain = foot.y - m_cellHeights->HeightAt(foot.x, foot.z);
+			// SND.2b — pied dans l'eau sans nager (gué, rivage) : clapotis. Une seule
+			// requête, et seulement quand un pas tombe.
+			if (!swimming)
+			{
+				engine::gameplay::IWorldCollider::WaterQuery wq;
+				const engine::math::Vec3 probe(foot.x, foot.y + 0.05f, foot.z);
+				if (m_cellCollider.QueryWater(probe, wq) && wq.inWater && wq.surfaceY > foot.y + kShallowWaterMinDepthM)
+					ctx.inShallowWater = true;
+			}
 		}
 
 		float volume = engine::audio::FootstepVolume(speed);

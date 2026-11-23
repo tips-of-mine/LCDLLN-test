@@ -3569,6 +3569,499 @@ def p_doll_rag(spec, lod):
     return m.out()
 
 
+# ======================================================================= Tome 6
+def p_bunting_garland(spec, lod):
+    """Guirlande de fanions sur deux mâts (n° 195) : portée 8 m, mâts 4,5 m, corde en
+    chaînette, fanions triangulaires de quatre couleurs alternées."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for x in (-4.0, 4.0):
+        cyl(d, (x, 0, 0), (x, 0, 4.5), 0.07, 0.05, S(lod, 6))
+    n = {0: 24, 1: 12, 2: 6}[lod]
+    sag = 1.0
+    pts = [Vector((-4.0 + 8.0 * k / n, 0, 4.4 - sag * math.sin(math.pi * k / n))) for k in range(n + 1)]
+    if lod < 2:
+        API["tube"](m.p("Rope"), pts, [0.012] * len(pts), 4, 0.5)
+    cols = ("Cloth_Red", "Cloth_Ochre", "Cloth_Blue", "Cloth_Green")
+    nf = {0: 16, 1: 10, 2: 6}[lod]
+    for k in range(nf):
+        t0, t1 = (k + 0.15) / nf, (k + 0.85) / nf
+        a = Vector((-4.0 + 8.0 * t0, 0, 4.4 - sag * math.sin(math.pi * t0)))
+        b = Vector((-4.0 + 8.0 * t1, 0, 4.4 - sag * math.sin(math.pi * t1)))
+        c = (a + b) / 2 - Vector((0, 0, 0.42))
+        p = m.p(cols[k % 4])
+        i = len(p.v)
+        p.v += [a, b, c]
+        p.f.append((i, i + 1, i + 2))
+        p.uv.append([(0, 1), (1, 1), (0.5, 0)])
+        p.cn.append(None)
+    return m.out()
+
+
+def p_bookcase_tall(spec, lod):
+    """Grande bibliothèque murale (n° 196), 2,4 x 0,5 x 3 m : montants, six tablettes,
+    rangées de livres de hauteurs variées, corniche."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for x in (-1.2, 0.0, 1.2):
+        box(d, (x - 0.04, -0.25, 0), (x + 0.04, 0.25, 2.9))
+    box(d, (-1.2, 0.22, 0), (1.2, 0.25, 2.9))
+    zs = [0.08 + 0.47 * k for k in range(7)]
+    for z in zs:
+        box(d, (-1.2, -0.25, z - 0.04), (1.2, 0.25, z))
+    box(d, (-1.28, -0.3, 2.9), (1.28, 0.3, 3.0))
+    b = m.p("Book_Covers")
+    rng = random.Random(spec["seed"])
+    for z in zs[:-1]:
+        for half in (-1, 1):
+            x = 0.04 if half > 0 else -1.16
+            end = 1.16 if half > 0 else -0.04
+            step = {0: 1, 1: 2, 2: 6}[lod]
+            while x < end - 0.03:
+                wd = rng.uniform(0.03, 0.07) * step
+                if x + wd > end:
+                    break
+                if rng.random() < 0.08 and lod == 0:
+                    x += wd
+                    continue
+                hgt = rng.uniform(0.26, 0.4)
+                box(b, (x, -0.21, z), (x + wd - 0.004, rng.uniform(0.0, 0.05), z + hgt), uv=2.0)
+                x += wd
+    return m.out()
+
+
+def p_desk_scribe(spec, lod):
+    """Pupitre de scribe incliné (n° 197), 1,1 x 0,7 x 1,1 m : plateau en pente,
+    rebord porte-plume, tablette basse, livre ouvert et encrier."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for x in (-0.5, 0.5):
+        for y in (-0.3, 0.3):
+            h = 0.85 if y < 0 else 1.05
+            box(d, (x - 0.035, y - 0.035, 0), (x + 0.035, y + 0.035, h))
+    box(d, (-0.5, -0.3, 0.18), (0.5, 0.3, 0.21))
+    xf = Matrix.Translation((0, 0, 0.95)) @ Matrix.Rotation(math.radians(18), 4, "X")
+    box(d, (-0.55, -0.36, -0.02), (0.55, 0.36, 0.02), xf=xf)
+    box(d, (-0.55, -0.4, -0.02), (0.55, -0.36, 0.05), xf=xf)
+    if lod < 2:
+        box(m.p("Paper"), (-0.32, -0.2, 0.02), (0.32, 0.2, 0.035), xf=xf)
+        lathe_at(m.p("Glass_Green"), 0.42, 0.25, [(0.03, 1.09), (0.035, 1.12), (0.015, 1.16)], S(lod, 8))
+    return m.out()
+
+
+def p_paper_stack(spec, lod):
+    """Piles de documents (n° 198) : _1 trois liasses ficelées, _2 pile haute et rouleaux."""
+    m = M()
+    p = m.p("Paper")
+    rng = random.Random(spec["seed"])
+    tall = spec["id"].endswith("_2")
+    piles = [(-0.18, 0.0, 0.28), (0.12, 0.05, 0.18), (0.0, -0.22, 0.12)] if not tall else [(0.0, 0.0, 0.55)]
+    for cx, cy, h in piles:
+        z = 0.0
+        while z < h:
+            dz = rng.uniform(0.02, 0.05) if lod < 2 else h
+            xf = Matrix.Translation((cx + rng.uniform(-0.01, 0.01), cy, z)) @ Matrix.Rotation(rng.uniform(-0.12, 0.12), 4, "Z")
+            box(p, (-0.15, -0.11, 0), (0.15, 0.11, min(dz, h - z)), uv=3.0, xf=xf)
+            z += dz
+        if lod == 0 and not tall:
+            box(m.p("Rope"), (cx - 0.01, cy - 0.12, 0), (cx + 0.01, cy + 0.12, h + 0.005))
+    if tall:
+        for k in range({0: 3, 1: 2, 2: 1}[lod]):
+            y = -0.25 - 0.07 * k
+            cyl(p, (-0.2, y, 0.035), (0.2, y, 0.035), 0.035, 0.035, S(lod, 8))
+    return m.out()
+
+
+def p_curtain_drape(spec, lod):
+    """Tenture de velours drapée (n° 199), 2,4 x 3,5 m : tringle, plis verticaux,
+    embrasses relevant le pan sur les côtés, frange au sol."""
+    m = M()
+    cyl(m.p("Brass"), (-1.25, 0.0, 3.45), (1.25, 0.0, 3.45), 0.025, 0.025, S(lod, 8))
+    c = m.p("Cloth_Red")
+    nx = {0: 24, 1: 14, 2: 6}[lod]
+    nz = {0: 8, 1: 5, 2: 2}[lod]
+    i0 = len(c.v)
+    for j in range(nz + 1):
+        z = 3.4 * (1 - j / nz)
+        for k in range(nx + 1):
+            u = k / nx
+            side = abs(u - 0.5) * 2
+            pinch = max(0.0, side - 0.55) * (1 - abs(z - 1.2) / 2.2) if z < 3.4 else 0
+            x = (-1.2 + 2.4 * u) * (1 - 0.35 * max(0.0, pinch))
+            y = -0.06 * math.sin(k * math.pi / 2 * (24 / nx) ** 0) - 0.04 * pinch
+            c.v.append(Vector((x, y, z)))
+    for j in range(nz):
+        for k in range(nx):
+            a = i0 + j * (nx + 1) + k
+            c.f.append((a, a + 1, a + nx + 2, a + nx + 1))
+            c.uv.append([(k / nx, 1 - j / nz), ((k + 1) / nx, 1 - j / nz), ((k + 1) / nx, 1 - (j + 1) / nz), (k / nx, 1 - (j + 1) / nz)])
+            c.cn.append(None)
+    if lod < 2:
+        for x in (-0.9, 0.9):
+            cyl(m.p("Cloth_Ochre"), (x * 1.0, -0.12, 1.2), (x * 1.0, 0.04, 1.2), 0.05, 0.05, 6)
+    return m.out()
+
+
+def p_pyre_stake(spec, lod):
+    """Bûcher à poteau (n° 200) : fagots et bûches en cercle Ø 2 m, poteau de 3 m au
+    centre, corde."""
+    m = M()
+    w = m.p("Bark_Broad")
+    rng = random.Random(spec["seed"])
+    n = {0: 22, 1: 12, 2: 6}[lod]
+    for k in range(n):
+        a = 2 * math.pi * k / n + rng.uniform(-0.1, 0.1)
+        r0, r1 = 0.95, rng.uniform(0.05, 0.25)
+        z1 = rng.uniform(0.6, 0.95)
+        cyl(w, (r0 * math.cos(a), r0 * math.sin(a), 0.05), (r1 * math.cos(a), r1 * math.sin(a), z1), 0.07, 0.06, S(lod, 6))
+    if lod < 2:
+        for k in range(8):
+            a = 2 * math.pi * k / 8 + 0.3
+            c = Vector((0.6 * math.cos(a), 0.6 * math.sin(a), 0.12))
+            dd = Vector((-math.sin(a), math.cos(a), 0)) * 0.4
+            cyl(w, c - dd, c + dd, 0.09, 0.09, S(lod, 6))
+    cyl(m.p("Wood_Dark"), (0, 0, 0), (0, 0, 3.0), 0.11, 0.09, S(lod, 8))
+    if lod < 2:
+        cyl(m.p("Rope"), (0, 0, 1.5), (0, 0, 1.65), 0.125, 0.125, S(lod, 8), False)
+    return m.out()
+
+
+def p_map_table(spec, lod):
+    """Table de campagne pliante avec carte déroulée (n° 201), 1,8 x 1 x 0,85 m :
+    tréteaux en X, plateau, carte imaginaire lestée de pierres, dague, bougeoir."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for x in (-0.7, 0.7):
+        for s in (-1, 1):
+            cyl(d, (x, -0.42 * s, 0), (x, 0.42 * s, 0.8), 0.03, 0.03, S(lod, 6))
+    box(d, (-0.9, -0.5, 0.8), (0.9, 0.5, 0.85))
+    p = m.p("Parchment_Map")
+    _quad(p, (-0.62, -0.4, 0.856), (0.62, -0.4, 0.856), (0.62, 0.4, 0.856), (-0.62, 0.4, 0.856))
+    if lod < 2:
+        cyl(p, (-0.66, -0.4, 0.875), (-0.66, 0.4, 0.875), 0.022, 0.022, S(lod, 8))
+        for x, y in ((0.55, 0.33), (0.55, -0.33)):
+            lathe_at(m.p("Rock_Grey"), x, y, [(0.04, 0.85), (0.05, 0.88), (0.001, 0.91)], 6)
+        candle(m, Vector((-0.8, 0.38, 0.85)), 0.16, 0.025, lod)
+    return m.out()
+
+
+def p_wardrobe_painted(spec, lod):
+    """Armoire peinte (n° 202), 1,6 x 0,6 x 2,2 m : caisse, deux portes à panneaux,
+    corniche, pieds tournés, poignées de laiton."""
+    m = M()
+    w = m.p("Wood_Painted")
+    box(w, (-0.8, -0.3, 0.15), (0.8, 0.3, 2.05))
+    box(w, (-0.86, -0.36, 2.05), (0.86, 0.36, 2.2))
+    box(w, (-0.84, -0.34, 0.12), (0.84, 0.34, 0.2))
+    for x in (-0.72, 0.72):
+        for y in (-0.24, 0.24):
+            lathe_at(m.p("Wood_Dark"), x, y, [(0.05, 0.0), (0.07, 0.06), (0.04, 0.12)], S(lod, 8))
+    if lod < 2:
+        o = m.p("Wood_Dark")
+        for x0, x1 in ((-0.74, -0.04), (0.04, 0.74)):
+            for z0, z1 in ((0.3, 1.0), (1.15, 1.95)):
+                box(o, (x0 + 0.06, -0.32, z0), (x1 - 0.06, -0.3, z1))
+        box(o, (-0.01, -0.32, 0.2), (0.01, -0.3, 2.05))
+        for x in (-0.09, 0.09):
+            lathe_at(m.p("Brass"), x, -0.32, [(0.001, 1.04), (0.02, 1.06), (0.001, 1.1)], 6)
+    return m.out()
+
+
+# ======================================================================= Tome 7
+def p_obelisk_ruined(spec, lod):
+    """Obélisque de grès de nécropole (n° 203) : _1 debout, fût brisé en biseau à 5,5 m ;
+    _2 tronçon resté sur son socle, le reste couché dans le sable."""
+    m = M()
+    o = m.p("Rock_Ochre")
+    box(o, (-0.9, -0.9, 0), (0.9, 0.9, 0.5))
+    box(o, (-0.7, -0.7, 0.5), (0.7, 0.7, 0.8))
+    standing = spec["id"].endswith("_1")
+    top = 5.5 if standing else 1.6
+
+    def shaft(part, z0, z1, h0, h1, xf=None, cut=0.0):
+        c = [(-h0, -h0, z0), (h0, -h0, z0), (h0, h0, z0), (-h0, h0, z0),
+             (-h1, -h1, z1 - cut), (h1, -h1, z1 + cut), (h1, h1, z1 + cut * 0.4), (-h1, h1, z1 - cut * 0.6)]
+        c = [Vector(v) for v in c]
+        if xf is not None:
+            c = [xf @ v for v in c]
+        for f in ((0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7), (4, 5, 6, 7)):
+            _quad(part, *[c[k] for k in f])
+
+    shaft(o, 0.8, top, 0.5, 0.5 - 0.03 * top, cut=0.25)
+    if not standing:
+        xf = Matrix.Translation((0.6, 0.0, 0.35)) @ Matrix.Rotation(math.radians(88), 4, "Y") @ Matrix.Rotation(0.2, 4, "Z")
+        shaft(o, 0.0, 4.2, 0.45, 0.3, xf=xf, cut=0.15)
+        if lod < 2:
+            xf2 = Matrix.Translation((4.75, 0.3, 0.25)) @ Matrix.Rotation(math.radians(90), 4, "Y")
+            shaft(o, 0.0, 0.9, 0.3, 0.001, xf=xf2)   # pyramidion tombé
+    return m.out()
+
+
+def p_colossus_feet(spec, lod):
+    """Pieds d'un colosse brisé sur leur socle (n° 204), socle 4,4 x 3 m, H 3,4 m :
+    deux pieds nus, jambes rompues à mi-mollet, éclats au pied du socle. Aucun visage
+    (statues neutres, décision Q18)."""
+    m = M()
+    o = m.p("Rock_Ochre")
+    box(o, (-2.2, -1.5, 0), (2.2, 1.5, 0.9))
+    box(o, (-2.35, -1.65, 0), (2.35, 1.65, 0.25))
+    i0 = len(o.v)
+    for sx, h in ((-0.85, 3.4), (0.85, 2.5)):
+        box(o, (sx - 0.55, -0.3, 0.9), (sx + 0.55, 0.85, 1.5))           # talon, cou-de-pied
+        box(o, (sx - 0.55, -1.2, 0.9), (sx + 0.55, -0.3, 1.18))          # avant-pied
+        lathe_at(o, sx, 0.35, [(0.6, 0.9), (0.62, 1.6), (0.55, 2.2), (0.62, h - 0.3), (0.55, h)], S(lod, 10))
+        if lod < 2:
+            for k in range(5):
+                x = sx - 0.42 + 0.21 * k
+                cyl(o, (x, -1.2, 1.0), (x, -1.45, 1.0), 0.11 - 0.01 * abs(k - 1), 0.09, S(lod, 6))
+    _jitter(o, i0, 0.03, spec["seed"] % 11)
+    if lod < 2:
+        for k in range(4):
+            _stone(m.p("Rock_Ochre"), Vector((-1.8 + 1.2 * k, -2.2 + 0.2 * k, 0)), 0.45, 0.35, spec["seed"] + k, lod)
+    return m.out()
+
+
+def p_mausoleum_small(spec, lod):
+    """Petit mausolée de pierre (n° 205), 3 x 4 x 4,2 m : socle, murs, pilastres, porte
+    de bronze sous arc, fronton, toit à deux pans de dalles, marches."""
+    m = M()
+    w, c = m.p("Stone_Wall"), m.p("Stone_Carved")
+    box(c, (-1.7, -2.2, 0), (1.7, 2.2, 0.4))
+    box(c, (-1.0, -2.75, 0), (1.0, -2.2, 0.2))
+    box(c, (-1.0, -2.5, 0.2), (1.0, -2.2, 0.4))
+    box(w, (-1.5, -2.0, 0.4), (1.5, 2.0, 3.0))
+    for x in (-1.55, -0.75, 0.75, 1.55):
+        box(c, (x - 0.12, -2.12, 0.4), (x + 0.12, -1.95, 3.0))
+    box(c, (-1.65, -2.15, 3.0), (1.65, 2.15, 3.2))
+    _arch_band(c, -0.55, 0.55, 2.0, 0.55, 0.12, 0.14, lod, y0=(-2.08, -1.96))
+    box(m.p("Brass"), (-0.55, -2.03, 0.4), (0.55, -2.0, 2.0))
+    r = m.p("Stone_Carved")
+    for sg in (-1, 1):
+        _quad(r, (sg * 1.75, -2.25, 3.2), (sg * 1.75, 2.25, 3.2), (0, 2.25, 4.2), (0, -2.25, 4.2))
+        if sg > 0:
+            r.f[-1] = tuple(reversed(r.f[-1]))
+    for y in (-2.25, 2.25):
+        tri = (Vector((-1.75, y, 3.2)), Vector((1.75, y, 3.2)), Vector((0, y, 4.2)))
+        i = len(r.v)
+        r.v += list(tri)
+        r.f.append((i, i + 1, i + 2) if y > 0 else (i, i + 2, i + 1))
+        r.uv.append([(0, 0), (1, 0), (0.5, 1)])
+        r.cn.append(None)
+    return m.out()
+
+
+def p_stair_spiral(spec, lod):
+    """Escalier de pierre en colimaçon (n° 206), Ø 2,6 m, H 3,2 m : noyau central,
+    marches en éventail (un tour), main courante de corde au LOD0."""
+    m = M()
+    c = m.p("Stone_Carved")
+    cyl(c, (0, 0, 0), (0, 0, 3.4), 0.18, 0.18, S(lod, 10))
+    n = 16
+    for k in range(n):
+        a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1.15) / n
+        z = 0.2 * (k + 1)
+        pts = [Vector((0.15 * math.cos(a0), 0.15 * math.sin(a0), z)), Vector((1.3 * math.cos(a0), 1.3 * math.sin(a0), z)),
+               Vector((1.3 * math.cos(a1), 1.3 * math.sin(a1), z)), Vector((0.15 * math.cos(a1), 0.15 * math.sin(a1), z))]
+        low = [p - Vector((0, 0, 0.18)) for p in pts]
+        _quad(c, *pts)
+        _quad(c, low[3], low[2], low[1], low[0])
+        if lod < 2:
+            _quad(c, low[0], low[1], pts[1], pts[0])
+            _quad(c, low[1], low[2], pts[2], pts[1])
+    if lod == 0:
+        rail = [Vector((1.25 * math.cos(2 * math.pi * t / 24), 1.25 * math.sin(2 * math.pi * t / 24), 0.9 + 2.8 * t / 24)) for t in range(25)]
+        API["tube"](m.p("Rope"), rail, [0.025] * 25, 4, 0.5)
+    return m.out()
+
+
+# ======================================================================= Tome 8
+def p_window_rose(spec, lod):
+    """Rosace de vitrail dans son cadre de pierre (n° 207), Ø 3 m, base à 0 (pièce de
+    façade posée sur un mur ou un pignon) : disque de verre, anneau mouluré, rayons."""
+    m = M()
+    g = m.p("Glass_Rose")
+    n = S(lod, 32)
+    R, zc = 1.3, 1.5
+    i = len(g.v)
+    g.v.append(Vector((0, 0, zc)))
+    for k in range(n):
+        a = 2 * math.pi * k / n
+        g.v.append(Vector((R * math.cos(a), 0, zc + R * math.sin(a))))
+    for k in range(n):
+        a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1) / n
+        g.f.append((i, i + 1 + (k + 1) % n, i + 1 + k))
+        g.uv.append([(0.5, 0.5), (0.5 + 0.48 * math.cos(a1), 0.5 + 0.48 * math.sin(a1)), (0.5 + 0.48 * math.cos(a0), 0.5 + 0.48 * math.sin(a0))])
+        g.cn.append(None)
+    c = m.p("Stone_Carved")
+    xf = Matrix.Translation((0, 0, zc)) @ Matrix.Rotation(math.pi / 2, 4, "X")
+    i0 = len(c.v)
+    API["tube"](c, [Vector((0, 0, -0.12)), Vector((0, 0, 0.12))], [R + 0.2, R + 0.2], n, 1.0)
+    API["tube"](c, [Vector((0, 0, 0.12)), Vector((0, 0, -0.12))], [R, R], n, 1.0)
+    for k in range(n):   # faces avant et arrière de l'anneau
+        a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1) / n
+        for y, sg in ((-0.12, 1), (0.12, -1)):
+            q = [Vector((R * math.cos(a0), R * math.sin(a0), y)), Vector((R * math.cos(a1), R * math.sin(a1), y)),
+                 Vector(((R + 0.2) * math.cos(a1), (R + 0.2) * math.sin(a1), y)), Vector(((R + 0.2) * math.cos(a0), (R + 0.2) * math.sin(a0), y))]
+            _quad(c, *(q if sg > 0 else q[::-1]))
+    c.v[i0:] = [xf @ v for v in c.v[i0:]]
+    if lod < 2:
+        for k in range(8):
+            a = 2 * math.pi * k / 8
+            cyl(c, (0.25 * math.cos(a), 0, zc + 0.25 * math.sin(a)), (R * math.cos(a), 0, zc + R * math.sin(a)), 0.035, 0.035, 4, False)
+        cyl(c, (0, -0.04, zc), (0, 0.04, zc), 0.26, 0.26, S(lod, 16), False)
+    return m.out()
+
+
+def p_bed_pallet(spec, lod):
+    """Paillasse de dortoir (n° 208), 2 x 0,9 m : cadre bas de planches, matelas de toile
+    bourré de paille, couverture repliée."""
+    m = M()
+    d = m.p("Wood_Plank")
+    box(d, (-1.0, -0.45, 0.1), (1.0, 0.45, 0.2))
+    for x in (-0.95, 0.95):
+        for y in (-0.4, 0.4):
+            box(d, (x - 0.04, y - 0.04, 0), (x + 0.04, y + 0.04, 0.1))
+    box(m.p("Canvas"), (-0.96, -0.41, 0.2), (0.96, 0.41, 0.32))
+    if lod < 2:
+        box(m.p("Cloth_Ochre"), (0.2, -0.43, 0.32), (0.9, 0.43, 0.38))
+        box(m.p("Canvas"), (-0.92, -0.3, 0.32), (-0.6, 0.3, 0.42))   # traversin
+    return m.out()
+
+
+def p_earthwork_plank(spec, lod):
+    """Levée de terre étayée de planches (n° 209), module 6 m : talus de terre, parement
+    de planches verticales tenu par des pieux, côté défenseur en pente douce."""
+    m = M()
+    e = m.p("Earth")
+    i0 = len(e.v)
+    prof = [(-0.35, 0.0), (-0.35, 1.6), (0.3, 1.7), (2.2, 0.0)]
+    for y0, y1 in ((-3.0, 3.0),):
+        for k in range(len(prof) - 1):
+            (a, za), (b, zb) = prof[k], prof[k + 1]
+            _quad(e, (y0, a, za), (y1, a, za), (y1, b, zb), (y0, b, zb))
+        for x, sg in ((-3.0, 1), (3.0, -1)):
+            pts = [Vector((x, a, z)) for a, z in prof]
+            i = len(e.v)
+            e.v += pts
+            e.f.append(tuple(i + j for j in (range(4) if sg < 0 else reversed(range(4)))))
+            e.uv.append([(0, 0), (0, 1), (1, 1), (1, 0)])
+            e.cn.append(None)
+    _jitter(e, i0, 0.04, spec["seed"] % 7)
+    for k in range(i0, len(e.v)):
+        e.v[k] = Vector((e.v[k].x, e.v[k].y, max(e.v[k].z, 0.0)))
+    w = m.p("Wood_Weathered")
+    nb = {0: 24, 1: 12, 2: 4}[lod]
+    rng = random.Random(spec["seed"])
+    for k in range(nb):
+        x0 = -3.0 + 6.0 * k / nb
+        box(w, (x0 + 0.01, -0.45, 0), (x0 + 6.0 / nb - 0.01, -0.36, 1.7 + rng.uniform(-0.1, 0.1)))
+    for x in (-2.8, -1.4, 0.0, 1.4, 2.8):
+        cyl(m.p("Wood_Dark"), (x, -0.52, 0), (x, -0.52, 2.0), 0.07, 0.06, S(lod, 6))
+    return m.out()
+
+
+# ======================================================================= Tome 9
+def p_gear_large(spec, lod):
+    """Grand engrenage de bois cerclé de fer sur chevalet (n° 210), Ø 2,6 m : roue dentée
+    debout, axe, deux montants en A, pignon de renvoi."""
+    m = M()
+    d, i = m.p("Wood_Dark"), m.p("Iron")
+    R, zc = 1.15, 1.45
+    n = S(lod, 24)
+    cyl(d, (0, -0.12, zc), (0, 0.12, zc), R, R, n)
+    cyl(i, (0, -0.13, zc), (0, 0.13, zc), R + 0.02, R + 0.02, n, cap=False)
+    teeth = {0: 20, 1: 12, 2: 0}[lod]
+    for k in range(teeth):
+        a = 2 * math.pi * k / teeth
+        xf = Matrix.Translation((0, 0, zc)) @ Matrix.Rotation(-a, 4, "Y")
+        box(d, (R - 0.02, -0.1, -0.07), (R + 0.16, 0.1, 0.07), xf=xf)
+    cyl(i, (0, -0.45, zc), (0, 0.45, zc), 0.08, 0.08, S(lod, 8))
+    for y in (-0.38, 0.38):
+        for sx in (-1, 1):
+            cyl(d, (sx * 0.8, y, 0), (0, y, zc + 0.1), 0.06, 0.06, S(lod, 6))
+        box(d, (-0.9, y - 0.06, 0), (0.9, y + 0.06, 0.12))
+    if lod < 2:
+        cyl(d, (1.55, -0.1, 0.7), (1.55, 0.1, 0.7), 0.35, 0.35, S(lod, 12))
+        box(d, (1.4, -0.3, 0), (1.7, 0.3, 0.4))
+    return m.out()
+
+
+def p_crane_wood(spec, lod):
+    """Grue de chantier en bois (n° 211), H 6,5 m : mât sur croix de base, bras incliné
+    haubané, poulie, corde et crochet, contrepoids de pierres."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for a in (0, math.pi / 2):
+        box(d, (-1.4, -0.12, 0), (1.4, 0.12, 0.25), xf=Matrix.Rotation(a, 4, "Z"))
+    cyl(d, (0, 0, 0), (0, 0, 6.0), 0.16, 0.13, S(lod, 8))
+    for k in range(4):
+        a = math.pi / 2 * k + math.pi / 4
+        cyl(d, (1.1 * math.cos(a), 1.1 * math.sin(a), 0.2), (0, 0, 2.2), 0.06, 0.06, S(lod, 6), False)
+    tip = Vector((3.8, 0, 6.4))
+    cyl(d, (0, 0, 4.2), tip, 0.1, 0.08, S(lod, 6))
+    cyl(d, (0, 0, 6.0), (-1.4, 0, 5.4), 0.08, 0.08, S(lod, 6))
+    box(m.p("Rock_Grey"), (-1.8, -0.35, 4.9), (-1.1, 0.35, 5.5))
+    r = m.p("Rope")
+    cyl(r, (0, 0, 6.0), tip, 0.015, 0.015, 4, False)
+    cyl(r, tip, (3.8, 0, 2.6), 0.015, 0.015, 4, False)
+    if lod < 2:
+        cyl(m.p("Iron"), (3.8, -0.08, 6.3), (3.8, 0.08, 6.3), 0.14, 0.14, S(lod, 10))
+        API["tube"](m.p("Iron"), [Vector((3.8, 0, 2.6)), Vector((3.8, 0, 2.35)), Vector((3.95, 0, 2.3)), Vector((4.0, 0, 2.42))], [0.025] * 4, 5, 0.5)
+    return m.out()
+
+
+# ====================================================================== Tome 10
+def p_armillary_sphere(spec, lod):
+    """Sphère armillaire d'astrologue sur pied (n° 212), H 2,2 m : trépied, colonne,
+    anneaux de laiton (méridien, équateur, écliptique), globe central."""
+    m = M()
+    b, d = m.p("Brass"), m.p("Wood_Dark")
+    for k in range(3):
+        a = 2 * math.pi * k / 3
+        cyl(d, (0.55 * math.cos(a), 0.55 * math.sin(a), 0), (0, 0, 0.6), 0.04, 0.035, S(lod, 6))
+    cyl(d, (0, 0, 0.55), (0, 0, 1.2), 0.06, 0.05, S(lod, 8))
+    zc, R = 1.65, 0.5
+    n = {0: 24, 1: 14, 2: 6}[lod]
+    for ax, tilt in (("X", math.pi / 2), ("Y", math.pi / 2), ("X", math.radians(23))):
+        if lod == 2 and tilt != math.pi / 2:
+            continue
+        pts = [Vector((R * math.cos(2 * math.pi * k / n), R * math.sin(2 * math.pi * k / n), 0)) for k in range(n + 1)]
+        xf = Matrix.Translation((0, 0, zc)) @ Matrix.Rotation(tilt, 4, ax)
+        API["tube"](b, [xf @ p for p in pts], [0.02] * (n + 1), 4 if lod < 2 else 3, 0.5)
+    pts = [Vector((R * math.cos(2 * math.pi * k / n), R * math.sin(2 * math.pi * k / n), zc)) for k in range(n + 1)]
+    API["tube"](b, pts, [0.025] * (n + 1), 4 if lod < 2 else 3, 0.5)
+    if lod < 2:
+        lathe_at(m.p("Wood_Painted"), 0, 0, [(0.001, zc - 0.16), (0.12, zc - 0.11), (0.16, zc), (0.12, zc + 0.11), (0.001, zc + 0.16)], S(lod, 12))
+        cyl(b, (0, 0, zc - R - 0.05), (0, 0, zc + R + 0.06), 0.012, 0.012, 4)
+    cyl(b, (0, 0, 1.15), (0, 0, zc - R), 0.03, 0.03, 6)
+    return m.out()
+
+
+def p_battering_ram(spec, lod):
+    """Bélier de siège couvert sur roues (n° 213), 6 x 2,6 x 3 m : châssis, quatre roues,
+    toit de planches à deux pans tendu de peaux, tronc ferré suspendu à des chaînes."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for y in (-1.0, 1.0):
+        box(d, (-2.8, y - 0.12, 0.6), (2.8, y + 0.12, 0.85))
+        for x in (-2.7, -0.9, 0.9, 2.7):
+            box(d, (x - 0.1, y - 0.1, 0.85), (x + 0.1, y + 0.1, 2.3))
+        box(d, (-2.8, y - 0.1, 2.2), (2.8, y + 0.1, 2.4))
+    for x in (-2.0, 2.0):
+        for y in (-1.25, 1.25):
+            wheel(m, (x, y, 0.55), 0.55, 0.18, lod, 6, axis="y")
+    hide = m.p("Leather")
+    for sg in (-1, 1):
+        q = [(-3.0, sg * 1.3, 2.3), (3.0, sg * 1.3, 2.3), (3.0, 0, 3.0), (-3.0, 0, 3.0)]
+        _quad(hide, *(q if sg < 0 else q[::-1]))
+    cyl(m.p("Bark_Broad"), (-3.0, 0, 1.5), (3.3, 0, 1.5), 0.25, 0.22, S(lod, 10))
+    cyl(m.p("Iron"), (3.3, 0, 1.5), (3.7, 0, 1.5), 0.26, 0.05, S(lod, 8))
+    if lod < 2:
+        for x in (-1.5, 1.5):
+            cyl(m.p("Iron"), (x, 0, 1.75), (x, 0, 2.3), 0.025, 0.025, 4)
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

@@ -463,6 +463,9 @@ namespace tools::world_gen
 			// Atelier décors T2 : bûcher de fête (pl.23) dans un camp sur trois, bât de mulet.
 			if (rng.Next() < 0.33) Piece(w, "Bonfire_Stack_1", c - side * 9.0 + d * 3.0, 0.0, rng.Next() * 360.0, 1.0, true);
 			Piece(w, "PackSaddle_1", c + d * 2.4 - side * 1.5, 0.0, rng.Next() * 360.0, 1.0, false);
+			// Atelier décors T8 (pl.37) : paillasses alignées près de l'abri de toile.
+			for (int k = 0; k < 2; ++k)
+				Piece(w, "Bed_Pallet_1", c + side * 4.4 - d * (3.0 + k * 1.1), 0.0, a, 1.0, false);
 		}
 
 		/// Champ de bataille abandonné (BD T1 pl.36-44) : débris de chariot, piques,
@@ -481,6 +484,13 @@ namespace tools::world_gen
 				Piece(w, "Stakes_Chevaux_1", c - v * 12.0 + u * (k * 4.2), 0.0, a, 1.0, true);
 			Piece(w, "Ballista_1", c + u * 9.0 + v * 6.0, 0.0, a + 90.0, 1.0, true);
 			Piece(w, "Tent_Striped_1", c - u * 14.0 - v * 4.0, 0.0, a, 1.0, true);   // tente de commandement (T4, pl.39)
+			// Atelier décors T6 (pl.8, 36, 48) : table de campagne à carte et liasses devant la
+			// tente de commandement ; bûcher à poteau à l'écart.
+			Piece(w, "Map_Table_1", c - u * 9.5 - v * 4.0, 0.0, a + 90.0, 1.0, true);
+			Piece(w, "Paper_Stack_1", c - u * 9.5 - v * 5.6, 0.0, a, 1.0, false);
+			Piece(w, "Pyre_Stake_1", c + u * 15.0 - v * 3.0, 0.0, a, 1.0, true);
+			// Atelier décors T10 (pl.23, 38) : bélier couvert abandonné.
+			Piece(w, "Battering_Ram_1", c + u * 14.0 + v * 10.5, 0.0, a, 1.0, true);
 			for (int k = 0; k < 4; ++k)
 			{
 				const double b = rng.Next() * 2.0 * kPi;
@@ -488,6 +498,9 @@ namespace tools::world_gen
 				Piece(w, bones[k % 3], c + Vec2{ std::cos(b), std::sin(b) } * (5.0 + rng.Next() * 14.0), 0.0, rng.Next() * 360.0, 1.0, false);
 			}
 			Piece(w, "Torch_Pole_1", c - v * 16.0 + u * 8.5, 0.0, 0.0, 1.0, false);
+			// Atelier décors T8 (pl.21) : levée de terre étayée de planches face à l'engin.
+			for (int k = -1; k <= 1; ++k)
+				Piece(w, "Earthwork_Plank_1", c - v * 21.0 + u * (k * 6.0), 0.0, a, 1.0, true);
 			for (int k = -2; k <= 2; ++k)   // ligne de palissade de campagne
 				Piece(w, "Palisade_Stake_1", c + v * 14.0 + u * (k * 2.0), 0.0, a, 1.0, true);
 			for (int k = 0; k < 4; ++k)

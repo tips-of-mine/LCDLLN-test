@@ -964,6 +964,87 @@ TEXTURES.update({
     "Mirror": lambda: flat("Mirror", 105, (190, 196, 200), 0.05, 0.05, metallic=0.9),
 })
 
+
+def parchment_map(name="Parchment_Map", seed=108, size=1024):
+    """Carte imaginaire sur parchemin (T6 pl.36, 48) : côtes et courbes de niveau à
+    l'encre, rivières, points de villes, cadre. Aucune géographie de la BD, aucun texte."""
+    h = w = size
+    n = fbm(h, w, seed, 5, 3, tile=False)
+    m = fbm(h, w, seed + 7, 4, 24)
+    col = np.zeros((h, w, 3), np.float32) + np.array([208, 186, 140], np.float32)
+    col *= (0.86 + 0.18 * m)[..., None]
+    ink = np.array([62, 44, 30], np.float32)
+    land = n > 0.5
+    col[land] *= 0.93
+    for lvl, wd in ((0.5, 0.008), (0.6, 0.004), (0.7, 0.004)):
+        line = np.abs(n - lvl) < wd
+        col[line] = ink
+    rng = np.random.default_rng(seed)
+    for _ in range(3):
+        x, y = rng.uniform(0.2, 0.8, 2) * size
+        a = rng.uniform(0, 6.28)
+        for _ in range(400):
+            a += rng.normal(0, 0.15)
+            x, y = x + 1.5 * np.cos(a), y + 1.5 * np.sin(a)
+            if not (2 <= x < size - 2 and 2 <= y < size - 2):
+                break
+            col[int(y) - 1:int(y) + 1, int(x) - 1:int(x) + 1] = [70, 80, 96]
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    for _ in range(9):
+        cx, cy = rng.uniform(0.12, 0.88, 2) * size
+        col[(xx - cx) ** 2 + (yy - cy) ** 2 < 36] = [120, 30, 26]
+    edge = np.minimum(np.minimum(xx, w - 1 - xx), np.minimum(yy, h - 1 - yy)) / size
+    col[(edge > 0.03) & (edge < 0.036)] = ink
+    col *= (0.75 + 0.25 * np.clip(edge * 10, 0, 1))[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(m, 0.5))
+    save(f"T_Decor_{name}_ORM.png", orm(m, 0.9, 0.0, 0.15))
+
+
+TEXTURES.update({
+    "Cloth_Green": lambda: flat("Cloth_Green", 106, (52, 92, 58), 0.9, 0.16, (1.0, 8.0)),
+    "Wood_Painted": lambda: planks("Wood_Painted", 107, [(0, (44, 78, 66)), (0.5, (60, 102, 86)), (1, (84, 124, 104))], 0.3),
+    "Parchment_Map": parchment_map,
+})
+
+
+def stained_rose(name="Glass_Rose", seed=109, size=1024):
+    """Rosace de vitrail (T8 pl.33) : secteurs rayonnants de verres colorés, plombs
+    sombres, médaillon central à pétales ; motif géométrique, sans figure ni symbole."""
+    h = w = size
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32) / size - 0.5
+    r = np.hypot(xx, yy) * 2
+    a = (np.arctan2(yy, xx) + np.pi) / (2 * np.pi)
+    pal = np.array([[120, 28, 34], [30, 50, 112], [176, 136, 44], [34, 86, 58], [36, 40, 90], [96, 30, 60]], np.float32)
+    sec = np.floor(a * 16).astype(int)
+    ring = np.digitize(r, [0.18, 0.42, 0.7, 0.95])
+    idx = (sec + ring * 3) % 6
+    col = pal[idx]
+    lead = (np.abs((a * 16) % 1 - 0.5) > 0.47) & (r > 0.18)
+    for rr in (0.18, 0.42, 0.7, 0.95):
+        lead |= np.abs(r - rr) < 0.012
+    for k in range(12):   # médaillons circulaires de l'anneau médian
+        ca = 2 * np.pi * (k + 0.5) / 12
+        d = np.hypot(xx - 0.28 * np.cos(ca), yy - 0.28 * np.sin(ca))
+        lead |= np.abs(d - 0.055) < 0.006
+        col[d < 0.05] = [190, 160, 90] if k % 2 else [70, 110, 160]
+    petal = (r < 0.18) & (np.cos(a * 2 * np.pi * 8) * 0.06 + 0.12 > r)
+    col[petal] = [230, 200, 120]
+    col[lead] = [30, 28, 30]
+    col[r > 1.0] = [70, 66, 60]
+    n = fbm(h, w, seed, 4, 32)
+    col *= (0.85 + 0.25 * n)[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(lead.astype(np.float32) * 0.5 + 0.1 * n, 2.0))
+    save(f"T_Decor_{name}_ORM.png", orm(n, 0.2, 0.0, 0.2))
+
+
+TEXTURES.update({
+    "Glass_Rose": stained_rose,
+    "Earth": lambda: flat("Earth", 110, (104, 84, 62), 0.95, 0.3),
+})
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

@@ -295,6 +295,10 @@ namespace tools::world_gen
 		/// pictogramme, sans texte, devant le bâtiment de chaque service de la ville ; le
 		/// client affiche le nom du service dans la langue du joueur au survol ou au clic.
 		/// Le panneau est sur potence, perpendiculaire à la façade, à côté de la porte.
+		/// Les bâtiments importés de la ville d'ancrage (ImportLegacyContent, posés avant
+		/// la génération) sont aussi candidats : leur façade est inconnue (doorPoint =
+		/// position), le panneau est alors posé du côté du centre de la ville, au bord de
+		/// leur emprise (footprintRadius).
 		/// \param firstBuilding indice du premier bâtiment posé pour cette ville.
 		void PlaceServiceSigns(World& w, const CityDef& c, size_t firstBuilding)
 		{
@@ -303,7 +307,8 @@ namespace tools::world_gen
 				if (HasFacadeSign(s) && std::find(todo.begin(), todo.end(), s) == todo.end()) todo.push_back(s);
 			if (todo.empty()) return;
 			std::vector<size_t> cand;
-			for (size_t i = firstBuilding; i < w.buildings.size(); ++i)
+			const size_t first = (c.id == w.master.importAnchorCity) ? 0 : firstBuilding;
+			for (size_t i = first; i < w.buildings.size(); ++i)
 				if (w.buildings[i].cityId == c.id && w.buildings[i].templateType != "ruine") cand.push_back(i);
 			auto dist = [&](size_t i) {
 				const Vec2 p = w.buildings[i].position;
@@ -329,13 +334,17 @@ namespace tools::world_gen
 				used[best] = true;
 				const BuildingPlacementDef& b = w.buildings[cand[best]];
 				Vec2 f{ b.doorPoint.x - b.position.x, b.doorPoint.z - b.position.z };
+				const bool imported = std::hypot(f.x, f.z) < 1e-6;
+				// Bâtiment importé : façade inconnue, panneau tourné vers le centre de la ville.
+				if (imported) f = Vec2{ c.center.x - b.position.x, c.center.z - b.position.z };
 				const double l = std::hypot(f.x, f.z);
 				if (l < 1e-6) continue;
 				f = f * (1.0 / l);
 				const Vec2 side{ -f.z, f.x };
 				const double off = std::min(std::max(b.halfW * 0.55, 1.2), std::max(0.6, b.halfW - 0.2));
 				// Origine du mesh au milieu de la potence : poteau à 0,15 m de la façade.
-				const Vec2 p = b.position + f * (b.halfD + 0.6) + side * off;
+				const double depth = imported ? b.footprintRadius : b.halfD;
+				const Vec2 p = b.position + f * (depth + 0.6) + side * off;
 				if (w.IsWater(p)) continue;
 				AddProp(w, "Sign_Service_" + svc, p, YawAlong(f), 1.0, kSolid, 1, 0.5);
 				w.Occupy(p, 0.7);
@@ -935,6 +944,9 @@ namespace tools::world_gen
 						{
 							const Vec2 cp = bp.doorPoint + side * 5.0 - dir * 0.5;
 							if (!w.IsOccupied(cp, 1.8)) { AddProp(w, "Crucible_Hanging_1", cp, YawFacing(side), 1.0, kSolid, 1, 1.2); w.Occupy(cp, 1.8); }
+							// Grand engrenage sur chevalet (atelier décors T9, pl.8-9, 15).
+							const Vec2 gp = bp.doorPoint - side * 5.2 - dir * 0.5;
+							if (!w.IsOccupied(gp, 1.6)) { AddProp(w, "Gear_Large_1", gp, YawFacing(side), 1.0, kSolid, 1, 1.3); w.Occupy(gp, 1.6); }
 						}
 						AddProp(w, "Workbench", bp.doorPoint - side * 2.4, YawFacing(side), 1.0, kSolid, 1, 0.9);
 						AddProp(w, "Whetstone", bp.doorPoint + side * 3.6 - dir * 0.8, rng.Range(0, 360), 1.0, 0, 2);
@@ -990,6 +1002,17 @@ namespace tools::world_gen
 							if (!w.IsOccupied(hp, 0.5)) AddProp(w, "Hedge_Trimmed_1", hp, 0.0, 1.0, kSolid, 1, 0.7);
 						}
 				}
+				// Guirlandes de fanions sur mâts (atelier décors T6, pl.37-41) : deux en travers
+				// de la place des villes, mâts posés hors des étals et des statues.
+				if (town)
+					for (int k = 0; k < 2; ++k)
+					{
+						const Vec2 radial = Dir(k * kPi + 0.9);
+						const Vec2 gp = c.center + radial * (Rp * 0.5);
+						const Vec2 along{ -radial.z, radial.x };
+						if (!w.IsOccupied(gp + along * 4.0, 0.4) && !w.IsOccupied(gp - along * 4.0, 0.4))
+							AddProp(w, "Bunting_Garland_1", gp, YawAlong(along), 1.0, 0, 0);
+					}
 				// Braseros-vasques sur fût (atelier décors T3, pl.28) aux grandes places.
 				if (c.kind == "capitale" || c.kind == "grande_ville")
 					for (int k = 0; k < 4; ++k)
@@ -1038,6 +1061,11 @@ namespace tools::world_gen
 				{
 					const Vec2 sp = b.position + side * (b.halfW + 1.6) + front * (b.halfD * 0.3);
 					if (!w.IsOccupied(sp, 1.0) && rng.Chance(0.6)) { AddProp(w, "Frame_Scaffold_1", sp, b.yawDeg + 90.0, 1.0, kSolid, 1, 1.0); w.Occupy(sp, 1.0); }
+				}
+				// Grue de chantier en bois (atelier décors T9, pl.9, 15) de l'autre côté, bras vers le mur.
+				{
+					const Vec2 cp = b.position - side * (b.halfW + 2.2);
+					if (!w.IsOccupied(cp, 1.4) && rng.Chance(0.5)) { AddProp(w, "Crane_Wood_1", cp, YawAlong(side), 1.0, kSolid, 0, 1.3); w.Occupy(cp, 1.4); }
 				}
 				const Vec2 pile = b.doorPoint + side * (rng.Chance(0.5) ? 2.6 : -2.6);
 				if (!w.IsOccupied(pile, 0.6)) AddProp(w, bricks[rng.Below(4)], pile, rng.Range(0, 360), 1.0, kSolid, 1, 0.5);
@@ -1237,6 +1265,19 @@ namespace tools::world_gen
 					const Vec2 sd{ -tv.z / tl, tv.x / tl };
 					for (const double sg : { -1.0, 1.0 })
 						AddProp(w, "Urn_Stone_1", gy + sd * (1.6 * sg), 0.0, 1.0, kSolid, 1, 0.35);
+				}
+				// Petit mausolée de pierre (atelier décors T7, pl.46-47) au fond des cimetières des
+				// grandes villes, porte tournée vers la ville.
+				if (c.kind == "capitale" || c.kind == "grande_ville")
+				{
+					const Vec2 tv{ c.center.x - gy.x, c.center.z - gy.z };
+					const double tl = std::max(1e-6, std::hypot(tv.x, tv.z));
+					const Vec2 mp = gy - Vec2{ tv.x / tl, tv.z / tl } * 7.0;
+					if (!w.IsWater(mp) && !w.IsOccupied(mp, 2.5))
+					{
+						AddProp(w, "Mausoleum_Small_1", mp, YawFacing(mp - c.center), 1.0, kSolid, 0, 2.4);   // porte en +Z glTF
+						w.Occupy(mp, 2.5);
+					}
 				}
 				PlaceOldGraves(w, gy, c.center - gy, GraveCountFor(c), rng);
 				w.Occupy(gy, 2.5);

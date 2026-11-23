@@ -1092,6 +1092,120 @@
       "nom": "Tombes anciennes (cailloux, croix de bois, stèles)",
       "tome": 0,
       "placement_prevu": ""
+    },
+    {
+      "num": 195,
+      "nom": "Guirlande de fanions sur mâts",
+      "tome": 6,
+      "placement_prevu": "places de marché des villes"
+    },
+    {
+      "num": 196,
+      "nom": "Grande bibliothèque murale",
+      "tome": 6,
+      "placement_prevu": "intérieurs (catalogue) : bibliothèques, écoles de magie"
+    },
+    {
+      "num": 197,
+      "nom": "Pupitre de scribe incliné",
+      "tome": 6,
+      "placement_prevu": "intérieurs (catalogue) : bibliothèques, administrations"
+    },
+    {
+      "num": 198,
+      "nom": "Piles de documents et parchemins",
+      "tome": 6,
+      "placement_prevu": "champs de bataille (devant la tente de commandement) ; intérieurs"
+    },
+    {
+      "num": 199,
+      "nom": "Tenture de velours drapée",
+      "tome": 6,
+      "placement_prevu": "intérieurs (catalogue) : salles de banquet, chambres"
+    },
+    {
+      "num": 200,
+      "nom": "Bûcher à poteau",
+      "tome": 6,
+      "placement_prevu": "champs de bataille"
+    },
+    {
+      "num": 201,
+      "nom": "Table de campagne avec carte déroulée",
+      "tome": 6,
+      "placement_prevu": "champs de bataille (tente de commandement)"
+    },
+    {
+      "num": 202,
+      "nom": "Armoire peinte",
+      "tome": 6,
+      "placement_prevu": "intérieurs (catalogue) : chambres"
+    },
+    {
+      "num": 203,
+      "nom": "Obélisque de grès brisé",
+      "tome": 7,
+      "placement_prevu": "désert : vestiges très rares (BushesFor desert)"
+    },
+    {
+      "num": 204,
+      "nom": "Pieds d'un colosse brisé sur socle",
+      "tome": 7,
+      "placement_prevu": "désert : vestiges très rares (BushesFor desert)"
+    },
+    {
+      "num": 205,
+      "nom": "Petit mausolée de pierre",
+      "tome": 7,
+      "placement_prevu": "cimetières des capitales et grandes villes"
+    },
+    {
+      "num": 206,
+      "nom": "Escalier de pierre en colimaçon",
+      "tome": 7,
+      "placement_prevu": "intérieurs (catalogue) : tours, donjons"
+    },
+    {
+      "num": 207,
+      "nom": "Rosace de vitrail dans son cadre de pierre",
+      "tome": 8,
+      "placement_prevu": "intérieurs et façades (catalogue) : temples, chapelles"
+    },
+    {
+      "num": 208,
+      "nom": "Paillasse de dortoir",
+      "tome": 8,
+      "placement_prevu": "camps (près de l'abri de toile) ; intérieurs : casernes, infirmeries"
+    },
+    {
+      "num": 209,
+      "nom": "Levée de terre étayée de planches",
+      "tome": 8,
+      "placement_prevu": "champs de bataille"
+    },
+    {
+      "num": 210,
+      "nom": "Grand engrenage sur chevalet",
+      "tome": 9,
+      "placement_prevu": "forges des villes naines"
+    },
+    {
+      "num": 211,
+      "nom": "Grue de chantier en bois",
+      "tome": 9,
+      "placement_prevu": "chantiers de reconstruction"
+    },
+    {
+      "num": 212,
+      "nom": "Sphère armillaire d'astrologue",
+      "tome": 10,
+      "placement_prevu": "intérieurs (catalogue) : écoles de magie, bibliothèques, observatoires"
+    },
+    {
+      "num": 213,
+      "nom": "Bélier de siège couvert sur roues",
+      "tome": 10,
+      "placement_prevu": "champs de bataille"
     }
   ]
 }

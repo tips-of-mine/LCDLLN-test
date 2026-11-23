@@ -398,6 +398,8 @@ namespace engine::render
 		gpuData.flags = static_cast<uint32_t>(mat.flags);
 		gpuData.tiling[0] = mat.tiling[0];
 		gpuData.tiling[1] = mat.tiling[1];
+		// Teinte (personnalisation) : bits RGBA8 recopiés tels quels dans padding[0].
+		std::memcpy(&gpuData.padding[0], &mat.tintRgba8, sizeof(uint32_t));
 
 		const uint32_t materialIndex = static_cast<uint32_t>(m_materials.size());
 		m_materials.push_back(gpuData);

@@ -1331,6 +1331,13 @@ elseif(UNIX)
   lcdlln_add_simple_test(race_definition_tests
     ${CMAKE_SOURCE_DIR}/src/client/character_creation/tests/RaceDefinitionTests.cpp)
 
+  # Personnalisation des personnages : catalogue client (appearance_catalog.json).
+  # 5 races jouables x 2 genres, >= 5 emplacements personnalisables chacun,
+  # fichiers référencés présents, bornage des indices et résolution des pièces.
+  # Note : AppearanceCatalog.cpp est déjà linké via engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(appearance_catalog_tests
+    ${CMAKE_SOURCE_DIR}/src/client/character_creation/tests/AppearanceCatalogTests.cpp)
+
   # CHAR-MODEL.25 : systeme de customisation de personnage.
   # Charge game/data/configuration/races/*.json (alignes sur races.json),
   # valide/genere des customisations, resout en assets concrets.

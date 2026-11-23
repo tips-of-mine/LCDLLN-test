@@ -88,7 +88,8 @@ namespace engine::server
 			"COALESCE(UNIX_TIMESTAMP(s.last_seen), 0) AS last_seen_unix, "
 			"COALESCE(s.total_play_seconds, 0) AS total_play, "
 			"c.spawn_x, c.spawn_y, c.spawn_z, c.spawn_yaw_deg, c.spawn_pitch_deg, "
-			"c.race_str, c.class_str, c.gender, c.skin_color_idx "
+			"c.race_str, c.class_str, c.gender, c.skin_color_idx, "
+			"COALESCE(HEX(c.appearance), '') AS appearance_hex "
 			"FROM characters c "
 			"LEFT JOIN character_stats s ON s.character_id = c.id AND s.server_id = c.server_id "
 			"WHERE c.account_id = ? AND c.server_id = ? AND c.deleted_at IS NULL "
@@ -131,6 +132,9 @@ namespace engine::server
 			if (e.gender.empty()) e.gender = "male";
 			// Teinte de peau (migration 0068). Defaut 0 (claire) si vide/NULL.
 			e.skin_color_idx = static_cast<uint8_t>(stmt->GetUInt64(17));
+			// Personnalisation (migration 0097), lue en hexadécimal ; vide si NULL
+			// (personnage antérieur) => apparence par défaut côté client.
+			e.appearance = engine::network::AppearanceFromHex(stmt->GetString(18));
 			entries.push_back(std::move(e));
 		}
 

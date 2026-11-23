@@ -493,6 +493,11 @@ namespace engine::client
 		/// le SnapshotEntity. Vide pour les mobs / lootbags, ou pour les joueurs si le
 		/// master n'a pas pu fournir le genre — le rendu retombe alors sur "male".
 		std::string gender;
+		/// Personnalisation : race (« humains », « demons »…) et bloc CharacterAppearance
+		/// propagés via le SnapshotEntity (wire v22). Vides pour les mobs / lootbags ou un
+		/// personnage antérieur — le rendu retombe sur humains + apparence par défaut.
+		std::string raceId;
+		std::vector<uint8_t> appearance;
 		/// TD.8 : état d'animation (valeur d'AvatarAnimState) propagé via le SnapshotEntity.
 		/// Consommé par RecordRemoteAvatars pour jouer le bon clip (emote/roulade/run/…).
 		uint8_t animationState = 0;

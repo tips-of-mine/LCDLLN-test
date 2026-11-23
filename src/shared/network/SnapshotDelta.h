@@ -57,6 +57,8 @@ namespace engine::network::snapshot
 		uint32_t archetypeId = 0;
 		std::string characterName;    ///< 64 octets au plus.
 		std::string gender;           ///< 8 octets au plus.
+		std::string raceId;           ///< v22 — 16 octets au plus (vide pour les mobs).
+		std::string appearance;       ///< v22 — bloc CharacterAppearance, 32 octets au plus.
 		/// Hors fil : entité de faible priorité (PNJ d'ambiance, chantier 4.5) mise à jour
 		/// un snapshot sur deux. Jamais sérialisé.
 		bool halfRate = false;
@@ -99,7 +101,7 @@ namespace engine::network::snapshot
 	/// Taille fixe de l'en-tête d'un morceau dans la charge utile.
 	inline constexpr size_t kChunkHeaderSize = 34u;
 	/// Plafond de morceaux par snapshot (protège le décodeur). Large devant le pire cas
-	/// de kMaxEntitiesPerSnapshot entités complètes (~170 o chacune) plus leurs retraits.
+	/// de kMaxEntitiesPerSnapshot entités complètes (~220 o chacune) plus leurs retraits.
 	inline constexpr uint16_t kMaxChunksPerSnapshot = 128u;
 	/// Plafond d'entités dans un snapshot (le shard en envoie au plus
 	/// server.replication.view_cap_entities, 100 par défaut).

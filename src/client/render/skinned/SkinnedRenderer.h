@@ -40,6 +40,22 @@ namespace engine::render::skinned
 ///   - Init(...)   à la création du renderer (1 fois par device).
 ///   - Record(...) chaque frame (Task 14).
 ///   - Destroy()   avant la destruction du device.
+/// Personnalisation — une pièce d'avatar modulaire à dessiner (corps, visage,
+/// coiffure, barbe, cornes…). Toutes les pièces d'un même avatar partagent le
+/// squelette du corps : elles sont dessinées par SkinnedRenderer::RecordParts
+/// avec les mêmes matrices d'os et la même matrice modèle (un seul slot du ring).
+struct SkinnedDrawPart
+{
+    /// Maillage à dessiner (non possédé). Ignoré s'il est nul ou non uploadé.
+    const SkinnedMesh* mesh = nullptr;
+    /// Index matériau par sous-maillage (parallèle à mesh->submeshes).
+    /// SkinnedRenderer::kSkipSubmesh masque un sous-maillage. Vide ou de taille
+    /// différente → un seul draw avec materialIndex.
+    std::vector<uint32_t> submeshMaterialIndices;
+    /// Matériau du chemin mono-draw.
+    uint32_t materialIndex = 0;
+};
+
 class SkinnedRenderer
 {
 public:
@@ -143,6 +159,30 @@ public:
                 uint32_t skinMaterialIndex = 0u,
                 float skinDepthBiasConstant = 0.0f,
                 float skinDepthBiasSlope = 0.0f);
+
+    /// Valeur d'index matériau qui masque un sous-maillage (cf. SkinnedDrawPart).
+    static constexpr uint32_t kSkipSubmesh = 0xFFFFFFFFu;
+
+    /// Personnalisation — dessine toutes les pièces d'un avatar modulaire avec UN
+    /// seul upload des matrices d'os et de la matrice modèle (un slot du ring par
+    /// avatar, quel que soit le nombre de pièces).
+    ///
+    /// \param parts      Tableau de pièces (le corps en premier par convention).
+    /// \param partCount  Nombre de pièces.
+    /// \param finalBoneMatrices  Matrices finales du squelette du corps (partagé).
+    /// \param skinMaterialIndex  Matériau de peau : reçoit le biais de profondeur peau.
+    ///
+    /// Doit être appelée dans le render pass G-buffer (loadOp=LOAD), comme Record.
+    void RecordParts(VkDevice device, VkCommandBuffer cmd,
+                     VkExtent2D extent,
+                     const float* prevViewProj, const float* viewProj,
+                     const SkinnedDrawPart* parts, size_t partCount,
+                     const std::vector<engine::math::Mat4>& finalBoneMatrices,
+                     VkDescriptorSet materialDescriptorSet,
+                     const float* modelMatrixColumnMajor4x4,
+                     uint32_t skinMaterialIndex = 0u,
+                     float skinDepthBiasConstant = 0.0f,
+                     float skinDepthBiasSlope = 0.0f);
 
     /// Libère toutes les ressources Vulkan dans l'ordre inverse de leur
     /// création. Idempotent (safe à appeler plusieurs fois, ou après un Init

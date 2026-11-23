@@ -365,6 +365,44 @@ namespace engine::render
 				// accents et le tiret cadratin dans TOUTES les interfaces in-game.
 				// Si Arial est introuvable, repli sur ProggyClean (ASCII seulement —
 				// couvre * [ ] @ mais laisse accents/typographie en '?').
+				// Lettres accentuées (é, è, à, ç, ê…) : Windlass n'en a pas et Arial les
+				// rendait en minuscules d'une autre police au milieu des petites
+				// capitales de Windlass (« FéMININ », « LUMIèRE »). On merge d'abord une
+				// police à petites capitales de même esprit (Cinzel, déjà livrée) pour la
+				// plage des lettres Latin-1 : ImGui garde le premier glyphe fusionné, Arial
+				// ne complète ensuite que le reste (symboles, ponctuation typographique).
+				{
+					static const ImWchar kAccentRanges[] = {
+						0x00C0, 0x00FF, // lettres accentuées Latin-1 (À-ÿ)
+						0x0152, 0x0153, // Œ œ
+						0,
+					};
+					const std::string accentPath = cfg->GetString("render.auth_ui.accent_font_path",
+						"fonts/Cinzel-Regular.ttf");
+					std::vector<uint8_t> bytesAccent = engine::platform::FileSystem::ReadAllBytesContent(*cfg, accentPath);
+					if (!bytesAccent.empty())
+					{
+						void* atlasAccent = IM_ALLOC(bytesAccent.size());
+						std::memcpy(atlasAccent, bytesAccent.data(), bytesAccent.size());
+						ImFontConfig accCfg{};
+						accCfg.MergeMode = true;
+						// Cinzel dessine ses petites capitales un peu plus bas que Windlass :
+						// léger agrandissement pour aligner les hauteurs de lettres.
+						ImFont* accFont = io.Fonts->AddFontFromMemoryTTF(atlasAccent, static_cast<int>(bytesAccent.size()),
+							uiFontPx * 1.08f, &accCfg, kAccentRanges);
+						if (accFont != nullptr)
+							LOG_INFO(Render, "[WorldEditorImGui] Accents : {} fusionnée sur Windlass", accentPath);
+						else
+						{
+							IM_FREE(atlasAccent);
+							LOG_WARN(Render, "[WorldEditorImGui] Accents : AddFontFromMemoryTTF a échoué ({})", accentPath);
+						}
+					}
+					else
+					{
+						LOG_WARN(Render, "[WorldEditorImGui] Police des accents introuvable : {} (repli Arial)", accentPath);
+					}
+				}
 				bool richFallbackLoaded = false;
 				const std::string fbArialPath = cfg->GetString("editor.font.arial_path", "C:/Windows/Fonts/arial.ttf");
 				std::vector<uint8_t> bytesFbArial = engine::platform::FileSystem::ReadAllBytes(std::filesystem::path(fbArialPath));

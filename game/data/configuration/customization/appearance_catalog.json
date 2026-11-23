@@ -1,0 +1,2595 @@
+{
+  "_comment": "Catalogue de personnalisation des personnages (généré par tools/asset_pipeline/character_appearance/build_character_appearance.py — ne pas éditer à la main). L'apparence d'un personnage est un indice par emplacement (slots), dans l'ordre des options listées ici.",
+  "version": 1,
+  "licence": "CC0 — création originale du projet LCDLLN (générée par tools/asset_pipeline/character_appearance)",
+  "slotOrder": [
+    "face",
+    "skinTone",
+    "hair",
+    "hairColor",
+    "eyeColor",
+    "beard",
+    "moustache",
+    "ears",
+    "horns",
+    "tail",
+    "wings",
+    "tusks"
+  ],
+  "raceOrder": [
+    "humains",
+    "elfes",
+    "nains",
+    "orcs",
+    "demons"
+  ],
+  "slotLabels": {
+    "face": "Visage",
+    "skinTone": "Teinte de peau",
+    "hair": "Coiffure",
+    "hairColor": "Couleur des cheveux",
+    "eyeColor": "Couleur des yeux",
+    "beard": "Barbe",
+    "moustache": "Moustache",
+    "ears": "Oreilles",
+    "horns": "Cornes",
+    "tail": "Queue",
+    "wings": "Ailes",
+    "tusks": "Défenses"
+  },
+  "materials": {
+    "skin": [
+      "MI_Regular_Male",
+      "MI_Regular_Female"
+    ],
+    "hair": "MI_Hair",
+    "eye": "MI_Eye",
+    "horn": "MI_Horn",
+    "tusk": "MI_Tusk"
+  },
+  "hornTexture": "textures/characters/appearance/T_Horn.png",
+  "tuskTexture": "textures/characters/appearance/T_Tusk.png",
+  "budgets": {
+    "face": [
+      9500,
+      4500,
+      1800
+    ],
+    "hair": [
+      10500,
+      4200,
+      1600
+    ],
+    "beard": [
+      6000,
+      2400,
+      1000
+    ],
+    "moustache": [
+      1200,
+      500,
+      250
+    ],
+    "ears": [
+      1500,
+      700,
+      300
+    ],
+    "horns": [
+      2500,
+      1000,
+      400
+    ],
+    "tusks": [
+      800,
+      400,
+      200
+    ],
+    "tail": [
+      1500,
+      700,
+      300
+    ],
+    "wings": [
+      5000,
+      2000,
+      900
+    ]
+  },
+  "races": {
+    "humains": {
+      "male": {
+        "body": "models/characters/humains/Male_Ranger/Male_Ranger.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/humains/male/face_1_lod0.glb",
+                "models/characters/appearance/humains/male/face_1_lod1.glb",
+                "models/characters/appearance/humains/male/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/humains/male/face_2_lod0.glb",
+                "models/characters/appearance/humains/male/face_2_lod1.glb",
+                "models/characters/appearance/humains/male/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/humains/male/face_3_lod0.glb",
+                "models/characters/appearance/humains/male/face_3_lod1.glb",
+                "models/characters/appearance/humains/male/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "claire",
+              "name": "Claire",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#FFFFFF",
+              "hex": "#C8906A"
+            },
+            {
+              "id": "halee",
+              "name": "Hâlée",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#F8FFFC",
+              "hex": "#A57650"
+            },
+            {
+              "id": "foncee",
+              "name": "Foncée",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#8D8078",
+              "hex": "#5E3A26"
+            }
+          ],
+          "hair": [
+            {
+              "id": "none",
+              "name": "Rasé",
+              "lods": []
+            },
+            {
+              "id": "cropped",
+              "name": "Ras",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_cropped_lod0.glb",
+                "models/characters/appearance/humains/male/hair_cropped_lod1.glb",
+                "models/characters/appearance/humains/male/hair_cropped_lod2.glb"
+              ]
+            },
+            {
+              "id": "short",
+              "name": "Court",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_short_lod0.glb",
+                "models/characters/appearance/humains/male/hair_short_lod1.glb",
+                "models/characters/appearance/humains/male/hair_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "swept",
+              "name": "Coiffé en arrière",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_swept_lod0.glb",
+                "models/characters/appearance/humains/male/hair_swept_lod1.glb",
+                "models/characters/appearance/humains/male/hair_swept_lod2.glb"
+              ]
+            },
+            {
+              "id": "medium",
+              "name": "Mi-long",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_medium_lod0.glb",
+                "models/characters/appearance/humains/male/hair_medium_lod1.glb",
+                "models/characters/appearance/humains/male/hair_medium_lod2.glb"
+              ]
+            },
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_long_lod0.glb",
+                "models/characters/appearance/humains/male/hair_long_lod1.glb",
+                "models/characters/appearance/humains/male/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "ponytail",
+              "name": "Queue de cheval",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_ponytail_lod0.glb",
+                "models/characters/appearance/humains/male/hair_ponytail_lod1.glb",
+                "models/characters/appearance/humains/male/hair_ponytail_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "brun_fonce",
+              "name": "Brun foncé",
+              "hex": "#3A2416",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#482D1B"
+            },
+            {
+              "id": "chatain",
+              "name": "Châtain",
+              "hex": "#6A4428",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#845532"
+            },
+            {
+              "id": "auburn",
+              "name": "Auburn",
+              "hex": "#7E3A1E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#9E4825"
+            },
+            {
+              "id": "roux",
+              "name": "Roux",
+              "hex": "#A2552C",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#CA6A37"
+            },
+            {
+              "id": "blond",
+              "name": "Blond",
+              "hex": "#B9965A",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#E7BB70"
+            },
+            {
+              "id": "blond_cendre",
+              "name": "Blond cendré",
+              "hex": "#A89A7E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#D2C09E"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#86837E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#A8A49E"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "brun",
+              "name": "Brun",
+              "hex": "#5A3A22",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#70482A"
+            },
+            {
+              "id": "noisette",
+              "name": "Noisette",
+              "hex": "#7A5A2E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#987039"
+            },
+            {
+              "id": "vert",
+              "name": "Vert",
+              "hex": "#4E6B3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#628648"
+            },
+            {
+              "id": "bleu",
+              "name": "Bleu",
+              "hex": "#4C6E8E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#5F8AB2"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#7C8488",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#9BA5AA"
+            }
+          ],
+          "beard": [
+            {
+              "id": "none",
+              "name": "Aucune",
+              "lods": []
+            },
+            {
+              "id": "short_beard",
+              "name": "Barbe courte",
+              "lods": [
+                "models/characters/appearance/humains/male/beard_short_beard_lod0.glb",
+                "models/characters/appearance/humains/male/beard_short_beard_lod1.glb",
+                "models/characters/appearance/humains/male/beard_short_beard_lod2.glb"
+              ]
+            },
+            {
+              "id": "full_beard",
+              "name": "Barbe fournie",
+              "lods": [
+                "models/characters/appearance/humains/male/beard_full_beard_lod0.glb",
+                "models/characters/appearance/humains/male/beard_full_beard_lod1.glb",
+                "models/characters/appearance/humains/male/beard_full_beard_lod2.glb"
+              ]
+            },
+            {
+              "id": "long_beard",
+              "name": "Longue barbe",
+              "lods": [
+                "models/characters/appearance/humains/male/beard_long_beard_lod0.glb",
+                "models/characters/appearance/humains/male/beard_long_beard_lod1.glb",
+                "models/characters/appearance/humains/male/beard_long_beard_lod2.glb"
+              ]
+            },
+            {
+              "id": "goatee",
+              "name": "Bouc",
+              "lods": [
+                "models/characters/appearance/humains/male/beard_goatee_lod0.glb",
+                "models/characters/appearance/humains/male/beard_goatee_lod1.glb",
+                "models/characters/appearance/humains/male/beard_goatee_lod2.glb"
+              ]
+            },
+            {
+              "id": "chin_strap",
+              "name": "Collier",
+              "lods": [
+                "models/characters/appearance/humains/male/beard_chin_strap_lod0.glb",
+                "models/characters/appearance/humains/male/beard_chin_strap_lod1.glb",
+                "models/characters/appearance/humains/male/beard_chin_strap_lod2.glb"
+              ]
+            }
+          ],
+          "moustache": [
+            {
+              "id": "none",
+              "name": "Aucune",
+              "lods": []
+            },
+            {
+              "id": "thin",
+              "name": "Fine",
+              "lods": [
+                "models/characters/appearance/humains/male/moustache_thin_lod0.glb",
+                "models/characters/appearance/humains/male/moustache_thin_lod1.glb",
+                "models/characters/appearance/humains/male/moustache_thin_lod2.glb"
+              ]
+            },
+            {
+              "id": "thick",
+              "name": "Épaisse",
+              "lods": [
+                "models/characters/appearance/humains/male/moustache_thick_lod0.glb",
+                "models/characters/appearance/humains/male/moustache_thick_lod1.glb",
+                "models/characters/appearance/humains/male/moustache_thick_lod2.glb"
+              ]
+            },
+            {
+              "id": "handlebar",
+              "name": "Guidon",
+              "lods": [
+                "models/characters/appearance/humains/male/moustache_handlebar_lod0.glb",
+                "models/characters/appearance/humains/male/moustache_handlebar_lod1.glb",
+                "models/characters/appearance/humains/male/moustache_handlebar_lod2.glb"
+              ]
+            },
+            {
+              "id": "drooping",
+              "name": "Tombante",
+              "lods": [
+                "models/characters/appearance/humains/male/moustache_drooping_lod0.glb",
+                "models/characters/appearance/humains/male/moustache_drooping_lod1.glb",
+                "models/characters/appearance/humains/male/moustache_drooping_lod2.glb"
+              ]
+            }
+          ]
+        }
+      },
+      "female": {
+        "body": "models/characters/humains/Female_Ranger/Female_Ranger.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/humains/female/face_1_lod0.glb",
+                "models/characters/appearance/humains/female/face_1_lod1.glb",
+                "models/characters/appearance/humains/female/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/humains/female/face_2_lod0.glb",
+                "models/characters/appearance/humains/female/face_2_lod1.glb",
+                "models/characters/appearance/humains/female/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/humains/female/face_3_lod0.glb",
+                "models/characters/appearance/humains/female/face_3_lod1.glb",
+                "models/characters/appearance/humains/female/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "claire",
+              "name": "Claire",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#FFFFFF",
+              "hex": "#C8906A"
+            },
+            {
+              "id": "halee",
+              "name": "Hâlée",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#F6FDF9",
+              "hex": "#A57650"
+            },
+            {
+              "id": "foncee",
+              "name": "Foncée",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#8C7C76",
+              "hex": "#5E3A26"
+            }
+          ],
+          "hair": [
+            {
+              "id": "short",
+              "name": "Court",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_short_lod0.glb",
+                "models/characters/appearance/humains/female/hair_short_lod1.glb",
+                "models/characters/appearance/humains/female/hair_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "bob",
+              "name": "Carré",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_bob_lod0.glb",
+                "models/characters/appearance/humains/female/hair_bob_lod1.glb",
+                "models/characters/appearance/humains/female/hair_bob_lod2.glb"
+              ]
+            },
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_long_lod0.glb",
+                "models/characters/appearance/humains/female/hair_long_lod1.glb",
+                "models/characters/appearance/humains/female/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "ponytail",
+              "name": "Queue de cheval",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_ponytail_lod0.glb",
+                "models/characters/appearance/humains/female/hair_ponytail_lod1.glb",
+                "models/characters/appearance/humains/female/hair_ponytail_lod2.glb"
+              ]
+            },
+            {
+              "id": "high_tail",
+              "name": "Queue haute",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_high_tail_lod0.glb",
+                "models/characters/appearance/humains/female/hair_high_tail_lod1.glb",
+                "models/characters/appearance/humains/female/hair_high_tail_lod2.glb"
+              ]
+            },
+            {
+              "id": "bun",
+              "name": "Chignon",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_bun_lod0.glb",
+                "models/characters/appearance/humains/female/hair_bun_lod1.glb",
+                "models/characters/appearance/humains/female/hair_bun_lod2.glb"
+              ]
+            },
+            {
+              "id": "braid",
+              "name": "Tresse",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_braid_lod0.glb",
+                "models/characters/appearance/humains/female/hair_braid_lod1.glb",
+                "models/characters/appearance/humains/female/hair_braid_lod2.glb"
+              ]
+            },
+            {
+              "id": "twin_braids",
+              "name": "Deux tresses",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_twin_braids_lod0.glb",
+                "models/characters/appearance/humains/female/hair_twin_braids_lod1.glb",
+                "models/characters/appearance/humains/female/hair_twin_braids_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "brun_fonce",
+              "name": "Brun foncé",
+              "hex": "#3A2416",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#482D1B"
+            },
+            {
+              "id": "chatain",
+              "name": "Châtain",
+              "hex": "#6A4428",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#845532"
+            },
+            {
+              "id": "auburn",
+              "name": "Auburn",
+              "hex": "#7E3A1E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#9E4825"
+            },
+            {
+              "id": "roux",
+              "name": "Roux",
+              "hex": "#A2552C",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#CA6A37"
+            },
+            {
+              "id": "blond",
+              "name": "Blond",
+              "hex": "#B9965A",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#E7BB70"
+            },
+            {
+              "id": "blond_cendre",
+              "name": "Blond cendré",
+              "hex": "#A89A7E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#D2C09E"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#86837E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#A8A49E"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "brun",
+              "name": "Brun",
+              "hex": "#5A3A22",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#70482A"
+            },
+            {
+              "id": "noisette",
+              "name": "Noisette",
+              "hex": "#7A5A2E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#987039"
+            },
+            {
+              "id": "vert",
+              "name": "Vert",
+              "hex": "#4E6B3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#628648"
+            },
+            {
+              "id": "bleu",
+              "name": "Bleu",
+              "hex": "#4C6E8E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#5F8AB2"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#7C8488",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#9BA5AA"
+            }
+          ]
+        }
+      }
+    },
+    "elfes": {
+      "male": {
+        "body": "models/characters/elfes/Male_Elfe/Male_Elfe.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/elfes/male/face_1_lod0.glb",
+                "models/characters/appearance/elfes/male/face_1_lod1.glb",
+                "models/characters/appearance/elfes/male/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/elfes/male/face_2_lod0.glb",
+                "models/characters/appearance/elfes/male/face_2_lod1.glb",
+                "models/characters/appearance/elfes/male/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/elfes/male/face_3_lod0.glb",
+                "models/characters/appearance/elfes/male/face_3_lod1.glb",
+                "models/characters/appearance/elfes/male/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "claire",
+              "name": "Claire",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#FFFFFF",
+              "hex": "#C8906A"
+            },
+            {
+              "id": "halee",
+              "name": "Hâlée",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#F8FFFC",
+              "hex": "#A57650"
+            },
+            {
+              "id": "foncee",
+              "name": "Foncée",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#8D8078",
+              "hex": "#5E3A26"
+            }
+          ],
+          "hair": [
+            {
+              "id": "short",
+              "name": "Court",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_short_lod0.glb",
+                "models/characters/appearance/humains/male/hair_short_lod1.glb",
+                "models/characters/appearance/humains/male/hair_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "swept",
+              "name": "Coiffé en arrière",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_swept_lod0.glb",
+                "models/characters/appearance/humains/male/hair_swept_lod1.glb",
+                "models/characters/appearance/humains/male/hair_swept_lod2.glb"
+              ]
+            },
+            {
+              "id": "medium",
+              "name": "Mi-long",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_medium_lod0.glb",
+                "models/characters/appearance/humains/male/hair_medium_lod1.glb",
+                "models/characters/appearance/humains/male/hair_medium_lod2.glb"
+              ]
+            },
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_long_lod0.glb",
+                "models/characters/appearance/humains/male/hair_long_lod1.glb",
+                "models/characters/appearance/humains/male/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "ponytail",
+              "name": "Queue de cheval",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_ponytail_lod0.glb",
+                "models/characters/appearance/humains/male/hair_ponytail_lod1.glb",
+                "models/characters/appearance/humains/male/hair_ponytail_lod2.glb"
+              ]
+            },
+            {
+              "id": "high_tail",
+              "name": "Queue haute",
+              "lods": [
+                "models/characters/appearance/elfes/male/hair_high_tail_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_high_tail_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_high_tail_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "blond_pale",
+              "name": "Blond pâle",
+              "hex": "#D3C49C",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFF5C3"
+            },
+            {
+              "id": "blond",
+              "name": "Blond",
+              "hex": "#B9965A",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#E7BB70"
+            },
+            {
+              "id": "argent",
+              "name": "Argenté",
+              "hex": "#BFC3C6",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#EFF4F8"
+            },
+            {
+              "id": "blanc",
+              "name": "Blanc",
+              "hex": "#D2CFC7",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFFFF9"
+            },
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "chatain",
+              "name": "Châtain",
+              "hex": "#6A4428",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#845532"
+            },
+            {
+              "id": "roux",
+              "name": "Roux",
+              "hex": "#A2552C",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#CA6A37"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "vert",
+              "name": "Vert",
+              "hex": "#4E6B3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#628648"
+            },
+            {
+              "id": "bleu",
+              "name": "Bleu",
+              "hex": "#4C6E8E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#5F8AB2"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#7C8488",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#9BA5AA"
+            },
+            {
+              "id": "ambre",
+              "name": "Ambre",
+              "hex": "#A8782A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#D29634"
+            },
+            {
+              "id": "noisette",
+              "name": "Noisette",
+              "hex": "#7A5A2E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#987039"
+            }
+          ],
+          "ears": [
+            {
+              "id": "ear_elf_short",
+              "name": "Pointues",
+              "lods": [
+                "models/characters/appearance/elfes/male/ear_elf_short_lod0.glb",
+                "models/characters/appearance/elfes/male/ear_elf_short_lod1.glb",
+                "models/characters/appearance/elfes/male/ear_elf_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "ear_elf_long",
+              "name": "Longues",
+              "lods": [
+                "models/characters/appearance/elfes/male/ear_elf_long_lod0.glb",
+                "models/characters/appearance/elfes/male/ear_elf_long_lod1.glb",
+                "models/characters/appearance/elfes/male/ear_elf_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "ear_elf_swept",
+              "name": "Effilées vers l'arrière",
+              "lods": [
+                "models/characters/appearance/elfes/male/ear_elf_swept_lod0.glb",
+                "models/characters/appearance/elfes/male/ear_elf_swept_lod1.glb",
+                "models/characters/appearance/elfes/male/ear_elf_swept_lod2.glb"
+              ]
+            }
+          ]
+        }
+      },
+      "female": {
+        "body": "models/characters/elfes/Female_Elfe/Female_Elfe.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/elfes/female/face_1_lod0.glb",
+                "models/characters/appearance/elfes/female/face_1_lod1.glb",
+                "models/characters/appearance/elfes/female/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/elfes/female/face_2_lod0.glb",
+                "models/characters/appearance/elfes/female/face_2_lod1.glb",
+                "models/characters/appearance/elfes/female/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/elfes/female/face_3_lod0.glb",
+                "models/characters/appearance/elfes/female/face_3_lod1.glb",
+                "models/characters/appearance/elfes/female/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "claire",
+              "name": "Claire",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#FFFFFF",
+              "hex": "#C8906A"
+            },
+            {
+              "id": "halee",
+              "name": "Hâlée",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#F6FDF9",
+              "hex": "#A57650"
+            },
+            {
+              "id": "foncee",
+              "name": "Foncée",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#8C7C76",
+              "hex": "#5E3A26"
+            }
+          ],
+          "hair": [
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_long_lod0.glb",
+                "models/characters/appearance/humains/female/hair_long_lod1.glb",
+                "models/characters/appearance/humains/female/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "bob",
+              "name": "Carré",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_bob_lod0.glb",
+                "models/characters/appearance/humains/female/hair_bob_lod1.glb",
+                "models/characters/appearance/humains/female/hair_bob_lod2.glb"
+              ]
+            },
+            {
+              "id": "braid",
+              "name": "Tresse",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_braid_lod0.glb",
+                "models/characters/appearance/humains/female/hair_braid_lod1.glb",
+                "models/characters/appearance/humains/female/hair_braid_lod2.glb"
+              ]
+            },
+            {
+              "id": "twin_braids",
+              "name": "Deux tresses",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_twin_braids_lod0.glb",
+                "models/characters/appearance/humains/female/hair_twin_braids_lod1.glb",
+                "models/characters/appearance/humains/female/hair_twin_braids_lod2.glb"
+              ]
+            },
+            {
+              "id": "high_tail",
+              "name": "Queue haute",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_high_tail_lod0.glb",
+                "models/characters/appearance/humains/female/hair_high_tail_lod1.glb",
+                "models/characters/appearance/humains/female/hair_high_tail_lod2.glb"
+              ]
+            },
+            {
+              "id": "bun",
+              "name": "Chignon",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_bun_lod0.glb",
+                "models/characters/appearance/humains/female/hair_bun_lod1.glb",
+                "models/characters/appearance/humains/female/hair_bun_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "blond_pale",
+              "name": "Blond pâle",
+              "hex": "#D3C49C",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFF5C3"
+            },
+            {
+              "id": "blond",
+              "name": "Blond",
+              "hex": "#B9965A",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#E7BB70"
+            },
+            {
+              "id": "argent",
+              "name": "Argenté",
+              "hex": "#BFC3C6",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#EFF4F8"
+            },
+            {
+              "id": "blanc",
+              "name": "Blanc",
+              "hex": "#D2CFC7",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFFFF9"
+            },
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "chatain",
+              "name": "Châtain",
+              "hex": "#6A4428",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#845532"
+            },
+            {
+              "id": "roux",
+              "name": "Roux",
+              "hex": "#A2552C",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#CA6A37"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "vert",
+              "name": "Vert",
+              "hex": "#4E6B3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#628648"
+            },
+            {
+              "id": "bleu",
+              "name": "Bleu",
+              "hex": "#4C6E8E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#5F8AB2"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#7C8488",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#9BA5AA"
+            },
+            {
+              "id": "ambre",
+              "name": "Ambre",
+              "hex": "#A8782A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#D29634"
+            },
+            {
+              "id": "noisette",
+              "name": "Noisette",
+              "hex": "#7A5A2E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#987039"
+            }
+          ],
+          "ears": [
+            {
+              "id": "ear_elf_short",
+              "name": "Pointues",
+              "lods": [
+                "models/characters/appearance/elfes/female/ear_elf_short_lod0.glb",
+                "models/characters/appearance/elfes/female/ear_elf_short_lod1.glb",
+                "models/characters/appearance/elfes/female/ear_elf_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "ear_elf_long",
+              "name": "Longues",
+              "lods": [
+                "models/characters/appearance/elfes/female/ear_elf_long_lod0.glb",
+                "models/characters/appearance/elfes/female/ear_elf_long_lod1.glb",
+                "models/characters/appearance/elfes/female/ear_elf_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "ear_elf_swept",
+              "name": "Effilées vers l'arrière",
+              "lods": [
+                "models/characters/appearance/elfes/female/ear_elf_swept_lod0.glb",
+                "models/characters/appearance/elfes/female/ear_elf_swept_lod1.glb",
+                "models/characters/appearance/elfes/female/ear_elf_swept_lod2.glb"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "nains": {
+      "male": {
+        "body": "models/characters/nains/Male_Nain/Male_Nain.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/nains/male/face_1_lod0.glb",
+                "models/characters/appearance/nains/male/face_1_lod1.glb",
+                "models/characters/appearance/nains/male/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/nains/male/face_2_lod0.glb",
+                "models/characters/appearance/nains/male/face_2_lod1.glb",
+                "models/characters/appearance/nains/male/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/nains/male/face_3_lod0.glb",
+                "models/characters/appearance/nains/male/face_3_lod1.glb",
+                "models/characters/appearance/nains/male/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "claire",
+              "name": "Claire",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#FFFFFF",
+              "hex": "#C8906A"
+            },
+            {
+              "id": "halee",
+              "name": "Hâlée",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#F8FFFC",
+              "hex": "#A57650"
+            },
+            {
+              "id": "foncee",
+              "name": "Foncée",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#8D8078",
+              "hex": "#5E3A26"
+            }
+          ],
+          "hair": [
+            {
+              "id": "none",
+              "name": "Rasé",
+              "lods": []
+            },
+            {
+              "id": "short",
+              "name": "Court",
+              "lods": [
+                "models/characters/appearance/nains/male/hair_short_lod0.glb",
+                "models/characters/appearance/nains/male/hair_short_lod1.glb",
+                "models/characters/appearance/nains/male/hair_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "medium",
+              "name": "Mi-long",
+              "lods": [
+                "models/characters/appearance/nains/male/hair_medium_lod0.glb",
+                "models/characters/appearance/nains/male/hair_medium_lod1.glb",
+                "models/characters/appearance/nains/male/hair_medium_lod2.glb"
+              ]
+            },
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/nains/male/hair_long_lod0.glb",
+                "models/characters/appearance/nains/male/hair_long_lod1.glb",
+                "models/characters/appearance/nains/male/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "braid",
+              "name": "Tresse",
+              "lods": [
+                "models/characters/appearance/nains/male/hair_braid_lod0.glb",
+                "models/characters/appearance/nains/male/hair_braid_lod1.glb",
+                "models/characters/appearance/nains/male/hair_braid_lod2.glb"
+              ]
+            },
+            {
+              "id": "topknot",
+              "name": "Chignon haut",
+              "lods": [
+                "models/characters/appearance/nains/male/hair_topknot_lod0.glb",
+                "models/characters/appearance/nains/male/hair_topknot_lod1.glb",
+                "models/characters/appearance/nains/male/hair_topknot_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "roux",
+              "name": "Roux",
+              "hex": "#A2552C",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#CA6A37"
+            },
+            {
+              "id": "auburn",
+              "name": "Auburn",
+              "hex": "#7E3A1E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#9E4825"
+            },
+            {
+              "id": "brun_fonce",
+              "name": "Brun foncé",
+              "hex": "#3A2416",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#482D1B"
+            },
+            {
+              "id": "chatain",
+              "name": "Châtain",
+              "hex": "#6A4428",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#845532"
+            },
+            {
+              "id": "blond",
+              "name": "Blond",
+              "hex": "#B9965A",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#E7BB70"
+            },
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#86837E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#A8A49E"
+            },
+            {
+              "id": "blanc",
+              "name": "Blanc",
+              "hex": "#D2CFC7",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFFFF9"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "brun",
+              "name": "Brun",
+              "hex": "#5A3A22",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#70482A"
+            },
+            {
+              "id": "noisette",
+              "name": "Noisette",
+              "hex": "#7A5A2E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#987039"
+            },
+            {
+              "id": "bleu",
+              "name": "Bleu",
+              "hex": "#4C6E8E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#5F8AB2"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#7C8488",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#9BA5AA"
+            },
+            {
+              "id": "vert",
+              "name": "Vert",
+              "hex": "#4E6B3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#628648"
+            }
+          ],
+          "beard": [
+            {
+              "id": "full_beard",
+              "name": "Barbe fournie",
+              "lods": [
+                "models/characters/appearance/nains/male/beard_full_beard_lod0.glb",
+                "models/characters/appearance/nains/male/beard_full_beard_lod1.glb",
+                "models/characters/appearance/nains/male/beard_full_beard_lod2.glb"
+              ]
+            },
+            {
+              "id": "long_beard",
+              "name": "Longue barbe",
+              "lods": [
+                "models/characters/appearance/nains/male/beard_long_beard_lod0.glb",
+                "models/characters/appearance/nains/male/beard_long_beard_lod1.glb",
+                "models/characters/appearance/nains/male/beard_long_beard_lod2.glb"
+              ]
+            },
+            {
+              "id": "braided_beard",
+              "name": "Barbe tressée",
+              "lods": [
+                "models/characters/appearance/nains/male/beard_braided_beard_lod0.glb",
+                "models/characters/appearance/nains/male/beard_braided_beard_lod1.glb",
+                "models/characters/appearance/nains/male/beard_braided_beard_lod2.glb"
+              ]
+            },
+            {
+              "id": "short_beard",
+              "name": "Barbe courte",
+              "lods": [
+                "models/characters/appearance/nains/male/beard_short_beard_lod0.glb",
+                "models/characters/appearance/nains/male/beard_short_beard_lod1.glb",
+                "models/characters/appearance/nains/male/beard_short_beard_lod2.glb"
+              ]
+            },
+            {
+              "id": "none",
+              "name": "Aucune",
+              "lods": []
+            }
+          ],
+          "moustache": [
+            {
+              "id": "thick",
+              "name": "Épaisse",
+              "lods": [
+                "models/characters/appearance/nains/male/moustache_thick_lod0.glb",
+                "models/characters/appearance/nains/male/moustache_thick_lod1.glb",
+                "models/characters/appearance/nains/male/moustache_thick_lod2.glb"
+              ]
+            },
+            {
+              "id": "handlebar",
+              "name": "Guidon",
+              "lods": [
+                "models/characters/appearance/nains/male/moustache_handlebar_lod0.glb",
+                "models/characters/appearance/nains/male/moustache_handlebar_lod1.glb",
+                "models/characters/appearance/nains/male/moustache_handlebar_lod2.glb"
+              ]
+            },
+            {
+              "id": "drooping",
+              "name": "Tombante",
+              "lods": [
+                "models/characters/appearance/nains/male/moustache_drooping_lod0.glb",
+                "models/characters/appearance/nains/male/moustache_drooping_lod1.glb",
+                "models/characters/appearance/nains/male/moustache_drooping_lod2.glb"
+              ]
+            },
+            {
+              "id": "thin",
+              "name": "Fine",
+              "lods": [
+                "models/characters/appearance/nains/male/moustache_thin_lod0.glb",
+                "models/characters/appearance/nains/male/moustache_thin_lod1.glb",
+                "models/characters/appearance/nains/male/moustache_thin_lod2.glb"
+              ]
+            },
+            {
+              "id": "none",
+              "name": "Aucune",
+              "lods": []
+            }
+          ]
+        }
+      },
+      "female": {
+        "body": "models/characters/nains/Female_Nain/Female_Nain.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/nains/female/face_1_lod0.glb",
+                "models/characters/appearance/nains/female/face_1_lod1.glb",
+                "models/characters/appearance/nains/female/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/nains/female/face_2_lod0.glb",
+                "models/characters/appearance/nains/female/face_2_lod1.glb",
+                "models/characters/appearance/nains/female/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/nains/female/face_3_lod0.glb",
+                "models/characters/appearance/nains/female/face_3_lod1.glb",
+                "models/characters/appearance/nains/female/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "claire",
+              "name": "Claire",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#FFFFFF",
+              "hex": "#C8906A"
+            },
+            {
+              "id": "halee",
+              "name": "Hâlée",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#F6FDF9",
+              "hex": "#A57650"
+            },
+            {
+              "id": "foncee",
+              "name": "Foncée",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#8C7C76",
+              "hex": "#5E3A26"
+            }
+          ],
+          "hair": [
+            {
+              "id": "twin_braids",
+              "name": "Deux tresses",
+              "lods": [
+                "models/characters/appearance/nains/female/hair_twin_braids_lod0.glb",
+                "models/characters/appearance/nains/female/hair_twin_braids_lod1.glb",
+                "models/characters/appearance/nains/female/hair_twin_braids_lod2.glb"
+              ]
+            },
+            {
+              "id": "braid",
+              "name": "Tresse",
+              "lods": [
+                "models/characters/appearance/nains/female/hair_braid_lod0.glb",
+                "models/characters/appearance/nains/female/hair_braid_lod1.glb",
+                "models/characters/appearance/nains/female/hair_braid_lod2.glb"
+              ]
+            },
+            {
+              "id": "bun",
+              "name": "Chignon",
+              "lods": [
+                "models/characters/appearance/nains/female/hair_bun_lod0.glb",
+                "models/characters/appearance/nains/female/hair_bun_lod1.glb",
+                "models/characters/appearance/nains/female/hair_bun_lod2.glb"
+              ]
+            },
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/nains/female/hair_long_lod0.glb",
+                "models/characters/appearance/nains/female/hair_long_lod1.glb",
+                "models/characters/appearance/nains/female/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "high_tail",
+              "name": "Queue haute",
+              "lods": [
+                "models/characters/appearance/nains/female/hair_high_tail_lod0.glb",
+                "models/characters/appearance/nains/female/hair_high_tail_lod1.glb",
+                "models/characters/appearance/nains/female/hair_high_tail_lod2.glb"
+              ]
+            },
+            {
+              "id": "bob",
+              "name": "Carré",
+              "lods": [
+                "models/characters/appearance/nains/female/hair_bob_lod0.glb",
+                "models/characters/appearance/nains/female/hair_bob_lod1.glb",
+                "models/characters/appearance/nains/female/hair_bob_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "roux",
+              "name": "Roux",
+              "hex": "#A2552C",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#CA6A37"
+            },
+            {
+              "id": "auburn",
+              "name": "Auburn",
+              "hex": "#7E3A1E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#9E4825"
+            },
+            {
+              "id": "brun_fonce",
+              "name": "Brun foncé",
+              "hex": "#3A2416",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#482D1B"
+            },
+            {
+              "id": "chatain",
+              "name": "Châtain",
+              "hex": "#6A4428",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#845532"
+            },
+            {
+              "id": "blond",
+              "name": "Blond",
+              "hex": "#B9965A",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#E7BB70"
+            },
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#86837E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#A8A49E"
+            },
+            {
+              "id": "blanc",
+              "name": "Blanc",
+              "hex": "#D2CFC7",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFFFF9"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "brun",
+              "name": "Brun",
+              "hex": "#5A3A22",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#70482A"
+            },
+            {
+              "id": "noisette",
+              "name": "Noisette",
+              "hex": "#7A5A2E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#987039"
+            },
+            {
+              "id": "bleu",
+              "name": "Bleu",
+              "hex": "#4C6E8E",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#5F8AB2"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#7C8488",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#9BA5AA"
+            },
+            {
+              "id": "vert",
+              "name": "Vert",
+              "hex": "#4E6B3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#628648"
+            }
+          ]
+        }
+      }
+    },
+    "orcs": {
+      "male": {
+        "body": "models/characters/orcs/Male_Orc/Male_Orc.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/orcs/male/face_1_lod0.glb",
+                "models/characters/appearance/orcs/male/face_1_lod1.glb",
+                "models/characters/appearance/orcs/male/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/orcs/male/face_2_lod0.glb",
+                "models/characters/appearance/orcs/male/face_2_lod1.glb",
+                "models/characters/appearance/orcs/male/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/orcs/male/face_3_lod0.glb",
+                "models/characters/appearance/orcs/male/face_3_lod1.glb",
+                "models/characters/appearance/orcs/male/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "vert_gris",
+              "name": "Vert-de-gris",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#BDFFFF",
+              "hex": "#7E8C62"
+            },
+            {
+              "id": "olive",
+              "name": "Olive sombre",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#8DE9C3",
+              "hex": "#5E6A3E"
+            }
+          ],
+          "hair": [
+            {
+              "id": "none",
+              "name": "Rasé",
+              "lods": []
+            },
+            {
+              "id": "mohawk",
+              "name": "Crête",
+              "lods": [
+                "models/characters/appearance/orcs/male/hair_mohawk_lod0.glb",
+                "models/characters/appearance/orcs/male/hair_mohawk_lod1.glb",
+                "models/characters/appearance/orcs/male/hair_mohawk_lod2.glb"
+              ]
+            },
+            {
+              "id": "shaved_tail",
+              "name": "Rasé à queue",
+              "lods": [
+                "models/characters/appearance/orcs/male/hair_shaved_tail_lod0.glb",
+                "models/characters/appearance/orcs/male/hair_shaved_tail_lod1.glb",
+                "models/characters/appearance/orcs/male/hair_shaved_tail_lod2.glb"
+              ]
+            },
+            {
+              "id": "high_tail",
+              "name": "Queue haute",
+              "lods": [
+                "models/characters/appearance/orcs/male/hair_high_tail_lod0.glb",
+                "models/characters/appearance/orcs/male/hair_high_tail_lod1.glb",
+                "models/characters/appearance/orcs/male/hair_high_tail_lod2.glb"
+              ]
+            },
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/orcs/male/hair_long_lod0.glb",
+                "models/characters/appearance/orcs/male/hair_long_lod1.glb",
+                "models/characters/appearance/orcs/male/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "wild",
+              "name": "Hirsute",
+              "lods": [
+                "models/characters/appearance/orcs/male/hair_wild_lod0.glb",
+                "models/characters/appearance/orcs/male/hair_wild_lod1.glb",
+                "models/characters/appearance/orcs/male/hair_wild_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "brun_fonce",
+              "name": "Brun foncé",
+              "hex": "#3A2416",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#482D1B"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#86837E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#A8A49E"
+            },
+            {
+              "id": "blanc",
+              "name": "Blanc",
+              "hex": "#D2CFC7",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFFFF9"
+            },
+            {
+              "id": "rouge_sang",
+              "name": "Rouge sombre",
+              "hex": "#4E1714",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#621D19"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "ambre",
+              "name": "Ambre",
+              "hex": "#A8782A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#D29634"
+            },
+            {
+              "id": "rouge",
+              "name": "Rouge",
+              "hex": "#8A2420",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#AC2D28"
+            },
+            {
+              "id": "brun",
+              "name": "Brun",
+              "hex": "#5A3A22",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#70482A"
+            },
+            {
+              "id": "or",
+              "name": "Or",
+              "hex": "#C09A3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#F0C048"
+            }
+          ],
+          "tusks": [
+            {
+              "id": "tusks_small",
+              "name": "Petites",
+              "lods": [
+                "models/characters/appearance/orcs/male/tusks_small_lod0.glb",
+                "models/characters/appearance/orcs/male/tusks_small_lod1.glb",
+                "models/characters/appearance/orcs/male/tusks_small_lod2.glb"
+              ]
+            },
+            {
+              "id": "tusks_long",
+              "name": "Longues",
+              "lods": [
+                "models/characters/appearance/orcs/male/tusks_long_lod0.glb",
+                "models/characters/appearance/orcs/male/tusks_long_lod1.glb",
+                "models/characters/appearance/orcs/male/tusks_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "tusks_wide",
+              "name": "Écartées",
+              "lods": [
+                "models/characters/appearance/orcs/male/tusks_wide_lod0.glb",
+                "models/characters/appearance/orcs/male/tusks_wide_lod1.glb",
+                "models/characters/appearance/orcs/male/tusks_wide_lod2.glb"
+              ]
+            }
+          ]
+        }
+      },
+      "female": {
+        "body": "models/characters/orcs/Female_Orc/Female_Orc.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/orcs/female/face_1_lod0.glb",
+                "models/characters/appearance/orcs/female/face_1_lod1.glb",
+                "models/characters/appearance/orcs/female/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/orcs/female/face_2_lod0.glb",
+                "models/characters/appearance/orcs/female/face_2_lod1.glb",
+                "models/characters/appearance/orcs/female/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/orcs/female/face_3_lod0.glb",
+                "models/characters/appearance/orcs/female/face_3_lod1.glb",
+                "models/characters/appearance/orcs/female/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "vert_gris",
+              "name": "Vert-de-gris",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#BCFFFF",
+              "hex": "#7E8C62"
+            },
+            {
+              "id": "olive",
+              "name": "Olive sombre",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#8CE3C1",
+              "hex": "#5E6A3E"
+            }
+          ],
+          "hair": [
+            {
+              "id": "high_tail",
+              "name": "Queue haute",
+              "lods": [
+                "models/characters/appearance/orcs/female/hair_high_tail_lod0.glb",
+                "models/characters/appearance/orcs/female/hair_high_tail_lod1.glb",
+                "models/characters/appearance/orcs/female/hair_high_tail_lod2.glb"
+              ]
+            },
+            {
+              "id": "mohawk",
+              "name": "Crête",
+              "lods": [
+                "models/characters/appearance/orcs/female/hair_mohawk_lod0.glb",
+                "models/characters/appearance/orcs/female/hair_mohawk_lod1.glb",
+                "models/characters/appearance/orcs/female/hair_mohawk_lod2.glb"
+              ]
+            },
+            {
+              "id": "shaved_tail",
+              "name": "Rasé à queue",
+              "lods": [
+                "models/characters/appearance/orcs/female/hair_shaved_tail_lod0.glb",
+                "models/characters/appearance/orcs/female/hair_shaved_tail_lod1.glb",
+                "models/characters/appearance/orcs/female/hair_shaved_tail_lod2.glb"
+              ]
+            },
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/orcs/female/hair_long_lod0.glb",
+                "models/characters/appearance/orcs/female/hair_long_lod1.glb",
+                "models/characters/appearance/orcs/female/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "wild",
+              "name": "Hirsute",
+              "lods": [
+                "models/characters/appearance/orcs/female/hair_wild_lod0.glb",
+                "models/characters/appearance/orcs/female/hair_wild_lod1.glb",
+                "models/characters/appearance/orcs/female/hair_wild_lod2.glb"
+              ]
+            },
+            {
+              "id": "twin_braids",
+              "name": "Deux tresses",
+              "lods": [
+                "models/characters/appearance/orcs/female/hair_twin_braids_lod0.glb",
+                "models/characters/appearance/orcs/female/hair_twin_braids_lod1.glb",
+                "models/characters/appearance/orcs/female/hair_twin_braids_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "brun_fonce",
+              "name": "Brun foncé",
+              "hex": "#3A2416",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#482D1B"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#86837E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#A8A49E"
+            },
+            {
+              "id": "blanc",
+              "name": "Blanc",
+              "hex": "#D2CFC7",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFFFF9"
+            },
+            {
+              "id": "rouge_sang",
+              "name": "Rouge sombre",
+              "hex": "#4E1714",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#621D19"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "ambre",
+              "name": "Ambre",
+              "hex": "#A8782A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#D29634"
+            },
+            {
+              "id": "rouge",
+              "name": "Rouge",
+              "hex": "#8A2420",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#AC2D28"
+            },
+            {
+              "id": "brun",
+              "name": "Brun",
+              "hex": "#5A3A22",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#70482A"
+            },
+            {
+              "id": "or",
+              "name": "Or",
+              "hex": "#C09A3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#F0C048"
+            }
+          ],
+          "tusks": [
+            {
+              "id": "tusks_small",
+              "name": "Petites",
+              "lods": [
+                "models/characters/appearance/orcs/female/tusks_small_lod0.glb",
+                "models/characters/appearance/orcs/female/tusks_small_lod1.glb",
+                "models/characters/appearance/orcs/female/tusks_small_lod2.glb"
+              ]
+            },
+            {
+              "id": "tusks_long",
+              "name": "Longues",
+              "lods": [
+                "models/characters/appearance/orcs/female/tusks_long_lod0.glb",
+                "models/characters/appearance/orcs/female/tusks_long_lod1.glb",
+                "models/characters/appearance/orcs/female/tusks_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "tusks_wide",
+              "name": "Écartées",
+              "lods": [
+                "models/characters/appearance/orcs/female/tusks_wide_lod0.glb",
+                "models/characters/appearance/orcs/female/tusks_wide_lod1.glb",
+                "models/characters/appearance/orcs/female/tusks_wide_lod2.glb"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "demons": {
+      "male": {
+        "body": "models/characters/demons/Male_Demon/Male_Demon.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/demons/male/face_1_lod0.glb",
+                "models/characters/appearance/demons/male/face_1_lod1.glb",
+                "models/characters/appearance/demons/male/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/demons/male/face_2_lod0.glb",
+                "models/characters/appearance/demons/male/face_2_lod1.glb",
+                "models/characters/appearance/demons/male/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/demons/male/face_3_lod0.glb",
+                "models/characters/appearance/demons/male/face_3_lod1.glb",
+                "models/characters/appearance/demons/male/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "rouge_sombre",
+              "name": "Rouge sombre",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#CF8097",
+              "hex": "#8A3A30"
+            },
+            {
+              "id": "brun_braise",
+              "name": "Brun de braise",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#9F808B",
+              "hex": "#6A3A2C"
+            },
+            {
+              "id": "cendre",
+              "name": "Cendre",
+              "basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+              "tint": "#B3F6FF",
+              "hex": "#77706C"
+            }
+          ],
+          "hair": [
+            {
+              "id": "none",
+              "name": "Rasé",
+              "lods": []
+            },
+            {
+              "id": "short",
+              "name": "Court",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_short_lod0.glb",
+                "models/characters/appearance/humains/male/hair_short_lod1.glb",
+                "models/characters/appearance/humains/male/hair_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "swept",
+              "name": "Coiffé en arrière",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_swept_lod0.glb",
+                "models/characters/appearance/humains/male/hair_swept_lod1.glb",
+                "models/characters/appearance/humains/male/hair_swept_lod2.glb"
+              ]
+            },
+            {
+              "id": "medium",
+              "name": "Mi-long",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_medium_lod0.glb",
+                "models/characters/appearance/humains/male/hair_medium_lod1.glb",
+                "models/characters/appearance/humains/male/hair_medium_lod2.glb"
+              ]
+            },
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/humains/male/hair_long_lod0.glb",
+                "models/characters/appearance/humains/male/hair_long_lod1.glb",
+                "models/characters/appearance/humains/male/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "high_tail",
+              "name": "Queue haute",
+              "lods": [
+                "models/characters/appearance/elfes/male/hair_high_tail_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_high_tail_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_high_tail_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "rouge_sang",
+              "name": "Rouge sombre",
+              "hex": "#4E1714",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#621D19"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#86837E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#A8A49E"
+            },
+            {
+              "id": "blanc",
+              "name": "Blanc",
+              "hex": "#D2CFC7",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFFFF9"
+            },
+            {
+              "id": "brun_fonce",
+              "name": "Brun foncé",
+              "hex": "#3A2416",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#482D1B"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "or",
+              "name": "Or",
+              "hex": "#C09A3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#F0C048"
+            },
+            {
+              "id": "rouge",
+              "name": "Rouge",
+              "hex": "#8A2420",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#AC2D28"
+            },
+            {
+              "id": "ambre",
+              "name": "Ambre",
+              "hex": "#A8782A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#D29634"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#7C8488",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#9BA5AA"
+            }
+          ],
+          "horns": [
+            {
+              "id": "horns_ram",
+              "name": "Bélier",
+              "lods": [
+                "models/characters/appearance/demons/male/horns_ram_lod0.glb",
+                "models/characters/appearance/demons/male/horns_ram_lod1.glb",
+                "models/characters/appearance/demons/male/horns_ram_lod2.glb"
+              ]
+            },
+            {
+              "id": "horns_back",
+              "name": "Balayées en arrière",
+              "lods": [
+                "models/characters/appearance/demons/male/horns_back_lod0.glb",
+                "models/characters/appearance/demons/male/horns_back_lod1.glb",
+                "models/characters/appearance/demons/male/horns_back_lod2.glb"
+              ]
+            },
+            {
+              "id": "horns_up",
+              "name": "Dressées",
+              "lods": [
+                "models/characters/appearance/demons/male/horns_up_lod0.glb",
+                "models/characters/appearance/demons/male/horns_up_lod1.glb",
+                "models/characters/appearance/demons/male/horns_up_lod2.glb"
+              ]
+            },
+            {
+              "id": "horns_short",
+              "name": "Courtes",
+              "lods": [
+                "models/characters/appearance/demons/male/horns_short_lod0.glb",
+                "models/characters/appearance/demons/male/horns_short_lod1.glb",
+                "models/characters/appearance/demons/male/horns_short_lod2.glb"
+              ]
+            }
+          ],
+          "tail": [
+            {
+              "id": "tail_short",
+              "name": "Courte",
+              "lods": [
+                "models/characters/appearance/demons/male/tail_short_lod0.glb",
+                "models/characters/appearance/demons/male/tail_short_lod1.glb",
+                "models/characters/appearance/demons/male/tail_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "tail_medium",
+              "name": "Moyenne",
+              "lods": [
+                "models/characters/appearance/demons/male/tail_medium_lod0.glb",
+                "models/characters/appearance/demons/male/tail_medium_lod1.glb",
+                "models/characters/appearance/demons/male/tail_medium_lod2.glb"
+              ]
+            },
+            {
+              "id": "tail_long",
+              "name": "Longue",
+              "lods": [
+                "models/characters/appearance/demons/male/tail_long_lod0.glb",
+                "models/characters/appearance/demons/male/tail_long_lod1.glb",
+                "models/characters/appearance/demons/male/tail_long_lod2.glb"
+              ]
+            }
+          ],
+          "wings": [
+            {
+              "id": "none",
+              "name": "Sans ailes",
+              "lods": []
+            },
+            {
+              "id": "wings_bat",
+              "name": "Chauve-souris",
+              "lods": [
+                "models/characters/appearance/demons/male/wings_bat_lod0.glb",
+                "models/characters/appearance/demons/male/wings_bat_lod1.glb",
+                "models/characters/appearance/demons/male/wings_bat_lod2.glb"
+              ]
+            },
+            {
+              "id": "wings_spiked",
+              "name": "Griffues",
+              "lods": [
+                "models/characters/appearance/demons/male/wings_spiked_lod0.glb",
+                "models/characters/appearance/demons/male/wings_spiked_lod1.glb",
+                "models/characters/appearance/demons/male/wings_spiked_lod2.glb"
+              ]
+            },
+            {
+              "id": "wings_small",
+              "name": "Petites",
+              "lods": [
+                "models/characters/appearance/demons/male/wings_small_lod0.glb",
+                "models/characters/appearance/demons/male/wings_small_lod1.glb",
+                "models/characters/appearance/demons/male/wings_small_lod2.glb"
+              ]
+            }
+          ]
+        }
+      },
+      "female": {
+        "body": "models/characters/demons/Female_Demon/Female_Demon.glb",
+        "hiddenBodyMeshes": [
+          "Head_Hood"
+        ],
+        "slots": {
+          "face": [
+            {
+              "id": "face_1",
+              "name": "Visage 1",
+              "lods": [
+                "models/characters/appearance/demons/female/face_1_lod0.glb",
+                "models/characters/appearance/demons/female/face_1_lod1.glb",
+                "models/characters/appearance/demons/female/face_1_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_2",
+              "name": "Visage 2",
+              "lods": [
+                "models/characters/appearance/demons/female/face_2_lod0.glb",
+                "models/characters/appearance/demons/female/face_2_lod1.glb",
+                "models/characters/appearance/demons/female/face_2_lod2.glb"
+              ]
+            },
+            {
+              "id": "face_3",
+              "name": "Visage 3",
+              "lods": [
+                "models/characters/appearance/demons/female/face_3_lod0.glb",
+                "models/characters/appearance/demons/female/face_3_lod1.glb",
+                "models/characters/appearance/demons/female/face_3_lod2.glb"
+              ]
+            }
+          ],
+          "skinTone": [
+            {
+              "id": "rouge_sombre",
+              "name": "Rouge sombre",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#CE7C95",
+              "hex": "#8A3A30"
+            },
+            {
+              "id": "brun_braise",
+              "name": "Brun de braise",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#9E7C89",
+              "hex": "#6A3A2C"
+            },
+            {
+              "id": "cendre",
+              "name": "Cendre",
+              "basecolor": "textures/characters/humains/T_Regular_Female_BaseColor.png",
+              "tint": "#B1F0FF",
+              "hex": "#77706C"
+            }
+          ],
+          "hair": [
+            {
+              "id": "long",
+              "name": "Long",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_long_lod0.glb",
+                "models/characters/appearance/humains/female/hair_long_lod1.glb",
+                "models/characters/appearance/humains/female/hair_long_lod2.glb"
+              ]
+            },
+            {
+              "id": "bob",
+              "name": "Carré",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_bob_lod0.glb",
+                "models/characters/appearance/humains/female/hair_bob_lod1.glb",
+                "models/characters/appearance/humains/female/hair_bob_lod2.glb"
+              ]
+            },
+            {
+              "id": "high_tail",
+              "name": "Queue haute",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_high_tail_lod0.glb",
+                "models/characters/appearance/humains/female/hair_high_tail_lod1.glb",
+                "models/characters/appearance/humains/female/hair_high_tail_lod2.glb"
+              ]
+            },
+            {
+              "id": "braid",
+              "name": "Tresse",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_braid_lod0.glb",
+                "models/characters/appearance/humains/female/hair_braid_lod1.glb",
+                "models/characters/appearance/humains/female/hair_braid_lod2.glb"
+              ]
+            },
+            {
+              "id": "short",
+              "name": "Court",
+              "lods": [
+                "models/characters/appearance/humains/female/hair_short_lod0.glb",
+                "models/characters/appearance/humains/female/hair_short_lod1.glb",
+                "models/characters/appearance/humains/female/hair_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "swept",
+              "name": "Coiffé en arrière",
+              "lods": [
+                "models/characters/appearance/demons/female/hair_swept_lod0.glb",
+                "models/characters/appearance/demons/female/hair_swept_lod1.glb",
+                "models/characters/appearance/demons/female/hair_swept_lod2.glb"
+              ]
+            }
+          ],
+          "hairColor": [
+            {
+              "id": "noir",
+              "name": "Noir",
+              "hex": "#1C1611",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#231B15"
+            },
+            {
+              "id": "rouge_sang",
+              "name": "Rouge sombre",
+              "hex": "#4E1714",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#621D19"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#86837E",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#A8A49E"
+            },
+            {
+              "id": "blanc",
+              "name": "Blanc",
+              "hex": "#D2CFC7",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#FFFFF9"
+            },
+            {
+              "id": "brun_fonce",
+              "name": "Brun foncé",
+              "hex": "#3A2416",
+              "texture": "textures/characters/appearance/T_Hair.png",
+              "tint": "#482D1B"
+            }
+          ],
+          "eyeColor": [
+            {
+              "id": "or",
+              "name": "Or",
+              "hex": "#C09A3A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#F0C048"
+            },
+            {
+              "id": "rouge",
+              "name": "Rouge",
+              "hex": "#8A2420",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#AC2D28"
+            },
+            {
+              "id": "ambre",
+              "name": "Ambre",
+              "hex": "#A8782A",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#D29634"
+            },
+            {
+              "id": "gris",
+              "name": "Gris",
+              "hex": "#7C8488",
+              "texture": "textures/characters/appearance/T_Eye.png",
+              "tint": "#9BA5AA"
+            }
+          ],
+          "horns": [
+            {
+              "id": "horns_ram",
+              "name": "Bélier",
+              "lods": [
+                "models/characters/appearance/demons/female/horns_ram_lod0.glb",
+                "models/characters/appearance/demons/female/horns_ram_lod1.glb",
+                "models/characters/appearance/demons/female/horns_ram_lod2.glb"
+              ]
+            },
+            {
+              "id": "horns_back",
+              "name": "Balayées en arrière",
+              "lods": [
+                "models/characters/appearance/demons/female/horns_back_lod0.glb",
+                "models/characters/appearance/demons/female/horns_back_lod1.glb",
+                "models/characters/appearance/demons/female/horns_back_lod2.glb"
+              ]
+            },
+            {
+              "id": "horns_up",
+              "name": "Dressées",
+              "lods": [
+                "models/characters/appearance/demons/female/horns_up_lod0.glb",
+                "models/characters/appearance/demons/female/horns_up_lod1.glb",
+                "models/characters/appearance/demons/female/horns_up_lod2.glb"
+              ]
+            },
+            {
+              "id": "horns_short",
+              "name": "Courtes",
+              "lods": [
+                "models/characters/appearance/demons/female/horns_short_lod0.glb",
+                "models/characters/appearance/demons/female/horns_short_lod1.glb",
+                "models/characters/appearance/demons/female/horns_short_lod2.glb"
+              ]
+            }
+          ],
+          "tail": [
+            {
+              "id": "tail_short",
+              "name": "Courte",
+              "lods": [
+                "models/characters/appearance/demons/female/tail_short_lod0.glb",
+                "models/characters/appearance/demons/female/tail_short_lod1.glb",
+                "models/characters/appearance/demons/female/tail_short_lod2.glb"
+              ]
+            },
+            {
+              "id": "tail_medium",
+              "name": "Moyenne",
+              "lods": [
+                "models/characters/appearance/demons/female/tail_medium_lod0.glb",
+                "models/characters/appearance/demons/female/tail_medium_lod1.glb",
+                "models/characters/appearance/demons/female/tail_medium_lod2.glb"
+              ]
+            },
+            {
+              "id": "tail_long",
+              "name": "Longue",
+              "lods": [
+                "models/characters/appearance/demons/female/tail_long_lod0.glb",
+                "models/characters/appearance/demons/female/tail_long_lod1.glb",
+                "models/characters/appearance/demons/female/tail_long_lod2.glb"
+              ]
+            }
+          ],
+          "wings": [
+            {
+              "id": "none",
+              "name": "Sans ailes",
+              "lods": []
+            },
+            {
+              "id": "wings_bat",
+              "name": "Chauve-souris",
+              "lods": [
+                "models/characters/appearance/demons/female/wings_bat_lod0.glb",
+                "models/characters/appearance/demons/female/wings_bat_lod1.glb",
+                "models/characters/appearance/demons/female/wings_bat_lod2.glb"
+              ]
+            },
+            {
+              "id": "wings_spiked",
+              "name": "Griffues",
+              "lods": [
+                "models/characters/appearance/demons/female/wings_spiked_lod0.glb",
+                "models/characters/appearance/demons/female/wings_spiked_lod1.glb",
+                "models/characters/appearance/demons/female/wings_spiked_lod2.glb"
+              ]
+            },
+            {
+              "id": "wings_small",
+              "name": "Petites",
+              "lods": [
+                "models/characters/appearance/demons/female/wings_small_lod0.glb",
+                "models/characters/appearance/demons/female/wings_small_lod1.glb",
+                "models/characters/appearance/demons/female/wings_small_lod2.glb"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "stats": {
+    "files": 351,
+    "bytes": 32450416
+  }
+}

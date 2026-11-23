@@ -2499,11 +2499,15 @@ namespace engine
 					const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
 					// IDs doivent matcher exactement les race_str de races.json :
 					// "humains", "nains", "orcs" (au pluriel). Note : le dossier disk
-					// game/data/models/avatars/orc/orc.glb est singulier (heritage de
-					// l'upload utilisateur inbox/orc/), mais c'est OK car le meshPath
-					// dans races.json pointe vers le bon chemin singulier — seule la
-					// cle de map (race_str) doit etre pluriel pour matcher la DB.
-					constexpr const char* kMvpRaces[] = { "humains", "nains", "orcs" };
+					// game/data/models/avatars/orc/orc.glb (mannequin Mixamo) n'est plus le
+					// corps des orcs jouables (personnalisation : corps dérivé du corps
+					// humain UE5) ; il reste chargé sous la clé « orcs_creature » pour les
+					// mobs. La clé de map (race_str) doit être au pluriel pour matcher la DB.
+					// Personnalisation : les 5 races jouables ont leur corps (races.json,
+					// meshPath + importScale) — nains, orcs, démons et elfes sont dérivés
+					// du corps humain UE5 (même squelette, mêmes animations).
+					constexpr const char* kMvpRaces[] = { "humains", "nains", "orcs", "elfes", "demons" };
+					constexpr const char* kCreatureOrcMeshKey = "orcs_creature";
 
 					engine::client::CharacterCreationPresenter racesPresenter;
 					racesPresenter.Init(m_cfg);
@@ -2692,6 +2696,30 @@ namespace engine
 						if (femaleMesh != maleMesh) {
 							loadOneRace(RaceMeshKey(raceId, "female"), raceId, femaleMesh, def->importScale, def->importRotXDeg);
 						}
+					}
+					// Mobs : l'ancien mannequin orc (Mixamo) reste le corps des archétypes
+					// « orcs » du catalogue de créatures (clé dédiée), pour que la refonte
+					// des orcs jouables ne change pas l'apparence des monstres.
+					loadOneRace(RaceMeshKey(kCreatureOrcMeshKey, "male"), "orcs", "models/avatars/orc/orc.glb", 1.0f, 0.0f);
+					// Personnalisation des personnages : catalogue + assembleur des pièces
+					// (non bloquant : catalogue absent -> rendu historique, corps seul).
+					if (m_appearanceCatalog.Init(m_cfg) && m_pipeline)
+					{
+						auto& appearanceMaterials = m_pipeline->GetMaterialDescriptorCache();
+						const uint32_t appearanceOutfit = (m_avatarMaterialId != 0u)
+							? m_avatarMaterialId : appearanceMaterials.GetDefaultMaterialIndex();
+						(void)m_appearanceAssembler.Init(
+							m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetPhysicalDevice(),
+							&m_assetRegistry,
+							&appearanceMaterials,
+							&m_appearanceCatalog,
+							contentRoot,
+							appearanceOutfit,
+							m_cfg.GetString("client.character_creation.body_normal",
+								"textures/characters/humains/T_Regular_Male_Normal.png"),
+							m_cfg.GetString("client.character_creation.body_normal_female",
+								"textures/characters/humains/T_Regular_Female_Normal.png"));
 					}
 					// Genre courant depuis config (mergee avec le fichier de persistance au boot).
 					m_avatarGender = m_cfg.GetString("client.character_creation.gender", "male");
@@ -4173,13 +4201,48 @@ namespace engine
 					LOG_WARN(Render, "[AvatarSkinDiag] 0 sous-maillage peau (noms ne matchent pas body_material_names)");
 			}
 
+			// Personnalisation : corps de la race + pièces choisies (visage, coiffure,
+			// barbe, cornes…), dessinés en UN enregistrement (os et matrice modèle
+			// partagés). Échec (catalogue absent) -> rendu historique ci-dessous.
+			const std::string localRace = m_localRaceId.empty() ? std::string("humains") : m_localRaceId;
+			const bool localModular = m_appearanceAssembler.IsReady()
+				&& m_appearanceAssembler.Assemble(*m_currentSkinnedMesh, localRace, m_avatarGender,
+					m_localAppearance, /*lod*/ 0, m_assembledScratch);
+			engine::math::Mat4 localModelMat = finalModelMat;
+			if (localModular)
+			{
+				// Proportions choisies : taille (uniforme) et largeur (X/Z), appliquées
+				// sous la translation des pieds (les pieds restent au sol).
+				engine::math::Mat4 prop;
+				prop.m[0] = m_assembledScratch.widthScale * m_assembledScratch.heightScale;
+				prop.m[5] = m_assembledScratch.heightScale;
+				prop.m[10] = m_assembledScratch.widthScale * m_assembledScratch.heightScale;
+				localModelMat = engine::math::Mat4::Translate(feetPos) *
+					engine::math::Mat4::RotateY(m_avatarYaw) * prop * m_currentSkinnedMesh->importTransform;
+			}
+
 			m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
 				m_vkDeviceContext.GetDevice(), cmd, reg,
 				m_vkSwapchain.GetExtent(),
 				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
 				m_fgGBufferVelocityId, m_fgDepthId,
 				[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat, bodyMaterialId,
+				 localModular, localModelMat,
 				 submeshMaterialIndices = std::move(submeshMaterialIndices)](VkCommandBuffer innerCmd) {
+					if (localModular)
+					{
+						m_skinnedRenderer.RecordParts(
+							m_vkDeviceContext.GetDevice(), innerCmd,
+							m_vkSwapchain.GetExtent(),
+							rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+							m_assembledScratch.parts.data(), m_assembledScratch.parts.size(),
+							finals,
+							materialCache.GetDescriptorSet(),
+							localModelMat.m,
+							m_assembledScratch.skinMaterialId,
+							m_avatarSkinDepthBiasConstant,
+							m_avatarSkinDepthBiasSlope);
+					}
 					// Chantier 2 SP1 — avatar modulaire : dessine chaque partie active
 					// avec les MÊMES matrices d'os (squelette partagé). Le Body garde son
 					// routage matériau (habit/peau) ; les parties placeholder utilisent le
@@ -4198,6 +4261,9 @@ namespace engine
 					for (const engine::render::skinned::SkinnedMesh* part : m_modularAvatar.ActiveParts())
 					{
 						const bool isBody = (part == m_currentSkinnedMesh);
+						// Personnalisation : le corps est déjà dessiné avec ses pièces.
+						if (isBody && localModular)
+							continue;
 						if (!isBody && identityFinals.size() != finals.size())
 							identityFinals.assign(finals.size(), engine::math::Mat4::Identity());
 						m_skinnedRenderer.Record(

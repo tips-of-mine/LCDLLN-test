@@ -1034,6 +1034,8 @@ namespace engine
 			m_chestMesh.Destroy(m_vkDeviceContext.GetDevice());
 			m_boatMesh.Destroy(m_vkDeviceContext.GetDevice()); // v1.0.125
 			m_currentSkinnedMesh = nullptr;
+			// Personnalisation : pièces des avatars (visages, coiffures…) avant le renderer.
+			m_appearanceAssembler.Shutdown(m_vkDeviceContext.GetDevice());
 			m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
 			m_skinnedAvatarReady = false;
 			// M45.7 — libère le volume DDGI + sa passe de mise à jour (idempotent :
@@ -1349,6 +1351,12 @@ namespace engine
 						m_racePreviewViewport.SetGender(m_avatarGender);
 						m_racePreviewViewport.SetSkinTone(m_avatarSkinTone);
 						m_racePreviewViewport.SetMesh(m_currentSkinnedMesh);
+						// Personnalisation : l'aperçu montre le personnage tel qu'il est
+						// (visage, coiffure, traits raciaux), cadré en pied.
+						m_racePreviewViewport.SetAppearanceAssembler(&m_appearanceAssembler);
+						m_racePreviewViewport.SetAppearance(m_localRaceId.empty() ? std::string("humains") : m_localRaceId,
+							m_avatarGender, m_localAppearance);
+						m_racePreviewViewport.SetFocusHead(false);
 						// Vue de face + rotation manuelle (pas d'auto-orbit) : retour
 						// joueur 2026-07-09. Le drag dans la fenêtre pilote ensuite l'angle.
 						m_racePreviewViewport.SetAutoOrbit(false);
@@ -3762,8 +3770,11 @@ namespace engine
 				// TD.6 — genre du personnage propagé par le snapshot. Fallback "male" si vide
 				// (master sans migration 0067 ou avatar legacy). Récupère le mesh correspondant
 				// dans le registre m_raceMeshes (clé "humains|male" / "humains|female").
-				meshRace = "humains";
 				gender = (re.gender == "male" || re.gender == "female") ? re.gender : std::string{"male"};
+				// Personnalisation (wire v22) : corps de la race du joueur s'il est
+				// chargé ; repli humains (personnage antérieur, race inconnue).
+				meshRace = (!re.raceId.empty() && GetRaceMesh(re.raceId, gender) != nullptr)
+					? re.raceId : std::string{"humains"};
 			}
 			else if (re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 			{
@@ -3779,6 +3790,10 @@ namespace engine
 				meshRace = (appearance != nullptr && !appearance->meshKey.empty())
 					? appearance->meshKey
 					: std::string{"humains"};
+				// Personnalisation : les orcs jouables ont un nouveau corps ; les mobs
+				// « orcs » gardent l'ancien mannequin (chargé sous « orcs_creature »).
+				if (meshRace == "orcs" && GetRaceMesh("orcs_creature", "male") != nullptr)
+					meshRace = "orcs_creature";
 				// Monde vivant : villageoises, sentinelles… (variante Female_ si chargée).
 				gender = (appearance != nullptr) ? appearance->gender : std::string{"male"};
 				meshScale = (appearance != nullptr) ? appearance->scale : 1.0f;
@@ -3896,6 +3911,40 @@ namespace engine
 			// outfitMaterialIndex. C'est cohérent avec l'avatar local pré-mat-mat (régression
 			// acceptée pour V1, sera amélioré quand les matériaux par submesh seront décorrélés
 			// de l'état local).
+			// Personnalisation : un joueur distant est assemblé comme l'avatar local
+			// (corps de sa race + visage, coiffure, cornes… et teintes), avec des
+			// pièces de LOD 0/1/2 selon la distance. Un seul enregistrement par
+			// avatar (budget du ring inchangé). Les mobs gardent le chemin historique.
+			if (re.playerClientId != 0u && m_appearanceAssembler.IsReady())
+			{
+				engine::network::CharacterAppearance remoteAppearance =
+					engine::network::CharacterAppearance::DecodeOrDefault(re.appearance);
+				const float dist = std::sqrt(cand.dist2);
+				const int lod = dist < 12.0f ? 0 : (dist < 30.0f ? 1 : 2);
+				if (m_appearanceAssembler.Assemble(*remoteMesh, meshRace, gender, remoteAppearance, lod,
+						m_assembledScratch))
+				{
+					engine::math::Mat4 prop;
+					prop.m[0] = m_assembledScratch.widthScale * m_assembledScratch.heightScale;
+					prop.m[5] = m_assembledScratch.heightScale;
+					prop.m[10] = m_assembledScratch.widthScale * m_assembledScratch.heightScale;
+					const engine::math::Mat4 remoteModel =
+						engine::math::Mat4::Translate(engine::math::Vec3{ px, py - 0.9f, pz }) *
+						engine::math::Mat4::RotateY(yaw) * prop * (remoteMesh->importTransform);
+					m_skinnedRenderer.RecordParts(
+						m_vkDeviceContext.GetDevice(), cmd,
+						m_vkSwapchain.GetExtent(),
+						rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+						m_assembledScratch.parts.data(), m_assembledScratch.parts.size(),
+						finals,
+						materialCache.GetDescriptorSet(),
+						remoteModel.m,
+						m_assembledScratch.skinMaterialId,
+						m_avatarSkinDepthBiasConstant,
+						m_avatarSkinDepthBiasSlope);
+					continue;
+				}
+			}
 			const std::vector<uint32_t> submeshMaterialIndices;
 			m_skinnedRenderer.Record(
 				m_vkDeviceContext.GetDevice(), cmd,

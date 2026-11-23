@@ -6,6 +6,7 @@
 // ServerAppInternal.h.
 
 #include "src/shardd/app/ServerAppInternal.h"
+#include "src/shared/network/CharacterAppearance.h"
 
 // R1-A — JSON embarqués (générés au build) pour le moteur de stats des personnages.
 // Symboles inline constexpr kCharacterStatsJson / kFactionsJson, atteignables via
@@ -19,7 +20,8 @@ namespace engine::server
 
 	bool ServerApp::LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
 		std::string& outName, std::string& outGender, uint32_t& outLevel,
-		std::string& outFactionId, std::string& outClassId, std::string& outRaceId)
+		std::string& outFactionId, std::string& outClassId, std::string& outRaceId,
+		std::vector<uint8_t>& outAppearance)
 	{
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || characterId == 0u)
@@ -42,10 +44,26 @@ namespace engine::server
 		// Alimentent le moteur de stats (PV à l'enter-world).
 		// Monde « Royaumes » — `race_str` (migration 0033) ajouté EN FIN (indice 9) :
 		// ville de départ quand la position sauvegardée est hors du monde généré.
+		// Personnalisation (migration 0097) — colonne `appearance` ajoutée EN FIN. Si la
+		// colonne manque encore (shard démarré avant que le master n'ait appliqué la
+		// migration), repli sur la requête historique : le personnage entre en jeu
+		// avec l'apparence par défaut au lieu de perdre sa position et son nom.
+		bool withAppearance = true;
 		auto* stmt = cache->Acquire(mysql,
-			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender, level, faction_str, class_str, race_str FROM characters "
+			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender, level, faction_str, class_str, race_str, "
+			"COALESCE(HEX(appearance), '') FROM characters "
 			"WHERE id = ? AND deleted_at IS NULL");
-		if (!stmt || !stmt->Bind(0, characterId) || !stmt->Execute() || !stmt->FetchRow())
+		if (!stmt || !stmt->Bind(0, characterId) || !stmt->Execute())
+		{
+			LOG_WARN(Net, "[ServerApp] LoadSpawnFromDb : colonne appearance illisible (migration 0097 absente ?) — repli");
+			withAppearance = false;
+			stmt = cache->Acquire(mysql,
+				"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender, level, faction_str, class_str, race_str "
+				"FROM characters WHERE id = ? AND deleted_at IS NULL");
+			if (!stmt || !stmt->Bind(0, characterId) || !stmt->Execute())
+				return false;
+		}
+		if (!stmt->FetchRow())
 		{
 			return false;
 		}
@@ -61,10 +79,13 @@ namespace engine::server
 		outFactionId = stmt->GetString(7);
 		outClassId = stmt->GetString(8);
 		outRaceId = stmt->GetString(9);
+		// Personnalisation (migration 0097) — ajoutée EN FIN (indice 10), lue en hexadécimal.
+		outAppearance = withAppearance ? engine::network::AppearanceFromHex(stmt->GetString(10))
+			: std::vector<uint8_t>{};
 		return true;
 #else
 		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg; (void)outName; (void)outGender; (void)outLevel;
-		(void)outFactionId; (void)outClassId; (void)outRaceId;
+		(void)outFactionId; (void)outClassId; (void)outRaceId; (void)outAppearance;
 		return false;
 #endif
 	}
@@ -800,7 +821,7 @@ namespace engine::server
 		if (data.dbLoad != CharacterDbLoadResult::Error)
 		{
 			data.spawnLoaded = LoadSpawnFromDb(characterKey, data.spawnX, data.spawnY, data.spawnZ, data.spawnYawDeg,
-				data.name, data.gender, data.level, data.factionId, data.classId, data.raceId);
+				data.name, data.gender, data.level, data.factionId, data.classId, data.raceId, data.appearance);
 			data.discoveryLoaded = LoadDiscoveryFromDb(characterKey, data); // lore v1.0.114
 		}
 		return data;
@@ -1086,6 +1107,7 @@ namespace engine::server
 			std::string dbFactionId = std::move(loaded.factionId);
 			std::string dbClassId = std::move(loaded.classId);
 			std::string dbRaceId = std::move(loaded.raceId);
+			std::vector<uint8_t> dbAppearance = std::move(loaded.appearance);
 			if (loaded.spawnLoaded)
 			{
 				// ETAPE2.6 — personnage restauré : la position est celle de l'instantané.
@@ -1111,6 +1133,8 @@ namespace engine::server
 				acceptedClient.factionId = std::move(dbFactionId);
 				acceptedClient.classId = std::move(dbClassId);
 				acceptedClient.raceId = std::move(dbRaceId);
+				// Personnalisation (migration 0097) → identité du snapshot (autres joueurs).
+				acceptedClient.appearance = std::move(dbAppearance);
 				LOG_INFO(Net,
 					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, name=\"{}\", gender=\"{}\", pos=({:.2f}, {:.2f}, {:.2f}))",
 					acceptedClient.persistenceCharacterKey, acceptedClient.characterName, acceptedClient.gender, dbX, dbY, dbZ);

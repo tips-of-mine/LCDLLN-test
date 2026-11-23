@@ -258,6 +258,11 @@ namespace engine::server
 		/// quand la position sauvegardée est hors du monde généré. Vide en mode no-DB →
 		/// race par défaut du monde.
 		std::string raceId;
+		/// Personnalisation (characters.appearance, migration 0097) : bloc
+		/// CharacterAppearance encodé, chargé au Hello et recopié dans l'identité du
+		/// SnapshotEntity (envoyée aux autres joueurs à l'apparition seulement). Vide en
+		/// mode no-DB ou pour un personnage antérieur → apparence par défaut côté client.
+		std::vector<uint8_t> appearance;
 		uint32_t experiencePoints = 0;
 		/// Compte propriétaire (résolu au Hello via AdmittedCharacterRegistry). Clé de la
 		/// présence unifiée (ShardPresenceService) ; 0 si non résolu (registre absent).
@@ -684,9 +689,12 @@ namespace engine::server
 		/// R1-A — récupère aussi `faction` et `class` (out-params) pour alimenter le moteur de
 		/// stats (PV à l'enter-world). Vides si la colonne est NULL/absente.
 		/// Monde « Royaumes » — récupère aussi `race_str` (migration 0033, \p outRaceId).
+		/// Personnalisation — et `appearance` (migration 0097, \p outAppearance : bloc
+		/// CharacterAppearance encodé, vide si NULL = personnage antérieur).
 		bool LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
 		std::string& outName, std::string& outGender, uint32_t& outLevel,
-		std::string& outFactionId, std::string& outClassId, std::string& outRaceId);
+		std::string& outFactionId, std::string& outClassId, std::string& outRaceId,
+		std::vector<uint8_t>& outAppearance);
 
 		/// ETAPE2.1 — écrit l'état complet du personnage en base dans UNE transaction :
 		/// position et niveau (characters), progression (character_progress), bourse
@@ -773,6 +781,7 @@ namespace engine::server
 			std::string factionId;
 			std::string classId;
 			std::string raceId;
+			std::vector<uint8_t> appearance; ///< migration 0097 (vide si NULL)
 			/// Lore v1.0.114 — progression d'exploration lue en base (LoadDiscoveryFromDb).
 			bool discoveryLoaded = false;   ///< false : base absente ou tables illisibles
 			std::vector<std::string> visitedGraveyards;

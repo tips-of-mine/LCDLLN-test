@@ -215,6 +215,10 @@ namespace engine::server
 			// TD.6 : genre du perso (migration 0067, "male"/"female") → le client sélectionne
 			// le bon mesh skinné pour l'avatar distant. Vide = fallback "male" côté rendu.
 			outEntity.gender = client->gender;
+			// Personnalisation : race + apparence (migration 0097) → le client assemble
+			// le corps de la race et les pièces choisies (visage, coiffure, cornes…).
+			outEntity.raceId = client->raceId;
+			outEntity.appearance = client->appearance;
 			// TD.8 : état d'animation reporté par ce joueur → les autres clients jouent le bon
 			// clip (emote/roll/run/sprint/jump/…) au lieu de dériver Idle/Walk de la vélocité.
 			outEntity.animationState = static_cast<AvatarAnimState>(client->animationState);

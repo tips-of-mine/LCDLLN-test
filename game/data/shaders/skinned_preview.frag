@@ -40,6 +40,16 @@ void main() {
     vec2 uv = vUv * mat.tiling;
     vec4 base = texture(uTextures[mat.baseColorIndex], uv); // sRGB -> linéaire au sample
 
+    // Personnalisation des personnages : teinte du matériau (MaterialFlags::Tint = 8,
+    // TintMasked = 16). La teinte RGBA8 est rangée dans les bits de padding.x
+    // (MaterialGpuData) ; elle multiplie l'albedo (masquée par 1 - alpha pour les yeux).
+    if ((mat.flags & 24u) != 0u) {
+        vec3 tintColor = unpackUnorm4x8(floatBitsToUint(mat.padding.x)).rgb;
+        float tintAmount = ((mat.flags & 16u) != 0u) ? (1.0 - base.a) : 1.0;
+        base.rgb = mix(base.rgb, base.rgb * tintColor, tintAmount);
+        base.a = 1.0;
+    }
+
     vec3 N = normalize(vNormal);
     // Lumière clé fixe (cadrage aperçu) + ambiant doux pour révéler le volume.
     vec3 L = normalize(vec3(0.4, 0.8, 0.6));

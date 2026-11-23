@@ -295,6 +295,7 @@ add_library(engine_core
   src/client/crafting/CraftingUi.cpp
   src/client/character_creation/CharacterCreationUi.cpp
   src/client/character_creation/CharacterCustomizationSystem.cpp
+  src/client/character_creation/AppearanceCatalog.cpp   # personnalisation : catalogue des options
   src/client/render/race/RacePreviewViewport.cpp
   src/client/settings/SettingsMenuUi.cpp
   src/client/hud/HudLayoutEditor.cpp
@@ -509,6 +510,7 @@ add_library(engine_core
   src/client/render/skinned/SkinnedRenderer.cpp
   src/client/render/skinned/AvatarMaterialRouting.cpp
   src/client/render/skinned/ModularAvatar.cpp
+  src/client/render/skinned/AvatarAppearanceAssembler.cpp   # personnalisation : corps + pièces + teintes
   src/client/render/skinned/PlaceholderPart.cpp
   src/client/render/static_mesh/StaticMeshLoader.cpp
   src/client/gameplay/CharacterController.cpp

@@ -140,3 +140,35 @@ référencé par configuration/races/<race>.json (chemins model) → chargé run
 - **PvP** : les hitboxes (`collisionRadius/Height`) varient avec la taille ;
   garder l'équité en tête lors du tuning des bornes par race.
 - **Perf** : ne pas charger tous les FBX en mémoire ; prévoir du streaming.
+
+## Personnalisation jouable (catalogue d'apparence, novembre 2026)
+
+La couche `configuration/races/*.json` ci-dessus reste la couche de conception
+(limites physiques, presets de proportions). Le rendu en jeu de la
+personnalisation s'appuie sur un **catalogue d'apparence** généré avec ses
+assets :
+
+| Couche | Emplacement | Rôle |
+|--------|-------------|------|
+| Génération (sans Blender) | `tools/asset_pipeline/character_appearance/` | Corps de race, pièces .glb (3 LOD), textures, catalogue ; voir le README du dossier |
+| Catalogue | `game/data/configuration/customization/appearance_catalog.json` | Par race jouable et genre : corps, maillages à masquer, options par emplacement |
+| Format partagé | `src/shared/network/CharacterAppearance.h` | Apparence = un indice par emplacement + proportions (bloc binaire versionné, 20 octets) |
+| Client — données | `src/client/character_creation/AppearanceCatalog.{h,cpp}` | Lecture, bornage des indices, résolution en chemins |
+| Client — rendu | `src/client/render/skinned/AvatarAppearanceAssembler.{h,cpp}` | Corps + pièces + matériaux teintés ; `SkinnedRenderer::RecordParts` (un slot du ring par avatar) |
+| Contrôle CI | `validate_appearance.py` (workflow `character-appearance-assets`) | Races, ≥ 5 emplacements, LOD, squelette, budgets, textures |
+
+Emplacements (`AppearanceSlot`, ordre figé — n'ajouter qu'en fin) : visage,
+teinte de peau, coiffure, couleur des cheveux, couleur des yeux, barbe,
+moustache, oreilles (elfes), cornes, queue, ailes (démons), défenses (orcs).
+Proportions (`AppearanceProp`, en %) : taille, jambes, torse, épaules,
+corpulence. En jeu, la taille et la largeur sont appliquées à l'avatar ; la
+longueur des jambes est mémorisée mais pas encore rendue (mise à l'échelle par
+os à venir).
+
+Circulation : écran de création → `CharacterCreateRequestPayload.appearance` →
+master (normalisé, colonne `characters.appearance`, migration 0097) →
+`CharacterListEntry.appearance` → avatar local à l'entrée en jeu ; le shard lit
+la colonne au Hello et la réplique dans l'identité du snapshot (protocole v22,
+envoyée à l'apparition de l'entité seulement) → avatars des autres joueurs.
+Le serveur ne contrôle que les bornes génériques ; le client ramène tout indice
+hors catalogue sur la première option (un personnage reste toujours affichable).

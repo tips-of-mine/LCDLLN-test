@@ -8,6 +8,7 @@
 
 #include "src/client/auth/AuthUi.h"
 #include "src/client/character_creation/CharacterCustomization.h"
+#include "src/shared/network/CharacterAppearance.h"
 
 namespace engine::core
 {
@@ -17,6 +18,8 @@ namespace engine::platform
 {
 	class Window;
 }
+namespace engine::client { class AppearanceCatalog; }
+
 namespace engine::render::race
 {
 	/// Sous-projet C MVP (Task 12) — declare forward pour eviter d'inclure
@@ -63,6 +66,11 @@ namespace engine::render
 		/// \c RacePreviewViewport::Init et avant la 1ere frame qui rend
 		/// l'ecran de creation de perso.
 		void SetRacePreview(engine::render::race::RacePreviewViewport* preview) { m_racePreview = preview; }
+
+		/// Personnalisation — catalogue des options (visages, coiffures, couleurs,
+		/// traits raciaux) affichées par l'écran de création. Non possédé ;
+		/// nullptr = écran historique (genre, teinte, proportions seulement).
+		void SetAppearanceCatalog(const engine::client::AppearanceCatalog* catalog) { m_appearanceCatalog = catalog; }
 
 	private:
 		using VisualState = engine::client::AuthUiPresenter::VisualState;
@@ -205,6 +213,16 @@ namespace engine::render
 		/// Engine n'a pas (ou n'a pas reussi) a initialiser le viewport.
 		/// Pointer non possede ; lifetime = Engine.
 		engine::render::race::RacePreviewViewport* m_racePreview = nullptr;
+		/// Personnalisation — catalogue (non possédé) et apparence en cours d'édition.
+		const engine::client::AppearanceCatalog* m_appearanceCatalog = nullptr;
+		engine::network::CharacterAppearance m_charAppearance{};
+		/// « race|genre » pour lequel m_charAppearance a été borné : un changement de
+		/// race ou de genre ramène les indices dans les listes de la nouvelle race.
+		std::string m_charAppearanceKey;
+		/// Cadrage de l'aperçu : gros plan sur la tête (true) ou en pied (false).
+		bool m_charFocusHead = true;
+		/// Graine du tirage « Aléatoire » (avance à chaque clic).
+		uint32_t m_charRandomSeed = 0x9E3779B9u;
 		/// Sous-projet C MVP (Task 12) — Flag : "le mesh courant
 		/// du m_racePreview correspond a la race m_charRaceIdx". Mis a
 		/// false par defaut (Init du viewport laisse m_currentMesh

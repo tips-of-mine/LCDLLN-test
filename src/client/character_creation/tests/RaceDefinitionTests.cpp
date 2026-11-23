@@ -60,15 +60,16 @@ namespace
 
         const RaceDefinition* nains = FindRace(races, "nains");
         REQUIRE(nains != nullptr);
-        REQUIRE(nains->meshPath == "models/avatars/nains/nains.glb");
+        // Personnalisation : corps des nains dérivé du corps humain UE5.
+        REQUIRE(nains->meshPath == "models/characters/nains/Male_Nain/Male_Nain.glb");
 
         const RaceDefinition* orcs = FindRace(races, "orcs");
         REQUIRE(orcs != nullptr);
-        REQUIRE(orcs->meshPath == "models/avatars/orc/orc.glb");
+        REQUIRE(orcs->meshPath == "models/characters/orcs/Male_Orc/Male_Orc.glb");
     }
 
-    /// Verifie que les races hors-MVP ont meshPath vide (string par defaut
-    /// "" quand la cle est absente du JSON). Engine fallback humains.
+    /// Personnalisation : elfes et démons ont désormais leur corps (dérivé du
+    /// corps humain UE5) ; les races non jouables gardent un meshPath vide.
     void Test_NonMvpRaces_HaveEmptyMeshPath()
     {
         CharacterCreationPresenter p;
@@ -79,11 +80,15 @@ namespace
 
         const RaceDefinition* elfes = FindRace(races, "elfes");
         REQUIRE(elfes != nullptr);
-        REQUIRE(elfes->meshPath.empty());
+        REQUIRE(elfes->meshPath == "models/characters/elfes/Male_Elfe/Male_Elfe.glb");
 
         const RaceDefinition* demons = FindRace(races, "demons");
         REQUIRE(demons != nullptr);
-        REQUIRE(demons->meshPath.empty());
+        REQUIRE(demons->meshPath == "models/characters/demons/Male_Demon/Male_Demon.glb");
+        REQUIRE(demons->importScale > 100.0f);
+
+        const RaceDefinition* morts = FindRace(races, "morts_vivants");
+        REQUIRE(morts == nullptr || morts->meshPath.empty());
     }
 }
 

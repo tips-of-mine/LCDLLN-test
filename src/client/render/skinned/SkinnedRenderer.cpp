@@ -562,9 +562,35 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
                              float skinDepthBiasConstant,
                              float skinDepthBiasSlope)
 {
+    // Chemin historique (une seule pièce) : délègue à RecordParts.
+    SkinnedDrawPart part;
+    part.mesh = &mesh;
+    part.materialIndex = materialIndex;
+    part.submeshMaterialIndices = submeshMaterialIndices;
+    RecordParts(device, cmd, extent, prevViewProj, viewProj, &part, 1u, finalBoneMatrices,
+                materialDescriptorSet, modelMatrixColumnMajor4x4, skinMaterialIndex,
+                skinDepthBiasConstant, skinDepthBiasSlope);
+}
+
+void SkinnedRenderer::RecordParts(VkDevice device, VkCommandBuffer cmd,
+                                  VkExtent2D extent,
+                                  const float* prevViewProj, const float* viewProj,
+                                  const SkinnedDrawPart* parts, size_t partCount,
+                                  const std::vector<engine::math::Mat4>& finalBoneMatrices,
+                                  VkDescriptorSet materialDescriptorSet,
+                                  const float* modelMatrixColumnMajor4x4,
+                                  uint32_t skinMaterialIndex,
+                                  float skinDepthBiasConstant,
+                                  float skinDepthBiasSlope)
+{
+    if (parts == nullptr || partCount == 0u)
+        return;
     // 0. Sélectionne le slot de buffers de cette frame puis avance le ring.
     //    Garantit qu'on ne réécrit jamais le bone SSBO / model buffer encore lu
     //    par une frame en vol (FIF) → plus de tremblement / pose « double ».
+    //    Personnalisation : UN slot pour toutes les pièces d'un avatar (corps,
+    //    visage, coiffure, barbe, cornes…), qui partagent les mêmes matrices d'os
+    //    et la même matrice modèle — le budget de draws du ring reste par avatar.
     const uint32_t slot = m_frameSlot;
     m_frameSlot = (m_frameSlot + 1u) % kFrameSlots;
 
@@ -644,53 +670,59 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
     pc.fade = 1.0f;
     pc.pad1 = pc.pad2 = 0;
 
-    // 7. Bind des vertex buffers : per-vertex @ binding 0 (mesh), per-instance
-    //    @ binding 1 (matrice modèle). Cf. layout vertex input dans Init.
-    VkBuffer vbufs[2] = { mesh.vertexBuffer, m_modelInstanceBuffer[slot] };
-    VkDeviceSize offsets[2] = { 0, 0 };
-    vkCmdBindVertexBuffers(cmd, 0, 2, vbufs, offsets);
-
-    // 8. Bind de l'index buffer (UINT32 — cf. SkinnedMeshCpuData::indices).
-    vkCmdBindIndexBuffer(cmd, mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-    // 9. Draw call(s), 1 instance (1 avatar).
-    //    Chemin multi-matériaux : si on a un index matériau par sous-maillage
-    //    (parallèle à mesh.submeshes), on dessine chaque plage avec son propre
-    //    materialIndex (habit vs peau). Le descriptor set (set 0) est bindless
-    //    et déjà bindé : seul le push constant materialIndex change entre draws.
-    //    Sinon, chemin mono-draw historique (mesh.indexCount d'un coup).
     // Le pipeline a depthBiasEnable=TRUE + DEPTH_BIAS dynamique : il FAUT donc
     // appeler vkCmdSetDepthBias avant chaque draw (sinon valeur indefinie). On
     // pose 0 par defaut, et le biais peau (skinDepthBias*) pour les sous-maillages
-    // dont l'index materiau figure dans skinMaterialIndices.
+    // dont l'index materiau est celui de la peau.
     auto isSkin = [&](uint32_t matIndex) -> bool {
         return skinMaterialIndex != 0u && matIndex == skinMaterialIndex;
     };
 
-    const bool perSubmesh =
-        !mesh.submeshes.empty() && submeshMaterialIndices.size() == mesh.submeshes.size();
-    if (perSubmesh) {
-        for (size_t s = 0; s < mesh.submeshes.size(); ++s) {
-            const SkinnedSubMesh& sub = mesh.submeshes[s];
-            if (sub.indexCount == 0) continue;
-            const uint32_t matIdx = submeshMaterialIndices[s];
-            const bool skin = isSkin(matIdx);
-            vkCmdSetDepthBias(cmd, skin ? skinDepthBiasConstant : 0.0f, 0.0f,
-                              skin ? skinDepthBiasSlope : 0.0f);
-            pc.materialIndex = matIdx;
+    for (size_t p = 0; p < partCount; ++p) {
+        const SkinnedDrawPart& part = parts[p];
+        if (part.mesh == nullptr || part.mesh->vertexBuffer == VK_NULL_HANDLE
+            || part.mesh->indexBuffer == VK_NULL_HANDLE)
+            continue;
+        const SkinnedMesh& mesh = *part.mesh;
+
+        // 7. Bind des vertex buffers : per-vertex @ binding 0 (mesh), per-instance
+        //    @ binding 1 (matrice modèle, commune à toutes les pièces).
+        VkBuffer vbufs[2] = { mesh.vertexBuffer, m_modelInstanceBuffer[slot] };
+        VkDeviceSize offsets[2] = { 0, 0 };
+        vkCmdBindVertexBuffers(cmd, 0, 2, vbufs, offsets);
+
+        // 8. Bind de l'index buffer (UINT32 — cf. SkinnedMeshCpuData::indices).
+        vkCmdBindIndexBuffer(cmd, mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+        // 9. Draw call(s). Chemin multi-matériaux : un index matériau par
+        //    sous-maillage (parallèle à mesh.submeshes) ; kSkipSubmesh masque le
+        //    sous-maillage (ex. capuche du corps quand une tête est posée). Sinon,
+        //    chemin mono-draw historique (mesh.indexCount d'un coup).
+        const bool perSubmesh =
+            !mesh.submeshes.empty() && part.submeshMaterialIndices.size() == mesh.submeshes.size();
+        if (perSubmesh) {
+            for (size_t s = 0; s < mesh.submeshes.size(); ++s) {
+                const SkinnedSubMesh& sub = mesh.submeshes[s];
+                const uint32_t matIdx = part.submeshMaterialIndices[s];
+                if (sub.indexCount == 0 || matIdx == kSkipSubmesh) continue;
+                const bool skin = isSkin(matIdx);
+                vkCmdSetDepthBias(cmd, skin ? skinDepthBiasConstant : 0.0f, 0.0f,
+                                  skin ? skinDepthBiasSlope : 0.0f);
+                pc.materialIndex = matIdx;
+                vkCmdPushConstants(cmd, m_pipelineLayout,
+                                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                                   0, sizeof(PushConstants), &pc);
+                vkCmdDrawIndexed(cmd, sub.indexCount, /*instanceCount*/ 1,
+                                 sub.firstIndex, 0, 0);
+            }
+        } else {
+            vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+            pc.materialIndex = part.materialIndex;
             vkCmdPushConstants(cmd, m_pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                0, sizeof(PushConstants), &pc);
-            vkCmdDrawIndexed(cmd, sub.indexCount, /*instanceCount*/ 1,
-                             sub.firstIndex, 0, 0);
+            vkCmdDrawIndexed(cmd, mesh.indexCount, /*instanceCount*/ 1, 0, 0, 0);
         }
-    } else {
-        vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
-        pc.materialIndex = materialIndex;
-        vkCmdPushConstants(cmd, m_pipelineLayout,
-                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                           0, sizeof(PushConstants), &pc);
-        vkCmdDrawIndexed(cmd, mesh.indexCount, /*instanceCount*/ 1, 0, 0, 0);
     }
 }
 

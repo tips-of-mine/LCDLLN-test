@@ -31,7 +31,10 @@
       "iconPath": "ui/races/elfes/theme.json",
       "defaultSkinColors": ["#F5DEB3", "#E8D0AA", "#C4A882", "#B8946F"],
       "defaultHairColors": ["#F5F5DC", "#C0C0C0", "#D4AF37", "#98FB98", "#ADD8E6"],
-      "defaultEyeColors": ["#00CED1", "#32CD32", "#9370DB", "#F0E68C"]
+      "defaultEyeColors": ["#00CED1", "#32CD32", "#9370DB", "#F0E68C"],
+      "meshPath": "models/characters/elfes/Male_Elfe/Male_Elfe.glb",
+      "importScale": 99.0,
+      "importRotXDeg": -90.0
     },
     {
       "id": "orcs",
@@ -47,7 +50,9 @@
       "defaultSkinColors": ["#355E3B", "#556B2F", "#4B5320", "#228B22"],
       "defaultHairColors": ["#1C1C1C", "#2F4F4F", "#8B0000", "#000000"],
       "defaultEyeColors": ["#FF4500", "#FF6347", "#DC143C", "#8B0000"],
-      "meshPath": "models/avatars/orc/orc.glb"
+      "meshPath": "models/characters/orcs/Male_Orc/Male_Orc.glb",
+      "importScale": 101.0,
+      "importRotXDeg": -90.0
     },
     {
       "id": "nains",
@@ -63,7 +68,9 @@
       "defaultSkinColors": ["#C68642", "#A0522D", "#8B4513", "#D2691E"],
       "defaultHairColors": ["#8B0000", "#A52A2A", "#D2691E", "#CD853F", "#F4A460", "#808080"],
       "defaultEyeColors": ["#4169E1", "#2E8B57", "#B8860B", "#696969"],
-      "meshPath": "models/avatars/nains/nains.glb"
+      "meshPath": "models/characters/nains/Male_Nain/Male_Nain.glb",
+      "importScale": 70.0,
+      "importRotXDeg": -90.0
     },
     {
       "id": "morts_vivants",
@@ -108,7 +115,10 @@
       "iconPath": "ui/races/demons/theme.json",
       "defaultSkinColors": ["#8B0000", "#B22222", "#CC2200", "#FF4500"],
       "defaultHairColors": ["#000000", "#8B0000", "#B8860B", "#1C1C1C"],
-      "defaultEyeColors": ["#FF4500", "#FFD700", "#FF6347", "#DC143C"]
+      "defaultEyeColors": ["#FF4500", "#FFD700", "#FF6347", "#DC143C"],
+      "meshPath": "models/characters/demons/Male_Demon/Male_Demon.glb",
+      "importScale": 103.0,
+      "importRotXDeg": -90.0
     }
   ]
 }

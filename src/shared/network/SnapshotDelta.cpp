@@ -32,6 +32,10 @@ namespace engine::network::snapshot
 		constexpr double kTwoPi = 6.283185307179586;
 		constexpr size_t kMaxNameBytes = 64u;
 		constexpr size_t kMaxGenderBytes = 8u;
+		/// Personnalisation : identifiant de race (« humains », « demons »…) et bloc
+		/// CharacterAppearance (cf. CharacterAppearance.h, kAppearanceMaxBytes).
+		constexpr size_t kMaxRaceBytes = 16u;
+		constexpr size_t kMaxAppearanceBytes = 32u;
 
 		// --- Écriture -----------------------------------------------------------
 
@@ -215,7 +219,8 @@ namespace engine::network::snapshot
 			if (cur.animationState != base.animationState)
 				mask |= kFieldAnimation;
 			if (cur.playerClientId != base.playerClientId || cur.archetypeId != base.archetypeId
-				|| cur.characterName != base.characterName || cur.gender != base.gender)
+				|| cur.characterName != base.characterName || cur.gender != base.gender
+				|| cur.raceId != base.raceId || cur.appearance != base.appearance)
 				mask |= kFieldIdentity;
 			return mask;
 		}
@@ -257,6 +262,10 @@ namespace engine::network::snapshot
 				PutVarU64(out, cur.archetypeId);
 				PutShortString(out, cur.characterName, kMaxNameBytes);
 				PutShortString(out, cur.gender, kMaxGenderBytes);
+				// v22 — personnalisation (race + bloc d'apparence), avec l'identité :
+				// n'est envoyée qu'à l'apparition de l'entité ou à son changement.
+				PutShortString(out, cur.raceId, kMaxRaceBytes);
+				PutShortString(out, cur.appearance, kMaxAppearanceBytes);
 			}
 		}
 
@@ -289,7 +298,9 @@ namespace engine::network::snapshot
 			{
 				if (!r.VarU32(u.values.playerClientId) || !r.VarU32(u.values.archetypeId)
 					|| !r.ShortString(u.values.characterName, kMaxNameBytes)
-					|| !r.ShortString(u.values.gender, kMaxGenderBytes))
+					|| !r.ShortString(u.values.gender, kMaxGenderBytes)
+					|| !r.ShortString(u.values.raceId, kMaxRaceBytes)
+					|| !r.ShortString(u.values.appearance, kMaxAppearanceBytes))
 					return false;
 			}
 			return true;
@@ -332,6 +343,9 @@ namespace engine::network::snapshot
 		w.archetypeId = entity.archetypeId;
 		w.characterName = entity.characterName.substr(0, kMaxNameBytes);
 		w.gender = entity.gender.substr(0, kMaxGenderBytes);
+		w.raceId = entity.raceId.substr(0, kMaxRaceBytes);
+		w.appearance.assign(entity.appearance.begin(),
+			entity.appearance.begin() + static_cast<std::ptrdiff_t>((std::min)(entity.appearance.size(), kMaxAppearanceBytes)));
 		return w;
 	}
 
@@ -354,6 +368,8 @@ namespace engine::network::snapshot
 		e.archetypeId = w.archetypeId;
 		e.characterName = w.characterName;
 		e.gender = w.gender;
+		e.raceId = w.raceId;
+		e.appearance.assign(w.appearance.begin(), w.appearance.end());
 		return e;
 	}
 
@@ -752,6 +768,8 @@ namespace engine::network::snapshot
 					e.archetypeId = u.values.archetypeId;
 					e.characterName = u.values.characterName;
 					e.gender = u.values.gender;
+					e.raceId = u.values.raceId;
+					e.appearance = u.values.appearance;
 				}
 			}
 		}

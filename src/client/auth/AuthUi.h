@@ -127,6 +127,10 @@ namespace engine::client
 			/// Teinte de peau (0 = claire, 1 = foncée), reçue via CHARACTER_LIST
 			/// (migration 0068). Consommée par Engine::EnterWorld -> SetAvatarSkinTone.
 			uint8_t skinColorIdx = 0;
+			/// Personnalisation (bloc CharacterAppearance encodé) reçue via
+			/// CHARACTER_LIST (migration 0097). Vide = personnage antérieur -> défaut.
+			/// Consommée par Engine::EnterWorld (assemblage de l'avatar local).
+			std::vector<uint8_t> appearance;
 			/// Niveau du personnage (reçu via CHARACTER_LIST, affiché « niv. N » au
 			/// select). Consommé par Engine::EnterWorld pour l'arbre de compétences
 			/// (verrouillage des paliers + affichage), au lieu du 60 permissif.
@@ -738,7 +742,8 @@ namespace engine::client
 		/// \param classIdUtf8   Systeme de personnages PR2 — id de classe choisi
 		///                      au sein de la faction (ex. "guerrier"), envoye au
 		///                      master. Vide = legacy.
-		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "", const char* genderUtf8 = "male", uint8_t skinColorIdx = 0u, const char* factionIdUtf8 = "", const char* classIdUtf8 = "");
+		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "", const char* genderUtf8 = "male", uint8_t skinColorIdx = 0u, const char* factionIdUtf8 = "", const char* classIdUtf8 = "",
+			const std::vector<uint8_t>& appearance = {});
 
 		/// Sous-projet C MVP (Task 12) — Accesseur vers le presenter de
 		/// creation de personnage detenu par AuthUiPresenter. Permet a
@@ -1003,6 +1008,9 @@ namespace engine::client
 		/// Teinte de peau choisie (0 = claire, 1 = foncée), envoyée au master dans
 		/// CharacterCreateRequestPayload.customization.skinColorIdx (migration 0068).
 		uint8_t m_characterSkinColorIdx = 0;
+		/// Personnalisation choisie (bloc CharacterAppearance encodé), envoyée au
+		/// master dans CharacterCreateRequestPayload.appearance (migration 0097).
+		std::vector<uint8_t> m_characterAppearance;
 		uint32_t m_activeField = 0;
 		int32_t m_hoveredFieldIndex = -1;
 		int32_t m_hoveredFieldInfoIndex = -1;

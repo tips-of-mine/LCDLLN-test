@@ -1,0 +1,53 @@
+# Personnalisation des personnages — contrôle des assets (sans Blender).
+#
+# Vérifie le catalogue game/data/configuration/customization/appearance_catalog.json
+# et tout ce qu'il référence (tools/asset_pipeline/character_appearance/validate_appearance.py) :
+# 5 races jouables × 2 genres, >= 5 emplacements personnalisables chacun, 3 LOD par
+# pièce, squelette identique au corps, budgets de triangles, boîtes englobantes,
+# textures et teintes, licence. Lance aussi les tests unitaires de la chaîne de
+# génération (géométrie, écriture .glb). Rapide : déclenché seulement quand ces
+# fichiers changent.
+name: character-appearance-assets
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'tools/asset_pipeline/character_appearance/**'
+      - 'game/data/configuration/customization/**'
+      - 'game/data/models/characters/**'
+      - 'game/data/textures/characters/**'
+      - 'game/data/races/races.json'
+      - '.github/workflows/character-appearance-assets.yml'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'tools/asset_pipeline/character_appearance/**'
+      - 'game/data/configuration/customization/**'
+      - 'game/data/models/characters/**'
+      - 'game/data/textures/characters/**'
+      - 'game/data/races/races.json'
+      - '.github/workflows/character-appearance-assets.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Dépendances des tests (numpy, Pillow)
+        run: python -m pip install --quiet numpy pillow
+
+      - name: Contrôle des assets de personnalisation
+        run: python tools/asset_pipeline/character_appearance/validate_appearance.py
+
+      - name: Tests de la chaîne de génération
+        run: python -m unittest discover -s tools/asset_pipeline/character_appearance/tests -v

@@ -54,7 +54,8 @@ namespace engine::client
 	} // namespace
 
 	/// Soumet le nom de personnage saisi depuis le renderer ImGui et lance la création.
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8, const char* genderUtf8, uint8_t skinColorIdx, const char* factionIdUtf8, const char* classIdUtf8)
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8, const char* genderUtf8, uint8_t skinColorIdx, const char* factionIdUtf8, const char* classIdUtf8,
+		const std::vector<uint8_t>& appearance)
 	{
 		if (m_phase != Phase::CharacterCreate)
 		{
@@ -69,6 +70,8 @@ namespace engine::client
 		m_characterGender = (genderUtf8 && std::string(genderUtf8) == "female") ? "female" : "male";
 		// Teinte de peau envoyee au master (skinColorIdx, persiste en DB migration 0068).
 		m_characterSkinColorIdx = skinColorIdx;
+		// Personnalisation complète (visage, coiffure, couleurs, traits raciaux…).
+		m_characterAppearance = appearance;
 		// Applique aussi le genre au moteur AVANT la soumission : l'EnterWorld qui suit
 		// resout le mesh via Engine::GetRaceMesh(raceId) qui lit m_avatarGender.
 		// SetCharacterGender garde le fix client interim #1 (repli si la DB serveur n'a
@@ -150,6 +153,7 @@ namespace engine::client
 		const uint8_t characterSkinColorIdx = m_characterSkinColorIdx;  // teinte (migration 0068)
 		const std::string characterFactionId = m_characterFactionId;  // Systeme de personnages PR2
 		const std::string characterClassId = m_characterClassId;      // Systeme de personnages PR2
+		const std::vector<uint8_t> characterAppearance = m_characterAppearance; // personnalisation (0097)
 
 		m_pendingAsyncKind = AsyncKind::CharacterCreate;
 		{
@@ -159,7 +163,7 @@ namespace engine::client
 
 		engine::network::NetClient* const masterClient = m_masterClient.get();
 		const uint64_t sessionId = m_masterSessionId;
-		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName, characterRaceId, characterGender, characterSkinColorIdx, characterFactionId, characterClassId]() {
+		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName, characterRaceId, characterGender, characterSkinColorIdx, characterFactionId, characterClassId, characterAppearance]() {
 			AsyncResult local{};
 			if (masterClient == nullptr)
 			{
@@ -177,7 +181,7 @@ namespace engine::client
 			engine::network::CharacterCustomization custom{};
 			custom.skinColorIdx = characterSkinColorIdx;
 			if (!disp.SendRequest(engine::network::kOpcodeCharacterCreateRequest,
-					engine::network::BuildCharacterCreateRequestPayload(characterName, characterRaceId, characterClassId, custom, characterGender, characterFactionId),
+					engine::network::BuildCharacterCreateRequestPayload(characterName, characterRaceId, characterClassId, custom, characterGender, characterFactionId, characterAppearance),
 					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
 						done = true;
 						if (timeout)
@@ -227,7 +231,7 @@ namespace engine::client
 // Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*, const char*, const char*, uint8_t, const char*, const char*) {}
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*, const char*, const char*, uint8_t, const char*, const char*, const std::vector<uint8_t>&) {}
 	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin() {}
 
 	void AuthUiPresenter::BuildModel_CharacterCreate(RenderModel&) const {}

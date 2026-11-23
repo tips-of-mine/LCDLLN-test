@@ -607,9 +607,17 @@ def b_crop(spec, lod):
             for q in range(3):
                 x = -L / 2 + 0.2 + q * (L - 0.4) / 2
                 tube(posts, [Vector((x, y, -0.1)), Vector((x, y, H))], [0.04, 0.035], 4)
-    if spec["crop"] == "vine":
-        return [posts, part]
-    return [part]
+    parts = [posts, part] if spec["crop"] == "vine" else [part]
+    if lod >= 1:
+        # Couvert vu de loin (retour propriétaire du 23/11/2026 : champs lus comme des
+        # rectangles) : plan horizontal texturé (rangs, sillons, fleurs) à mi-hauteur,
+        # pour que la parcelle se lise comme une culture continue au-delà du LOD0.
+        top = Part(material("Crop_Top_" + spec["crop"].capitalize(), False))
+        z = min(H * hfac * 0.45, 0.5)   # bas : pas de « plateau » visible en bordure de champ
+        top.quad(Vector((-L / 2, -W / 2, z)), Vector((L / 2, -W / 2, z)), Vector((L / 2, W / 2, z)),
+                 Vector((-L / 2, W / 2, z)), [(0, 0), (1, 0), (1, 1), (0, 1)], Vector((0, 0, 1)))
+        parts.append(top)
+    return parts
 
 
 def b_fern(spec, lod):

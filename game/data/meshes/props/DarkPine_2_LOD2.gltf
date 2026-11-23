@@ -15,7 +15,7 @@
   "nodes": [
     {
       "mesh": 0,
-      "name": "DarkPine_1_LOD2"
+      "name": "DarkPine_2_LOD2"
     }
   ],
   "materials": [
@@ -48,7 +48,7 @@
   ],
   "meshes": [
     {
-      "name": "DarkPine_1_LOD2",
+      "name": "DarkPine_2_LOD2",
       "primitives": [
         {
           "attributes": {
@@ -89,17 +89,17 @@
     {
       "mimeType": "image/png",
       "name": "Bark_DarkPine_Normal",
-      "uri": "../Bark_DarkPine_Normal.png"
+      "uri": "Bark_DarkPine_Normal.png"
     },
     {
       "mimeType": "image/png",
       "name": "Bark_DarkPine",
-      "uri": "../Bark_DarkPine.png"
+      "uri": "Bark_DarkPine.png"
     },
     {
       "mimeType": "image/png",
       "name": "Leaves_DarkPine",
-      "uri": "../Leaves_DarkPine.png"
+      "uri": "Leaves_DarkPine.png"
     }
   ],
   "accessors": [
@@ -108,14 +108,14 @@
       "componentType": 5126,
       "count": 1257,
       "max": [
-        5.548752784729004,
-        16.24419593811035,
-        5.1845879554748535
+        6.012287616729736,
+        16.562116622924805,
+        5.601429462432861
       ],
       "min": [
-        -5.911670207977295,
-        -0.2766226828098297,
-        -4.662191390991211
+        -6.071958065032959,
+        -0.254881352186203,
+        -4.824188709259033
       ],
       "type": "VEC3"
     },
@@ -142,14 +142,14 @@
       "componentType": 5126,
       "count": 184,
       "max": [
-        6.933695316314697,
-        16.63416290283203,
-        6.266087532043457
+        6.066118240356445,
+        16.35927391052246,
+        5.721707344055176
       ],
       "min": [
-        -5.251853942871094,
-        -0.5276167392730713,
-        -6.241790771484375
+        -5.462108612060547,
+        -0.583227276802063,
+        -6.896381378173828
       ],
       "type": "VEC3"
     },
@@ -231,7 +231,7 @@
   "buffers": [
     {
       "byteLength": 57472,
-      "uri": "DarkPine_1_LOD2.bin"
+      "uri": "DarkPine_2_LOD2.bin"
     }
   ]
 }

@@ -1085,4 +1085,5 @@ def main():
         print(f"[build_decor] {r['id']} tris LOD0/1/2 = {r['lods']}", flush=True)
 
 
-main()
+if __name__ == "__main__":  # importable (build_tree_billboards.py)
+    main()

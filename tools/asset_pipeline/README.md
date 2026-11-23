@@ -85,17 +85,24 @@ Sorties :
 | Fichier | Rôle | Triangles (budget) |
 |---|---|---|
 | `meshes/props/<Nom>.gltf` | LOD0, détail complet (utilisé par le jeu et le catalogue) | ≤ 26 000 (≈ 4 000 à 14 000) |
-| `meshes/props/lod/<Nom>_LOD1.gltf` | LOD1 : moins de côtés, brindilles retirées, cartes plus grandes | ≤ 9 000 |
-| `meshes/props/lod/<Nom>_LOD2.gltf` | LOD2 : tronc, charpentières, quelques grandes cartes | ≤ 2 500 |
+| `meshes/props/<Nom>_LOD1.gltf` | LOD1 : moins de côtés, brindilles retirées, cartes plus grandes | ≤ 9 000 |
+| `meshes/props/<Nom>_LOD2.gltf` | LOD2 : tronc, charpentières, quelques grandes cartes | ≤ 2 500 |
 | `meshes/props/Bark_*.png`, `Leaves_*.png` | textures partagées (écorce + normal map, feuillage RGBA) | — |
 
 Le feuillage est en `alphaMode: BLEND` (le moteur active la découpe alpha), normales des
 cartes orientées vers l'extérieur de la couronne. Les arbres sont à taille réelle
 (chêne ≈ 10 m, pin ≈ 17 m) et ajoutés aux tables de `tools/world_gen/lib/Vegetation.cpp`
-(feuillus, conifères, marais, terres mortes). **Limites actuelles du moteur** : le client
-ne bascule pas encore entre LOD0/1/2 pour les props de décor (seul le LOD0 est affiché) ;
-le billboard (impostor `.mipo`) se cuit à la demande, il n'est pas versionné (≈ 3 Mo par
-arbre) et ne s'affiche que si `world.impostor.enabled` est vrai :
+(feuillus, conifères, marais, terres mortes). Le client bascule LOD0 → LOD1 → LOD2 →
+billboard selon la distance (`world.scatter.lod1_m`, `lod2_m`, `billboard_m`) ; le
+billboard `<Nom>_BB.gltf` (deux plans croisés, texture `T_Decor_BB_<Nom>.png`) se refait
+avec `decor/build_tree_billboards.py` après toute régénération des arbres :
+
+```powershell
+blender -b -P tools/asset_pipeline/decor/build_tree_billboards.py
+```
+
+L'impostor `.mipo` (non versionné, ≈ 3 Mo par arbre, affiché seulement si
+`world.impostor.enabled`) reste possible :
 
 ```powershell
 impostor_builder.exe --input game/data/meshes/props/DarkOak_1.gltf --output game/data/meshes/props/DarkOak_1.mipo

@@ -15,13 +15,13 @@
   "nodes": [
     {
       "mesh": 0,
-      "name": "DarkPine_2_LOD1"
+      "name": "MarshWillow_1_LOD2"
     }
   ],
   "materials": [
     {
       "doubleSided": true,
-      "name": "Bark_DarkPine",
+      "name": "Bark_MarshWillow",
       "normalTexture": {
         "index": 0
       },
@@ -36,7 +36,7 @@
     {
       "alphaMode": "BLEND",
       "doubleSided": true,
-      "name": "Leaves_DarkPine",
+      "name": "Leaves_MarshWillow",
       "pbrMetallicRoughness": {
         "baseColorTexture": {
           "index": 2
@@ -48,7 +48,7 @@
   ],
   "meshes": [
     {
-      "name": "DarkPine_2_LOD1",
+      "name": "MarshWillow_1_LOD2",
       "primitives": [
         {
           "attributes": {
@@ -88,137 +88,137 @@
   "images": [
     {
       "mimeType": "image/png",
-      "name": "Bark_DarkPine_Normal",
-      "uri": "../Bark_DarkPine_Normal.png"
+      "name": "Bark_MarshWillow_Normal",
+      "uri": "Bark_MarshWillow_Normal.png"
     },
     {
       "mimeType": "image/png",
-      "name": "Bark_DarkPine",
-      "uri": "../Bark_DarkPine.png"
+      "name": "Bark_MarshWillow",
+      "uri": "Bark_MarshWillow.png"
     },
     {
       "mimeType": "image/png",
-      "name": "Leaves_DarkPine",
-      "uri": "../Leaves_DarkPine.png"
+      "name": "Leaves_MarshWillow",
+      "uri": "Leaves_MarshWillow.png"
     }
   ],
   "accessors": [
     {
       "bufferView": 0,
       "componentType": 5126,
-      "count": 4929,
+      "count": 516,
       "max": [
-        6.666076183319092,
-        16.562116622924805,
-        6.785688400268555
+        2.64336895942688,
+        9.194901466369629,
+        1.8247153759002686
       ],
       "min": [
-        -7.827669620513916,
-        -0.6005167365074158,
-        -6.00536584854126
+        -4.394770622253418,
+        -0.3340461254119873,
+        -4.643486022949219
       ],
       "type": "VEC3"
     },
     {
       "bufferView": 1,
       "componentType": 5126,
-      "count": 4929,
+      "count": 516,
       "type": "VEC3"
     },
     {
       "bufferView": 2,
       "componentType": 5126,
-      "count": 4929,
+      "count": 516,
       "type": "VEC2"
     },
     {
       "bufferView": 3,
       "componentType": 5123,
-      "count": 20499,
+      "count": 2265,
       "type": "SCALAR"
     },
     {
       "bufferView": 4,
       "componentType": 5126,
-      "count": 3188,
+      "count": 496,
       "max": [
-        7.39206075668335,
-        16.4183349609375,
-        7.409570217132568
+        5.133940696716309,
+        11.378815650939941,
+        4.761288166046143
       ],
       "min": [
-        -8.262724876403809,
-        -0.14845126867294312,
-        -6.461147785186768
+        -6.793868064880371,
+        -0.11661756038665771,
+        -7.778514862060547
       ],
       "type": "VEC3"
     },
     {
       "bufferView": 5,
       "componentType": 5126,
-      "count": 3188,
+      "count": 496,
       "type": "VEC3"
     },
     {
       "bufferView": 6,
       "componentType": 5126,
-      "count": 3188,
+      "count": 496,
       "type": "VEC2"
     },
     {
       "bufferView": 7,
       "componentType": 5123,
-      "count": 4782,
+      "count": 744,
       "type": "SCALAR"
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
-      "byteLength": 59148,
+      "byteLength": 6192,
       "byteOffset": 0,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 59148,
-      "byteOffset": 59148,
+      "byteLength": 6192,
+      "byteOffset": 6192,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 39432,
-      "byteOffset": 118296,
+      "byteLength": 4128,
+      "byteOffset": 12384,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 40998,
-      "byteOffset": 157728,
+      "byteLength": 4530,
+      "byteOffset": 16512,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteLength": 38256,
-      "byteOffset": 198728,
+      "byteLength": 5952,
+      "byteOffset": 21044,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 38256,
-      "byteOffset": 236984,
+      "byteLength": 5952,
+      "byteOffset": 26996,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 25504,
-      "byteOffset": 275240,
+      "byteLength": 3968,
+      "byteOffset": 32948,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 9564,
-      "byteOffset": 300744,
+      "byteLength": 1488,
+      "byteOffset": 36916,
       "target": 34963
     }
   ],
@@ -230,8 +230,8 @@
   ],
   "buffers": [
     {
-      "byteLength": 310308,
-      "uri": "DarkPine_2_LOD1.bin"
+      "byteLength": 38404,
+      "uri": "MarshWillow_1_LOD2.bin"
     }
   ]
 }

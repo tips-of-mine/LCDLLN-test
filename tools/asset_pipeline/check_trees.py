@@ -7,7 +7,8 @@ Vérifie, sans Blender (Python standard), pour chaque arbre et chacun de ses 3 L
   - le budget de triangles du LOD est respecté et décroît de LOD0 à LOD2 ;
   - les matériaux : écorce (baseColor + normal) puis feuillage en alphaMode BLEND
     (sauf l'arbre mort, sans feuillage), tous doubleSided ;
-  - les images référencées existent (les LOD rangés dans lod/ pointent vers ../) ;
+  - les images référencées existent (LOD rangés à côté du LOD0, <Nom>_LOD1/_LOD2) ;
+  - le billboard <Nom>_BB.gltf (horizon boisé) existe pour les arbres feuillus ;
   - la hauteur (axe Y du glTF) est plausible pour l'espèce, base au sol ;
   - chaque arbre est au catalogue des props et dans les tables de Vegetation.cpp.
 
@@ -42,7 +43,7 @@ def check(ok, what):
 
 def load(name, lod):
     """Charge le .gltf d'un LOD ; retourne (chemin, document) ou (chemin, None)."""
-    path = os.path.join(PROPS, name + ".gltf") if lod == 0 else os.path.join(PROPS, "lod", "%s_LOD%d.gltf" % (name, lod))
+    path = os.path.join(PROPS, name + ".gltf") if lod == 0 else os.path.join(PROPS, "%s_LOD%d.gltf" % (name, lod))
     if not os.path.isfile(path):
         return path, None
     with open(path, encoding="utf-8") as f:
@@ -88,6 +89,8 @@ def main():
             ymax = max(g["accessors"][p["attributes"]["POSITION"]]["max"][1] for m in g["meshes"] for p in m["primitives"])
             check(-1.5 <= ymin <= 0.1, "%s LOD%d : base à y=%.2f (attendu ≈ 0)" % (name, lod, ymin))
             check(hmin <= ymax <= hmax, "%s LOD%d : hauteur %.1f m hors [%d, %d]" % (name, lod, ymax, hmin, hmax))
+        bb = os.path.join(PROPS, name + "_BB.gltf")
+        check(os.path.isfile(bb), "%s : billboard %s absent (build_tree_billboards.py)" % (name, os.path.basename(bb)))
         if len(tris) == 3:
             check(tris[0] > tris[1] > tris[2], "%s : triangles non décroissants %s" % (name, tris))
     if _fails:

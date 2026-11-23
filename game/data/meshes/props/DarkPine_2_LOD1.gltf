@@ -15,7 +15,7 @@
   "nodes": [
     {
       "mesh": 0,
-      "name": "DarkPine_2_LOD2"
+      "name": "DarkPine_2_LOD1"
     }
   ],
   "materials": [
@@ -48,7 +48,7 @@
   ],
   "meshes": [
     {
-      "name": "DarkPine_2_LOD2",
+      "name": "DarkPine_2_LOD1",
       "primitives": [
         {
           "attributes": {
@@ -89,136 +89,136 @@
     {
       "mimeType": "image/png",
       "name": "Bark_DarkPine_Normal",
-      "uri": "../Bark_DarkPine_Normal.png"
+      "uri": "Bark_DarkPine_Normal.png"
     },
     {
       "mimeType": "image/png",
       "name": "Bark_DarkPine",
-      "uri": "../Bark_DarkPine.png"
+      "uri": "Bark_DarkPine.png"
     },
     {
       "mimeType": "image/png",
       "name": "Leaves_DarkPine",
-      "uri": "../Leaves_DarkPine.png"
+      "uri": "Leaves_DarkPine.png"
     }
   ],
   "accessors": [
     {
       "bufferView": 0,
       "componentType": 5126,
-      "count": 1257,
+      "count": 4929,
       "max": [
-        6.012287616729736,
+        6.666076183319092,
         16.562116622924805,
-        5.601429462432861
+        6.785688400268555
       ],
       "min": [
-        -6.071958065032959,
-        -0.254881352186203,
-        -4.824188709259033
+        -7.827669620513916,
+        -0.6005167365074158,
+        -6.00536584854126
       ],
       "type": "VEC3"
     },
     {
       "bufferView": 1,
       "componentType": 5126,
-      "count": 1257,
+      "count": 4929,
       "type": "VEC3"
     },
     {
       "bufferView": 2,
       "componentType": 5126,
-      "count": 1257,
+      "count": 4929,
       "type": "VEC2"
     },
     {
       "bufferView": 3,
       "componentType": 5123,
-      "count": 5403,
+      "count": 20499,
       "type": "SCALAR"
     },
     {
       "bufferView": 4,
       "componentType": 5126,
-      "count": 184,
+      "count": 3188,
       "max": [
-        6.066118240356445,
-        16.35927391052246,
-        5.721707344055176
+        7.39206075668335,
+        16.4183349609375,
+        7.409570217132568
       ],
       "min": [
-        -5.462108612060547,
-        -0.583227276802063,
-        -6.896381378173828
+        -8.262724876403809,
+        -0.14845126867294312,
+        -6.461147785186768
       ],
       "type": "VEC3"
     },
     {
       "bufferView": 5,
       "componentType": 5126,
-      "count": 184,
+      "count": 3188,
       "type": "VEC3"
     },
     {
       "bufferView": 6,
       "componentType": 5126,
-      "count": 184,
+      "count": 3188,
       "type": "VEC2"
     },
     {
       "bufferView": 7,
       "componentType": 5123,
-      "count": 276,
+      "count": 4782,
       "type": "SCALAR"
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
-      "byteLength": 15084,
+      "byteLength": 59148,
       "byteOffset": 0,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 15084,
-      "byteOffset": 15084,
+      "byteLength": 59148,
+      "byteOffset": 59148,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 10056,
-      "byteOffset": 30168,
+      "byteLength": 39432,
+      "byteOffset": 118296,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 10806,
-      "byteOffset": 40224,
+      "byteLength": 40998,
+      "byteOffset": 157728,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteLength": 2208,
-      "byteOffset": 51032,
+      "byteLength": 38256,
+      "byteOffset": 198728,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 2208,
-      "byteOffset": 53240,
+      "byteLength": 38256,
+      "byteOffset": 236984,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 1472,
-      "byteOffset": 55448,
+      "byteLength": 25504,
+      "byteOffset": 275240,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 552,
-      "byteOffset": 56920,
+      "byteLength": 9564,
+      "byteOffset": 300744,
       "target": 34963
     }
   ],
@@ -230,8 +230,8 @@
   ],
   "buffers": [
     {
-      "byteLength": 57472,
-      "uri": "DarkPine_2_LOD2.bin"
+      "byteLength": 310308,
+      "uri": "DarkPine_2_LOD1.bin"
     }
   ]
 }

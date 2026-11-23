@@ -89,17 +89,17 @@
     {
       "mimeType": "image/png",
       "name": "Bark_MarshWillow_Normal",
-      "uri": "../Bark_MarshWillow_Normal.png"
+      "uri": "Bark_MarshWillow_Normal.png"
     },
     {
       "mimeType": "image/png",
       "name": "Bark_MarshWillow",
-      "uri": "../Bark_MarshWillow.png"
+      "uri": "Bark_MarshWillow.png"
     },
     {
       "mimeType": "image/png",
       "name": "Leaves_MarshWillow",
-      "uri": "../Leaves_MarshWillow.png"
+      "uri": "Leaves_MarshWillow.png"
     }
   ],
   "accessors": [

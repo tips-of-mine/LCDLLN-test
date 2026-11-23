@@ -15,7 +15,7 @@
   "nodes": [
     {
       "mesh": 0,
-      "name": "GnarledDeadTree_2_LOD2"
+      "name": "GnarledDeadTree_1_LOD2"
     }
   ],
   "materials": [
@@ -36,7 +36,7 @@
   ],
   "meshes": [
     {
-      "name": "GnarledDeadTree_2_LOD2",
+      "name": "GnarledDeadTree_1_LOD2",
       "primitives": [
         {
           "attributes": {
@@ -64,12 +64,12 @@
     {
       "mimeType": "image/png",
       "name": "Bark_DeadTree_Dark_Normal",
-      "uri": "../Bark_DeadTree_Dark_Normal.png"
+      "uri": "Bark_DeadTree_Dark_Normal.png"
     },
     {
       "mimeType": "image/png",
       "name": "Bark_DeadTree_Dark",
-      "uri": "../Bark_DeadTree_Dark.png"
+      "uri": "Bark_DeadTree_Dark.png"
     }
   ],
   "accessors": [
@@ -78,14 +78,14 @@
       "componentType": 5126,
       "count": 390,
       "max": [
-        2.5274105072021484,
-        12.47089672088623,
-        5.575681686401367
+        4.0453290939331055,
+        9.814397811889648,
+        1.6480255126953125
       ],
       "min": [
-        -4.225799560546875,
-        -0.3245232403278351,
-        -1.2122197151184082
+        -2.386446475982666,
+        -0.37881478667259216,
+        -6.977797031402588
       ],
       "type": "VEC3"
     },
@@ -143,7 +143,7 @@
   "buffers": [
     {
       "byteLength": 15900,
-      "uri": "GnarledDeadTree_2_LOD2.bin"
+      "uri": "GnarledDeadTree_1_LOD2.bin"
     }
   ]
 }

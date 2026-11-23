@@ -15,7 +15,7 @@
   "nodes": [
     {
       "mesh": 0,
-      "name": "DarkOak_1_LOD1"
+      "name": "DarkOak_2_LOD2"
     }
   ],
   "materials": [
@@ -48,7 +48,7 @@
   ],
   "meshes": [
     {
-      "name": "DarkOak_1_LOD1",
+      "name": "DarkOak_2_LOD2",
       "primitives": [
         {
           "attributes": {
@@ -89,136 +89,136 @@
     {
       "mimeType": "image/png",
       "name": "Bark_DarkOak_Normal",
-      "uri": "../Bark_DarkOak_Normal.png"
+      "uri": "Bark_DarkOak_Normal.png"
     },
     {
       "mimeType": "image/png",
       "name": "Bark_DarkOak",
-      "uri": "../Bark_DarkOak.png"
+      "uri": "Bark_DarkOak.png"
     },
     {
       "mimeType": "image/png",
       "name": "Leaves_DarkOak",
-      "uri": "../Leaves_DarkOak.png"
+      "uri": "Leaves_DarkOak.png"
     }
   ],
   "accessors": [
     {
       "bufferView": 0,
       "componentType": 5126,
-      "count": 1697,
+      "count": 487,
       "max": [
-        6.722762107849121,
-        15.666481018066406,
-        6.208408832550049
+        5.436013221740723,
+        13.476760864257812,
+        4.903880596160889
       ],
       "min": [
-        -7.160892963409424,
-        -0.2996981739997864,
-        -7.302515506744385
+        -6.732993125915527,
+        -0.328777015209198,
+        -3.767714738845825
       ],
       "type": "VEC3"
     },
     {
       "bufferView": 1,
       "componentType": 5126,
-      "count": 1697,
+      "count": 487,
       "type": "VEC3"
     },
     {
       "bufferView": 2,
       "componentType": 5126,
-      "count": 1697,
+      "count": 487,
       "type": "VEC2"
     },
     {
       "bufferView": 3,
       "componentType": 5123,
-      "count": 7434,
+      "count": 2127,
       "type": "SCALAR"
     },
     {
       "bufferView": 4,
       "componentType": 5126,
-      "count": 3780,
+      "count": 180,
       "max": [
-        8.780485153198242,
-        17.208499908447266,
-        7.986258506774902
+        6.897754669189453,
+        16.877859115600586,
+        10.531648635864258
       ],
       "min": [
-        -9.073431015014648,
-        -0.07691752910614014,
-        -9.319843292236328
+        -11.090799331665039,
+        0.36240339279174805,
+        -6.210226058959961
       ],
       "type": "VEC3"
     },
     {
       "bufferView": 5,
       "componentType": 5126,
-      "count": 3780,
+      "count": 180,
       "type": "VEC3"
     },
     {
       "bufferView": 6,
       "componentType": 5126,
-      "count": 3780,
+      "count": 180,
       "type": "VEC2"
     },
     {
       "bufferView": 7,
       "componentType": 5123,
-      "count": 5670,
+      "count": 270,
       "type": "SCALAR"
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
-      "byteLength": 20364,
+      "byteLength": 5844,
       "byteOffset": 0,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 20364,
-      "byteOffset": 20364,
+      "byteLength": 5844,
+      "byteOffset": 5844,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 13576,
-      "byteOffset": 40728,
+      "byteLength": 3896,
+      "byteOffset": 11688,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 14868,
-      "byteOffset": 54304,
+      "byteLength": 4254,
+      "byteOffset": 15584,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteLength": 45360,
-      "byteOffset": 69172,
+      "byteLength": 2160,
+      "byteOffset": 19840,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 45360,
-      "byteOffset": 114532,
+      "byteLength": 2160,
+      "byteOffset": 22000,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 30240,
-      "byteOffset": 159892,
+      "byteLength": 1440,
+      "byteOffset": 24160,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteLength": 11340,
-      "byteOffset": 190132,
+      "byteLength": 540,
+      "byteOffset": 25600,
       "target": 34963
     }
   ],
@@ -230,8 +230,8 @@
   ],
   "buffers": [
     {
-      "byteLength": 201472,
-      "uri": "DarkOak_1_LOD1.bin"
+      "byteLength": 26140,
+      "uri": "DarkOak_2_LOD2.bin"
     }
   ]
 }

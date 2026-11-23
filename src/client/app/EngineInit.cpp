@@ -3887,6 +3887,15 @@ namespace engine
 			// la couleur d'horizon legacy uniforme ci-dessus.
 			lp.aerialSkyModel =
 				m_cfg.GetBool("client.sky.analytic", true) ? 1.0f : 0.0f;
+			// Teinte aerial (retour propriétaire du 23/11/2026, relief lointain en
+			// « rectangles blancs » la nuit) : la nuit, lightDir est la direction de la
+			// LUNE ; le ciel (sky.frag) est évalué avec le soleil réel, sous l'horizon.
+			// La perspective aérienne doit utiliser le même soleil, sinon le relief
+			// fondu prend une teinte de plein jour sur un ciel nocturne. Slots libres
+			// (pad1, ddgiOrigin.w, ddgiSpacing.w) : layout du push-constant inchangé.
+			lp.ddgiOrigin[3]  = dnLight.sunDir[0];
+			lp.aerialSunY     = dnLight.sunDir[1];
+			lp.ddgiSpacing[3] = dnLight.sunDir[2];
 		}
 		VkImageView irrView       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetImageView() : VK_NULL_HANDLE;
 		VkSampler   irrSamp       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetSampler()   : VK_NULL_HANDLE;

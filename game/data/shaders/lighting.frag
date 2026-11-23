@@ -98,9 +98,9 @@ layout(push_constant) uniform PC
     // useIBL+useDdgi+pad0+pad1 = 16 o pour aligner les vec4 DDGI sur 16 (std140). ---
     float useDdgi;      // 1.0 = ajoute l'irradiance DDGI dynamique, 0.0 = inchangé
     float aerialSkyModel; // 1.0 = teinte aerial = ciel ANALYTIQUE évalué par rayon (chantier 2026-07-20) ; 0.0 = skyColor legacy (ex-pad0)
-    float pad1;         // padding (alignement vec4)
-    vec4  ddgiOrigin;   // xyz = origine monde grille (mètres) ; w inutilisé
-    vec4  ddgiSpacing;  // xyz = espacement par axe (mètres) ; w inutilisé
+    float aerialSunY;   // Y de la direction RÉELLE du soleil (teinte aerial ; ex-pad1)
+    vec4  ddgiOrigin;   // xyz = origine monde grille (mètres) ; w = X de la direction réelle du soleil
+    vec4  ddgiSpacing;  // xyz = espacement par axe (mètres) ; w = Z de la direction réelle du soleil
     vec4  ddgiCounts;   // xyz = nb sondes par axe ; w = irradianceTexels (côté hors bordure)
     vec4  ddgiAtlas;    // x = atlasCols, y = atlasRows, z = tileSize (texels+2), w = intensity
 } pc;
@@ -594,7 +594,11 @@ void main()
         vec3  tintBase;
         if (pc.aerialSkyModel >= 0.5)
         {
-            tintBase = AerialAnalyticHorizon(rayDir, normalize(pc.lightDir.xyz));
+            // Soleil RÉEL (pas la lune de nuit), comme sky.frag : de nuit, le relief
+            // fondu prend la teinte sombre du ciel au lieu d'un horizon de plein jour.
+            vec3 aerialSun = vec3(pc.ddgiOrigin.w, pc.aerialSunY, pc.ddgiSpacing.w);
+            aerialSun = dot(aerialSun, aerialSun) > 0.25 ? normalize(aerialSun) : normalize(pc.lightDir.xyz);
+            tintBase = AerialAnalyticHorizon(rayDir, aerialSun);
             // Brume neutre : l'horizon analytique rasant est très saturé (jaune
             // le matin) alors que le fond réellement visible est surtout la
             // couche nuageuse, claire. Sans désaturation, le relief lointain

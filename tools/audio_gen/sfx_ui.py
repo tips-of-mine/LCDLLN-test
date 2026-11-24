@@ -86,6 +86,31 @@ def parchment(r, dur=0.35, lo=1200.0, hi=8000.0, crackle=60) -> np.ndarray:
     return dsp.bandpass(out, lo * 0.8, hi)
 
 
+def paper_roll(r, dur=0.5, rate0=22.0, rate1=6.0, lo=700.0, hi=7000.0) -> np.ndarray:
+    """Parchemin qui roule (déroulé ou enroulé), 23/11/2026.
+
+    Chaque tour du rouleau fait passer une pliure : souffle de papier modulé au
+    rythme des tours (de `rate0` à `rate1` tours par seconde : un rouleau qu'on
+    déroule ralentit, un rouleau qu'on range accélère), un craquement sec à chaque
+    passage de pliure, et un frottement grave du papier contre lui-même.
+    """
+    t = _t(dur)
+    rate = np.linspace(rate0, rate1, len(t))
+    phase = 2 * np.pi * np.cumsum(rate) / dsp.SR
+    am = 0.35 + 0.65 * np.abs(np.sin(phase * 0.5)) ** 3          # passage de pliure à chaque tour
+    env = np.clip(t / 0.03, 0, 1) * np.clip((dur - t) / 0.12, 0, 1)
+    hiss = dsp.bandpass(r.standard_normal(len(t)), lo, hi) * am
+    rub = dsp.bandpass(r.standard_normal(len(t)), 180.0, 900.0) * am * 0.5
+    out = (hiss / (np.max(np.abs(hiss)) + 1e-9) + rub / (np.max(np.abs(rub)) + 1e-9) * 0.4) * env
+    # Craquements : un par tour (instant où sin(phase/2) repasse par 0), gain aléatoire.
+    turns = np.nonzero(np.diff(np.floor(phase / (2 * np.pi))) > 0)[0]
+    for s in turns:
+        g = dsp.samples(r.uniform(0.002, 0.006))
+        burst = dsp.bandpass(r.standard_normal(g + 64), 1500.0, 8000.0)[:min(g, len(t) - s)]
+        out[s:s + len(burst)] += burst * r.uniform(0.4, 1.0) * env[s]
+    return dsp.lowpass(out, 9000.0)
+
+
 def leather(r, dur=0.18) -> np.ndarray:
     t = _t(dur)
     return dsp.bandpass(r.standard_normal(len(t)), 300, 2500) * _env(t, 0.02, 0.05)
@@ -183,9 +208,20 @@ def make(sid: str) -> np.ndarray:
         x = place(x, coins(r, 4, 0.2) * 0.5, 0.2, 1.0)
         return norm(room(x, 0.12), -9)
     if sid == "map_open":
-        return norm(room(parchment(r, 0.55, 900, 7500, 120), 0.1), -10)
+        # Carte (M) déroulée — 23/11/2026, calé sur le déroulé visuel de 0,35 s :
+        # lien de cuir qu'on défait, parchemin qui se déroule en ralentissant,
+        # puis le rouleau du bas qui se pose (bois) et la feuille qui s'aplatit.
+        x = leather(r, 0.08) * 0.5
+        x = place(x, paper_roll(r, 0.45, 24.0, 7.0), 0.04, 1.0)
+        x = place(x, wood_knock(r, 115.0, 0.14), 0.40, 0.55)
+        x = place(x, parchment(r, 0.18, 600, 4000, 12), 0.41, 0.35)
+        return norm(room(x, 0.12), -10)
     if sid == "map_close":
-        x = place(parchment(r, 0.3, 900, 6000, 50), leather(r, 0.1), 0.25, 0.8)
+        # Carte (M) rangée : le parchemin s'enroule en accélérant, le rouleau se
+        # referme (bois) et le lien de cuir le serre.
+        x = paper_roll(r, 0.36, 7.0, 24.0)
+        x = place(x, wood_knock(r, 140.0, 0.10), 0.34, 0.5)
+        x = place(x, leather(r, 0.12), 0.40, 0.7)
         return norm(room(x, 0.1), -11)
     if sid == "place_discovered":
         x = mono(render(_one("taiko", "D1", 120), 60, 4.0))

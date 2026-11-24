@@ -42,6 +42,16 @@ namespace engine::render
 		/// FIX.11 — vrai à chaque ouverture (Engine remet l'état à zéro) : la frame
 		/// suivante fixe le zoom initial (≈ defaultViewM visibles) et recentre.
 		bool initPending = true;
+		/// Déroulé du parchemin (23/11/2026) — temps écoulé (s) depuis l'ouverture.
+		float unrollElapsedS = 0.0f;
+		/// Taille « pleine » de la fenêtre (px), relevée à la première frame de
+		/// l'ouverture (celle mémorisée par ImGui, redimensionnement du joueur compris) ;
+		/// 0 = pas encore relevée.
+		float fullW = 0.0f;
+		float fullH = 0.0f;
+		/// Vrai une fois le déroulé terminé : la taille n'est plus imposée et le
+		/// joueur peut de nouveau redimensionner la fenêtre.
+		bool unrollDone = false;
 	};
 
 	/// Entrées de la fenêtre Carte (une frame).
@@ -76,8 +86,12 @@ namespace engine::render
 		uint8_t currentMap = 0;
 	};
 
-	/// Dessine la fenêtre « Carte du monde ». \param open mis à false si le
-	/// joueur ferme la fenêtre (✕). \param view zoom / pan / suivi du joueur, modifié
+	/// Dessine la fenêtre « Carte du monde », habillée en parchemin (fond clair, encre
+	/// brune, rouleaux de bois en haut et en bas, en-tête dessiné sans barre de titre
+	/// ImGui) et déroulée sur kWorldMapUnrollSeconds à chaque ouverture. Les noms des
+	/// lieux n'apparaissent qu'au survol (WorldMapPresentation.h).
+	/// \param open mis à false si le
+	/// joueur ferme la fenêtre (bouton X de l'en-tête). \param view zoom / pan / suivi du joueur, modifié
 	/// par la molette, le glisser et les boutons du pied. Lot D : la zone de dessin
 	/// occupe toute la région de contenu (redimensionnement suivi à chaque frame,
 	/// échelle identique sur les deux axes) et la carte suit le joueur par défaut.

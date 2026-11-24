@@ -1,4 +1,4 @@
-# assets/icons/skills/
+# icons/skills/
 
 🇫🇷 FRANÇAIS
 ## Pourquoi ce dossier existe
@@ -7,33 +7,46 @@ d'action). Distinctes des icônes fonctionnelles de `icons/ui/` (navigation/éta
 ici c'est du **contenu gameplay**.
 
 ## Organisation
-Un sous-dossier par classe, fichier nommé d'après l'`id` de la compétence
-(tel qu'il figure dans `game/data/gameplay/class_skills/<classId>.json`) :
+Un sous-dossier par classe ; chaque fichier porte le nom exact du champ `iconFile`
+de la compétence dans `game/data/gameplay/class_skills/<classId>.json` :
 
 ```
-icons/skills/<classId>/<skillId>.png
+icons/skills/<classId>/<iconFile>
 ```
 
-Exemples :
-- `icons/skills/pretre_jugement/pretre_jugement_single_t1.png`
-- `icons/skills/pretre_jugement/pretre_jugement_aoe_t1.png`
-- `icons/skills/guerrier/guerrier_def_t5.png`
+Exemple : `icons/skills/guerrier/Guerrier_Unitaire_Niv08_Estoc-Funeste.png`.
+Le chemin est construit par `ClassSkillCatalog` (`src/client/gameplay/ClassSkillCatalog.cpp`).
+24 classes × 180 = 4320 icônes (180 par sous-dossier de classe).
+`branches/` contient les bannières d'en-tête des trois colonnes de l'arbre.
 
-Le nom de fichier **doit** correspondre exactement à l'`id` (le mapping est
-automatique, aucune édition des JSON nécessaire). 24 classes × 180 = 4320 icônes
-attendues au total (180 par sous-dossier de classe).
+## Fabrication (ne pas éditer les PNG à la main)
+Les icônes sont **composées** par `tools/skills/compose_skill_icons.py` :
+
+1. **Motif central** : un motif peint par *compétence de base* (18 par classe,
+   3 branches × 6), partagé par toutes ses déclinaisons (« Estoc », « Estoc Funeste »,
+   « Estoc Maitrise 50 »…). Sources détourées en 512 px dans
+   `tools/skills/icon_motifs/<classId>/<branche>_<slug>.png` (Git LFS).
+2. **Cadre** : bordure de la couleur du palier — niveaux 1-10 bronze, 11-20 argent,
+   21-30 or, 31-40 violet, 41-50 orange, 51-60 cyan.
+3. **Points de rang** : 1 à 10 points selon le rang dans le palier.
+
+```
+python3 tools/skills/compose_skill_icons.py --class guerrier   # une classe
+python3 tools/skills/compose_skill_icons.py --all              # toutes
+```
+
+Contrôle en CI (`.github/workflows/skill-icons.yml`) :
+`tools/skills/validate_skill_icons.py` vérifie que chaque `iconFile` et chaque motif
+existent, puis les tests de `tools/skills/tests/`.
+
+Les motifs ont été générés avec SDXL base 1.0 (licence CreativeML Open RAIL++-M,
+usage commercial autorisé), style pictural, sans reproduction d'éléments de la BD.
 
 ## Format
-- **PNG**, carré, fond **transparent**.
-- Taille recommandée : **64×64** (ou 128×128 pour plus de netteté).
-- Chemin chargé au runtime, relatif à `paths.content` (= `game/data`) :
-  `icons/skills/<classId>/<skillId>.png`.
-
-## Note
-Déposer les fichiers ne suffit pas à les afficher : le rendu (chargement de la
-texture + `ImGui::Image` dans l'arbre / le Grimoire / la barre d'action) doit
-être câblé côté client. Tant qu'une icône est absente, l'UI retombe sur le
-libellé texte.
+- **PNG** RGBA 128×128, coins transparents.
+- Stockés dans **Git LFS** (`.gitattributes`) ; la CI `build-windows` fait le
+  checkout avec `lfs: true` pour les empaqueter dans le client.
+- Icône absente : l'interface retombe sur le libellé texte.
 
 ---
 
@@ -43,18 +56,23 @@ Per-class **skill icons** (skill tree, Grimoire, action bar). Distinct from the
 functional icons in `icons/ui/` (navigation/status): this is **gameplay content**.
 
 ## Layout
-One subfolder per class, file named after the skill `id` (as found in
-`game/data/gameplay/class_skills/<classId>.json`):
+One subfolder per class; each file is named exactly after the skill's `iconFile`
+field in `game/data/gameplay/class_skills/<classId>.json`:
 
 ```
-icons/skills/<classId>/<skillId>.png
+icons/skills/<classId>/<iconFile>
 ```
 
-The filename **must** match the `id` exactly (automatic mapping, no JSON edits).
-24 classes × 180 = 4320 icons total (180 per class subfolder).
+24 classes × 180 = 4320 icons (180 per class subfolder). `branches/` holds the
+three skill-tree column banners.
+
+## How they are made (do not hand-edit the PNGs)
+Icons are **composed** by `tools/skills/compose_skill_icons.py` from one painted
+motif per *base skill* (18 per class, shared by all its variants), stored in
+`tools/skills/icon_motifs/<classId>/` (Git LFS), plus a tier-coloured frame
+(bronze, silver, gold, purple, orange, cyan per 10 levels) and 1–10 rank dots.
+CI (`skill-icons.yml`) runs `validate_skill_icons.py` and the tool tests.
 
 ## Format
-- **PNG**, square, **transparent** background.
-- Recommended size: **64×64** (or 128×128 for sharper rendering).
-- Runtime path, relative to `paths.content` (= `game/data`):
-  `icons/skills/<classId>/<skillId>.png`.
+- **PNG** RGBA 128×128, transparent corners, stored in **Git LFS**.
+- Missing icon: the UI falls back to the text label.

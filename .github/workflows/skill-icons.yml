@@ -1,0 +1,53 @@
+# Validation des icones de competences de classe.
+#
+# - validate_skill_icons.py : chaque competence de game/data/gameplay/class_skills/*.json
+#   a son icone (game/data/icons/skills/<classId>/<iconFile>) et son motif source
+#   (tools/skills/icon_motifs/<classId>/), 18 competences de base par classe ;
+# - tests unitaires des outils (nommage des motifs partage par les deux scripts,
+#   paliers et rangs, gabarit du cadre).
+#
+# Les PNG sont dans Git LFS : checkout sans LFS, l'existence des pointeurs suffit.
+# Independant des builds, ~20 s.
+name: Icones de competences
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'game/data/gameplay/class_skills/**'
+      - 'game/data/icons/skills/**'
+      - 'tools/skills/**'
+      - '.github/workflows/skill-icons.yml'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'game/data/gameplay/class_skills/**'
+      - 'game/data/icons/skills/**'
+      - 'tools/skills/**'
+      - '.github/workflows/skill-icons.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  skill-icons:
+    name: Couverture des icones
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          lfs: false
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Pillow (tests du compositeur)
+        run: python -m pip install --quiet pillow
+
+      - name: Couverture icones et motifs
+        run: python tools/skills/validate_skill_icons.py
+
+      - name: Tests des outils
+        run: python -m unittest discover -s tools/skills/tests -v

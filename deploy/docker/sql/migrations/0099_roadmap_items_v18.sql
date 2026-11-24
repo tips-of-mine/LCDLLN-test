@@ -1,4 +1,4 @@
--- Migration 0097 — Roadmap items v16 : rendu lointain et océan de tentes de l'Oracle (lore v1.0.139)
+-- Migration 0099 — Roadmap items v18 : rendu lointain et océan de tentes de l'Oracle (lore v1.0.139)
 --
 -- Règle CLAUDE.md « Roadmap publique » : une fonctionnalité visible livrée met à
 -- jour la roadmap dans la même PR. Insertion idempotente par titre, sans id imposé.
@@ -14,11 +14,11 @@ SELECT v.title, v.description, v.status, v.category, v.display_order
 FROM (
   SELECT 'Paysages lointains plus nets' AS title,
          'De loin, les arbres gardent leur silhouette, les champs se lisent comme de vraies cultures et le relief se fond dans le ciel, de jour comme de nuit, au lieu de grands aplats blancs ou gris.' AS description,
-         'completed' AS status, 'graphismes' AS category, 75 AS display_order
+         'completed' AS status, 'graphismes' AS category, 77 AS display_order
   UNION ALL
   SELECT 'L''océan de tentes de l''Oracle',
          'Autour du rocher de l''Oracle, des milliers de tentes de pèlerins s''étendent désormais en quinze rangs, avec leurs fanions, leurs feux et leurs bagages.',
-         'completed', 'monde', 76
+         'completed', 'monde', 78
 ) AS v
 WHERE NOT EXISTS (SELECT 1 FROM roadmap_items r WHERE r.title = v.title);
 

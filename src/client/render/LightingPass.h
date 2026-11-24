@@ -45,9 +45,9 @@ namespace engine::render
 			// suivants soient alignés sur 16 (règle std140 des push_constant GLSL).
 			float useDdgi;         ///< 1.0 = échantillonne l'irradiance DDGI dynamique, 0.0 = aucun changement.
 			float aerialSkyModel = 0.0f; ///< Chantier perspective aérienne 2026-07-20 : 1.0 = la teinte aerial est le ciel ANALYTIQUE évalué par rayon (cohérent avec sky.frag) ; 0.0 = skyColor legacy (ex-pad0, layout inchangé).
-			float pad1;            ///< Padding (alignement vec4 std140).
-			float ddgiOrigin[4];   ///< xyz = origine monde de la grille DDGI (mètres) ; w inutilisé.
-			float ddgiSpacing[4];  ///< xyz = espacement par axe (mètres) ; w inutilisé.
+			float aerialSunY = 0.0f; ///< Composante Y de la direction RÉELLE du soleil pour la teinte aerial (ex-pad1, layout inchangé).
+			float ddgiOrigin[4];   ///< xyz = origine monde de la grille DDGI (mètres) ; w = direction réelle du soleil, X (teinte aerial).
+			float ddgiSpacing[4];  ///< xyz = espacement par axe (mètres) ; w = direction réelle du soleil, Z (teinte aerial).
 			float ddgiCounts[4];   ///< xyz = nb de sondes par axe ; w = irradianceTexels (côté hors bordure).
 			float ddgiAtlas[4];    ///< x = atlasCols, y = atlasRows, z = tileSize (texels+2), w = intensity.
 		};

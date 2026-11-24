@@ -173,7 +173,7 @@
   {
    "bufferView": 4,
    "componentType": 5126,
-   "count": 232,
+   "count": 208,
    "max": [
     7.5381011962890625,
     21.885419845581055,
@@ -189,19 +189,19 @@
   {
    "bufferView": 5,
    "componentType": 5126,
-   "count": 232,
+   "count": 208,
    "type": "VEC3"
   },
   {
    "bufferView": 6,
    "componentType": 5126,
-   "count": 232,
+   "count": 208,
    "type": "VEC2"
   },
   {
    "bufferView": 7,
    "componentType": 5123,
-   "count": 348,
+   "count": 312,
    "type": "SCALAR"
   }
  ],
@@ -232,26 +232,26 @@
   },
   {
    "buffer": 0,
-   "byteLength": 2784,
+   "byteLength": 2496,
    "byteOffset": 14096,
    "target": 34962
   },
   {
    "buffer": 0,
-   "byteLength": 2784,
-   "byteOffset": 16880,
+   "byteLength": 2496,
+   "byteOffset": 16592,
    "target": 34962
   },
   {
    "buffer": 0,
-   "byteLength": 1856,
-   "byteOffset": 19664,
+   "byteLength": 1664,
+   "byteOffset": 19088,
    "target": 34962
   },
   {
    "buffer": 0,
-   "byteLength": 696,
-   "byteOffset": 21520,
+   "byteLength": 624,
+   "byteOffset": 20752,
    "target": 34963
   }
  ],
@@ -263,7 +263,7 @@
  ],
  "buffers": [
   {
-   "byteLength": 22216,
+   "byteLength": 21376,
    "uri": "Tree_Beech_3_LOD2.bin"
   }
  ]

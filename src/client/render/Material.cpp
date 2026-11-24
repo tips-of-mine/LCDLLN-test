@@ -4,6 +4,7 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include <algorithm>
 #include <cstring>
 
 namespace engine::render
@@ -186,6 +187,30 @@ namespace engine::render
 		return true;
 	}
 
+	bool MaterialDescriptorCache::writeTextureSlot(VkDevice device, uint32_t slotIndex)
+	{
+		if (device == VK_NULL_HANDLE || m_descriptorSet == VK_NULL_HANDLE || slotIndex >= m_textureSlots.size())
+		{
+			LOG_ERROR(Render, "[MaterialDescriptorCache] Texture slot write FAILED: invalid parameters (slot={})", slotIndex);
+			return false;
+		}
+		const TextureSlot& slot = m_textureSlots[slotIndex];
+		VkDescriptorImageInfo info{};
+		info.sampler = slot.sampler != VK_NULL_HANDLE ? slot.sampler : m_samplerLinear;
+		info.imageView = slot.view != VK_NULL_HANDLE ? slot.view : m_fallbackView[0];
+		info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		VkWriteDescriptorSet write{};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstSet = m_descriptorSet;
+		write.dstBinding = 0;
+		write.dstArrayElement = slotIndex;
+		write.descriptorCount = 1;
+		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		write.pImageInfo = &info;
+		vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
+		return true;
+	}
+
 	bool MaterialDescriptorCache::writeMaterialData(VkDevice device, uint32_t materialIndex, const MaterialGpuData& gpuData)
 	{
 		if (device == VK_NULL_HANDLE || m_materialMemory == VK_NULL_HANDLE || materialIndex >= m_materials.size())
@@ -240,7 +265,10 @@ namespace engine::render
 			}
 		}
 
-		LOG_WARN(Render, "[MaterialDescriptorCache] Texture slot pool exhausted (asset_id={})", texture.Id());
+		if (!m_texturePoolExhaustedLogged)
+			LOG_ERROR(Render, "[MaterialDescriptorCache] Texture slot pool exhausted (max_textures={}, asset_id={}) : "
+				"les textures suivantes utilisent la texture par défaut", m_maxTextures, texture.Id());
+		m_texturePoolExhaustedLogged = true;
 		return 0u;
 	}
 
@@ -253,8 +281,27 @@ namespace engine::render
 			return false;
 		}
 
+		{
+			// Le tableau de textures compte contre les limites « samplers » et « images
+			// échantillonnées » par étage et par set ; une marge reste pour les autres sets.
+			VkPhysicalDeviceProperties props{};
+			vkGetPhysicalDeviceProperties(physicalDevice, &props);
+			const VkPhysicalDeviceLimits& lim = props.limits;
+			const uint32_t kMargin = 32u;
+			uint32_t cap = std::min({ lim.maxPerStageDescriptorSamplers, lim.maxPerStageDescriptorSampledImages,
+				lim.maxDescriptorSetSamplers, lim.maxDescriptorSetSampledImages });
+			cap = cap > kMargin + 3u ? cap - kMargin : 3u;
+			if (maxTextures > cap)
+			{
+				LOG_WARN(Render, "[MaterialDescriptorCache] max_textures {} borne a {} (limites du GPU) : "
+					"les shaders declarent {} textures", maxTextures, cap, kMaxBindlessTextures);
+				maxTextures = cap;
+			}
+		}
 		m_maxTextures = maxTextures;
 		m_maxMaterials = maxMaterials;
+		m_materialPoolExhaustedLogged = false;
+		m_texturePoolExhaustedLogged = false;
 		m_textureSlots.assign(m_maxTextures, {});
 		m_materials.clear();
 		m_textureKeyToSlot.clear();
@@ -387,7 +434,10 @@ namespace engine::render
 		}
 		if (m_materials.size() >= m_maxMaterials)
 		{
-			LOG_WARN(Render, "[MaterialDescriptorCache] Material pool exhausted");
+			if (!m_materialPoolExhaustedLogged)
+				LOG_ERROR(Render, "[MaterialDescriptorCache] Material pool exhausted (max_materials={}) : "
+					"les matériaux suivants utilisent le matériau par défaut", m_maxMaterials);
+			m_materialPoolExhaustedLogged = true;
 			return 0u;
 		}
 
@@ -401,7 +451,12 @@ namespace engine::render
 
 		const uint32_t materialIndex = static_cast<uint32_t>(m_materials.size());
 		m_materials.push_back(gpuData);
-		if (!writeTextureDescriptors(device) || !writeMaterialData(device, materialIndex, gpuData))
+		// Seuls les trois emplacements du matériau sont réécrits : réécrire tout le
+		// tableau (2048 descripteurs) à chaque matériau coûterait inutilement cher.
+		const bool slotsOk = writeTextureSlot(device, gpuData.baseColorIndex)
+			&& writeTextureSlot(device, gpuData.normalIndex)
+			&& writeTextureSlot(device, gpuData.ormIndex);
+		if (!slotsOk || !writeMaterialData(device, materialIndex, gpuData))
 		{
 			m_materials.pop_back();
 			LOG_ERROR(Render, "[MaterialDescriptorCache] CreateMaterial FAILED (index={})", materialIndex);

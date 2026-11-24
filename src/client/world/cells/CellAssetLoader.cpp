@@ -93,11 +93,24 @@ namespace engine::world::cells
 		const std::string splat = out.config.GetString("render.terrain.splatmap", "");
 		if (!splat.empty())
 			out.terrain.splatFile = engine::platform::FileSystem::ReadAllBytesContent(out.config, splat);
-		// SND.2 — sols pour les sons de pas (couche dominante par texel).
-		if (!out.terrain.splatFile.empty())
+		// SND.2 / SND.2b — sols pour les sons de pas : carte des sols du générateur
+		// (zone.json render.terrain.ground_map) si présente, sinon couche dominante du splat.
 		{
 			auto surface = std::make_shared<CellSurfaceMap>();
-			if (surface->BuildFromSlap(out.terrain.splatFile))
+			const std::string groundPath = out.config.GetString("render.terrain.ground_map", "");
+			bool ok = false;
+			if (!groundPath.empty())
+			{
+				const std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(out.config, groundPath);
+				std::string err;
+				ok = !bytes.empty() && surface->BuildFromGroundMap(bytes, err);
+				if (!ok)
+					LOG_WARN(Audio, "[Cells] {} : carte des sols ignoree ({}), repli sur le splat",
+						dir, bytes.empty() ? std::string("fichier absent") : err);
+			}
+			if (!ok && !out.terrain.splatFile.empty())
+				ok = surface->BuildFromSlap(out.terrain.splatFile);
+			if (ok)
 				out.surface = std::move(surface);
 		}
 		const std::string grass = out.config.GetString("render.terrain.grass_mask", "");

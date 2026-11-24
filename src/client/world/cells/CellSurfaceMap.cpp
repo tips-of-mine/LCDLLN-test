@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <utility>
 
 namespace engine::world::cells
 {
@@ -41,6 +42,19 @@ namespace engine::world::cells
 		}
 		m_width = w;
 		m_height = h;
+		return true;
+	}
+
+	bool CellSurfaceMap::BuildFromGroundMap(std::span<const uint8_t> f, std::string& err)
+	{
+		engine::world::GroundMap g;
+		if (!engine::world::LoadGroundMap(f, g, err))
+			return false;
+		m_ground = std::move(g);
+		// La couche du splat ne sert plus : mémoire rendue.
+		m_layers.clear();
+		m_layers.shrink_to_fit();
+		m_width = m_height = 0;
 		return true;
 	}
 

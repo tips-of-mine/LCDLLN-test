@@ -13,7 +13,7 @@ prend à chaque frame une **photo compacte de l'état** visible
 |---|---|
 | un élément d'interface devient actif à l'appui de la souris (bouton, case, onglet…) | `ui_click` (bois) |
 | une fenêtre s'ouvre / se ferme (courrier, guilde, artisanat, menu Pause, Options…) | `ui_open` / `ui_close` (parchemin, cuir) |
-| carte du monde (M) ouverte / fermée | `map_open` / `map_close` (parchemin déroulé / roulé) |
+| carte du monde (M) ouverte / fermée | `map_open` / `map_close` (parchemin déroulé / rangé : lien de cuir, feuille qui roule tour après tour, rouleau de bois — refaits le 23/11/2026, cf. `paper_roll`) |
 | niveau supérieur | `level_up` (roulement de timbales, accord de cuivres, cloches, gong) |
 | quête acceptée | `quest_accept` (arpège de harpe sur un coup de taiko) |
 | objectif progressé ou tous remplis | `quest_objective` (glockenspiel) |

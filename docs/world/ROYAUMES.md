@@ -170,6 +170,7 @@ Seuls `world/royaumes/world_master.json` (source) et
 | `zones/<c>/terrain_height.r16h` | heightmap 2049² (≈ 4,9 m), 10 km, altitude max 1 200 m |
 | `zones/<c>/terrain_splat.slap` / `terrain_grass.grms` | sol 2048² (herbe/terre/roche/neige), masque d'herbe |
 | `zones/<c>/terrain_forest.frms` | densité forestière 1024² (FORET.1) : arbres et sous-bois des forêts posés par le client |
+| `zones/<c>/terrain_ground.gndm` | nature du sol 2048² (SND.2b) : sons de pas (terre battue, sable, boue, gravier, marbre…), client seul |
 | `zones/<c>/zone.json` | cadrage (`terrain.origin_x/z` = coin min GLOBAL), PNJ statiques, réglages client |
 | `zones/<c>/spawners.json` | PNJ d'ambiance (routines, agendas de métier — cf. `docs/architecture/etape4_simulation.md` §4.4) + faune, `zoneId` = id de la cellule, positions globales |
 | `zones/<c>/respawn_points.txt` | cimetières / auberges |

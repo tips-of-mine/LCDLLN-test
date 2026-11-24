@@ -19,7 +19,7 @@ pip install numpy scipy mido soundfile pyloudnorm
 | `lcdlln_audio/textures.py` | vent, tonnerre lointain, souffle grave |
 | `lcdlln_audio/orchestra.py` | partitions (pupitres), écriture MIDI, rendu FluidSynth |
 | `menu_theme.py` | SND.1 — musique de l'écran de connexion (`docs/audio/SND.1_musique_menu.md`) |
-| `sfx_footsteps.py` | SND.2 — sons de pas par surface (`docs/audio/SND.2_moteur_sons_pas.md`) |
+| `sfx_footsteps.py` | SND.2 / SND.2b — sons de pas par surface, 6 variantes (`docs/audio/SND.2_moteur_sons_pas.md`) |
 | `sfx_ui.py` | SND.3 — sons d'interface et d'évènements (`docs/audio/SND.3_sons_interface.md`) |
 | `sfx_combat.py` | SND.5 — combat et sorts (`docs/audio/SND.5_sons_combat.md`) |
 | `sfx_interactions.py` | SND.6 — récolte et artisanat (`docs/audio/SND.6_sons_recolte_artisanat.md`) |

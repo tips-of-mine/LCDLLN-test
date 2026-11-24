@@ -63,14 +63,16 @@ if [[ -d "$ROOT/game/data" ]]; then
   mkdir -p "$DOCKER_DIR/game/data"
   # Monde « royaumes » : le master et le shard ne lisent dans les cellules que les
   # .json / .txt (zone, spawners, respawn…). Les données de RENDU générées
-  # (heightmap, splat, herbe, décor, bâtiments, eau : ~40 Mo par cellule, plusieurs
+  # (heightmap, splat, herbe, sols des pas, décor, bâtiments, eau : ~40 Mo par cellule, plusieurs
   # Go au total) restent dans le seul paquet client : exclues DÈS la copie (pas de
   # copie puis suppression, qui doublerait l'espace disque du runner).
   # Seconde carte « enfers » (zones/enfers_*, instances/zone_enfers_*) : même règle.
   (cd "$ROOT/game/data" && tar -cf - \
     --exclude='./zones/cell_*/*.r16h' --exclude='./zones/cell_*/*.slap' --exclude='./zones/cell_*/*.grms' \
+    --exclude='./zones/cell_*/*.gndm' \
     --exclude='./instances/zone_cell_*' \
     --exclude='./zones/enfers_*/*.r16h' --exclude='./zones/enfers_*/*.slap' --exclude='./zones/enfers_*/*.grms' \
+    --exclude='./zones/enfers_*/*.gndm' \
     --exclude='./instances/zone_enfers_*' .) | (cd "$DOCKER_DIR/game/data" && tar -xf -)
 else
   echo "Warning: game/data missing" >&2

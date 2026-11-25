@@ -44673,7 +44673,7 @@
       "id": "quest_oracle_appel",
       "name": "L'Appel de l'Oracle",
       "description": "Le veilleur de la grande porte reconnaît un appelé : la grande porte du sud-ouest s'ouvre devant lui, la prêtresse du dais le reçoit dans la salle de l'Oracle.",
-      "category": "exploration",
+      "category": "histoire",
       "tags": [
         "[GD]",
         "oracle",
@@ -44725,7 +44725,7 @@
       "id": "quest_oracle_echos",
       "name": "L'Épreuve des Échos",
       "description": "Derrière la porte de l'est, la salle des Échos garde ce que l'Oracle tait : un groupe d'au moins trois compagnons y affronte le Gardien des Échos.",
-      "category": "raid",
+      "category": "exploration",
       "tags": [
         "[GD]",
         "oracle",

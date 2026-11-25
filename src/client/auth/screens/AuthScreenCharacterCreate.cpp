@@ -153,7 +153,7 @@ namespace engine::client
 		const uint8_t characterSkinColorIdx = m_characterSkinColorIdx;  // teinte (migration 0068)
 		const std::string characterFactionId = m_characterFactionId;  // Systeme de personnages PR2
 		const std::string characterClassId = m_characterClassId;      // Systeme de personnages PR2
-		const std::vector<uint8_t> characterAppearance = m_characterAppearance; // personnalisation (0097)
+		const std::vector<uint8_t> characterAppearance = m_characterAppearance; // personnalisation (migration 0101)
 
 		m_pendingAsyncKind = AsyncKind::CharacterCreate;
 		{

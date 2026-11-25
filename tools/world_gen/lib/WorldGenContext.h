@@ -356,6 +356,19 @@ namespace tools::world_gen
 	bool InAnyGouffre(const WorldMaster& m, Vec2 p, double marginM);
 	/// Relief local ancré sur la ville \p cityId (nullptr si aucun). Terrain.cpp
 	const ReliefDef* ReliefOfCity(const WorldMaster& m, const std::string& cityId);
+	/// v1.0.140 — acropole : altitude (m, au-dessus du plateau de la ville) des gradins à la
+	/// distance \p d (m) du sommet, SANS l'escalier : heightM sur la plateforme, puis un palier
+	/// plus bas par gradin (talus linéaires de bankM, replats de terraceM), 0 au-delà du pied.
+	/// Fonction pure. Terrain.cpp
+	double AcropoleTerrace(const AcropoleShape& a, double d);
+	/// v1.0.140 — acropole : altitude (m, au-dessus du plateau de la ville) en \p p (global) :
+	/// gradins (AcropoleTerrace) et, dans l'axe sommet → ville, rampe de l'escalier monumental
+	/// (pente 0,6 depuis le bord de la plateforme jusqu'au niveau de la grand-place, raccord de
+	/// 4 m sur les côtés). 0 si la forme est désactivée. Fonction pure. Terrain.cpp
+	double AcropoleOffset(const AcropoleShape& a, Vec2 p);
+	/// v1.0.140 — vrai si \p p est sur la plateforme du sommet d'une acropole du master
+	/// (rayon topRadiusM + \p marginM). Terrain.cpp
+	bool OnAcropoleSummit(const WorldMaster& m, Vec2 p, double marginM);
 
 	struct GlobalWorld
 	{

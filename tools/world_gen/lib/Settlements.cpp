@@ -202,6 +202,9 @@ namespace tools::world_gen
 			else if (c.kind == "ville") { p = { 4, 100, 12.0, 7.0 }; }
 			else if (c.kind == "grande_ville" || c.kind == "forteresse") { p = { 5, 120, 14.0, 8.0 }; }
 			else if (c.kind == "capitale") { p = { 6, 140, 16.0, 9.0 }; }
+			// v1.0.140 (retour du propriétaire : « rajoute plus de champs, il y a beaucoup de gens à
+			// nourrir ») : la capitale en gradins (Lhynn) a trois fois plus de champs.
+			if (c.kind == "capitale" && c.acropole.enabled) { p.count = 18; p.attempts = 600; }
 			// Atelier décors (décision du propriétaire, 21/11/2026) : très grands champs
 			// pour remplir les abords des villes et hameaux — largeur ×5, longueur ×10.
 			// Les cultures sont des parcelles modulaires de 4 m posées en pavage.
@@ -692,6 +695,176 @@ namespace tools::world_gen
 		}
 	}
 
+	namespace
+	{
+		/// v1.0.140 — ville en gradins (acropole) : réserve la plateforme du sommet (palais,
+		/// Landmarks.cpp) et le couloir de l'escalier, pose l'escalier monumental direct (volées
+		/// Stairs_Monumental_1 de 3 m × 1,8 m, bout à bout sur la rampe de AcropoleOffset, du
+		/// bord de la plateforme au niveau de la grand-place) et prolonge le graphe des PNJ de la
+		/// place jusqu'au sommet. Les volées sont du décor (sans collision) : le sol marchable
+		/// est la rampe de la heightmap (pente 0,6 ≈ 31°, sous les 45° du contrôleur).
+		/// Effet de bord : w.scatter, occupation de w, nœuds et liens de \p L.
+		void BuildAcropoleStairs(World& w, const CityDef& c, SettlementLayout& L)
+		{
+			const AcropoleShape& a = c.acropole;
+			const Vec2 dir = a.stairDir;              // sommet -> grand-place
+			const Vec2 climb = dir * -1.0;            // sens de la montée
+			w.Occupy(a.summit, a.topRadiusM + 2.0);
+			for (double along = a.topRadiusM - 2.0; along <= a.stairBottomM; along += 2.0)
+				w.Occupy(a.summit + dir * along, a.stairHalfWidthM + 1.5);
+			const double plazaY = AcropoleTerrace(a, a.stairBottomM);
+			const int flights = static_cast<int>(std::floor((a.heightM - plazaY) / 1.8 + 1e-6));
+			for (int k = 0; k < flights; ++k)
+			{
+				// Volée k (0 = la plus haute) : de along = top + 3k (haut) à top + 3(k + 1) (bas) ;
+				// origine du mesh au milieu de la volée, pied de la première marche à baseY.
+				const Vec2 p = a.summit + dir * (a.topRadiusM + 3.0 * k + 1.5);
+				const double baseY = c.plateauY + a.heightM - 1.8 * (k + 1);
+				AddProp(w, "Stairs_Monumental_1", p, YawFacing(climb), 1.0, 0, 0, 0.0, baseY - w.HeightAt(p));
+			}
+			// Graphe : de la grand-place au bord de la plateforme (rondes des gardes).
+			int prev = Nearest(L, a.summit + dir * a.stairBottomM);
+			for (double along = a.stairBottomM - 6.0; along > a.topRadiusM - 6.0; along -= 6.0)
+			{
+				const int id = AddNode(L, a.summit + dir * along);
+				Link(L, prev, id);
+				prev = id;
+			}
+		}
+	}
+
+	namespace
+	{
+		/// v1.0.140 (retour du propriétaire : « on ne voit pas le port ! ») — PORT d'une capitale
+		/// en gradins qui a le service `port` (Lhynn, port de guerre de la BD, T7 pl.4) : site =
+		/// rivage le plus proche de la ville (sol de mer + 0,8 à + 8 m, hors les murs, chemin direct à sec à 90 %) devant une
+		/// eau franche (60 m de large, 50 m de profondeur) reliée à la pleine mer. Construit :
+		/// esplanade aplanie à quai + 1,1 m (30 m de profondeur), quai de pierre sur l'eau, quatre
+		/// jetées de bois de 40 m, cinq navires amarrés (Ship_Cog_1, flottaison au niveau de la
+		/// mer), deux grues, piles de caisses et de tonneaux, entrepôts (maisons) au fond de
+		/// l'esplanade, chemin pavé jusqu'à la ville. Rend false (avertissement) sans site.
+		/// Effet de bord : w.height (esplanade), w.scatter, w.buildings, occupation, graphe \p L.
+		bool BuildHarbour(World& w, const CityDef& c, SettlementLayout& L, const std::vector<TemplateRef>& pal, Rng& rng)
+		{
+			const double sea = w.master.scale.seaLevelM;
+			const double R = c.radiusM;
+			auto deep = [&](Vec2 q) { return w.HeightAt(q) < sea - 0.8; };
+			const double x0 = w.terrainOriginX + 60.0, z0 = w.terrainOriginZ + 60.0;
+			const double x1 = w.terrainOriginX + w.terrainSizeM - 60.0, z1 = w.terrainOriginZ + w.terrainSizeM - 60.0;
+			double best = 1e30;
+			Vec2 site{}, sdir{};
+			for (double dz = -900.0; dz <= 900.0; dz += 8.0)
+				for (double dx = -900.0; dx <= 900.0; dx += 8.0)
+				{
+					const Vec2 q{ c.center.x + dx, c.center.z + dz };
+					const double d = std::hypot(dx, dz);
+					if (d < R + 30.0 || d > 900.0 || d >= best || q.x < x0 || q.x > x1 || q.z < z0 || q.z > z1) continue;
+					const double h = w.HeightAt(q);
+					if (h < sea + 0.8 || h > sea + 8.0 || w.IsWater(q) || w.SlopeDegAt(q) > 20.0) continue;
+					// Le chemin direct depuis la ville reste à sec (pas de port de l'autre côté d'une lagune).
+					// (au plus 10 % des points mouillés : mares et chenaux franchis à gué).
+					int wet = 0, samples = 0;
+					for (double r = R; r < d - 20.0; r += 10.0, ++samples)
+						wet += w.HeightAt(c.center + Vec2{ dx / d, dz / d } * r) > sea + 0.3 ? 0 : 1;
+					if (wet * 10 > samples) continue;
+					for (int a = 0; a < 16; ++a)
+					{
+						const Vec2 dir = Dir(a * kPi / 8.0), tan{ -dir.z, dir.x };
+						bool ok = true;
+						for (double r : { 14.0, 32.0, 50.0 })
+							for (double t : { -30.0, 0.0, 30.0 })
+								ok = ok && deep(q + dir * r + tan * t);
+						Vec2 open{};
+						if (!ok || !NearestOpenSea(*w.g, q + dir * 50.0, 2500.0, open)) continue;
+						best = d; site = q; sdir = dir;
+						break;
+					}
+				}
+			if (best >= 1e29) { w.Warn("port de " + c.id + " : aucun rivage praticable"); return false; }
+			const Vec2 dir = sdir, tan{ -sdir.z, sdir.x };
+			const double quayY = sea + 1.1;
+			// Esplanade : 110 m le long du rivage, 30 m vers la terre, aplanie à la hauteur du quai.
+			for (int j = 0; j < w.height.height; ++j)
+				for (int i = 0; i < w.height.width; ++i)
+				{
+					const Vec2 q{ w.height.WorldX(i), w.height.WorldZ(j) };
+					const Vec2 d = q - site;
+					const double along = d.x * tan.x + d.z * tan.z, depth = -(d.x * dir.x + d.z * dir.z);
+					if (std::fabs(along) > 70.0 || depth < -2.0 || depth > 48.0) continue;
+					const double t = std::max(SmoothStep(55.0, 70.0, std::fabs(along)), SmoothStep(30.0, 48.0, depth));
+					double& h = w.height.At(i, j);
+					if (h < sea - 0.2 && depth < 2.0) continue; // l'eau reste de l'eau au bord du quai
+					h = Lerp(quayY - 0.02, h, t);
+				}
+			w.OccupyRect(site - dir * 15.0, 56.0, 17.0, YawAlong(tan));
+			// Quai de pierre sur l'eau (3 rangées de dalles), jetées de bois, navires.
+			for (double a = -54.0; a <= 54.0; a += 2.0)
+				for (int k = 0; k < 3; ++k)
+				{
+					const Vec2 q = site + tan * a + dir * (1.0 + 2.0 * k);
+					AddProp(w, "Bridge_Stone_Deck_1", q, YawAlong(tan), 1.0, kSolid | kPiece, 0, 0.0, quayY - w.HeightAt(q));
+				}
+			int ship = 0;
+			for (double a : { -36.0, -12.0, 12.0, 36.0 })
+			{
+				for (double r = 8.0; r <= 46.0; r += 2.0)
+					for (int k = -1; k <= 1; k += 2)
+					{
+						const Vec2 q = site + tan * (a + k * 1.0) + dir * r;
+						AddProp(w, "Boardwalk_Deck_1", q, YawAlong(dir), 1.0, kSolid | kPiece, 0, 0.0, quayY - w.HeightAt(q));
+					}
+				const Vec2 sp = site + tan * (a + 8.0) + dir * 26.0;
+				AddProp(w, "Ship_Cog_1", sp, YawFacing(dir) + rng.Range(-3.0, 3.0), 0.9 + 0.2 * rng.Next(), 0, 0, 0.0, (sea - 1.6) - w.HeightAt(sp));
+				++ship;
+			}
+			{
+				const Vec2 sp = site + tan * -60.0 + dir * 85.0; // navire au mouillage
+				AddProp(w, "Ship_Cog_1", sp, YawFacing(tan) + 20.0, 1.1, 0, 0, 0.0, (sea - 1.6) - w.HeightAt(sp));
+			}
+			w.Occupy(site + dir * 40.0, 60.0);
+			// Grues et marchandises sur le quai.
+			for (int sg = -1; sg <= 1; sg += 2)
+				AddProp(w, "Crane_Wood_1", site + tan * (sg * 24.0) - dir * 3.0, YawAlong(dir), 1.0, kSolid, 0, 1.6);
+			static const char* kGoods[] = { "Crate_Wooden", "Barrel", "Crate_Metal", "Barrel_Holder", "Rope_1", "FarmCrate_Empty", "Prop_Crate" };
+			for (double a = -50.0; a <= 50.0; a += 6.5)
+			{
+				if (std::fabs(std::fabs(a) - 24.0) < 4.0) continue; // pied des grues
+				const Vec2 g = site + tan * (a + rng.Range(-1.0, 1.0)) - dir * rng.Range(5.0, 9.0);
+				AddProp(w, kGoods[rng.Below(7)], g, rng.Range(0.0, 360.0), 1.0, kSolid, 1, 0.6);
+				if (rng.Chance(0.6)) AddProp(w, kGoods[rng.Below(7)], g + tan * 1.3, rng.Range(0.0, 360.0), 1.0, kSolid, 1, 0.6);
+			}
+			// Entrepôts au fond de l'esplanade, porte vers le quai.
+			for (double a = -48.0; a <= 48.0; a += 1.0)
+			{
+				const TemplateRef& t = PickWeighted(pal, rng.Next());
+				const Vec2 q = site + tan * a - dir * (24.0 + t.halfD);
+				const int b = TryPlaceBuilding(w, c, t, q, dir, "Entrepot", false);
+				if (b >= 0) { L.buildingIndices.push_back(b); a += 2.0 * t.halfW; }
+			}
+			// Chemin pavé de la ville au port, nœuds du graphe (dockers, gardes).
+			Vec2 toPort = site - c.center;
+			const double lp = std::hypot(toPort.x, toPort.z);
+			toPort = toPort * (1.0 / lp);
+			std::vector<Vec2> path;
+			for (double r = R - 4.0; r <= lp - 10.0; r += 3.0) path.push_back(c.center + toPort * r);
+			if (path.size() >= 2)
+			{
+				PaveAlong(w, path, 3, "RockPath_Irregular_Wide", 0.0, c.center);
+				int prev = Nearest(L, path.front());
+				for (size_t k = 3; k < path.size(); k += 3)
+				{
+					w.Occupy(path[k], kStreetHalf + 1.0);
+					const int id = AddNode(L, path[k]);
+					Link(L, prev, id);
+					prev = id;
+				}
+				const int q = AddNode(L, site - dir * 8.0);
+				Link(L, prev, q);
+			}
+			return ship > 0;
+		}
+	}
+
 	void BuildSettlements(World& w)
 	{
 		w.urban.Init(w.height.width, w.height.height, w.height.originX, w.height.originZ, w.height.step, w.urban.data.empty() ? uint8_t(0) : uint8_t(0));
@@ -762,6 +935,19 @@ namespace tools::world_gen
 			// Place : marque urbaine + occupation (dégagée).
 			w.Occupy(c.center, Rp + 1.0);
 
+			// v1.0.140 — ville en gradins : plateforme du sommet (palais) hors des rues et des lots.
+			auto onSummit = [&](Vec2 q) {
+				return c.acropole.enabled && std::hypot(q.x - c.acropole.summit.x, q.z - c.acropole.summit.z) < c.acropole.topRadiusM + 6.0;
+			};
+			// ... et pied de l'escalier monumental (étals et statues de la place s'en écartent).
+			auto inStair = [&](Vec2 q) {
+				if (!c.acropole.enabled) return false;
+				const Vec2 d = q - c.acropole.summit;
+				const double along = d.x * c.acropole.stairDir.x + d.z * c.acropole.stairDir.z;
+				const double across = std::fabs(-d.x * c.acropole.stairDir.z + d.z * c.acropole.stairDir.x);
+				return along > c.acropole.topRadiusM - 2.0 && along < c.acropole.stairBottomM + 6.0 && across < c.acropole.stairHalfWidthM + 2.5;
+			};
+
 			// --- Rues (polylignes) et noeuds.
 			std::vector<std::vector<Vec2>> streets;
 			for (size_t si = 0; si < angles.size(); ++si)
@@ -774,7 +960,10 @@ namespace tools::world_gen
 				for (double d = Rp; d <= len; d += 3.0)
 				{
 					const double t = (d - Rp) / std::max(1.0, len - Rp);
-					st.push_back(c.center + Dir(a + bend * t) * d);
+					const Vec2 q = c.center + Dir(a + bend * t) * d;
+					// v1.0.140 : une rue s'arrête au pied de la plateforme du palais (acropole).
+					if (onSummit(q)) break;
+					st.push_back(q);
 				}
 				if (st.size() < 2) continue;
 				int prev = Nearest(L, st.front());
@@ -795,8 +984,42 @@ namespace tools::world_gen
 				std::vector<Vec2> st;
 				std::vector<int> ringIds;
 				for (int k = 0; k <= 48; ++k) st.push_back(c.center + Dir(k * 2.0 * kPi / 48.0) * rr);
-				for (int k = 0; k < 48; k += 3) ringIds.push_back(AddNode(L, st[static_cast<size_t>(k)]));
-				for (size_t k = 0; k < ringIds.size(); ++k) Link(L, ringIds[k], ringIds[(k + 1) % ringIds.size()]);
+				if (c.acropole.enabled)
+				{
+					// v1.0.140 : l'anneau est interrompu par la plateforme du palais (tronçons
+					// hors du sommet, nœuds reliés seulement entre voisins du même tronçon).
+					std::vector<Vec2> run;
+					int prevId = -1;
+					for (int k = 0; k <= 48; ++k)
+					{
+						const Vec2 q = st[static_cast<size_t>(k)];
+						if (onSummit(q))
+						{
+							if (run.size() >= 2) streets.push_back(run);
+							run.clear();
+							prevId = -1;
+							continue;
+						}
+						run.push_back(q);
+						if (k % 3 == 0 && k < 48)
+						{
+							const int id = AddNode(L, q);
+							ringIds.push_back(id);
+							if (prevId >= 0) Link(L, prevId, id);
+							prevId = id;
+						}
+					}
+					if (run.size() >= 2) streets.push_back(run);
+					// Raccord au point de départ (k = 48 = k = 0) si l'anneau n'y est pas coupé.
+					if (!ringIds.empty() && prevId >= 0 && prevId != ringIds.front() && !onSummit(st.front()))
+						Link(L, prevId, ringIds.front());
+					st.clear();
+				}
+				else
+				{
+					for (int k = 0; k < 48; k += 3) ringIds.push_back(AddNode(L, st[static_cast<size_t>(k)]));
+					for (size_t k = 0; k < ringIds.size(); ++k) Link(L, ringIds[k], ringIds[(k + 1) % ringIds.size()]);
+				}
 				// Raccorde l'anneau aux rues rayonnantes les plus proches.
 				for (int id : ringIds)
 				{
@@ -806,7 +1029,50 @@ namespace tools::world_gen
 							L.nodes[static_cast<size_t>(nb)].p.z - L.nodes[static_cast<size_t>(id)].p.z) < 9.0)
 						Link(L, id, nb);
 				}
-				streets.push_back(st);
+				if (!st.empty()) streets.push_back(st);
+			}
+			// v1.0.140 — escalier monumental (avant les lots : son couloir est réservé).
+			if (c.acropole.enabled) BuildAcropoleStairs(w, c, L);
+			// v1.0.140 — port de la capitale en gradins (avant les lots et les faubourgs).
+			if (c.acropole.enabled && std::find(c.services.begin(), c.services.end(), "port") != c.services.end())
+				BuildHarbour(w, c, L, Palette(c), rng);
+			// v1.0.140 (retour du propriétaire : « la quantité de maisons est trop faible, c'est la
+			// capitale ») — ville en gradins : rues en arc sur chaque replat (deux si le replat est large), autour du
+			// sommet, dans la ville et hors du couloir de l'escalier ; les lots la bordent des deux
+			// côtés (boucle des lots ci-dessous) : les terrasses se couvrent de maisons comme dans
+			// la BD (T10 p.37). Nœuds tous les 9 m, reliés en chaîne et à la rue la plus proche.
+			if (c.acropole.enabled)
+			{
+				const AcropoleShape& a = c.acropole;
+				const double period = a.bankM + a.terraceM;
+				// Replats larges (≥ 40 m) : deux rues (au tiers et aux deux tiers), quatre rangées de maisons.
+				const int rows = a.terraceM >= 40.0 ? 2 : 1;
+				for (int k = 0; k < a.terraces * rows; ++k)
+				{
+					const double rr = a.topRadiusM + (k / rows) * period + a.bankM + a.terraceM * ((k % rows) + 1.0) / (rows + 1.0);
+					const int n = std::max(24, static_cast<int>(std::ceil(2.0 * kPi * rr / 3.0)));
+					std::vector<Vec2> run;
+					int prevId = -1;
+					auto flush = [&]() { if (run.size() >= 4) streets.push_back(run); run.clear(); prevId = -1; };
+					for (int q = 0; q <= n; ++q)
+					{
+						const Vec2 pt = a.summit + Dir(q * 2.0 * kPi / n) * rr;
+						if (std::hypot(pt.x - c.center.x, pt.z - c.center.z) > R - 4.0 || inStair(pt) || w.IsWater(pt)) { flush(); continue; }
+						run.push_back(pt);
+						if (q % 3 == 0)
+						{
+							const int id = AddNode(L, pt);
+							if (prevId >= 0) Link(L, prevId, id);
+							else
+							{
+								const int nb = Nearest(L, pt, id);
+								if (nb >= 0) Link(L, id, nb);
+							}
+							prevId = id;
+						}
+					}
+					flush();
+				}
 			}
 			// Dégage les rues (occupation) et marque les rues dans la carte urbaine.
 			for (const auto& st : streets)
@@ -889,7 +1155,8 @@ namespace tools::world_gen
 					bool any = false;
 					for (int side = -1; side <= 1; side += 2)
 					{
-						if (rng.Chance(c.kind == "hameau" ? 0.35 : 0.12)) continue; // jardins / vides
+						// jardins / vides (v1.0.140 : capitale en gradins plus serrée)
+						if (rng.Chance(c.kind == "hameau" ? 0.35 : (c.acropole.enabled ? 0.04 : 0.12))) continue;
 						const Vec2 nrm{ -tdir.z * side, tdir.x * side };
 						const Vec2 center = p + nrm * (kStreetHalf + 1.2 + t.halfD);
 						const int b = TryPlaceBuilding(w, c, t, center, nrm * -1.0, t.site ? "Chantier" : "Maison");
@@ -902,7 +1169,7 @@ namespace tools::world_gen
 			//     libre, porte tournée vers le noeud de rue le plus proche.
 			{
 				int attempts = 30;
-				if (c.kind == "capitale") attempts = 260;
+				if (c.kind == "capitale") attempts = c.acropole.enabled ? 2000 : 260; // v1.0.140 : capitale en gradins dense
 				else if (c.kind == "grande_ville") attempts = 160;
 				else if (c.kind == "ville" || c.kind == "forteresse") attempts = 90;
 				else if (c.kind == "village") attempts = 50;
@@ -965,6 +1232,7 @@ namespace tools::world_gen
 					const double a = 2.0 * kPi * (k + 0.5) / stalls + 0.31;
 					const Vec2 dir = Dir(a);
 					const Vec2 p = c.center + dir * (Rp - 1.8);
+					if (inStair(p)) continue; // v1.0.140 : pied de l'escalier du palais dégagé
 					const bool cart = (k % 3) == 2;
 					// Atelier décors T2 (pl.4) : un étal sur trois est un auvent rayé dans les villes.
 					const bool townMarket = c.kind != "hameau" && c.kind != "village";
@@ -993,7 +1261,7 @@ namespace tools::world_gen
 					for (int k = 0; k < 2; ++k)
 					{
 						const Vec2 sp = c.center + Dir(k * kPi + 0.2) * (Rp * 0.85);
-						if (!w.IsOccupied(sp, 0.6)) AddProp(w, k ? "Statue_Garden_2" : "Statue_Garden_1", sp, YawFacing(c.center - sp), 1.0, kSolid, 0, 0.5);
+						if (!inStair(sp) && !w.IsOccupied(sp, 0.6)) AddProp(w, k ? "Statue_Garden_2" : "Statue_Garden_1", sp, YawFacing(c.center - sp), 1.0, kSolid, 0, 0.5);
 					}
 					if (c.kind == "capitale")
 						for (int k = 0; k < 4; ++k)
@@ -1169,6 +1437,67 @@ namespace tools::world_gen
 				}
 			}
 
+			// --- v1.0.140 (retour du propriétaire : « remplace les champs par des maisons, décale
+			//     les champs plus loin ») — FAUBOURGS d'une capitale en gradins : quatre rues en anneau
+			//     hors les murs (de R + 20 à R + 95 m), sauf du côté du revers (mer) et dans l'eau,
+			//     bordées de maisons des deux côtés ; les champs sont repoussés au-delà (kFaubourgM).
+			const double kFaubourgM = c.acropole.enabled ? 110.0 : 0.0;
+			if (c.acropole.enabled && c.state != "ruine")
+			{
+				for (double off : { 20.0, 45.0, 70.0, 95.0 })
+				{
+					const double rr = R + off;
+					const int n = static_cast<int>(std::ceil(2.0 * kPi * rr / 3.0));
+					std::vector<Vec2> run;
+					int prevId = -1;
+					auto flush = [&]() {
+						if (run.size() >= 4)
+						{
+							const std::vector<Vec2> pts = ResamplePolyline(run, 1.0);
+							for (const Vec2& q : run) w.Occupy(q, kStreetHalf + 0.4);
+							double along = rng.Range(0.0, 3.0);
+							while (along < static_cast<double>(pts.size()) - 2.0)
+							{
+								const size_t k = static_cast<size_t>(along);
+								Vec2 tdir = pts[std::min(pts.size() - 1, k + 1)] - pts[k];
+								const double tl = std::hypot(tdir.x, tdir.z);
+								if (tl < 1e-6) { along += 1.0; continue; }
+								tdir = tdir * (1.0 / tl);
+								const TemplateRef& t = PickWeighted(pal, rng.Next());
+								bool any = false;
+								for (int side = -1; side <= 1; side += 2)
+								{
+									if (rng.Chance(0.06)) continue;
+									const Vec2 nrm{ -tdir.z * side, tdir.x * side };
+									const Vec2 center = pts[k] + nrm * (kStreetHalf + 1.2 + t.halfD);
+									const int b = TryPlaceBuilding(w, c, t, center, nrm * -1.0, "Maison", false);
+									if (b >= 0) { L.buildingIndices.push_back(b); any = true; ++lotCount; }
+								}
+								along += any ? (2.0 * t.halfW + 1.4 + rng.Range(0.0, 1.4)) : 2.0;
+							}
+						}
+						run.clear();
+						prevId = -1;
+					};
+					for (int q = 0; q <= n; ++q)
+					{
+						const Vec2 dq = Dir(q * 2.0 * kPi / n);
+						const Vec2 pt = c.center + dq * rr;
+						// Revers de la butte (côté opposé à l'escalier, la mer) : pas de faubourg.
+						const bool back = (dq.x * c.acropole.stairDir.x + dq.z * c.acropole.stairDir.z) < -0.35;
+						if (back || w.IsWater(pt) || w.IsWater(pt + dq * 8.0)) { flush(); continue; }
+						run.push_back(pt);
+						if (q % 3 == 0)
+						{
+							const int id = AddNode(L, pt);
+							if (prevId >= 0) Link(L, prevId, id);
+							prevId = id;
+						}
+					}
+					flush();
+				}
+			}
+
 			// --- Champs clôturés hors les murs : toutes les agglomérations habitées
 			//     (lore v1.0.52 : villes, grandes villes, capitales et forteresses
 			//     comprises, avec des parcelles plus grandes) ; pas de camps, ruines
@@ -1194,7 +1523,7 @@ namespace tools::world_gen
 					{
 						hw = fp.halfW * k; hd = fp.halfD * k;
 						// Au-delà du rempart ou de la palissade (posés à R + 3 m).
-						fc = c.center + dir * (R + hd + 9.0 + jitter);
+						fc = c.center + dir * (R + kFaubourgM + hd + 9.0 + jitter); // v1.0.140 : au-delà des faubourgs
 						if (!w.IsOccupied(fc, std::min(hw, hd)) && FieldGroundOk(w, fc, ax, az, hw, hd)) { placed = true; break; }
 					}
 					if (!placed) continue;

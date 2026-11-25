@@ -1212,6 +1212,30 @@
       "nom": "Tente de pèlerin à deux pans",
       "tome": 0,
       "placement_prevu": "Camp de l'Oracle : océan de tentes (quinze rangs)"
+    },
+    {
+      "num": 215,
+      "nom": "Façade du palais impérial (réinterprétation)",
+      "tome": 3,
+      "placement_prevu": "Lhynn : sommet de la ville en gradins (poi_palais_imperial_lhynn)"
+    },
+    {
+      "num": 216,
+      "nom": "Tour à flèche du palais impérial",
+      "tome": 3,
+      "placement_prevu": "Lhynn : angles du palais impérial"
+    },
+    {
+      "num": 217,
+      "nom": "Escalier monumental",
+      "tome": 10,
+      "placement_prevu": "Lhynn : de la grand-place au palais impérial"
+    },
+    {
+      "num": 218,
+      "nom": "Navire marchand à quai (cogue)",
+      "tome": 7,
+      "placement_prevu": "Lhynn : port (navires amarrés aux jetées)"
     }
   ]
 }

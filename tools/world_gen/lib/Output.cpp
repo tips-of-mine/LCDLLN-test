@@ -1627,8 +1627,9 @@ namespace tools::world_gen
 			for (const PoiDef& p : g.pois)
 			{
 				if (p.secret) continue;
-				// v1.0.132 : les châteaux (Palais des Maîtres des Dragons, Garundel…) ont aussi leur étiquette.
-				if (p.kind != "volcan" && p.kind != "cite" && p.kind != "chateau" && !(infernal && p.kind == "temple")) continue;
+				// v1.0.132 : les châteaux (Palais des Maîtres des Dragons, Garundel…) ont aussi leur étiquette ;
+				// v1.0.140 : le palais impérial de Lhynn aussi.
+				if (p.kind != "volcan" && p.kind != "cite" && p.kind != "chateau" && p.kind != "palais" && !(infernal && p.kind == "temple")) continue;
 				const double u = (p.center.x - originX) / side, v = (p.center.z - originZ) / side;
 				if (!inside(u, v)) continue;
 				poiLines.push_back("    { \"name\": " + Q(p.name) + ", \"kind\": " + Q(p.kind) + ", \"u\": " + Num(u) + ", \"v\": " + Num(v) + " }");

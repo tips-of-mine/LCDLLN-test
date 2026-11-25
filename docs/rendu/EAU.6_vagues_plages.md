@@ -93,7 +93,9 @@ UBO du terrain : `coastParams` ajouté en fin de bloc (224 → 240 octets).
 
 `TerrainCollider::QueryWater` : pour la mer, la surface = niveau + houle + vague
 de bord (`SeaSurfaceOffset`, même horloge que le rendu : `Engine::WaterTimeSeconds`,
-posée à chaque frame par `SetWaterTime`). Lacs et rivières restent plats.
+posée à chaque frame par `SetWaterTime`), seulement quand la grille de mer est
+rendue (`SetSeaWavesActive`) : hors monde en cellules ou loin de la mer, la mer
+affichée est plate et la nage aussi. Lacs et rivières restent plats.
 Purement client : le serveur ne simule pas la nage.
 
 ### Son du ressac

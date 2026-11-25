@@ -1145,6 +1145,8 @@ namespace engine
 			};
 		engine::world::water::BuildSeaGrid(m_clientWaterScene->lakes, cx, cz, settings, ground, m_seaGrid);
 		m_seaGridDirty = false;
+		// La nage ne suit la houle que là où la mer est rendue en relief.
+		m_terrainCollider.SetSeaWavesActive(m_seaGrid.Valid());
 		m_seaGridRetryFrames = 30;
 		// Nouvel essai qui n'a rien appris de plus sur le sol : rien à renvoyer.
 		if (retry && m_seaGrid.unknownSamples == previousUnknown)

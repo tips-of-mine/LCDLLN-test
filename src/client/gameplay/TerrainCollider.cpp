@@ -144,7 +144,7 @@ bool TerrainCollider::QueryWater(const engine::math::Vec3& worldCenter, WaterQue
         if (!inside)
             continue;
         float surfaceY = lake.waterLevelY;
-        if (lake.isOcean)
+        if (lake.isOcean && m_seaWavesActive)
         {
             // EAU.6 — la mer suit la houle et la vague de bord, comme a l'ecran.
             const float depthM = lake.waterLevelY - GroundHeightAt(px, pz);

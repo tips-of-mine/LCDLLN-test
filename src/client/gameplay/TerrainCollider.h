@@ -71,12 +71,18 @@ public:
     /// (Engine::WaterTimeSeconds). A appeler a chaque frame avant la nage.
     void SetWaterTime(float timeSeconds) { m_waterTimeS = timeSeconds; }
 
+    /// EAU.6 — vrai seulement quand la mer est rendue en relief (grille de mer
+    /// construite, Engine::UpdateSeaGrid). Sinon (monde hors cellules, nappe non
+    /// rectangulaire, loin de la mer) la mer affichee est plate : la nage aussi.
+    void SetSeaWavesActive(bool active) { m_seaWavesActive = active; }
+
     /// IWorldCollider : detecte l'immersion a `worldCenter` (centre capsule ~
     /// hauteur du bassin). Parcourt les lacs de la scene d'eau (point-in-polygon
     /// XZ) ; si le centre est sous la surface d'un lac -> `inWater=true`,
     /// `surfaceY`/`depth` renseignes. Sans scene -> `inWater=false`.
-    /// EAU.6 : pour la mer (`isOcean`), la surface suit la houle et la vague de
-    /// bord (SeaSurfaceOffset, profondeur = niveau - sol) ; lacs et rivieres
+    /// EAU.6 : pour la mer (`isOcean`), quand elle est rendue en relief
+    /// (SetSeaWavesActive), la surface suit la houle et la vague de bord
+    /// (SeaSurfaceOffset, profondeur = niveau - sol) ; lacs et rivieres
     /// restent plats.
     bool QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const override;
 
@@ -92,6 +98,7 @@ private:
     /// EAU.6 — houle de la mer et horloge des vagues (cf. SetSeaSwell / SetWaterTime).
     engine::world::water::SeaSwellParams m_seaSwell{};
     float m_waterTimeS = 0.0f;
+    bool  m_seaWavesActive = false;
 };
 
 }  // namespace engine::gameplay

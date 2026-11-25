@@ -9611,6 +9611,86 @@
       "billboard": false,
       "replaces": null,
       "ref": "T10-P023 ; T10-P038"
+    },
+    {
+      "id": "Tent_Pilgrim_1",
+      "num": 214,
+      "family": "objets",
+      "builder": "tent_pilgrim",
+      "seed": 21401,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.8,
+        5.0
+      ],
+      "height_m": [
+        2.05,
+        2.1
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026)"
+    },
+    {
+      "id": "Tent_Pilgrim_2",
+      "num": 214,
+      "family": "objets",
+      "builder": "tent_pilgrim",
+      "seed": 21402,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        5.0,
+        5.2
+      ],
+      "height_m": [
+        2.1,
+        2.15
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026)"
+    },
+    {
+      "id": "Tent_Pilgrim_3",
+      "num": 214,
+      "family": "objets",
+      "builder": "tent_pilgrim",
+      "seed": 21403,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.4,
+        4.6
+      ],
+      "height_m": [
+        1.85,
+        1.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026)"
+    },
+    {
+      "id": "Tent_Pilgrim_Long_1",
+      "num": 214,
+      "family": "objets",
+      "builder": "tent_pilgrim",
+      "seed": 21404,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        6.8,
+        7.0
+      ],
+      "height_m": [
+        2.55,
+        2.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026)"
     }
   ]
 }

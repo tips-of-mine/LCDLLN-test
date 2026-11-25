@@ -28,7 +28,7 @@ namespace engine::render
 		/// Personnalisation des personnages : l'albedo est multiplié par la teinte du
 		/// matériau (Material::tintRgba8). Une seule texture neutre sert ainsi toutes
 		/// les couleurs d'une palette (cheveux, teintes de peau) sans consommer de
-		/// place dans le tableau de 128 textures du shader.
+		/// place dans le tableau de textures sans liaison du shader (kMaxBindlessTextures).
 		Tint = 1u << 3,
 		/// Comme Tint, mais seulement là où l'alpha de la texture est faible
 		/// (facteur 1 - alpha) : iris teinté, sclère et pupille intactes.
@@ -89,10 +89,20 @@ namespace engine::render
 		MaterialDescriptorCache(const MaterialDescriptorCache&) = delete;
 		MaterialDescriptorCache& operator=(const MaterialDescriptorCache&) = delete;
 
+		/// Taille du tableau global de textures. DOIT rester égale à la taille de
+		/// `uTextures[]` dans gbuffer_geometry.frag et skinned_preview.frag.
+		/// Les 64 d'origine étaient saturés par les décors (atelier décors, ~400
+		/// assets) : les matériaux en trop retombaient sur le matériau par défaut
+		/// (blanc, sans découpe alpha), d'où feuillages et cultures en aplats gris.
+		static constexpr uint32_t kMaxBindlessTextures = 2048;
+		/// Nombre maximal de matériaux (variantes surbrillance comprises).
+		static constexpr uint32_t kMaxMaterials = 2048;
+
 		/// Creates samplers, fallback textures, the global descriptor set, and the material buffer.
+		/// maxTextures est borné aux limites du périphérique (descripteurs par étage et par set).
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
-		          uint32_t maxTextures = 128,
-		          uint32_t maxMaterials = 256);
+		          uint32_t maxTextures = kMaxBindlessTextures,
+		          uint32_t maxMaterials = kMaxMaterials);
 
 		/// Allocates a material slot, resolves its texture slots in the global array, and writes it into the GPU material buffer.
 		/// Returns material index 0 on failure or when the default fallback material is requested.
@@ -121,6 +131,8 @@ namespace engine::render
 		VkDeviceMemory        m_materialMemory = VK_NULL_HANDLE;
 		uint32_t              m_maxTextures = 0;
 		uint32_t              m_maxMaterials = 0;
+		bool                  m_materialPoolExhaustedLogged = false; ///< une seule erreur par session
+		bool                  m_texturePoolExhaustedLogged = false;  ///< une seule erreur par session
 
 		/// Fallback 1×1 GPU textures (owned by cache, not by AssetRegistry):
 		///   [0] = white   R8G8B8A8_SRGB  (default BaseColor)
@@ -137,6 +149,8 @@ namespace engine::render
 		bool createMaterialBuffer(VkDevice device, VkPhysicalDevice physicalDevice);
 		bool writeTextureDescriptors(VkDevice device);
 		uint32_t acquireTextureSlot(const TextureHandle& texture, VkSampler sampler, VkImageView fallbackView);
+		/// Réécrit un seul descripteur du tableau global (emplacement slotIndex).
+		bool writeTextureSlot(VkDevice device, uint32_t slotIndex);
 		bool writeMaterialData(VkDevice device, uint32_t materialIndex, const MaterialGpuData& gpuData);
 
 		struct TextureSlot

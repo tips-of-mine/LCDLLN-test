@@ -4,6 +4,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <string>
 #include <vector>
 
 namespace
@@ -59,6 +60,44 @@ int main()
 	bad.pop_back();
 	Check(!b.BuildFromSlap(bad), "taille incoherente refusee");
 	Check(b.LayerAt(1, 1, 0, 0, 100) == -1, "carte vide : -1");
+
+	// SND.2b — carte des sols (terrain_ground.gndm) : aller-retour du format,
+	// priorité sur le splat, emprise propre, rejets.
+	{
+		using engine::world::GroundClass;
+		using engine::world::GroundMap;
+		GroundMap g;
+		g.size = 2; g.originX = 1000.0; g.originZ = 2000.0; g.texelM = 50.0;
+		g.classes = { static_cast<uint8_t>(GroundClass::PackedEarth), static_cast<uint8_t>(GroundClass::Sand),
+			static_cast<uint8_t>(GroundClass::Marble), 200 /* classe d'une version future */ };
+		const std::vector<uint8_t> file = engine::world::SaveGroundMap(g);
+		GroundMap back; std::string e;
+		Check(engine::world::LoadGroundMap(file, back, e) && back.size == 2 && back.classes == g.classes
+			&& back.originX == 1000.0 && back.originZ == 2000.0 && back.texelM == 50.0, "gndm : aller-retour");
+
+		CellSurfaceMap s;
+		Check(s.BuildFromSlap(MakeSlap()), "splat puis carte des sols");
+		Check(s.BuildFromGroundMap(file, e) && s.HasGroundClasses() && !s.Empty(), "carte des sols chargee");
+		Check(s.GroundAt(1010, 2010) == GroundClass::PackedEarth, "nord-ouest : terre battue");
+		Check(s.GroundAt(1060, 2010) == GroundClass::Sand, "nord-est : sable");
+		Check(s.GroundAt(1010, 2060) == GroundClass::Marble, "sud-ouest : marbre");
+		Check(s.GroundAt(1060, 2060) == GroundClass::Unknown, "classe inconnue : repli");
+		Check(s.GroundAt(999, 2010) == GroundClass::Unknown && s.GroundAt(1100, 2010) == GroundClass::Unknown, "hors emprise");
+		Check(s.LayerAt(10, 10, 0, 0, 100) == -1, "couche du splat liberee");
+
+		std::vector<uint8_t> bad2 = file;
+		bad2[0] ^= 0xFF;
+		CellSurfaceMap t;
+		Check(!t.BuildFromGroundMap(bad2, e) && t.Empty(), "gndm : magic faux refuse");
+		bad2 = file;
+		bad2[4] = 2; // version 2 : inconnue de ce lecteur
+		Check(!t.BuildFromGroundMap(bad2, e), "gndm : version future refusee");
+		bad2 = file;
+		bad2.pop_back();
+		Check(!t.BuildFromGroundMap(bad2, e), "gndm : taille incoherente refusee");
+		Check(t.BuildFromSlap(MakeSlap()) && !t.BuildFromGroundMap(bad2, e) && t.LayerAt(10, 10, 0, 0, 100) == 0,
+			"gndm invalide : le splat reste utilisable");
+	}
 
 	if (s_failCount == 0)
 		std::cout << "[OK] cell_surface_map_tests" << std::endl;

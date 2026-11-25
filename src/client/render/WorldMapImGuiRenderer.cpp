@@ -1,5 +1,6 @@
 // Monde jouable (chantier « Royaumes ») — carte du monde + bannière de lieu.
 #include "src/client/render/WorldMapImGuiRenderer.h"
+#include "src/client/world/places/WorldMapPresentation.h"
 #include "src/client/world/places/WorldMapZoom.h"
 
 #include "src/client/world/discovery/MapDiscoveryClient.h"
@@ -42,17 +43,102 @@ namespace engine::render
 			return 3.2f;
 		}
 
-		/// Libellé toujours visible (sinon seulement zoomé ou survolé).
-		bool AlwaysLabelled(const engine::client::PlaceCity& c)
-		{
-			return c.kind == "capitale" || c.kind == "grande_ville" || !c.startFor.empty();
-		}
-
 		/// Texte avec ombre portée (lisibilité sur la carte).
 		void ShadowText(ImDrawList* dl, ImVec2 p, ImU32 col, const char* text)
 		{
 			dl->AddText(ImVec2(p.x + 1.0f, p.y + 1.0f), IM_COL32(0, 0, 0, 200), text);
 			dl->AddText(p, col, text);
+		}
+
+		// --- Habillage parchemin (23/11/2026) -----------------------------------
+		// La carte ne doit plus ressembler à une fenêtre système : fond parchemin
+		// clair, encre brune, cadre usé, rouleaux de bois en haut et en bas. Couleurs
+		// naturelles, peu saturées (direction artistique : réaliste / peint).
+
+		/// Hauteur (px) d'un rouleau de bois dessiné sur les bords haut et bas.
+		constexpr float kRollH = 18.0f;
+		/// Débord horizontal (px) des rouleaux de part et d'autre de la fenêtre.
+		constexpr float kRollOverhang = 10.0f;
+
+		/// Couleurs ImGui poussées par PushParchmentStyle (à dépiler par PopParchmentStyle).
+		constexpr int kParchmentColorCount = 15;
+		/// Variables de style poussées par PushParchmentStyle.
+		constexpr int kParchmentVarCount = 3;
+
+		/// Empile le style parchemin de la fenêtre carte : fond, encre, cadre, boutons,
+		/// info-bulles (les info-bulles ouvertes pendant la fenêtre héritent du style).
+		/// Effet de bord : pile de styles ImGui ; appeler PopParchmentStyle après End().
+		void PushParchmentStyle()
+		{
+			ImGui::PushStyleColor(ImGuiCol_WindowBg,         ImVec4(0.87f, 0.80f, 0.64f, 0.98f)); // parchemin
+			ImGui::PushStyleColor(ImGuiCol_PopupBg,          ImVec4(0.89f, 0.83f, 0.68f, 0.97f)); // info-bulles
+			ImGui::PushStyleColor(ImGuiCol_Border,           ImVec4(0.38f, 0.25f, 0.13f, 1.00f)); // bord usé brun
+			ImGui::PushStyleColor(ImGuiCol_Text,             ImVec4(0.24f, 0.16f, 0.09f, 1.00f)); // encre
+			ImGui::PushStyleColor(ImGuiCol_TextDisabled,     ImVec4(0.43f, 0.33f, 0.22f, 1.00f)); // encre pâlie
+			ImGui::PushStyleColor(ImGuiCol_Separator,        ImVec4(0.38f, 0.25f, 0.13f, 0.70f));
+			ImGui::PushStyleColor(ImGuiCol_Button,           ImVec4(0.77f, 0.67f, 0.49f, 0.90f)); // parchemin foncé
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered,    ImVec4(0.71f, 0.60f, 0.39f, 1.00f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive,     ImVec4(0.63f, 0.50f, 0.31f, 1.00f));
+			ImGui::PushStyleColor(ImGuiCol_ResizeGrip,        ImVec4(0.38f, 0.25f, 0.13f, 0.25f));
+			ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, ImVec4(0.38f, 0.25f, 0.13f, 0.55f));
+			ImGui::PushStyleColor(ImGuiCol_ResizeGripActive,  ImVec4(0.38f, 0.25f, 0.13f, 0.80f));
+			ImGui::PushStyleColor(ImGuiCol_FrameBg,          ImVec4(0.77f, 0.67f, 0.49f, 0.60f));
+			ImGui::PushStyleColor(ImGuiCol_TitleBg,          ImVec4(0.55f, 0.38f, 0.21f, 1.00f)); // inutilisé (sans barre), par cohérence
+			ImGui::PushStyleColor(ImGuiCol_TitleBgActive,    ImVec4(0.55f, 0.38f, 0.21f, 1.00f));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 2.0f);
+			// Marge haute / basse : place pour les rouleaux de bois.
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, kRollH + 6.0f));
+		}
+
+		/// Dépile le style empilé par PushParchmentStyle.
+		void PopParchmentStyle()
+		{
+			ImGui::PopStyleVar(kParchmentVarCount);
+			ImGui::PopStyleColor(kParchmentColorCount);
+		}
+
+		/// Dessine un rouleau de bois horizontal centré verticalement sur \p cy, de
+		/// \p x0 à \p x1 (px), avec deux pommeaux aux extrémités.
+		void DrawWoodRoll(ImDrawList* dl, float x0, float x1, float cy)
+		{
+			const float h = kRollH, top = cy - h * 0.5f, bot = cy + h * 0.5f, mid = cy - h * 0.12f;
+			const ImU32 light = IM_COL32(150, 104, 62, 255), dark = IM_COL32(74, 46, 24, 255);
+			// Corps : clair vers le haut (lumière), sombre vers le bas.
+			dl->AddRectFilledMultiColor(ImVec2(x0, top), ImVec2(x1, mid), dark, dark, light, light);
+			dl->AddRectFilledMultiColor(ImVec2(x0, mid), ImVec2(x1, bot), light, light, dark, dark);
+			dl->AddLine(ImVec2(x0, top + 3.0f), ImVec2(x1, top + 3.0f), IM_COL32(186, 140, 92, 120), 1.0f); // reflet
+			dl->AddRect(ImVec2(x0, top), ImVec2(x1, bot), IM_COL32(48, 30, 16, 255), 2.0f, 0, 1.2f);
+			// Pommeaux tournés.
+			for (const float x : { x0, x1 })
+			{
+				dl->AddCircleFilled(ImVec2(x, cy), h * 0.62f, IM_COL32(96, 62, 32, 255));
+				dl->AddCircleFilled(ImVec2(x - h * 0.12f, cy - h * 0.14f), h * 0.28f, IM_COL32(140, 96, 56, 255));
+				dl->AddCircle(ImVec2(x, cy), h * 0.62f, IM_COL32(48, 30, 16, 255), 0, 1.2f);
+			}
+		}
+
+		/// Habillage de la fenêtre courante : bords vieillis (ombre brune dégradée) et
+		/// rouleaux de bois sur les bords haut et bas. À appeler entre Begin et End ;
+		/// dessine sur la draw list de la fenêtre, hors de son rectangle de découpe.
+		void DrawParchmentDressing()
+		{
+			ImDrawList* dl = ImGui::GetWindowDrawList();
+			const ImVec2 wp = ImGui::GetWindowPos();
+			const ImVec2 ws = ImGui::GetWindowSize();
+			const ImVec2 we(wp.x + ws.x, wp.y + ws.y);
+			dl->PushClipRectFullScreen();
+			// Bords vieillis : bandes dégradées (brun translucide -> transparent).
+			const float e = 16.0f;
+			const ImU32 edge = IM_COL32(120, 84, 44, 90), clear = IM_COL32(120, 84, 44, 0);
+			dl->AddRectFilledMultiColor(wp, ImVec2(wp.x + e, we.y), edge, clear, clear, edge);
+			dl->AddRectFilledMultiColor(ImVec2(we.x - e, wp.y), we, clear, edge, edge, clear);
+			dl->AddRectFilledMultiColor(wp, ImVec2(we.x, wp.y + e * 2.0f), edge, edge, clear, clear);
+			dl->AddRectFilledMultiColor(ImVec2(wp.x, we.y - e * 2.0f), we, clear, clear, edge, edge);
+			// Rouleaux : celui du haut est fixe, celui du bas suit le déroulé.
+			DrawWoodRoll(dl, wp.x - kRollOverhang, we.x + kRollOverhang, wp.y + kRollH * 0.3f);
+			DrawWoodRoll(dl, wp.x - kRollOverhang, we.x + kRollOverhang, we.y - kRollH * 0.3f);
+			dl->PopClipRect();
 		}
 
 		/// FIX.12 / FIX.15 — Dessine plans d'eau, routes, rues et bâtiments (map_features.bin) visibles
@@ -411,12 +497,62 @@ namespace engine::render
 		const float side0 = std::max(320.0f, std::min(in.viewportW, in.viewportH) * 0.8f);
 		ImGui::SetNextWindowSize(ImVec2(side0, side0 + 56.0f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImVec2(in.viewportW * 0.5f, in.viewportH * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
-		const std::string title = (places.DisplayName().empty() ? std::string("Carte du monde") : places.DisplayName())
-			+ "###carte_du_monde";
-		if (!ImGui::Begin(title.c_str(), open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse))
+		const std::string title = places.DisplayName().empty() ? std::string("Carte du monde") : places.DisplayName();
+
+		// Déroulé du parchemin (23/11/2026). Frame 0 de l'ouverture : fenêtre invisible,
+		// on relève sa taille pleine (celle mémorisée par ImGui). Frames suivantes : la
+		// hauteur est imposée de l'en-tête à la taille pleine (bord haut fixe, le rouleau
+		// du bas descend). Ensuite la taille n'est plus imposée (redimensionnement libre).
+		const ImGuiIO& io = ImGui::GetIO();
+		const bool measuring = view.fullH <= 0.0f;
+		const bool unrolling = !measuring && !view.unrollDone;
+		if (unrolling)
+		{
+			view.unrollElapsedS += std::max(0.0f, io.DeltaTime);
+			const float f = engine::client::WorldMapUnrollFraction(view.unrollElapsedS, engine::client::kWorldMapUnrollSeconds);
+			const float minH = ImGui::GetTextLineHeightWithSpacing() + 2.0f * (kRollH + 6.0f) + 8.0f;
+			ImGui::SetNextWindowSize(ImVec2(view.fullW, engine::client::WorldMapUnrollHeight(f, minH, view.fullH)), ImGuiCond_Always);
+			if (f >= 1.0f)
+				view.unrollDone = true;
+		}
+
+		PushParchmentStyle();
+		if (measuring)
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.0f);
+		// Pas de barre de titre ImGui : en-tête dessiné dans le corps (nom + X).
+		// La fenêtre reste déplaçable (glisser l'en-tête ou le cadre) et redimensionnable.
+		// Pendant le déroulé, NoSavedSettings : une hauteur intermédiaire ne doit pas
+		// être enregistrée dans l'.ini (la prochaine ouverture la prendrait pour pleine).
+		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar
+			| ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse
+			| (unrolling ? ImGuiWindowFlags_NoSavedSettings : ImGuiWindowFlags_None);
+		const bool visible = ImGui::Begin("###carte_du_monde", nullptr, flags);
+		if (measuring)
+		{
+			view.fullW = ImGui::GetWindowSize().x;
+			view.fullH = ImGui::GetWindowSize().y;
+			ImGui::PopStyleVar();
+		}
+		if (!visible || measuring)
 		{
 			ImGui::End();
+			PopParchmentStyle();
 			return;
+		}
+		DrawParchmentDressing();
+
+		// En-tête : nom de la carte centré (encre), bouton X à droite.
+		{
+			const float closeW = ImGui::GetFrameHeight();
+			const float titleW = ImGui::CalcTextSize(title.c_str()).x;
+			const float regionW = ImGui::GetContentRegionAvail().x;
+			const float startX = ImGui::GetCursorPosX();
+			ImGui::SetCursorPosX(startX + std::max(0.0f, (regionW - titleW) * 0.5f));
+			ImGui::TextUnformatted(title.c_str());
+			ImGui::SameLine(startX + std::max(0.0f, regionW - closeW));
+			if (ImGui::Button("X##carte_fermer", ImVec2(closeW, 0.0f)))
+				*open = false;
+			ImGui::Separator();
 		}
 
 		float pu = 0.5f, pv = 0.5f;
@@ -441,7 +577,11 @@ namespace engine::render
 		// que dans une direction). Pas d'étirement : une seule échelle px / unité carte
 		// pour les deux axes ; le zoom fixe ce que montre le PLUS PETIT côté (≈ sizeM /
 		// zoom mètres, cf. « ~x km visibles »), le grand côté en montre davantage.
-		const ImVec2 avail = ImGui::GetContentRegionAvail();
+		ImVec2 avail = ImGui::GetContentRegionAvail();
+		// Pendant le déroulé, la mise en page se fait sur la taille pleine : la carte ne
+		// change pas d'échelle, elle est simplement découverte par le bas.
+		if (unrolling)
+			avail.y += std::max(0.0f, view.fullH - ImGui::GetWindowSize().y);
 		const float footerH = ImGui::GetTextLineHeightWithSpacing() * 1.6f;
 		const float canvasW = std::max(64.0f, avail.x);
 		const float canvasH = std::max(64.0f, avail.y - footerH);
@@ -454,7 +594,6 @@ namespace engine::render
 		// Interaction : molette = zoom, glisser = déplacer.
 		ImGui::InvisibleButton("##carte_zone", ImVec2(canvasW, canvasH));
 		const bool hovered = ImGui::IsItemHovered();
-		const ImGuiIO& io = ImGui::GetIO();
 		// Centre borné : la vue reste sur la carte ; un axe plus grand que la carte
 		// entière (fenêtre très allongée, zoom 1) reste centré sur la carte.
 		auto clampCenter = [&]()
@@ -538,7 +677,7 @@ namespace engine::render
 		ImDrawList* dl = ImGui::GetWindowDrawList();
 		dl->PushClipRect(p0, p1, true);
 		// Fond (hors carte quand la fenêtre est plus large que la carte entière).
-		dl->AddRectFilled(p0, p1, IM_COL32(14, 18, 22, 255));
+		dl->AddRectFilled(p0, p1, IM_COL32(196, 176, 134, 255)); // parchemin ombré
 		if (in.mapTexture != 0)
 		{
 			// Image limitée à la carte [0, 1] (pas de répétition de texture au-delà).
@@ -573,19 +712,27 @@ namespace engine::render
 			DrawDiscoveryFog(dl, *in.discovery, places, u0, v0, u1, v1, worldToScreen);
 		auto discovered = [&](float x, float z) { return in.discovery == nullptr || in.discovery->IsDiscovered(x, z); };
 
-		// Régions : nom en filigrane au centre (vue d'ensemble seulement).
-		if (view.zoom <= 2.5f)
-			for (const engine::client::PlaceRegion& r : places.Regions())
-			{
-				// Nom de région : seulement si son centre a été découvert.
-				if (!discovered((r.xMin + r.xMax) * 0.5f, (r.zMin + r.zMax) * 0.5f))
-					continue;
-				float ru = 0, rv = 0;
-				places.WorldToMapUv((r.xMin + r.xMax) * 0.5f, (r.zMin + r.zMax) * 0.5f, ru, rv);
-				const ImVec2 c = toScreen(ru, rv);
-				const ImVec2 ts = ImGui::CalcTextSize(r.name.c_str());
-				dl->AddText(ImVec2(c.x - ts.x * 0.5f, c.y - ts.y * 0.5f), IM_COL32(255, 255, 255, 70), r.name.c_str());
-			}
+		// Régions : nom en filigrane au centre, seulement quand le curseur est dans la
+		// région (vue d'ensemble, centre découvert) — 23/11/2026, plus de nom permanent.
+		const engine::client::PlaceRegion* cursorRegion = nullptr;
+		if (hovered)
+		{
+			float mx = 0, mz = 0;
+			places.MapUvToWorld(u0 + (io.MousePos.x - p0.x) / scale, v0 + (io.MousePos.y - p0.y) / scale, mx, mz);
+			cursorRegion = places.RegionAt(mx, mz);
+		}
+		for (const engine::client::PlaceRegion& r : places.Regions())
+		{
+			if (!engine::client::WorldMapRegionNameVisible(view.zoom, &r == cursorRegion,
+					discovered((r.xMin + r.xMax) * 0.5f, (r.zMin + r.zMax) * 0.5f)))
+				continue;
+			float ru = 0, rv = 0;
+			places.WorldToMapUv((r.xMin + r.xMax) * 0.5f, (r.zMin + r.zMax) * 0.5f, ru, rv);
+			const ImVec2 c = toScreen(ru, rv);
+			const ImVec2 ts = ImGui::CalcTextSize(r.name.c_str());
+			// Filigrane un peu plus marqué qu'avant (il n'apparaît plus qu'au survol).
+			dl->AddText(ImVec2(c.x - ts.x * 0.5f, c.y - ts.y * 0.5f), IM_COL32(255, 255, 255, 120), r.name.c_str());
+		}
 
 		// Lieux remarquables : losanges violets.
 		const engine::client::PlacePoi* hoveredPoi = nullptr;
@@ -601,8 +748,6 @@ namespace engine::render
 			const float r = 4.0f + markerZoom * 0.4f;
 			dl->AddQuadFilled(ImVec2(s.x, s.y - r), ImVec2(s.x + r, s.y), ImVec2(s.x, s.y + r), ImVec2(s.x - r, s.y), IM_COL32(176, 120, 226, 235));
 			dl->AddQuad(ImVec2(s.x, s.y - r), ImVec2(s.x + r, s.y), ImVec2(s.x, s.y + r), ImVec2(s.x - r, s.y), IM_COL32(20, 10, 30, 255));
-			if (view.zoom >= 2.0f)
-				ShadowText(dl, ImVec2(s.x + r + 3.0f, s.y - 7.0f), IM_COL32(220, 196, 255, 255), p.name.c_str());
 			const float d2 = (io.MousePos.x - s.x) * (io.MousePos.x - s.x) + (io.MousePos.y - s.y) * (io.MousePos.y - s.y);
 			if (hovered && d2 < bestHover) { bestHover = d2; hoveredPoi = &p; }
 		}
@@ -636,9 +781,6 @@ namespace engine::render
 			}
 			const float d2 = (io.MousePos.x - s.x) * (io.MousePos.x - s.x) + (io.MousePos.y - s.y) * (io.MousePos.y - s.y);
 			if (hovered && d2 < std::max(bestHover, (r + 3.0f) * (r + 3.0f))) { bestHover = d2; hoveredCity = &c; hoveredPoi = nullptr; }
-			if (AlwaysLabelled(c) || view.zoom >= 2.0f)
-				ShadowText(dl, ImVec2(s.x + r + 4.0f, s.y - 7.0f),
-					myStart ? IM_COL32(255, 222, 120, 255) : IM_COL32(245, 240, 228, 255), c.name.c_str());
 		}
 
 		// Lore v1.0.114 — lieux secrets découverts par le joueur : étoile à quatre
@@ -660,8 +802,6 @@ namespace engine::render
 				for (int i = 0; i < 8; ++i)
 					dl->AddTriangleFilled(s, star[i], star[(i + 1) % 8], IM_COL32(64, 224, 208, 245));
 				dl->AddPolyline(star, 8, IM_COL32(10, 30, 30, 255), ImDrawFlags_Closed, 1.5f);
-				if (view.zoom >= 2.0f)
-					ShadowText(dl, ImVec2(s.x + r + 3.0f, s.y - 7.0f), IM_COL32(150, 255, 240, 255), p.name.c_str());
 				const float d2 = (io.MousePos.x - s.x) * (io.MousePos.x - s.x) + (io.MousePos.y - s.y) * (io.MousePos.y - s.y);
 				if (hovered && d2 < std::max(bestHover, (r + 2.0f) * (r + 2.0f)))
 				{
@@ -684,7 +824,9 @@ namespace engine::render
 			dl->AddTriangleFilled(tip, left, right, IM_COL32(255, 70, 50, 255));
 			dl->AddTriangle(tip, left, right, IM_COL32(255, 255, 255, 255), 1.5f);
 		}
-		dl->AddRect(p0, p1, IM_COL32(150, 130, 90, 255), 0.0f, 0, 2.0f);
+		// Cadre de la carte à l'encre brune (double filet).
+		dl->AddRect(p0, p1, IM_COL32(72, 46, 24, 255), 0.0f, 0, 2.0f);
+		dl->AddRect(ImVec2(p0.x + 3.0f, p0.y + 3.0f), ImVec2(p1.x - 3.0f, p1.y - 3.0f), IM_COL32(72, 46, 24, 110), 0.0f, 0, 1.0f);
 		dl->PopClipRect();
 
 		// Info-bulle du lieu survolé.
@@ -765,6 +907,7 @@ namespace engine::render
 		ImGui::SameLine();
 		ImGui::TextDisabled("Molette : zoom - Glisser : deplacer - M : fermer");
 		ImGui::End();
+		PopParchmentStyle();
 	}
 
 	void DrawPlaceBanner(ImDrawList* fg, float dw, float /*dh*/, const engine::client::PlaceBannerTracker& banner,

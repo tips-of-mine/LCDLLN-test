@@ -166,7 +166,7 @@ longueur des jambes est mémorisée mais pas encore rendue (mise à l'échelle p
 os à venir).
 
 Circulation : écran de création → `CharacterCreateRequestPayload.appearance` →
-master (normalisé, colonne `characters.appearance`, migration 0097) →
+master (normalisé, colonne `characters.appearance`, migration 0101) →
 `CharacterListEntry.appearance` → avatar local à l'entrée en jeu ; le shard lit
 la colonne au Hello et la réplique dans l'identité du snapshot (protocole v22,
 envoyée à l'apparition de l'entité seulement) → avatars des autres joueurs.

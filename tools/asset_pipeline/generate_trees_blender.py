@@ -11,9 +11,9 @@ dans le style sombre des BD (troncs noueux, couleurs éteintes) :
 
 Chaque arbre existe en 3 niveaux de détail :
   - LOD0 : game/data/meshes/props/<Nom>.gltf           (proche, détail complet)
-  - LOD1 : game/data/meshes/props/lod/<Nom>_LOD1.gltf  (moyen : moins de côtés,
+  - LOD1 : game/data/meshes/props/<Nom>_LOD1.gltf  (moyen : moins de côtés,
            brindilles supprimées, cartes de feuillage plus grandes et moins nombreuses)
-  - LOD2 : game/data/meshes/props/lod/<Nom>_LOD2.gltf  (lointain : tronc et
+  - LOD2 : game/data/meshes/props/<Nom>_LOD2.gltf  (lointain : tronc et
            charpentières seules, une douzaine de grandes cartes de feuillage)
 Le « billboard » (impostor octaédrique `.mipo`) est cuit à partir du LOD0 par
 `tools/impostor_builder` (voir tools/asset_pipeline/README.md).
@@ -649,8 +649,8 @@ def _postprocess(path, image_prefix):
     - feuillage : alphaMode BLEND (le moteur le lit et active la découpe alpha,
       cf. tools/asset_pipeline/texture_trees.py), doubleSided ;
     - écorce : doubleSided (comme les arbres Quaternius) ;
-    - URIs des images préfixées par \\p image_prefix (« ../ » pour les LOD rangés
-      dans lod/, qui partagent les textures du dossier props/).
+    - URIs des images préfixées par \\p image_prefix (vide : les LOD sont rangés à
+      côté du LOD0, convention <Nom>_LOD1/_LOD2 lue par le client).
     \\return nombre de triangles
     """
     with open(path, encoding="utf-8") as f:
@@ -674,11 +674,11 @@ def _postprocess(path, image_prefix):
 def generate(out_dir, only=None):
     """Génère et exporte tous les arbres (ou \\p only) dans \\p out_dir.
 
-    Écrit <out>/<Nom>.gltf (LOD0) et <out>/lod/<Nom>_LOD1|2.gltf ; les textures
-    partagées sont dans <out>/. Vérifie le budget de triangles de chaque LOD.
+    Écrit <out>/<Nom>.gltf (LOD0) et <out>/<Nom>_LOD1|2.gltf (convention du client :
+    niveaux de détail à côté du mesh) ; les textures partagées sont dans <out>/. Vérifie le budget de triangles de chaque LOD.
     \\return liste (nom, lod, triangles)
     """
-    os.makedirs(os.path.join(out_dir, "lod"), exist_ok=True)
+    os.makedirs(out_dir, exist_ok=True)
     report = []
     for name, species, seed in TREES:
         if only and name not in only:
@@ -688,14 +688,9 @@ def generate(out_dir, only=None):
             if lod == 0:
                 path = os.path.join(out_dir, name + ".gltf")
             else:
-                path = os.path.join(out_dir, "lod", "%s_LOD%d.gltf" % (name, lod))
+                path = os.path.join(out_dir, "%s_LOD%d.gltf" % (name, lod))
             _export(obj, path)
-            if lod > 0:
-                # Les images sont écrites à côté du .gltf : on garde celles du dossier props/.
-                for f in os.listdir(os.path.dirname(path)):
-                    if f.endswith(".png"):
-                        os.replace(os.path.join(os.path.dirname(path), f), os.path.join(out_dir, f))
-            tris = _postprocess(path, "" if lod == 0 else "../")
+            tris = _postprocess(path, "")
             assert tris <= TRI_BUDGET[lod], "%s LOD%d : %d triangles > budget %d" % (name, lod, tris, TRI_BUDGET[lod])
             report.append((name, lod, tris))
             me = obj.data

@@ -7,6 +7,7 @@
 //   zones/<c>/terrain_splat.slap       splat 2048² RGBA (herbe/terre/roche/neige)
 //   zones/<c>/terrain_grass.grms       masque herbe 2048²
 //   zones/<c>/terrain_forest.frms      densité forestière 1024² (FORET.1 : arbres posés par le client)
+//   zones/<c>/terrain_ground.gndm      nature du sol 2048² (SND.2b : sons de pas, client seul)
 //   zones/<c>/zone.json                réglages client de la cellule (terrain, PNJ statiques…)
 //   zones/<c>/spawners.json            spawners serveur (+ routines d'ambiance), zoneId = cellule
 //   zones/<c>/respawn_points.txt       cimetières / auberges
@@ -41,6 +42,7 @@
 #include "src/shared/world/instances/ForestMask.h"
 #include "src/shared/world/instances/ScatterInstances.h"
 #include "src/shared/world/water/WaterSurfaces.h"
+#include "src/shared/world/GroundMap.h"
 #include "src/shared/world/LavaMask.h"
 
 #include <algorithm>
@@ -199,6 +201,22 @@ namespace tools::world_gen
 
 		struct SplatTexel { double grass, dirt, rock, snow, grassMask; };
 
+		/// SND.2b — ce qui a façonné un texel du splat, relevé au passage par
+		/// ComputeSplat / InfernalSplat (lecture seule, le splat reste identique) pour
+		/// en déduire la NATURE du sol (ClassifyGround) : route, rue, plage, marais…
+		struct SplatTrace
+		{
+			bool infernal = false;
+			char cover = 0;          ///< code de couverture au point même (Royaumes)
+			double coastSand = 0.0;  ///< part de sable d'une côte (BaseSplat)
+			double shoreK = 0.0;     ///< rivage / fond (0..1)
+			double chalk = 0.0;      ///< paroi de craie (0..1)
+			double roadK = 0.0;      ///< route (0..1)
+			double riverK = 0.0;     ///< berge de rivière (0..1)
+			uint8_t urban = 0;       ///< 1 = emprise urbaine, 2 = rue / place
+			uint8_t paint = 0;       ///< 1 = roche de l'Oracle, 2 = pierre blanche (marbre)
+		};
+
 		/// Base de splat (herbe, terre, roche, neige, masque d'herbe) d'un code de
 		/// couverture, sans les effets locaux (pente, eau, routes…).
 		SplatTexel BaseSplat(char code, double h, double sea)
@@ -243,7 +261,7 @@ namespace tools::world_gen
 		/// roche gris-brun, neige) : aucune herbe, aucune neige, aucun masque d'herbe ;
 		/// sol de terre rouge-brun (plaines, cendres, lave, chemins) et roche (pentes,
 		/// crêtes, coins montagneux, hauts sommets cendreux).
-		SplatTexel InfernalSplat(const World& w, Vec2 p)
+		SplatTexel InfernalSplat(const World& w, Vec2 p, SplatTrace* trace = nullptr)
 		{
 			const double h = w.HeightAt(p);
 			const double slope = w.SlopeDegAt(p);
@@ -275,6 +293,7 @@ namespace tools::world_gen
 			if (w.roadDist.InBounds(ri, rj))
 			{
 				const double k = SmoothStep(2.2, -0.8, w.roadDist.At(ri, rj));
+				if (trace) trace->roadK = k;
 				rock *= 1 - k; dirt = Lerp(dirt, 1.0, k);
 				lava *= 1.0 - SmoothStep(6.0, 2.0, w.roadDist.At(ri, rj));
 			}
@@ -282,6 +301,7 @@ namespace tools::world_gen
 			if (w.urban.InBounds(ui, uj))
 			{
 				const uint8_t u = w.urban.At(ui, uj);
+				if (trace) trace->urban = u;
 				if (u == 2) { dirt = 0.95; rock = 0.05; lava = 0.0; }
 				else if (u == 1) dirt += 0.35;
 			}
@@ -377,10 +397,16 @@ namespace tools::world_gen
 		/// emprise urbaine. Aux Enfers (v1.0.83), délègue à InfernalSplat (ni herbe ni
 		/// neige). Fonction pure (lecture seule de \p w), appelée en parallèle par rangée.
 		/// \param grid biomes précalculés de la cellule (résultat identique), ou nullptr.
-		SplatTexel ComputeSplat(const World& w, Vec2 p, const SplatBiomeGrid* grid = nullptr)
+		/// \param trace SND.2b : si non nul, reçoit les facteurs locaux (route, rue,
+		///        rivage…) qui servent à ClassifyGround ; sans effet sur le résultat.
+		SplatTexel ComputeSplat(const World& w, Vec2 p, const SplatBiomeGrid* grid = nullptr, SplatTrace* trace = nullptr)
 		{
 			// v1.0.83 : les Enfers ont leur propre palette (les Royaumes ne passent pas ici).
-			if (IsInfernalMap(w.master)) return InfernalSplat(w, p);
+			if (IsInfernalMap(w.master))
+			{
+				if (trace) trace->infernal = true;
+				return InfernalSplat(w, p, trace);
+			}
 			const double h = w.HeightAt(p);
 			const double slope = w.SlopeDegAt(p);
 			const double sea = w.master.scale.seaLevelM;
@@ -394,6 +420,13 @@ namespace tools::world_gen
 				// Fonction macro (et non la grille) : identique des deux côtés d'une
 				// frontière de cellule → splat raccord.
 				const char c = grid ? grid->Cover(sx, sz) : EffectiveCover(MacroBiome(w.master, sx, sz), sx, sz, w.master.seed);
+				if (trace && o[0] == 0 && o[1] == 0)
+				{
+					trace->cover = c;
+					// Même part de sable que BaseSplat (côte, plage, terre émergée sous code marin).
+					if (c == '_' || c == ',' || ((c == ' ' || c == '-') && h >= sea))
+						trace->coastSand = SmoothStep(sea + 6.0, sea + 1.5, h);
+				}
 				const SplatTexel b = BaseSplat(c, h, sea);
 				t.grass += b.grass * 0.2; t.dirt += b.dirt * 0.2; t.rock += b.rock * 0.2; t.snow += b.snow * 0.2; t.grassMask += b.grassMask * 0.2;
 			}
@@ -402,7 +435,7 @@ namespace tools::world_gen
 			t.grass = std::max(0.0, t.grass - patch);
 			t.dirt = std::max(0.0, t.dirt + patch);
 			// Rivage et fonds : sable/terre mouillée.
-			if (h < sea + 1.2) { const double k = SmoothStep(sea + 1.2, sea - 0.5, h); t.grass *= 1 - k; t.dirt += k; t.grassMask *= 1 - k; }
+			if (h < sea + 1.2) { const double k = SmoothStep(sea + 1.2, sea - 0.5, h); t.grass *= 1 - k; t.dirt += k; t.grassMask *= 1 - k; if (trace) trace->shoreK = k; }
 			// Neige en altitude (moins sur les pentes raides).
 			// v1.0.130 : limite des neiges des Royaumes vers 2 500 m (Pyrénées), avec ±60 m de bruit.
 			const double snowK = SmoothStep(2450.0, 2650.0, h + n * 60.0) * (1.0 - SmoothStep(38.0, 55.0, slope));
@@ -416,6 +449,7 @@ namespace tools::world_gen
 			if (const double wall = FalaiseWallAt(w.master, p.x, p.z); wall > 0.0)
 			{
 				const double chalk = wall * SmoothStep(22.0, 38.0, slope + n * 4.0);
+				if (trace) trace->chalk = chalk;
 				t.snow = std::max(t.snow, chalk);
 				t.rock *= 1.0 - chalk; t.grass *= 1.0 - chalk; t.dirt *= 1.0 - chalk;
 				t.grassMask *= 1.0 - chalk;
@@ -426,6 +460,7 @@ namespace tools::world_gen
 			{
 				const double rd = w.roadDist.At(ri, rj);
 				const double k = SmoothStep(2.2, -0.8, rd);
+				if (trace) trace->roadK = k;
 				t.grass *= 1 - k; t.rock *= 1 - k; t.snow *= 1 - k; t.dirt = Lerp(t.dirt, 1.0, k);
 				t.grassMask *= 1 - k;
 			}
@@ -434,6 +469,7 @@ namespace tools::world_gen
 			if (w.urban.InBounds(ui, uj))
 			{
 				const uint8_t u = w.urban.At(ui, uj);
+				if (trace) trace->urban = u;
 				if (u == 2) { t = { 0.05, 0.95, 0.0, 0.0, 0.0 }; }
 				else if (u == 1) { t.grass *= 0.6; t.dirt += 0.35; t.grassMask *= 0.6; }
 			}
@@ -442,6 +478,7 @@ namespace tools::world_gen
 			if (w.paint.InBounds(pi, pj) && w.paint.At(pi, pj) != 0)
 			{
 				const uint8_t pv = w.paint.At(pi, pj);
+				if (trace) trace->paint = pv;
 				return pv == 2 ? SplatTexel{ 0.0, 0.0, 0.05, 0.95, 0.0 } : SplatTexel{ 0.0, 0.0, 0.45, 0.55, 0.0 };
 			}
 			// Berges de rivière.
@@ -449,9 +486,46 @@ namespace tools::world_gen
 			if (w.riverDist.InBounds(vi, vj) && w.riverDist.At(vi, vj) < 4.0f)
 			{
 				const double k = SmoothStep(4.0, 0.0, w.riverDist.At(vi, vj));
+				if (trace) trace->riverK = k;
 				t.dirt += 0.6 * k; t.grass *= 1 - 0.5 * k;
 			}
 			return t;
+		}
+
+		/// SND.2b — nature du sol d'un texel (sons de pas) à partir de son splat \p t
+		/// et des facteurs relevés par ComputeSplat (\p tr). Ordre de priorité : marbre /
+		/// roche peints, rues et routes (terre battue), couche dominante neige / roche,
+		/// berges et rivages (boue, sable), puis la couverture (désert, marais, terres
+		/// arides, volcans, montagnes) et enfin herbe ou terre. Fonction pure.
+		engine::world::GroundClass ClassifyGround(const SplatTexel& t, const SplatTrace& tr)
+		{
+			using engine::world::GroundClass;
+			int dom = 0; // 0 herbe, 1 terre, 2 roche, 3 neige (même règle que le client : premier maximum)
+			const double ch[4] = { t.grass, t.dirt, t.rock, t.snow };
+			for (int k = 1; k < 4; ++k) if (ch[k] > ch[dom]) dom = k;
+			if (tr.infernal)
+			{
+				// Canal A = lave : on n'y marche que sur la croûte refroidie (pierre).
+				if (tr.urban == 2 || tr.roadK >= 0.5) return GroundClass::PackedEarth;
+				return dom == 1 ? GroundClass::Dirt : GroundClass::Rock;
+			}
+			if (tr.paint == 2) return GroundClass::Marble;
+			if (tr.paint == 1) return GroundClass::Rock;
+			if (tr.urban == 2 || tr.roadK >= 0.5) return GroundClass::PackedEarth;
+			if (dom == 3) return tr.chalk >= 0.5 ? GroundClass::Rock : GroundClass::Snow;
+			if (dom == 2) return GroundClass::Rock;
+			const char c = tr.cover;
+			const bool sandy = c == '~' || c == '_' || c == ',' || c == ' ' || c == '-';
+			if (tr.shoreK >= 0.5) return sandy ? GroundClass::Sand : GroundClass::Mud;
+			if (tr.riverK >= 0.5) return GroundClass::Mud;
+			if (c == '~' || tr.coastSand >= 0.5) return GroundClass::Sand;
+			if (dom == 1)
+			{
+				if (c == '%' || c == '&') return GroundClass::Mud;
+				if (c == ':' || c == 'l' || c == 'V' || c == '^' || c == 'M') return GroundClass::Gravel;
+				return GroundClass::Dirt;
+			}
+			return GroundClass::Grass;
 		}
 
 		// ------------------------------------------------- carte du monde
@@ -881,6 +955,7 @@ namespace tools::world_gen
 			const int T = N - 1;
 			const double px = w.terrainSizeM / T;
 			std::vector<uint8_t> splatPx(static_cast<size_t>(T) * T * 4), grassPx(static_cast<size_t>(T) * T);
+			std::vector<uint8_t> groundPx(static_cast<size_t>(T) * T); // SND.2b — nature du sol
 			// Biomes précalculés (résultat identique, ≈ 4 fois moins de bruits) ; les
 			// Enfers ont leur propre palette (InfernalSplat), sans cette grille.
 			SplatBiomeGrid grid;
@@ -890,7 +965,8 @@ namespace tools::world_gen
 				for (int i = 0; i < T; ++i)
 				{
 					const Vec2 p{ w.terrainOriginX + (i + 0.5) * px, w.terrainOriginZ + (j + 0.5) * px };
-					const SplatTexel t = ComputeSplat(w, p, gridPtr);
+					SplatTrace trace;
+					const SplatTexel t = ComputeSplat(w, p, gridPtr, &trace);
 					double sum = t.grass + t.dirt + t.rock + t.snow;
 					if (sum <= 1e-6) sum = 1.0;
 					// Quantification à somme exacte 255 (le reste va au canal dominant).
@@ -903,6 +979,7 @@ namespace tools::world_gen
 					const size_t q = static_cast<size_t>(j) * T + i;
 					for (int k = 0; k < 4; ++k) splatPx[q * 4 + k] = static_cast<uint8_t>(c[k]);
 					grassPx[q] = static_cast<uint8_t>(Clamp(t.grassMask * t.grass / sum, 0.0, 1.0) * 255.0);
+					groundPx[q] = static_cast<uint8_t>(ClassifyGround(t, trace));
 				}
 			});
 			std::vector<uint8_t> splat, grass;
@@ -912,6 +989,16 @@ namespace tools::world_gen
 			grass.insert(grass.end(), grassPx.begin(), grassPx.end());
 			if (!WriteBytes(w, zoneDir + "terrain_splat.slap", splat, err)) return false;
 			if (!WriteBytes(w, zoneDir + "terrain_grass.grms", grass, err)) return false;
+			// SND.2b — nature du sol (même grille que le splat) pour les sons de pas.
+			{
+				engine::world::GroundMap gm;
+				gm.size = static_cast<uint32_t>(T);
+				gm.originX = w.terrainOriginX;
+				gm.originZ = w.terrainOriginZ;
+				gm.texelM = px;
+				gm.classes = std::move(groundPx);
+				if (!WriteBytes(w, zoneDir + "terrain_ground.gndm", engine::world::SaveGroundMap(gm), err)) return false;
+			}
 			// v1.0.123 — masque de lave des Enfers (serveur : mort en 3 s ; LORE_BD §16.49) :
 			// canal A du splat réduit en blocs de F×F texels (moyenne, ≈ 20 m, 512² au plus :
 			// ≈ 1,3 Mo par cellule au lieu de 20 Mo), plus l'altitude la plus haute du sol du bloc
@@ -1104,6 +1191,7 @@ namespace tools::world_gen
 			rt.objectValue["splatmap"] = JStr(zoneDir + "terrain_splat.slap");
 			rt.objectValue["grass_mask"] = JStr(zoneDir + "terrain_grass.grms");
 			rt.objectValue["forest_mask"] = JStr(zoneDir + "terrain_forest.frms");
+			rt.objectValue["ground_map"] = JStr(zoneDir + "terrain_ground.gndm"); // SND.2b — sons de pas
 			rt.objectValue["hole_mask"] = JStr("");
 			rt.objectValue["grass_mask_visual_strength"] = JNum(0.35);
 			// v1.0.123 — Enfers : le canal A du splat est la lave (rendu lumineux, client).
@@ -1286,6 +1374,7 @@ namespace tools::world_gen
 				",\n  \"terrain_splatmap\": " + Q(zoneDir + "terrain_splat.slap") +
 				",\n  \"terrain_grass_mask\": " + Q(zoneDir + "terrain_grass.grms") +
 				",\n  \"terrain_forest_mask\": " + Q(zoneDir + "terrain_forest.frms") +
+				",\n  \"terrain_ground_map\": " + Q(zoneDir + "terrain_ground.gndm") +
 				",\n  \"source_edit_format_version\": 1,\n  \"terrain_world_size_m\": " + Num(w.terrainSizeM) +
 				",\n  \"texture_assets\": [],\n  \"exported_textures\": [],\n  \"texture_assets_source_missing\": [],\n  \"object_prefab_ids\": [],\n" +
 				"  \"note\": \"GENERE par tools/world_gen depuis world/" + wid + "/world_master.json.\"\n}\n";

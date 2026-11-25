@@ -1045,6 +1045,40 @@ TEXTURES.update({
 })
 
 
+def crop_top(name, seed, leaf, ripe, rows, accent=None, size=512):
+    """Dessus de parcelle vu de loin (cultures, LOD1/LOD2) : rangs parallèles à U
+    (même sens que les rangs du maillage), feuillage bruité, sillons de terre entre
+    les rangs, points de fleurs ou d'épis optionnels (accent = (couleur, densité))."""
+    h = w = size
+    n = fbm(h, w, seed, 5, 10)
+    d = fbm(h, w, seed + 3, 3, 40)
+    v = (np.arange(h)[:, None] + 0.0) / h
+    row = 0.5 + 0.5 * np.cos(2 * np.pi * (v * rows - 0.5))  # 1 au centre du rang (v = (k+0,5)/rows)
+    cover = np.clip(row * 1.4 + (n - 0.5) * 0.8, 0, 1)
+    plant = colorize(n, [(0, leaf), (1, ripe)])
+    soil = np.array((70, 56, 40), np.float32) * (0.85 + 0.3 * d)[..., None]
+    col = plant * cover[..., None] + soil * (1 - cover[..., None])
+    if accent:
+        c, dens = accent
+        rng = np.random.default_rng(seed)
+        m = (rng.random((h, w)) < dens) & (cover > 0.6)
+        m = m | np.roll(m, 1, 0) | np.roll(m, 1, 1)
+        col[m] = c
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(cover * 0.7 + n * 0.3, 2.0))
+    save(f"T_Decor_{name}_ORM.png", orm(n, 0.9, 0.0, 0.3))
+
+
+TEXTURES.update({
+    "Crop_Top_Wheat": lambda: crop_top("Crop_Top_Wheat", 111, (150, 120, 52), (206, 172, 92), 6),
+    "Crop_Top_Barley": lambda: crop_top("Crop_Top_Barley", 112, (156, 140, 78), (204, 190, 126), 6),
+    "Crop_Top_Corn": lambda: crop_top("Crop_Top_Corn", 113, (46, 84, 38), (98, 132, 58), 5, ((196, 168, 70), 0.004)),
+    "Crop_Top_Sunflower": lambda: crop_top("Crop_Top_Sunflower", 114, (48, 86, 40), (90, 124, 54), 5, ((222, 176, 34), 0.012)),
+    "Crop_Top_Rapeseed": lambda: crop_top("Crop_Top_Rapeseed", 115, (180, 168, 40), (226, 206, 52), 6, ((240, 222, 70), 0.03)),
+    "Crop_Top_Vine": lambda: crop_top("Crop_Top_Vine", 116, (44, 74, 36), (82, 108, 50), 2, ((70, 40, 70), 0.003)),
+})
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

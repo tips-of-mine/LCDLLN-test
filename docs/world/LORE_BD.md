@@ -1074,6 +1074,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.62](#1662-camp-de-loracle-bâti-selon-le-plan-v10136) | v1.0.136 | Camp de l'Oracle bâti selon le plan | Rocher bleu octogonal (≈ 300 m, ≈ 90 m), 8 escaliers blancs et 8 portes, océan de tentes, 5 tentes pyramidales, menhirs bleus, chemin des échoppes au sud-ouest ; plus de maisons ni de palissade. |
 | [16.63](#1663-atelier-décors--de-la-bd-au-jeu-v10137) | v1.0.137 | Atelier décors : de la BD au jeu | 182 objets génériques des tomes 1 à 5 modélisés (3 LOD, billboard), placés par le générateur ou au catalogue ; collection `decors` du lore ; signatures retirées ; enseignes à pictogramme ; tombes anciennes ; grands champs. |
 | [16.64](#1664-atelier-décors--tomes-6-à-14-v10138) | v1.0.138 | Atelier décors : tomes 6 à 14 | 19 objets génériques (n° 195 à 213) modélisés et placés ; tomes 11 à 14 sans objet générique nouveau ; signatures retirées, Empire du Jade réservé à l'extension. |
+| [16.65](#1665-rendu-lointain-et-océan-de-tentes-de-loracle-v10139) | v1.0.139 | Rendu lointain et océan de tentes de l'Oracle | Réserve matériaux 64 → 2048, LOD et billboards des arbres sombres, couvert des cultures, teinte aérienne au soleil réel ; quinze rangs de tentes de pèlerins (decor_214). |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5493,6 +5494,20 @@ Négation, dragons) : ils complètent seulement les références d'objets déjà
 `Cloth_Green`, `Wood_Painted`, `Parchment_Map`, `Glass_Rose`, `Earth`.
 
 **Contrôles** : `validate_decor.py` (416 assets), `world_gen_tests`, `sync_decors.py --check`.
+
+### 16.65 Rendu lointain et océan de tentes de l'Oracle (v1.0.139)
+
+**Retour du propriétaire** (23/11/2026, captures et journal client) : de loin, les arbres ne ressemblent pas à
+des arbres, les champs sont des rectangles, le relief lointain forme des « rectangles blancs » ; au Camp de
+l'Oracle, il n'y a pas assez de tentes autour du rocher.
+
+| Constat | Cause | Correction |
+|---|---|---|
+| Feuillages et cultures en aplats gris | Réserve bindless du moteur limitée à 64 matériaux et 64 textures, saturée par les décors : matériau par défaut (blanc, sans découpe alpha) | Réserve portée à 2048 (bornée aux limites du GPU), une erreur explicite si elle est atteinte |
+| Arbres sombres informes de loin | LOD1/LOD2 rangés à part (non lus), pas de billboard | LOD à côté du LOD0, billboards `_BB` générés (`build_tree_billboards.py`) |
+| Champs en rectangles | Rangs de cartes verticales seuls | Couvert horizontal texturé (rangs, sillons, fleurs) sur les LOD1/LOD2 des parcelles |
+| Relief lointain blanc la nuit | Teinte de la perspective aérienne calculée avec la lune comme soleil | Teinte calculée avec le soleil réel, comme le ciel |
+| Camp de l'Oracle clairsemé | Six rangs de tentes en panneaux de toit | Quinze rangs (≈ 3 000 tentes) de tentes de pèlerins modélisées (`decor_214`), tentes longues de familles avec leur feu |
 
 ## 17. Questions ouvertes
 

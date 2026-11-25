@@ -96,7 +96,7 @@ namespace engine::client
 			m_pendingEnterWorld.gender        = chosen.gender;
 			// Teinte de peau (DB, migration 0068) via CHARACTER_LIST -> Engine.
 			m_pendingEnterWorld.skinColorIdx  = chosen.skin_color_idx;
-			// Personnalisation (DB, migration 0097) via CHARACTER_LIST -> Engine.
+			// Personnalisation (DB, migration 0101) via CHARACTER_LIST -> Engine.
 			m_pendingEnterWorld.appearance    = chosen.appearance;
 			// Niveau du perso (CHARACTER_LIST) -> Engine -> arbre de competences.
 			m_pendingEnterWorld.level         = chosen.level;

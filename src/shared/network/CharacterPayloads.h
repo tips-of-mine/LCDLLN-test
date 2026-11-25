@@ -112,7 +112,7 @@ namespace engine::network
 		std::string faction_str;
 		// Personnalisation (bloc CharacterAppearance encodé, u8 longueur + octets).
 		// Appendue après faction_str (wire-breaking, lock-step client/master). Vide
-		// pour un personnage créé avant la migration 0097 => apparence par défaut.
+		// pour un personnage créé avant la migration 0101 => apparence par défaut.
 		std::vector<uint8_t> appearance;
 	};
 

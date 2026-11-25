@@ -44,7 +44,7 @@ namespace engine::server
 		// Alimentent le moteur de stats (PV à l'enter-world).
 		// Monde « Royaumes » — `race_str` (migration 0033) ajouté EN FIN (indice 9) :
 		// ville de départ quand la position sauvegardée est hors du monde généré.
-		// Personnalisation (migration 0097) — colonne `appearance` ajoutée EN FIN. Si la
+		// Personnalisation (migration 0101) — colonne `appearance` ajoutée EN FIN. Si la
 		// colonne manque encore (shard démarré avant que le master n'ait appliqué la
 		// migration), repli sur la requête historique : le personnage entre en jeu
 		// avec l'apparence par défaut au lieu de perdre sa position et son nom.
@@ -55,7 +55,7 @@ namespace engine::server
 			"WHERE id = ? AND deleted_at IS NULL");
 		if (!stmt || !stmt->Bind(0, characterId) || !stmt->Execute())
 		{
-			LOG_WARN(Net, "[ServerApp] LoadSpawnFromDb : colonne appearance illisible (migration 0097 absente ?) — repli");
+			LOG_WARN(Net, "[ServerApp] LoadSpawnFromDb : colonne appearance illisible (migration 0101 absente ?) — repli");
 			withAppearance = false;
 			stmt = cache->Acquire(mysql,
 				"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender, level, faction_str, class_str, race_str "
@@ -79,7 +79,7 @@ namespace engine::server
 		outFactionId = stmt->GetString(7);
 		outClassId = stmt->GetString(8);
 		outRaceId = stmt->GetString(9);
-		// Personnalisation (migration 0097) — ajoutée EN FIN (indice 10), lue en hexadécimal.
+		// Personnalisation (migration 0101) — ajoutée EN FIN (indice 10), lue en hexadécimal.
 		outAppearance = withAppearance ? engine::network::AppearanceFromHex(stmt->GetString(10))
 			: std::vector<uint8_t>{};
 		return true;
@@ -1133,7 +1133,7 @@ namespace engine::server
 				acceptedClient.factionId = std::move(dbFactionId);
 				acceptedClient.classId = std::move(dbClassId);
 				acceptedClient.raceId = std::move(dbRaceId);
-				// Personnalisation (migration 0097) → identité du snapshot (autres joueurs).
+				// Personnalisation (migration 0101) → identité du snapshot (autres joueurs).
 				acceptedClient.appearance = std::move(dbAppearance);
 				LOG_INFO(Net,
 					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, name=\"{}\", gender=\"{}\", pos=({:.2f}, {:.2f}, {:.2f}))",

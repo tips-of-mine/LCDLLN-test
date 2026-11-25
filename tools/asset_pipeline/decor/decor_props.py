@@ -4062,6 +4062,75 @@ def p_battering_ram(spec, lod):
     return m.out()
 
 
+# ================================================ Camp de l'Oracle (23/11/2026)
+def p_tent_pilgrim(spec, lod):
+    """Tente de pèlerin à deux pans (retour propriétaire du 23/11/2026 : « océan de
+    tentes » du Camp de l'Oracle). Faîtage selon X, entrée à l'extrémité -X (rabat
+    relevé), pignon arrière fermé, mâts aux deux bouts, haubans et piquets au LOD0.
+    Variantes : _1 toile écrue, _2 toile rapiécée (pièces ocre), _3 peaux tannées,
+    Tent_Pilgrim_Long_1 tente longue de famille."""
+    m = M()
+    sid = spec["id"]
+    long_ = "Long" in sid
+    L, W, H = (5.0, 2.8, 2.3) if long_ else {"1": (3.0, 2.2, 1.8), "2": (3.2, 2.3, 1.85), "3": (2.6, 2.0, 1.6)}[sid[-1]]
+    mat = "Leather" if sid.endswith("_3") and not long_ else "Canvas"
+    c = m.p(mat)
+    hx, hw = L / 2, W / 2
+    # deux pans (légèrement débordants)
+    _quad(c, (-hx, -hw, 0.05), (hx, -hw, 0.05), (hx, 0, H), (-hx, 0, H))
+    _quad(c, (hx, hw, 0.05), (-hx, hw, 0.05), (-hx, 0, H), (hx, 0, H))
+    # pignon arrière fermé (+X)
+    i = len(c.v)
+    c.v += [Vector((hx, -hw, 0.05)), Vector((hx, hw, 0.05)), Vector((hx, 0, H))]
+    c.f.append((i, i + 1, i + 2))
+    c.uv.append([(0, 0), (1, 0), (0.5, 1)])
+    c.cn.append(None)
+    # entrée (-X) : moitié gauche fermée, moitié droite relevée sur le pan
+    i = len(c.v)
+    c.v += [Vector((-hx, 0, H)), Vector((-hx, -hw, 0.05)), Vector((-hx, -hw * 0.15, 0.05))]
+    c.f.append((i, i + 1, i + 2))
+    c.uv.append([(0.5, 1), (0, 0), (0.42, 0)])
+    c.cn.append(None)
+    if lod < 2:
+        i = len(c.v)   # rabat roulé contre le pan +Y
+        c.v += [Vector((-hx, 0, H)), Vector((-hx - 0.25, hw * 0.9, 0.35)), Vector((-hx - 0.05, hw * 0.55, 0.25))]
+        c.f.append((i, i + 1, i + 2))
+        c.uv.append([(0.5, 1), (1, 0), (0.7, 0)])
+        c.cn.append(None)
+    if sid.endswith("_2") or long_:
+        pt = m.p("Cloth_Ochre")
+        rng = random.Random(spec["seed"])
+        for k in range(3 if lod == 0 else (1 if lod == 1 else 0)):
+            x0 = rng.uniform(-hx + 0.3, hx - 0.9)
+            t0 = rng.uniform(0.15, 0.6)
+            for side in (-1, 1):
+                if rng.random() < 0.5:
+                    continue
+                a = Vector((x0, side * hw * (1 - t0), 0.05 + H * t0))
+                b = Vector((x0 + 0.6, side * hw * (1 - t0), 0.05 + H * t0))
+                t1 = t0 + 0.2
+                cc = Vector((x0 + 0.6, side * hw * (1 - t1), 0.05 + H * t1))
+                d = Vector((x0, side * hw * (1 - t1), 0.05 + H * t1))
+                off = Vector((0, side * 0.012, 0.012))
+                q = [a + off, b + off, cc + off, d + off]
+                _quad(pt, *(q if side < 0 else [q[1], q[0], q[3], q[2]]))
+    w = m.p("Wood_Dark")
+    for x in (-hx - 0.02, hx + 0.02):
+        cyl(w, (x, 0, 0), (x, 0, H + 0.25), 0.035, 0.03, S(lod, 5))
+    if long_:
+        cyl(w, (0, 0, 0), (0, 0, H + 0.05), 0.035, 0.03, S(lod, 5))
+    if lod == 0:
+        r = m.p("Rope")
+        for x in (-hx - 0.02, hx + 0.02):
+            g = Vector((x + (0.9 if x > 0 else -0.9), 0, 0))
+            cyl(r, (x, 0, H + 0.2), tuple(g), 0.01, 0.01, 4, False)
+            cyl(w, tuple(g), tuple(g + Vector((0, 0, 0.25))), 0.025, 0.02, 4)
+        for x in (-hx * 0.6, hx * 0.6):
+            for side in (-1, 1):
+                cyl(w, (x, side * (hw + 0.25), 0), (x, side * (hw + 0.25), 0.2), 0.02, 0.015, 4)
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

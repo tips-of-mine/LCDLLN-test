@@ -24,7 +24,7 @@ struct MaterialGpuData
     vec2 padding;
 };
 
-layout(set = 0, binding = 0) uniform sampler2D uTextures[128];
+layout(set = 0, binding = 0) uniform sampler2D uTextures[2048]; // = MaterialDescriptorCache::kMaxBindlessTextures
 layout(set = 0, binding = 1) readonly buffer MaterialBuffer
 {
     MaterialGpuData materials[];

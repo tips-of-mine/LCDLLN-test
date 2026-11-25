@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace
@@ -167,6 +168,31 @@ int main()
 		ctx.swimming = true;
 		Check(FootstepSoundId(ctx) == "swim_stroke", "nage");
 		Check(FootstepSoundId(FootstepContext{}) == "step_dirt", "sol inconnu : terre");
+		// SND.2b — la nature du sol (carte du générateur) prime sur la couche du splat ;
+		// nage, eau peu profonde et plancher restent prioritaires.
+		{
+			using engine::world::GroundClass;
+			FootstepContext g;
+			g.layer = GroundLayer::Dirt; // une route est « terre » au splat
+			const std::pair<GroundClass, const char*> expected[] = {
+				{ GroundClass::Grass, "step_grass" }, { GroundClass::Dirt, "step_dirt" },
+				{ GroundClass::PackedEarth, "step_packed_earth" }, { GroundClass::Gravel, "step_gravel" },
+				{ GroundClass::Rock, "step_rock" }, { GroundClass::Snow, "step_snow_crunch" },
+				{ GroundClass::Sand, "step_sand" }, { GroundClass::Mud, "step_mud_squelch" },
+				{ GroundClass::Marble, "step_marble" } };
+			for (const auto& [cls, id] : expected)
+			{
+				g.ground = cls;
+				Check(FootstepSoundId(g) == id, id);
+			}
+			g.ground = GroundClass::Unknown;
+			Check(FootstepSoundId(g) == "step_dirt", "nature inconnue : repli sur le splat");
+			g.ground = GroundClass::Sand;
+			g.heightAboveTerrain = 1.0f;
+			Check(FootstepSoundId(g) == "step_wood", "plancher prioritaire sur le sol");
+			g.inShallowWater = true;
+			Check(FootstepSoundId(g) == "step_water", "eau prioritaire sur le plancher et le sol");
+		}
 		Check(FootstepVolume(1.0f) < FootstepVolume(7.0f), "la course s'entend plus que la marche");
 	}
 

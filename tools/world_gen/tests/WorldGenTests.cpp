@@ -50,6 +50,7 @@
 
 #include "src/shared/world/instances/Buildings.h"
 #include "src/shared/world/instances/ForestMask.h"
+#include "src/shared/world/GroundMap.h"
 #include "src/shared/world/instances/ScatterInstances.h"
 
 #include <zone_builder/JsonDocument.h>
@@ -371,6 +372,25 @@ namespace
 		Check(lavaMer > 255u * 5000u && lavaMaskOk && lavaLayer,
 			"lave v1.0.123 : canal A = lave (mer de lave), lava_mask.lvmk = blocs moyennes, zone.json lava_layer");
 		Check(noGrassMask && noForest, "palette v1.0.83 : Enfers sans masque d'herbe ni foret");
+		// SND.2b — sols des Enfers : terre, terre battue ou pierre (lave = croûte), jamais
+		// d'herbe, de neige, de sable, de boue ni de marbre.
+		{
+			namespace ew = engine::world;
+			bool onlyInfernal = true; size_t rockC = 0, dirtC = 0;
+			for (const char* c : { "n000_e000", "n000_w001" })
+			{
+				ew::GroundMap gm; std::string ge;
+				onlyInfernal = onlyInfernal && ew::LoadGroundMap(ReadBytes(out / "zones" / (std::string("enfers_") + c) / "terrain_ground.gndm"), gm, ge);
+				for (uint8_t v : gm.classes)
+				{
+					const auto g = static_cast<ew::GroundClass>(v);
+					rockC += g == ew::GroundClass::Rock ? 1 : 0;
+					dirtC += g == ew::GroundClass::Dirt ? 1 : 0;
+					if (g != ew::GroundClass::Rock && g != ew::GroundClass::Dirt && g != ew::GroundClass::PackedEarth) onlyInfernal = false;
+				}
+			}
+			Check(onlyInfernal && rockC > 0 && dirtC > 0, "sols SND.2b : Enfers en terre, terre battue et pierre seulement");
+		}
 		Check(noGreenProps, "palette v1.0.83 : decor des Enfers sans broussaille, herbe ni arbre vivant");
 		// Carte du monde : lave jaune-orange dans la mer de lave, aucun pixel vert dans le carré 3×3.
 		{
@@ -834,6 +854,36 @@ namespace
 			zoneKey = ss.str().find("terrain_forest.frms") != std::string::npos;
 		}
 		Check(zoneKey, "foret : zone.json reference la densite forestiere");
+		// SND.2b — nature du sol (sons de pas) : même grille que le splat, rues et routes
+		// de Kendrhir en terre battue (sous de la terre au splat), herbe présente,
+		// classes toutes connues ; zone.json et runtime_manifest la référencent.
+		{
+			namespace ew = engine::world;
+			ew::GroundMap gm; std::string ge;
+			const bool okGround = ew::LoadGroundMap(ReadBytes(tmp / "zones" / cell / "terrain_ground.gndm"), gm, ge);
+			const std::vector<uint8_t> splat = ReadBytes(tmp / "zones" / cell / "terrain_splat.slap");
+			uint32_t T = 0;
+			if (splat.size() >= 12) std::memcpy(&T, splat.data() + 4, 4);
+			size_t packed = 0, packedOnDirt = 0, grassC = 0, known = 0;
+			if (okGround && gm.size == T && splat.size() == 12u + static_cast<size_t>(T) * T * 4u)
+				for (size_t q = 0; q < gm.classes.size(); ++q)
+				{
+					const uint8_t v = gm.classes[q];
+					known += (v > 0 && v < ew::kGroundClassCount) ? 1 : 0;
+					grassC += v == static_cast<uint8_t>(ew::GroundClass::Grass) ? 1 : 0;
+					if (v != static_cast<uint8_t>(ew::GroundClass::PackedEarth)) continue;
+					++packed;
+					const uint8_t* px = splat.data() + 12 + q * 4;
+					packedOnDirt += (px[1] >= px[0] && px[1] >= px[2] && px[1] >= px[3]) ? 1 : 0;
+				}
+			Check(okGround && gm.size == T && known == gm.classes.size() && std::abs(gm.texelM * T - 10000.0) < 1.0,
+				"sols SND.2b : terrain_ground.gndm sur la grille du splat, classes connues");
+			Check(packed > 1000 && packedOnDirt * 100 >= packed * 95 && grassC > 1000,
+				"sols SND.2b : rues et routes en terre battue (terre au splat), herbe presente");
+			Check(ReadText(tmp / "zones" / cell / "zone.json").find("terrain_ground.gndm") != std::string::npos
+				&& ReadText(tmp / "zones" / cell / "runtime_manifest.json").find("\"terrain_ground_map\"") != std::string::npos,
+				"sols SND.2b : zone.json et runtime_manifest referencent la carte des sols");
+		}
 		fs::remove_all(tmp, ec);
 	}
 
@@ -4421,7 +4471,7 @@ namespace
 		for (const ScatterDef& s : w->scatter)
 		{
 			const double d = dist(s.position);
-			if (s.mesh.find("Overhang_Roof_Plaster") != std::string::npos && (s.flags & 1u) && d > 235.0 && d < 355.0) ++tents;
+			if (s.mesh.find("Tent_Pilgrim_") != std::string::npos && (s.flags & 1u) && d > 220.0 && d < 432.0) ++tents;
 			if (s.mesh.find("Stairs_Exterior_Straight") != std::string::npos && d < 210.0) ++stairs;
 			if (s.mesh.find("Door_2_Round") != std::string::npos && d < 170.0) ++doors;
 			if (s.mesh.find("Pebble_Square_5") != std::string::npos && s.scale >= 12.0 && d > 420.0 && d < 560.0) ++stones;
@@ -4437,7 +4487,8 @@ namespace
 		std::fprintf(stderr, "  oracle : maisons %d, tentes %d, marches %d, portes %d, menhirs %d (%d lueurs), echoppes SO %d\n",
 			houses, tents, stairs, doors, stones, blueStones, stallsSw);
 		Check(houses == 0, "oracle v1.0.136 : aucune maison europeenne dans le camp");
-		Check(tents >= 40, "oracle v1.0.136 : ocean de tentes (40 tentes au moins)");
+		// Retour propriétaire du 23/11/2026 : « pas assez de tentes autour » -> quinze rangs.
+		Check(tents >= 1200, "oracle : ocean de tentes de pelerins (1200 tentes au moins)");
 		Check(stairs == 8 * 33 && doors == 8, "oracle v1.0.136 : 8 escaliers et 8 portes");
 		Check(stones >= 18 && blueStones >= 9, "oracle v1.0.136 : menhirs bleus sur le grand cercle");
 		Check(stallsSw >= 8, "oracle v1.0.136 : echoppes des faux devins le long du chemin du sud-ouest");

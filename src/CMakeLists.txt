@@ -793,6 +793,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(world_map_zoom_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/places/WorldMapZoomTests.cpp)
 
+  # Carte du monde — libellés au survol et déroulé du parchemin (en-tête pur).
+  lcdlln_add_simple_test(world_map_presentation_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/places/WorldMapPresentationTests.cpp)
+
   # Atelier décors — enseignes de service : clé du service, prise au curseur (en-tête pur).
   lcdlln_add_simple_test(service_signs_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/ServiceSignsTests.cpp)

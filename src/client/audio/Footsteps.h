@@ -6,6 +6,8 @@
 // Le branchement (position, contrôleur de personnage, carte des sols) est dans
 // Engine (EngineAudio.cpp).
 
+#include "src/shared/world/GroundMap.h"
+
 #include <cstdint>
 #include <string_view>
 
@@ -62,15 +64,21 @@ namespace engine::audio
 	/// Contexte du pied au moment du pas.
 	struct FootstepContext
 	{
+		/// SND.2b — nature du sol (carte des sols du générateur) ; prioritaire sur
+		/// `layer` quand elle est connue.
+		engine::world::GroundClass ground = engine::world::GroundClass::Unknown;
+		/// Couche dominante du splat : repli quand `ground` est inconnu.
 		GroundLayer layer = GroundLayer::Unknown;
 		bool swimming = false;
 		bool inShallowWater = false;   ///< pied dans l'eau sans nager
 		float heightAboveTerrain = 0.0f; ///< m : > 0,3 = plancher (bâtiment, pont)
 	};
 
-	/// Identifiant du son de pas (ids de game/data/gameplay/surface_table.json :
-	/// step_grass, step_dirt, step_rock, step_snow_crunch, step_water,
-	/// swim_stroke, step_wood…). Sol inconnu : step_dirt.
+	/// Identifiant du son de pas (ids de game/data/audio/zone_audio.json :
+	/// step_grass, step_dirt, step_packed_earth, step_gravel, step_rock,
+	/// step_marble, step_snow_crunch, step_sand, step_mud_squelch, step_water,
+	/// swim_stroke, step_wood). Ordre : nage, eau peu profonde, plancher, nature
+	/// du sol (SND.2b), couche du splat. Sol inconnu : step_dirt.
 	std::string_view FootstepSoundId(const FootstepContext& ctx);
 
 	/// Volume relatif d'un pas selon la vitesse (marche plus discrète que la course).

@@ -36,7 +36,9 @@
       "variants": [
         "audio/sfx/footsteps/grass_2.wav",
         "audio/sfx/footsteps/grass_3.wav",
-        "audio/sfx/footsteps/grass_4.wav"
+        "audio/sfx/footsteps/grass_4.wav",
+        "audio/sfx/footsteps/grass_5.wav",
+        "audio/sfx/footsteps/grass_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -52,7 +54,9 @@
       "variants": [
         "audio/sfx/footsteps/dirt_2.wav",
         "audio/sfx/footsteps/dirt_3.wav",
-        "audio/sfx/footsteps/dirt_4.wav"
+        "audio/sfx/footsteps/dirt_4.wav",
+        "audio/sfx/footsteps/dirt_5.wav",
+        "audio/sfx/footsteps/dirt_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -68,7 +72,9 @@
       "variants": [
         "audio/sfx/footsteps/dirt_2.wav",
         "audio/sfx/footsteps/dirt_3.wav",
-        "audio/sfx/footsteps/dirt_4.wav"
+        "audio/sfx/footsteps/dirt_4.wav",
+        "audio/sfx/footsteps/dirt_5.wav",
+        "audio/sfx/footsteps/dirt_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -84,7 +90,9 @@
       "variants": [
         "audio/sfx/footsteps/gravel_2.wav",
         "audio/sfx/footsteps/gravel_3.wav",
-        "audio/sfx/footsteps/gravel_4.wav"
+        "audio/sfx/footsteps/gravel_4.wav",
+        "audio/sfx/footsteps/gravel_5.wav",
+        "audio/sfx/footsteps/gravel_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -100,7 +108,9 @@
       "variants": [
         "audio/sfx/footsteps/rock_2.wav",
         "audio/sfx/footsteps/rock_3.wav",
-        "audio/sfx/footsteps/rock_4.wav"
+        "audio/sfx/footsteps/rock_4.wav",
+        "audio/sfx/footsteps/rock_5.wav",
+        "audio/sfx/footsteps/rock_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -116,7 +126,9 @@
       "variants": [
         "audio/sfx/footsteps/sand_2.wav",
         "audio/sfx/footsteps/sand_3.wav",
-        "audio/sfx/footsteps/sand_4.wav"
+        "audio/sfx/footsteps/sand_4.wav",
+        "audio/sfx/footsteps/sand_5.wav",
+        "audio/sfx/footsteps/sand_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -132,7 +144,9 @@
       "variants": [
         "audio/sfx/footsteps/snow_crunch_2.wav",
         "audio/sfx/footsteps/snow_crunch_3.wav",
-        "audio/sfx/footsteps/snow_crunch_4.wav"
+        "audio/sfx/footsteps/snow_crunch_4.wav",
+        "audio/sfx/footsteps/snow_crunch_5.wav",
+        "audio/sfx/footsteps/snow_crunch_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -148,7 +162,9 @@
       "variants": [
         "audio/sfx/footsteps/snow_crunch_2.wav",
         "audio/sfx/footsteps/snow_crunch_3.wav",
-        "audio/sfx/footsteps/snow_crunch_4.wav"
+        "audio/sfx/footsteps/snow_crunch_4.wav",
+        "audio/sfx/footsteps/snow_crunch_5.wav",
+        "audio/sfx/footsteps/snow_crunch_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -164,7 +180,9 @@
       "variants": [
         "audio/sfx/footsteps/mud_squelch_2.wav",
         "audio/sfx/footsteps/mud_squelch_3.wav",
-        "audio/sfx/footsteps/mud_squelch_4.wav"
+        "audio/sfx/footsteps/mud_squelch_4.wav",
+        "audio/sfx/footsteps/mud_squelch_5.wav",
+        "audio/sfx/footsteps/mud_squelch_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -180,7 +198,9 @@
       "variants": [
         "audio/sfx/footsteps/wood_2.wav",
         "audio/sfx/footsteps/wood_3.wav",
-        "audio/sfx/footsteps/wood_4.wav"
+        "audio/sfx/footsteps/wood_4.wav",
+        "audio/sfx/footsteps/wood_5.wav",
+        "audio/sfx/footsteps/wood_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -196,7 +216,9 @@
       "variants": [
         "audio/sfx/footsteps/water_2.wav",
         "audio/sfx/footsteps/water_3.wav",
-        "audio/sfx/footsteps/water_4.wav"
+        "audio/sfx/footsteps/water_4.wav",
+        "audio/sfx/footsteps/water_5.wav",
+        "audio/sfx/footsteps/water_6.wav"
       ],
       "bus": "SFX",
       "minDistance": 1.0,
@@ -251,6 +273,42 @@
       "maxDistance": 18.0,
       "loop": false,
       "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_packed_earth",
+      "path": "audio/sfx/footsteps/packed_earth_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/packed_earth_2.wav",
+        "audio/sfx/footsteps/packed_earth_3.wav",
+        "audio/sfx/footsteps/packed_earth_4.wav",
+        "audio/sfx/footsteps/packed_earth_5.wav",
+        "audio/sfx/footsteps/packed_earth_6.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_marble",
+      "path": "audio/sfx/footsteps/marble_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/marble_2.wav",
+        "audio/sfx/footsteps/marble_3.wav",
+        "audio/sfx/footsteps/marble_4.wav",
+        "audio/sfx/footsteps/marble_5.wav",
+        "audio/sfx/footsteps/marble_6.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.75,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },

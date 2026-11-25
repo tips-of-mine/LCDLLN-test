@@ -349,7 +349,7 @@ namespace engine::server
 		const std::string genderStr = (parsed->gender == "female") ? "female" : "male";
 		// Teinte de peau (skinColorIdx) : entier non signé borné [0, 255] (0 = claire).
 		const uint32_t skinColorIdx = static_cast<uint32_t>(parsed->customization.skinColorIdx);
-		// Personnalisation (migration 0097) : bloc normalisé (bornes génériques,
+		// Personnalisation (migration 0101) : bloc normalisé (bornes génériques,
 		// défaut si absent ou mal formé), stocké en hexadécimal via UNHEX().
 		const std::string appearanceHex =
 			engine::network::AppearanceToHex(engine::network::NormalizeAppearance(parsed->appearance));

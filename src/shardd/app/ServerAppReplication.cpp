@@ -215,7 +215,7 @@ namespace engine::server
 			// TD.6 : genre du perso (migration 0067, "male"/"female") → le client sélectionne
 			// le bon mesh skinné pour l'avatar distant. Vide = fallback "male" côté rendu.
 			outEntity.gender = client->gender;
-			// Personnalisation : race + apparence (migration 0097) → le client assemble
+			// Personnalisation : race + apparence (migration 0101) → le client assemble
 			// le corps de la race et les pièces choisies (visage, coiffure, cornes…).
 			outEntity.raceId = client->raceId;
 			outEntity.appearance = client->appearance;

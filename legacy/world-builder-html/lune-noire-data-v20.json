@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.138",
+    "version": "1.0.139",
     "notes": [
+      "v1.0.139 : [DÉCISION] Camp de l'Oracle : océan de tentes de pèlerins (quinze rangs) ; rendu lointain corrigé (arbres, champs, horizon).",
       "v1.0.138 : [DÉCISION] Atelier décors étendu aux tomes 6 à 14 : 19 objets génériques (n° 195 à 213) modélisés et placés (clé decors), éléments signature retirés.",
       "v1.0.137 : [DÉCISION] Atelier décors (BD tomes 1 à 5) : 182 objets génériques modélisés et placés (clé decors), éléments signature retirés en attente d'autorisation, enseignes à pictogramme, tombes anciennes, grands champs.",
       "v1.0.132 : [DÉCISION] Carte du monde, lot 5 (lieux bâtis) : tours, châteaux, phares, cascades et ponts générés en jeu ; 72 lieux reclassés ; Château de Garundel.",
@@ -244426,7 +244427,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -247696,6 +247697,20 @@
           "nom": "Éléments signature des tomes 6 à 14 retirés",
           "decision": "Décision du propriétaire (22/11/2026) : les éléments signature des tomes 6 à 14 (trônes, palais et cités, ordres et bannières, Négation, dragons, machine de guerre naine, Empire du Jade) restent retirés en attendant l'autorisation ; ceux de l'Empire du Jade sont réservés à l'extension. LORE_BD §16.64.",
           "version": "1.0.138"
+        },
+        {
+          "collection": "decors",
+          "id": "oracle_ocean_tentes_v1139",
+          "nom": "Camp de l'Oracle : océan de tentes de pèlerins",
+          "decision": "Retour du propriétaire (23/11/2026, « pas assez de tentes autour ») : l'océan de tentes du Camp de l'Oracle passe de six à quinze rangs (du chemin de ronde jusqu'à environ 425 m du rocher, environ 3 000 tentes), en tentes de pèlerins modélisées (decor_214 : toile écrue, toile rapiécée, peaux, tente longue de famille avec son feu), entrées tournées vers le rocher ; le cimetière et les écuries sont posés avant et contournés. LORE_BD §16.65.",
+          "version": "1.0.139"
+        },
+        {
+          "collection": "decors",
+          "id": "rendu_lointain_v1139",
+          "nom": "Rendu lointain : arbres, champs et horizon",
+          "decision": "Retour du propriétaire (23/11/2026) : arbres informes de loin, champs en rectangles, relief en « rectangles blancs ». Corrigés côté client et assets : réserve de matériaux et de textures du moteur portée de 64 à 2048 (les décors la saturaient), arbres sombres dotés de leurs niveaux de détail et d'un billboard, couvert texturé des cultures vu de loin, teinte de la perspective aérienne calculée avec le soleil réel (la nuit, le relief se fond dans le ciel nocturne). LORE_BD §16.65.",
+          "version": "1.0.139"
         }
       ]
     },
@@ -361380,6 +361395,28 @@
       "placement": "champs de bataille",
       "generated": true,
       "source": "[BD] T10"
+    },
+    {
+      "id": "decor_214",
+      "num": 214,
+      "name": "Tente de pèlerin à deux pans",
+      "tome": 0,
+      "family": "objets",
+      "meshes": [
+        "Tent_Pilgrim_1",
+        "Tent_Pilgrim_2",
+        "Tent_Pilgrim_3",
+        "Tent_Pilgrim_Long_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P012",
+        "T5-P021",
+        "demande du propriétaire (23/11/2026)"
+      ],
+      "placement": "Camp de l'Oracle : océan de tentes (quinze rangs)",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
     }
   ]
 }

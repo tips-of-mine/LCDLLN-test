@@ -132,7 +132,7 @@ namespace engine::server
 			if (e.gender.empty()) e.gender = "male";
 			// Teinte de peau (migration 0068). Defaut 0 (claire) si vide/NULL.
 			e.skin_color_idx = static_cast<uint8_t>(stmt->GetUInt64(17));
-			// Personnalisation (migration 0097), lue en hexadécimal ; vide si NULL
+			// Personnalisation (migration 0101), lue en hexadécimal ; vide si NULL
 			// (personnage antérieur) => apparence par défaut côté client.
 			e.appearance = engine::network::AppearanceFromHex(stmt->GetString(18));
 			entries.push_back(std::move(e));

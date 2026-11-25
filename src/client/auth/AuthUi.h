@@ -128,7 +128,7 @@ namespace engine::client
 			/// (migration 0068). Consommée par Engine::EnterWorld -> SetAvatarSkinTone.
 			uint8_t skinColorIdx = 0;
 			/// Personnalisation (bloc CharacterAppearance encodé) reçue via
-			/// CHARACTER_LIST (migration 0097). Vide = personnage antérieur -> défaut.
+			/// CHARACTER_LIST (migration 0101). Vide = personnage antérieur -> défaut.
 			/// Consommée par Engine::EnterWorld (assemblage de l'avatar local).
 			std::vector<uint8_t> appearance;
 			/// Niveau du personnage (reçu via CHARACTER_LIST, affiché « niv. N » au
@@ -1009,7 +1009,7 @@ namespace engine::client
 		/// CharacterCreateRequestPayload.customization.skinColorIdx (migration 0068).
 		uint8_t m_characterSkinColorIdx = 0;
 		/// Personnalisation choisie (bloc CharacterAppearance encodé), envoyée au
-		/// master dans CharacterCreateRequestPayload.appearance (migration 0097).
+		/// master dans CharacterCreateRequestPayload.appearance (migration 0101).
 		std::vector<uint8_t> m_characterAppearance;
 		uint32_t m_activeField = 0;
 		int32_t m_hoveredFieldIndex = -1;

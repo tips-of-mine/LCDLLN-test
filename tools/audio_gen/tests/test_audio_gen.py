@@ -74,6 +74,40 @@ class FootstepTests(unittest.TestCase):
             self.assertLess(abs(float(x[0])), 0.01, surface)      # pas de clic au début
             self.assertLess(abs(float(x[-1])), 0.01, surface)     # ni à la fin
 
+    @staticmethod
+    def _narrowband_share(x: np.ndarray) -> float:
+        """Part de l'énergie 60–400 Hz concentrée dans la fenêtre de 20 Hz la plus
+        chargée : ≈ 0,7–0,8 pour un choc à sinus amorti (« tambour »), ≈ 0,2–0,35
+        pour un impact de bruit filtré."""
+        spec = np.abs(np.fft.rfft(x, n=1 << 15)) ** 2
+        f = np.fft.rfftfreq(1 << 15, 1.0 / dsp.SR)
+        band = spec[(f >= 60.0) & (f <= 400.0)]
+        win = max(1, int(20.0 / (f[1] - f[0])))
+        return float(np.convolve(band, np.ones(win), "valid").max() / (band.sum() + 1e-12))
+
+    def test_no_drum_on_reworked_surfaces(self):
+        """SND.2b — sols refaits : aucun appui tonal (plus d'effet tambour) et peu
+        d'énergie sous 200 Hz."""
+        for k, surface in enumerate(sfx_footsteps.SURFACES):
+            if surface in sfx_footsteps.LEGACY:
+                continue
+            for v in range(sfx_footsteps.VARIANTS[surface]):
+                x = sfx_footsteps.make(surface, dsp.rng(1000 * k + v + 1))
+                self.assertLess(self._narrowband_share(x), 0.45, f"{surface}_{v + 1}")
+                spec = np.abs(np.fft.rfft(x)) ** 2
+                f = np.fft.rfftfreq(len(x), 1.0 / dsp.SR)
+                self.assertLess(float(spec[f < 200.0].sum() / spec.sum()), 0.5, f"{surface}_{v + 1}")
+
+    def test_variants(self):
+        """SND.2b — 6 variantes par sol refait, 4 pour les sols inchangés ; deux
+        variantes d'un même sol ne sont jamais identiques."""
+        for k, surface in enumerate(sfx_footsteps.SURFACES):
+            n = sfx_footsteps.VARIANTS[surface]
+            self.assertEqual(n, 4 if surface in sfx_footsteps.LEGACY else 6, surface)
+            a = sfx_footsteps.make(surface, dsp.rng(1000 * k + 1))
+            b = sfx_footsteps.make(surface, dsp.rng(1000 * k + 2))
+            self.assertFalse(len(a) == len(b) and np.allclose(a, b), surface)
+
 
 class UiSoundTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("fluidsynth") and Path("/usr/share/sounds/sf2/FluidR3_GM.sf2").exists(),

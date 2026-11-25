@@ -174,7 +174,7 @@ namespace engine
 				m_avatarSkinTone = (enterCmd.skinColorIdx == 1u) ? 1 : 0;
 				LOG_INFO(Core, "[EnterWorld] teinte peau '{}' = {}",
 					enterCmd.characterName, m_avatarSkinTone == 1 ? "foncee" : "claire");
-				// Personnalisation (DB serveur via CHARACTER_LIST, migration 0097) : bloc
+				// Personnalisation (DB serveur via CHARACTER_LIST, migration 0101) : bloc
 				// décodé puis borné au catalogue de la race ; absent -> apparence par défaut.
 				m_localAppearance = engine::network::CharacterAppearance::DecodeOrDefault(enterCmd.appearance);
 				m_appearanceCatalog.Sanitize(enterCmd.raceId.empty() ? std::string("humains") : enterCmd.raceId,

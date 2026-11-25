@@ -984,7 +984,8 @@ namespace tools::world_gen
 			// Raid de la salle des Échos : le Gardien (170) au centre, quatre échos (171).
 			{
 				SpawnerDef g;
-				g.id = "quete_" + c.id + "_gardien_echos"; // préfixe « quete_ » : cible de quête sur la minicarte (quest_poi.json) g.archetypeId = 170; g.position = ec; g.y = floorY;
+				// Préfixe « quete_ » : cible de quête sur la minicarte (quest_poi.json).
+				g.id = "quete_" + c.id + "_gardien_echos"; g.archetypeId = 170; g.position = ec; g.y = floorY;
 				g.count = 1; g.respawnSec = 1800; g.leashM = 14.0;
 				w.spawners.push_back(g);
 				for (int k = 0; k < 4; ++k)

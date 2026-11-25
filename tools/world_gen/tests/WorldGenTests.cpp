@@ -4288,6 +4288,9 @@ namespace
 		// port avec navires à quai et grues ; champs de la capitale repoussés hors des faubourgs.
 		Check(count("Ship_Cog_1", 0u) >= 4 && count("Crane_Wood_1", 1u) == 2 && count("Boardwalk_Deck_1", 3u) >= 100,
 			"acropole v1.0.140 : port de Lhynn (navires amarres, grues, jetees)");
+		int depots = 0;
+		for (const BuildingPlacementDef& b : w->buildings) depots += b.displayName.rfind("Entrepot", 0) == 0 ? 1 : 0;
+		Check(depots >= 4, "acropole v1.0.140 : entrepots du port poses (esplanade reservee jusqu'a 20 m seulement)");
 		int crops = 0;
 		for (const ScatterDef& sd : w->scatter) crops += sd.mesh.find("Crop_") != std::string::npos ? 1 : 0;
 		Check(crops >= 1500, "acropole v1.0.140 : champs nombreux autour de la capitale");

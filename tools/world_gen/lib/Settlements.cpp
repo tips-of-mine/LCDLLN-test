@@ -796,7 +796,9 @@ namespace tools::world_gen
 					if (h < sea - 0.2 && depth < 2.0) continue; // l'eau reste de l'eau au bord du quai
 					h = Lerp(quayY - 0.02, h, t);
 				}
-			w.OccupyRect(site - dir * 15.0, 56.0, 17.0, YawAlong(tan));
+			// Quai et marchandises (de 2 m sur l'eau à 20 m vers la terre) ; les entrepôts, posés plus
+			// loin (au-delà de 24 m), restent libres.
+			w.OccupyRect(site - dir * 9.0, 56.0, 11.0, YawAlong(tan));
 			// Quai de pierre sur l'eau (3 rangées de dalles), jetées de bois, navires.
 			for (double a = -54.0; a <= 54.0; a += 2.0)
 				for (int k = 0; k < 3; ++k)

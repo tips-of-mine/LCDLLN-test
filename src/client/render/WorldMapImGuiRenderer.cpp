@@ -55,10 +55,74 @@ namespace engine::render
 		// clair, encre brune, cadre usé, rouleaux de bois en haut et en bas. Couleurs
 		// naturelles, peu saturées (direction artistique : réaliste / peint).
 
-		/// Hauteur (px) d'un rouleau de bois dessiné sur les bords haut et bas.
-		constexpr float kRollH = 18.0f;
+		/// Facteur d'échelle de l'habillage (25/11/2026) : proportionnel à la police
+		/// courante (base 16 px), jamais sous 1. Sur un écran très large la police
+		/// est agrandie : rouleaux, bords et filets suivent au lieu de rester à
+		/// quelques pixels. Main thread, police ImGui courante.
+		float SkinScale()
+		{
+			return std::max(1.0f, ImGui::GetFontSize() / 16.0f);
+		}
+		/// Hauteur (px) d'un rouleau de bois sur les bords haut et bas (à l'échelle).
+		float RollH()
+		{
+			return 30.0f * SkinScale();
+		}
 		/// Débord horizontal (px) des rouleaux de part et d'autre de la fenêtre.
-		constexpr float kRollOverhang = 10.0f;
+		float RollOverhang()
+		{
+			return 0.45f * RollH();
+		}
+
+		/// Textures de l'habillage (25/11/2026, rendues par Blender —
+		/// tools/asset_pipeline/ui/map_parchment_blender.py). 0 = texture absente :
+		/// repli sur le dessin vectoriel d'origine.
+		struct ParchmentSkin
+		{
+			ImTextureID roll = 0;      ///< ui/map/map_roll.png (rouleau complet, 3 tranches)
+			ImTextureID parchment = 0; ///< ui/map/map_parchment.png (répétable)
+			ImTextureID edge = 0;      ///< ui/map/map_edge.png (bord usé, 9 tranches)
+			float rollAspect = 6.4f;   ///< largeur / hauteur de map_roll.png
+		};
+
+		/// Part de la largeur de map_roll.png occupée par chaque pommeau (bague
+		/// comprise) : ces tranches ne sont jamais étirées.
+		constexpr float kRollCapFrac = 0.115f;
+		/// Teinte (multiplicative) du parchemin vierge des zones inexplorées.
+		constexpr ImU32 kFogTint = IM_COL32(210, 186, 146, 255);
+		/// Repli sans texture : parchemin vierge uni des zones inexplorées.
+		constexpr ImU32 kFogFlat = IM_COL32(178, 152, 110, 255);
+
+		/// Côté (px) d'une tuile de parchemin à l'écran.
+		float ParchmentTilePx()
+		{
+			return 384.0f * SkinScale();
+		}
+
+		/// Recouvre le rectangle [\p a, \p b] par la texture répétable \p tex, en
+		/// tuiles de \p tile px alignées sur \p origin (le sampler ImGui est en
+		/// CLAMP : chaque tuile coupée est émise avec ses propres UV). \p tint
+		/// multiplie la couleur. N'écrit que dans \p dl.
+		void AddTiledImage(ImDrawList* dl, ImTextureID tex, ImVec2 a, ImVec2 b, ImVec2 origin, float tile, ImU32 tint)
+		{
+			if (b.x <= a.x || b.y <= a.y || tile <= 0.0f)
+				return;
+			const int tx0 = static_cast<int>(std::floor((a.x - origin.x) / tile));
+			const int tx1 = static_cast<int>(std::floor((b.x - origin.x - 0.001f) / tile));
+			const int ty0 = static_cast<int>(std::floor((a.y - origin.y) / tile));
+			const int ty1 = static_cast<int>(std::floor((b.y - origin.y - 0.001f) / tile));
+			for (int ty = ty0; ty <= ty1; ++ty)
+				for (int tx = tx0; tx <= tx1; ++tx)
+				{
+					const float ox = origin.x + tx * tile, oy = origin.y + ty * tile;
+					const ImVec2 c0(std::max(a.x, ox), std::max(a.y, oy));
+					const ImVec2 c1(std::min(b.x, ox + tile), std::min(b.y, oy + tile));
+					if (c1.x <= c0.x || c1.y <= c0.y)
+						continue;
+					dl->AddImage(tex, c0, c1, ImVec2((c0.x - ox) / tile, (c0.y - oy) / tile),
+						ImVec2((c1.x - ox) / tile, (c1.y - oy) / tile), tint);
+				}
+		}
 
 		/// Couleurs ImGui poussées par PushParchmentStyle (à dépiler par PopParchmentStyle).
 		constexpr int kParchmentColorCount = 15;
@@ -88,7 +152,7 @@ namespace engine::render
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 2.0f);
 			// Marge haute / basse : place pour les rouleaux de bois.
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, kRollH + 6.0f));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f * SkinScale(), RollH() * 0.75f + 6.0f));
 		}
 
 		/// Dépile le style empilé par PushParchmentStyle.
@@ -99,10 +163,22 @@ namespace engine::render
 		}
 
 		/// Dessine un rouleau de bois horizontal centré verticalement sur \p cy, de
-		/// \p x0 à \p x1 (px), avec deux pommeaux aux extrémités.
-		void DrawWoodRoll(ImDrawList* dl, float x0, float x1, float cy)
+		/// \p x0 à \p x1 (px), avec deux pommeaux aux extrémités. Avec la texture
+		/// \p skin.roll : 3 tranches (pommeaux à leur proportion, corps étiré — le
+		/// fil du bois est parallèle à l'axe). Sans texture : dessin vectoriel.
+		void DrawWoodRoll(ImDrawList* dl, const ParchmentSkin& skin, float x0, float x1, float cy)
 		{
-			const float h = kRollH, top = cy - h * 0.5f, bot = cy + h * 0.5f, mid = cy - h * 0.12f;
+			const float h = RollH();
+			if (skin.roll != 0)
+			{
+				const float top = cy - h * 0.5f, bot = cy + h * 0.5f;
+				const float capW = std::min(h * skin.rollAspect * kRollCapFrac, (x1 - x0) * 0.5f);
+				dl->AddImage(skin.roll, ImVec2(x0, top), ImVec2(x0 + capW, bot), ImVec2(0, 0), ImVec2(kRollCapFrac, 1));
+				dl->AddImage(skin.roll, ImVec2(x0 + capW, top), ImVec2(x1 - capW, bot), ImVec2(kRollCapFrac, 0), ImVec2(1.0f - kRollCapFrac, 1));
+				dl->AddImage(skin.roll, ImVec2(x1 - capW, top), ImVec2(x1, bot), ImVec2(1.0f - kRollCapFrac, 0), ImVec2(1, 1));
+				return;
+			}
+			const float top = cy - h * 0.5f, bot = cy + h * 0.5f, mid = cy - h * 0.12f;
 			const ImU32 light = IM_COL32(150, 104, 62, 255), dark = IM_COL32(74, 46, 24, 255);
 			// Corps : clair vers le haut (lumière), sombre vers le bas.
 			dl->AddRectFilledMultiColor(ImVec2(x0, top), ImVec2(x1, mid), dark, dark, light, light);
@@ -118,16 +194,37 @@ namespace engine::render
 			}
 		}
 
-		/// Habillage de la fenêtre courante : bords vieillis (ombre brune dégradée) et
-		/// rouleaux de bois sur les bords haut et bas. À appeler entre Begin et End ;
-		/// dessine sur la draw list de la fenêtre, hors de son rectangle de découpe.
-		void DrawParchmentDressing()
+		/// Fond de la fenêtre courante : parchemin texturé répété puis bord usé en 9
+		/// tranches (repli : bandes dégradées). À appeler juste après Begin (sous le
+		/// contenu) ; dessine sur la draw list de la fenêtre, hors de sa découpe.
+		void DrawParchmentBackground(const ParchmentSkin& skin)
 		{
 			ImDrawList* dl = ImGui::GetWindowDrawList();
 			const ImVec2 wp = ImGui::GetWindowPos();
 			const ImVec2 ws = ImGui::GetWindowSize();
 			const ImVec2 we(wp.x + ws.x, wp.y + ws.y);
 			dl->PushClipRectFullScreen();
+			if (skin.parchment != 0)
+				AddTiledImage(dl, skin.parchment, wp, we, wp, ParchmentTilePx(), IM_COL32_WHITE);
+			if (skin.edge != 0)
+			{
+				// 9 tranches : coins à taille fixe, bords étirés, centre vide.
+				const float c = std::min({ 40.0f * SkinScale(), ws.x * 0.5f, ws.y * 0.5f });
+				const float k = 0.25f; // part de la texture occupée par un coin
+				const float xs[4] = { wp.x, wp.x + c, we.x - c, we.x };
+				const float ys[4] = { wp.y, wp.y + c, we.y - c, we.y };
+				const float us[4] = { 0.0f, k, 1.0f - k, 1.0f };
+				for (int j = 0; j < 3; ++j)
+					for (int i = 0; i < 3; ++i)
+					{
+						if (i == 1 && j == 1)
+							continue;
+						dl->AddImage(skin.edge, ImVec2(xs[i], ys[j]), ImVec2(xs[i + 1], ys[j + 1]),
+							ImVec2(us[i], us[j]), ImVec2(us[i + 1], us[j + 1]));
+					}
+				dl->PopClipRect();
+				return;
+			}
 			// Bords vieillis : bandes dégradées (brun translucide -> transparent).
 			const float e = 16.0f;
 			const ImU32 edge = IM_COL32(120, 84, 44, 90), clear = IM_COL32(120, 84, 44, 0);
@@ -135,9 +232,21 @@ namespace engine::render
 			dl->AddRectFilledMultiColor(ImVec2(we.x - e, wp.y), we, clear, edge, edge, clear);
 			dl->AddRectFilledMultiColor(wp, ImVec2(we.x, wp.y + e * 2.0f), edge, edge, clear, clear);
 			dl->AddRectFilledMultiColor(ImVec2(wp.x, we.y - e * 2.0f), we, clear, clear, edge, edge);
-			// Rouleaux : celui du haut est fixe, celui du bas suit le déroulé.
-			DrawWoodRoll(dl, wp.x - kRollOverhang, we.x + kRollOverhang, wp.y + kRollH * 0.3f);
-			DrawWoodRoll(dl, wp.x - kRollOverhang, we.x + kRollOverhang, we.y - kRollH * 0.3f);
+			dl->PopClipRect();
+		}
+
+		/// Rouleaux de bois sur les bords haut et bas de la fenêtre courante, par-dessus
+		/// le contenu. À appeler juste avant End ; celui du haut est fixe, celui du
+		/// bas suit le déroulé (bord bas de la fenêtre).
+		void DrawParchmentRolls(const ParchmentSkin& skin)
+		{
+			ImDrawList* dl = ImGui::GetWindowDrawList();
+			const ImVec2 wp = ImGui::GetWindowPos();
+			const ImVec2 ws = ImGui::GetWindowSize();
+			const float h = RollH(), ov = RollOverhang();
+			dl->PushClipRectFullScreen();
+			DrawWoodRoll(dl, skin, wp.x - ov, wp.x + ws.x + ov, wp.y + h * 0.15f);
+			DrawWoodRoll(dl, skin, wp.x - ov, wp.x + ws.x + ov, wp.y + ws.y - h * 0.15f);
 			dl->PopClipRect();
 		}
 
@@ -255,14 +364,15 @@ namespace engine::render
 		/// (ImGui), entre NewFrame et Render ; n'écrit que dans \p dl.
 		template <typename WorldToScreen>
 		void DrawDiscoveryFog(ImDrawList* dl, const engine::client::MapDiscoveryClient& disc,
-			const engine::client::WorldPlaces& places, float u0, float v0, float u1, float v1, WorldToScreen&& worldToScreen)
+			const engine::client::WorldPlaces& places, float u0, float v0, float u1, float v1, WorldToScreen&& worldToScreen,
+			ImTextureID fogTex, ImVec2 tileOrigin, float tilePx)
 		{
 			namespace cells = engine::world::cells;
 			namespace dsc = engine::world::discovery;
-			// FIX.12 — noir opaque : rien de la carte ne doit transparaître hors des
-			// zones explorées (un brun très sombre ressortait gris après la
-			// conversion sRGB de l'affichage).
-			const ImU32 fog = IM_COL32(0, 0, 0, 255);
+			// FIX.12 — voile opaque : rien de la carte ne doit transparaître hors des
+			// zones explorées. 25/11/2026 : le noir est remplacé par du parchemin
+			// vierge (texture répétée, teintée), comme une carte ancienne pas
+			// encore tracée ; repli uni si la texture manque.
 			float wx0 = 0, wz0 = 0, wx1 = 0, wz1 = 0;
 			places.MapUvToWorld(u0, v0, wx0, wz0);
 			places.MapUvToWorld(u1, v1, wx1, wz1);
@@ -277,7 +387,11 @@ namespace engine::render
 			auto rect = [&](double xa, double za, double xb, double zb) {
 				const ImVec2 a = worldToScreen(static_cast<float>(xa), static_cast<float>(za));
 				const ImVec2 b = worldToScreen(static_cast<float>(xb), static_cast<float>(zb));
-				dl->AddRectFilled(ImVec2(std::min(a.x, b.x), std::min(a.y, b.y)), ImVec2(std::max(a.x, b.x), std::max(a.y, b.y)), fog);
+				const ImVec2 lo(std::min(a.x, b.x), std::min(a.y, b.y)), hi(std::max(a.x, b.x), std::max(a.y, b.y));
+				if (fogTex != 0)
+					AddTiledImage(dl, fogTex, lo, hi, tileOrigin, tilePx, kFogTint);
+				else
+					dl->AddRectFilled(lo, hi, kFogFlat);
 			};
 			// Taille d'une case à l'écran (px), mesurée près de la vue.
 			const float pxPerTile = std::fabs(worldToScreen(static_cast<float>(vx0 + T), static_cast<float>(vz0)).x
@@ -498,6 +612,12 @@ namespace engine::render
 		ImGui::SetNextWindowSize(ImVec2(side0, side0 + 56.0f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImVec2(in.viewportW * 0.5f, in.viewportH * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
 		const std::string title = places.DisplayName().empty() ? std::string("Carte du monde") : places.DisplayName();
+		ParchmentSkin skin;
+		skin.roll = static_cast<ImTextureID>(in.rollTexture);
+		skin.parchment = static_cast<ImTextureID>(in.parchmentTexture);
+		skin.edge = static_cast<ImTextureID>(in.edgeTexture);
+		if (in.rollTexW > 0.0f && in.rollTexH > 0.0f)
+			skin.rollAspect = in.rollTexW / in.rollTexH;
 
 		// Déroulé du parchemin (23/11/2026). Frame 0 de l'ouverture : fenêtre invisible,
 		// on relève sa taille pleine (celle mémorisée par ImGui). Frames suivantes : la
@@ -510,7 +630,7 @@ namespace engine::render
 		{
 			view.unrollElapsedS += std::max(0.0f, io.DeltaTime);
 			const float f = engine::client::WorldMapUnrollFraction(view.unrollElapsedS, engine::client::kWorldMapUnrollSeconds);
-			const float minH = ImGui::GetTextLineHeightWithSpacing() + 2.0f * (kRollH + 6.0f) + 8.0f;
+			const float minH = ImGui::GetTextLineHeightWithSpacing() + 2.0f * (RollH() * 0.75f + 6.0f) + 8.0f;
 			ImGui::SetNextWindowSize(ImVec2(view.fullW, engine::client::WorldMapUnrollHeight(f, minH, view.fullH)), ImGuiCond_Always);
 			if (f >= 1.0f)
 				view.unrollDone = true;
@@ -539,7 +659,7 @@ namespace engine::render
 			PopParchmentStyle();
 			return;
 		}
-		DrawParchmentDressing();
+		DrawParchmentBackground(skin);
 
 		// En-tête : nom de la carte centré (encre), bouton X à droite.
 		{
@@ -677,7 +797,13 @@ namespace engine::render
 		ImDrawList* dl = ImGui::GetWindowDrawList();
 		dl->PushClipRect(p0, p1, true);
 		// Fond (hors carte quand la fenêtre est plus large que la carte entière).
-		dl->AddRectFilled(p0, p1, IM_COL32(196, 176, 134, 255)); // parchemin ombré
+		// Hors carte : même parchemin vierge que l'inexploré (tuiles calées sur la
+		// fenêtre : le papier ne glisse pas quand on déplace la carte).
+		const ImVec2 paperOrigin = ImGui::GetWindowPos();
+		if (skin.parchment != 0)
+			AddTiledImage(dl, skin.parchment, p0, p1, paperOrigin, ParchmentTilePx(), kFogTint);
+		else
+			dl->AddRectFilled(p0, p1, kFogFlat);
 		if (in.mapTexture != 0)
 		{
 			// Image limitée à la carte [0, 1] (pas de répétition de texture au-delà).
@@ -709,7 +835,8 @@ namespace engine::render
 
 		// Carte à découvrir : voile sur ce qui n'a pas été exploré.
 		if (in.discovery != nullptr)
-			DrawDiscoveryFog(dl, *in.discovery, places, u0, v0, u1, v1, worldToScreen);
+			DrawDiscoveryFog(dl, *in.discovery, places, u0, v0, u1, v1, worldToScreen,
+				skin.parchment, paperOrigin, ParchmentTilePx());
 		auto discovered = [&](float x, float z) { return in.discovery == nullptr || in.discovery->IsDiscovered(x, z); };
 
 		// Régions : nom en filigrane au centre, seulement quand le curseur est dans la
@@ -824,10 +951,15 @@ namespace engine::render
 			dl->AddTriangleFilled(tip, left, right, IM_COL32(255, 70, 50, 255));
 			dl->AddTriangle(tip, left, right, IM_COL32(255, 255, 255, 255), 1.5f);
 		}
-		// Cadre de la carte à l'encre brune (double filet).
-		dl->AddRect(p0, p1, IM_COL32(72, 46, 24, 255), 0.0f, 0, 2.0f);
-		dl->AddRect(ImVec2(p0.x + 3.0f, p0.y + 3.0f), ImVec2(p1.x - 3.0f, p1.y - 3.0f), IM_COL32(72, 46, 24, 110), 0.0f, 0, 1.0f);
 		dl->PopClipRect();
+		// Cadre de la carte à l'encre brune (double filet), hors découpe de la carte.
+		// 25/11/2026 : épaisseurs à l'échelle de l'habillage (lisibles en grand écran).
+		{
+			const float k = SkinScale();
+			const float g = 4.0f * k;
+			dl->AddRect(ImVec2(p0.x - g, p0.y - g), ImVec2(p1.x + g, p1.y + g), IM_COL32(72, 46, 24, 150), 0.0f, 0, 1.0f * k);
+			dl->AddRect(p0, p1, IM_COL32(60, 38, 20, 255), 0.0f, 0, 2.5f * k);
+		}
 
 		// Info-bulle du lieu survolé.
 		if (hoveredSecret != nullptr)
@@ -906,6 +1038,7 @@ namespace engine::render
 		}
 		ImGui::SameLine();
 		ImGui::TextDisabled("Molette : zoom - Glisser : deplacer - M : fermer");
+		DrawParchmentRolls(skin);
 		ImGui::End();
 		PopParchmentStyle();
 	}

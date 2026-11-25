@@ -686,6 +686,10 @@ namespace engine
 		engine::render::WorldMapHudInput in;
 		in.places = &m_worldPlaces;
 		in.mapTexture = m_worldPlaces.MapImage().empty() ? 0u : m_skillIconCache.GetOrLoad(m_worldPlaces.MapImage());
+		// Habillage parchemin (25/11/2026) — textures Blender ; 0 si absentes (repli vectoriel).
+		in.rollTexture = m_skillIconCache.GetOrLoad("ui/map/map_roll.png", &in.rollTexW, &in.rollTexH);
+		in.parchmentTexture = m_skillIconCache.GetOrLoad("ui/map/map_parchment.png");
+		in.edgeTexture = m_skillIconCache.GetOrLoad("ui/map/map_edge.png");
 		in.playerX = pos.x;
 		in.playerZ = pos.z;
 		in.playerYaw = m_avatarYaw;

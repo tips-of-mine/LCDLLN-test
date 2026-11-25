@@ -18,6 +18,8 @@
 # - sync_services.py --check (atelier décors) : la liste des services de chaque ville
 #   du lore est recopiée au master (clé services des cities) ; tools/world_gen y pose
 #   les panneaux à pictogramme (Sign_Service_<id>) ;
+# - sync_apparence.py --check (v1.0.140) : apparence propre des villes du lore (enceinte,
+#   donjon, bâti, vestiges de siège ; Kendrhir) recopiée au master (clé apparence des cities) ;
 # - sync_decors.py --check (atelier décors) : registre des décors tirés des BD recopié
 #   dans le lore (clé decors, une fiche par objet), d'après tools/asset_pipeline/decor ;
 # - check_secrets.py (v1.0.110) : les villes et lieux `secret: true` du lore le sont
@@ -94,6 +96,9 @@ jobs:
 
       - name: Services des villes recopiés au master (atelier décors)
         run: python tools/lore/sync_services.py --check
+
+      - name: Apparence des villes recopiée au master (v1.0.140, Kendrhir)
+        run: python tools/lore/sync_apparence.py --check
 
       - name: Registre des décors recopié dans le lore (atelier décors)
         run: python tools/lore/sync_decors.py --check

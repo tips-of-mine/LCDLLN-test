@@ -322,6 +322,19 @@ voisines raccord au mètre près :
    chantiers entourés d'étais et de matériaux, trois brèches avec gravats dans
    le rempart ou la palissade ; auberge, marché, forge, pavage et PNJ comme une
    ville intacte — ex. Kendrhir après le tome 1).
+   **Apparence propre** (v1.0.140, clé `apparence` des `cities`, recopiée du lore par
+   `tools/lore/sync_apparence.py`) : `enceinte: rempart_bois` remplace rempart ou palissade
+   par un rempart de rondins de 20 m (modules de 4 m sur le cercle R + 3 m, tour carrée
+   de bois tous les ~44 m, une porte entre deux tours par route qui arrive, contrefort
+   oblique devant un pan sain sur cinq ; en reconstruction : arcs de six modules d'origine,
+   reconstruits en bois neuf avec échafaudages et grues, ou calcinés avec tours étêtées,
+   trois brèches franchissables, portes remises en état) ; `donjon: tour_fleche` pose un
+   donjon à flèche au nord, entre la rue circulaire et le rempart (flèche en chantier en
+   reconstruction) ; `bati: planches` donne ≈ 70 % de maisons de planches (dont des maisons
+   hautes de 3 niveaux) et des ruines de planches ; `vestiges_siege` sème hors les murs une
+   tour de siège effondrée, des mangonneaux brûlés, des mantelets, des échelles, des lignes
+   de pieux et des roues brisées, à plus de 12 m des routes. Seule Kendrhir en porte une
+   (LORE_BD §16.66).
 9. `Vegetation.cpp` : treillis **global** jitterisé (aucun motif répété),
    couverture nuancée (bois dans les plaines, clairières dans les forêts).
    **Forêts et lisières (FORET.1)** : leurs arbres ne sont plus stockés dans

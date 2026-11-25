@@ -12,7 +12,9 @@
 //    heightmap est IDENTIQUE des deux côtés (raccord sans couture) ; puis d'une
 //    cellule de départ de faction (Haeldorf) : spawn par défaut au sec.
 // 6. État « reconstruction » (Kendrhir) : maisons, ruines et chantiers
-//    mêlés, auberge en service, étais autour des chantiers.
+//    mêlés, auberge en service, étais autour des chantiers ; v1.0.140 : apparence
+//    d'après le tome 1 (rempart de rondins, tours, portes, contreforts, donjon,
+//    maisons de planches, restes du siège) et clé `apparence` du master validée.
 // 7. EAU.5 : cuvettes sous la mer isolées comblées (mer reliée conservée) ;
 //    lac creusé d'après son polygone, rives au-dessus de l'eau même à flanc
 //    de pente (digue), pas de digue sur un lit de rivière.
@@ -884,7 +886,112 @@ namespace
 				&& ReadText(tmp / "zones" / cell / "runtime_manifest.json").find("\"terrain_ground_map\"") != std::string::npos,
 				"sols SND.2b : zone.json et runtime_manifest referencent la carte des sols");
 		}
+		// v1.0.140 — Kendrhir d'après le tome 1 (clé apparence du master) : rempart de
+		// rondins de 20 m en reconstruction (pans d'origine, neufs, calcinés, brèches), tours,
+		// une porte par route, contreforts dehors, donjon en chantier au nord, maisons de
+		// planches majoritaires, restes du siège hors les murs et loin des portes.
+		{
+			tools::world_gen::Vec2 center{};
+			int n = 0;
+			for (const auto& p : pls)
+				if (p.displayName.find(suffix) != std::string::npos) { center.x += p.worldPosition.x; center.z += p.worldPosition.z; ++n; }
+			if (n > 0) center = center * (1.0 / n);
+			auto count = [&](const char* mesh, double rMin, double rMax, double* rSum = nullptr) {
+				int k = 0;
+				for (const auto& in : sf.instances)
+				{
+					if (sf.meshPaths[in.meshIndex] != std::string("meshes/props/") + mesh + ".gltf") continue;
+					const double r = std::hypot(in.x - center.x, in.z - center.z);
+					if (r < rMin || r > rMax) continue;
+					++k;
+					if (rSum) *rSum += r;
+				}
+				return k;
+			};
+			double rWall = 0.0, rButt = 0.0;
+			const int old = count("Rampart_Wood_1", 0, 200, &rWall), fresh = count("Rampart_Wood_New_1", 0, 200);
+			const int burnt = count("Rampart_Wood_Burnt_1", 0, 200), breach = count("Rampart_Wood_Breach_1", 0, 200);
+			const int butt = count("Rampart_Buttress_Wood_1", 0, 200, &rButt);
+			Check(old > 20 && fresh > 5 && burnt > 5 && breach >= 3 && old + fresh + burnt + breach > 100,
+				"Kendrhir v1.0.140 : rempart de rondins (pans d'origine, neufs, calcines, breches)");
+			// Les clôtures des champs commencent à R + 9 m ; l'ancienne palissade était sur le cercle du rempart.
+			Check(old > 0 && count("Prop_WoodenFence_Single", 0, rWall / old + 1.5) == 0, "Kendrhir v1.0.140 : plus de cloture basse en guise d'enceinte");
+			Check(count("Tower_Rampart_Wood_1", 0, 200) >= 6 && count("Tower_Rampart_Wood_Ruined_1", 0, 200) >= 1,
+				"Kendrhir v1.0.140 : tours de bois, dont des tours etetees");
+			Check(count("Gate_Rampart_Wood_1", 0, 200) >= 2, "Kendrhir v1.0.140 : une porte par route qui arrive");
+			Check(butt >= 4 && old > 0 && rButt / butt > rWall / old + 2.0, "Kendrhir v1.0.140 : contreforts poses cote exterieur");
+			// Donjon : un seul, en chantier (ville en reconstruction), au nord du centre (-Z).
+			int keeps = 0;
+			bool north = false;
+			for (const auto& in : sf.instances)
+				if (sf.meshPaths[in.meshIndex].find("/Keep_Timber_Spire") != std::string::npos
+					&& std::hypot(in.x - center.x, in.z - center.z) < 150.0)
+				{
+					++keeps;
+					north = sf.meshPaths[in.meshIndex] == "meshes/props/Keep_Timber_Spire_Site_1.gltf" && in.z < center.z - 30.0;
+				}
+			Check(keeps == 1 && north, "Kendrhir v1.0.140 : donjon a fleche en chantier au nord de la ville");
+			// Bâti de planches majoritaire parmi les maisons habitées.
+			int plank = 0, houses = 0;
+			for (const auto& p : pls)
+			{
+				if (p.displayName.find(suffix) == std::string::npos || p.templateType != "maison" || p.variantId.rfind("ruine_", 0) == 0) continue;
+				++houses;
+				plank += p.variantId.find("planches") != std::string::npos ? 1 : 0;
+			}
+			Check(houses > 0 && plank * 2 > houses, "Kendrhir v1.0.140 : maisons de planches majoritaires");
+			int plankRuins = 0;
+			for (const auto& p : pls)
+				plankRuins += (p.displayName.find(suffix) != std::string::npos && p.variantId == "ruine_planches_6x8") ? 1 : 0;
+			Check(plankRuins > 0, "Kendrhir v1.0.140 : ruines de planches (quartiers incendies)");
+			// Restes du siège : hors les murs (au-delà du rempart et de ses contreforts).
+			const int wreck = count("SiegeTower_Wreck_1", 125, 260), cats = count("Catapult_Burnt_1", 125, 260);
+			Check(wreck == 1 && cats >= 1 && count("SiegeTower_Wreck_1", 0, 125) == 0 && count("Catapult_Burnt_1", 0, 125) == 0,
+				"Kendrhir v1.0.140 : restes du siege hors les murs");
+		}
 		fs::remove_all(tmp, ec);
+	}
+
+	/// v1.0.140 — clé `apparence` du master : valeurs fermées (une faute dans le lore casse
+	/// le chargement), seule Kendrhir en porte une (les autres villes restent sur les règles
+	/// génériques, donc inchangées).
+	void TestCityAppearance()
+	{
+		namespace fs = std::filesystem;
+		tools::world_gen::WorldMaster m;
+		std::string err;
+		Check(tools::world_gen::LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", m, err), "apparence v1.0.140 : master royaumes charge");
+		int withAppearance = 0;
+		const tools::world_gen::CityDef* kendrhir = nullptr;
+		for (const auto& c : m.cities)
+		{
+			const bool any = !c.apparence.enceinte.empty() || !c.apparence.donjon.empty() || !c.apparence.bati.empty() || c.apparence.vestigesSiege;
+			withAppearance += any ? 1 : 0;
+			if (c.id == "kendrhir_vale") kendrhir = &c;
+		}
+		Check(kendrhir && kendrhir->apparence.enceinte == "rempart_bois" && kendrhir->apparence.donjon == "tour_fleche"
+			&& kendrhir->apparence.bati == "planches" && kendrhir->apparence.vestigesSiege,
+			"apparence v1.0.140 : Kendrhir (rempart de bois, donjon, planches, vestiges)");
+		Check(withAppearance == 1, "apparence v1.0.140 : aucune autre ville ne change");
+		// Valeur inconnue : le chargement échoue avec un message explicite.
+		const fs::path root = fs::temp_directory_path() / "lcdlln_world_gen_tests_apparence";
+		std::error_code ec;
+		fs::remove_all(root, ec);
+		fs::create_directories(root / "world" / "royaumes", ec);
+		std::string text = ReadText(fs::path(LCDLLN_CONTENT_DIR) / "world" / "royaumes" / "world_master.json");
+		const std::string good = "\"enceinte\": \"rempart_bois\"";
+		const size_t at = text.find(good);
+		Check(at != std::string::npos, "apparence v1.0.140 : cle enceinte presente dans le master");
+		if (at != std::string::npos)
+		{
+			text.replace(at, good.size(), "\"enceinte\": \"rempart_pierre\"");
+			std::ofstream(root / "world" / "royaumes" / "world_master.json", std::ios::binary) << text;
+			tools::world_gen::WorldMaster bad;
+			std::string e;
+			Check(!tools::world_gen::LoadWorldMaster(root.string(), "royaumes", bad, e) && e.find("apparence.enceinte") != std::string::npos,
+				"apparence v1.0.140 : valeur inconnue refusee");
+		}
+		fs::remove_all(root, ec);
 	}
 
 	/// FIX.12 — tracés de la carte : routes globales, chemins locaux, rues
@@ -4642,6 +4749,7 @@ int main()
 	TestStartCorridors();
 	TestGenerationAndInvariants();
 	TestReconstruction();
+	TestCityAppearance();
 	TestMapFeatures();
 	TestWaterShores();
 	TestRiverIslandAndSharedPois();

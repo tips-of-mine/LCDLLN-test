@@ -101,6 +101,17 @@ namespace tools::world_gen
 				std::vector<TemplateRef> pal = Palette(intact);
 				double total = 0.0;
 				for (const TemplateRef& t : pal) total += t.weight;
+				if (c.apparence.bati == "planches")
+				{
+					// Ville de bois incendiée (Kendrhir, BD T1 p.26) : ruines et chantiers de
+					// planches surtout, quelques ruines de pierre (âtres, soubassements) ;
+					// mêmes proportions que ci-dessous.
+					pal.push_back(House("ruine_planches_6x8", total * 0.45));
+					pal.push_back(House("ruine_6x6", total * 0.15));
+					pal.push_back(Site("ruine_planches_6x8", total * 0.25));
+					pal.push_back(Site("ruine_6x6", total * 0.10));
+					return pal;
+				}
 				pal.push_back(House("ruine_6x6", total * 0.25));
 				pal.push_back(House("ruine_6x10", total * 0.20));
 				pal.push_back(House("ruine_8x10", total * 0.15));
@@ -109,6 +120,12 @@ namespace tools::world_gen
 				pal.push_back(Site("ruine_8x10", total * 0.08));
 				return pal;
 			}
+			// Bâti de planches (apparence `bati: planches`, Kendrhir — BD T1 p.23 et 26) :
+			// hautes maisons de planches serrées, ≈ 70 % du poids de la palette.
+			if (c.apparence.bati == "planches")
+				return { House("maison_planches_4x6", 2.5), House("maison_planches_6x8", 2.5), House("maison_haute_planches_6x8", 2.0),
+					House("echoppe_planches_4x8", 1.2), House("maison_4x6", 1.0), House("maison_6x6", 1.0), House("echoppe_4x8", 0.6),
+					House("maison_haute_6x8", 0.5), House("grande_maison_8x10", 0.4) };
 			if (c.race == "nains")
 				return { House("maison_6x6", 3), House("manoir_8x12", 1), House("caserne_8x14", 0.6), House("forge_6x6", 0.8), House("echoppe_4x8", 1) };
 			if (c.race == "orcs")
@@ -172,13 +189,19 @@ namespace tools::world_gen
 			return 2;
 		}
 
+		/// Rempart de rondins de 20 m (apparence `enceinte: rempart_bois`, v1.0.140) : remplace
+		/// le rempart de pierre ou la palissade de la règle générique.
+		bool HasWoodRampart(const CityDef& c)
+		{
+			return c.state != "ruine" && c.apparence.enceinte == "rempart_bois";
+		}
 		bool HasWalls(const CityDef& c)
 		{
-			return c.state != "ruine" && (c.kind == "capitale" || c.kind == "grande_ville" || c.kind == "forteresse");
+			return c.state != "ruine" && !HasWoodRampart(c) && (c.kind == "capitale" || c.kind == "grande_ville" || c.kind == "forteresse");
 		}
 		bool HasPalisade(const CityDef& c)
 		{
-			return c.state != "ruine" && !HasWalls(c) && (c.race == "orcs" || c.kind == "camp" || c.kind == "ville");
+			return c.state != "ruine" && !HasWalls(c) && !HasWoodRampart(c) && (c.race == "orcs" || c.kind == "camp" || c.kind == "ville");
 		}
 
 		/// Parcelles cultivées d'une agglomération (champs clôturés hors les murs).
@@ -690,6 +713,223 @@ namespace tools::world_gen
 			for (const auto& t : pal) { acc += t.weight / total; if (u <= acc) return t; }
 			return pal.back();
 		}
+
+		// ------------------------------------------------ Kendrhir (v1.0.140, BD T1)
+		// Pièces d'enceinte (tools/asset_pipeline/decor, n° 215-219) : module de 4 m le long
+		// de l'axe X local, ligne des rondins à l'origine, face extérieure en -Z glTF local
+		// (chemin de ronde en +Z) ; avec le yaw de la tangente (YawAlong), -Z local regarde
+		// vers l'EXTÉRIEUR de la ville.
+		constexpr double kRampartModuleM = 4.0;   ///< largeur d'un module de rempart (m)
+		constexpr double kGateHalfM = 4.2;        ///< demi-largeur du passage de porte (m)
+		constexpr double kTowerHalfM = 3.0;       ///< demi-côté du fût d'une tour (m)
+		constexpr double kButtressHalfDepthM = 3.0; ///< demi-profondeur d'un contrefort (m)
+
+		/// Rempart de rondins de 20 m (apparence `enceinte: rempart_bois`) posé sur le cercle
+		/// de rayon R + 3 m : modules de 4 m, tours carrées tous les ~44 m, porte flanquée de
+		/// deux tours à chaque route qui arrive, contreforts obliques côté extérieur.
+		/// En état « reconstruction » : arcs de six modules tirés au sort (moitié d'origine,
+		/// un quart reconstruits en bois neuf avec échafaudages, un quart calcinés aux têtes
+		/// rompues, tours étêtées), trois brèches de souches calcinées franchissables loin des
+		/// portes ; les portes sont toujours remises en état.
+		/// \param R      rayon urbain (m) ; \param gates angles (rad) des portes (routes).
+		/// \param rng    générateur propre à l'enceinte (n'affecte pas le reste de la ville).
+		/// Effet de bord : w.scatter (pièces), occupation du sol (w.Occupy).
+		void BuildWoodRampart(World& w, const CityDef& c, double R, const std::vector<double>& gates, Rng& rng)
+		{
+			const double rw = R + 3.0;
+			const int segs = std::max(12, static_cast<int>(std::floor(2.0 * kPi * rw / kRampartModuleM)));
+			const bool rebuild = c.state == "reconstruction";
+			const uint8_t wallFlags = static_cast<uint8_t>(kSolid | kPiece | kOccluder);
+			auto arcDist = [&](double a, double b) { return std::fabs(std::remainder(a - b, 2.0 * kPi)) * rw; };
+			auto nearGate = [&](double a, double m) {
+				for (double g : gates) if (arcDist(a, g) < m) return true;
+				return false;
+			};
+			// Brèches (reconstruction) : 3, demi-ouverture 4 à 7 m, à plus de 16 m des portes.
+			std::vector<std::pair<double, double>> breaches;
+			if (rebuild)
+				for (int attempt = 0; attempt < 32 && breaches.size() < 3; ++attempt)
+				{
+					const double a = rng.Range(0.0, 2.0 * kPi), half = rng.Range(4.0, 7.0);
+					bool ok = !nearGate(a, kGateHalfM + 2.0 * kTowerHalfM + 16.0 + half);
+					for (const auto& br : breaches) ok = ok && arcDist(a, br.first) > br.second + half + 24.0;
+					if (ok) breaches.emplace_back(a, half);
+				}
+			auto inBreach = [&](double a, double margin) {
+				for (const auto& br : breaches) if (arcDist(a, br.first) < br.second + margin) return true;
+				return false;
+			};
+			// Type d'arc (six modules) : 0 = d'origine, 1 = reconstruit (bois neuf), 2 = calciné.
+			const int arcs = (segs + 5) / 6;
+			std::vector<int> arcType(static_cast<size_t>(arcs), 0);
+			if (rebuild)
+				for (int k = 0; k < arcs; ++k)
+				{
+					const double u = rng.Next();
+					arcType[static_cast<size_t>(k)] = u < 0.5 ? 0 : (u < 0.75 ? 1 : 2);
+				}
+			const int towerEvery = 11;   // ~44 m entre deux tours
+			const double gateClear = kGateHalfM + 2.0 * kTowerHalfM + 0.8;
+			int craneArc = -1;
+			for (int k = 0; k < segs; ++k)
+			{
+				const double a = 2.0 * kPi * (k + 0.5) / segs;
+				const Vec2 out = Dir(a);
+				const Vec2 p = c.center + out * rw;
+				if (nearGate(a, gateClear)) continue;
+				if (w.IsWater(p) || !w.InPlayableBounds(p, 40.0)) continue;
+				const Vec2 tan{ -out.z, out.x };
+				const double yaw = YawAlong(tan);
+				if (inBreach(a, 0.0))
+				{
+					AddProp(w, "Rampart_Wood_Breach_1", p, yaw, 1.0, 0, 0);   // franchissable
+					continue;
+				}
+				// Sol sous le module : posé au point le plus bas ; falaise (> 6 m) = pas de mur.
+				double lo = 1e18, hi = -1e18;
+				for (int q = 0; q < 9; ++q)
+				{
+					const Vec2 sp = p + tan * ((q % 3 - 1) * 1.9) + out * ((q / 3 - 1) * 1.4);
+					const double h = w.HeightAt(sp);
+					lo = std::min(lo, h);
+					hi = std::max(hi, h);
+				}
+				if (hi - lo > 6.0) continue;
+				const double yOff = lo - w.HeightAt(p);
+				const int type = (inBreach(a, kRampartModuleM * 1.5)) ? 2 : arcType[static_cast<size_t>(k / 6)];
+				const bool tower = (k % towerEvery) == towerEvery / 2 && !nearGate(a, gateClear + 10.0) && !inBreach(a, 6.0);
+				if (tower)
+				{
+					AddProp(w, type == 2 ? "Tower_Rampart_Wood_Ruined_1" : "Tower_Rampart_Wood_1", p, yaw, 1.0, wallFlags, 0, 0.0, yOff);
+					w.Occupy(p, kTowerHalfM + 0.6);
+					continue;
+				}
+				static const char* kModules[] = { "Rampart_Wood_1", "Rampart_Wood_New_1", "Rampart_Wood_Burnt_1" };
+				AddProp(w, kModules[type], p, yaw, 1.0, wallFlags, 0, 0.0, yOff);
+				w.Occupy(p, 1.8);
+				// Contrefort oblique (BD T1 p.37) devant un pan sain sur cinq, hors abords des portes.
+				if (type != 2 && k % 5 == 2 && !nearGate(a, gateClear + 6.0))
+				{
+					const Vec2 bp = p + out * (0.17 + kButtressHalfDepthM);
+					if (!w.IsWater(bp) && w.InPlayableBounds(bp, 40.0) && std::fabs(w.HeightAt(bp) - w.HeightAt(p)) < 3.0)
+					{
+						AddProp(w, "Rampart_Buttress_Wood_1", bp, yaw, 1.0, wallFlags, 0);
+						// Emprise réservée sans déborder au-delà de R + 9 m, où commencent les
+						// champs (FieldsFor) : les parcelles gardent leur taille.
+						w.Occupy(bp, kButtressHalfDepthM - 0.6);
+					}
+				}
+				// Pans reconstruits : échafaudage côté intérieur, une grue par arc au plus.
+				if (type == 1)
+				{
+					const Vec2 sp = p - out * 3.2;
+					if (!w.IsOccupied(sp, 1.0) && rng.Chance(0.4)) { AddProp(w, "Frame_Scaffold_1", sp, yaw, 1.0, kSolid, 1, 1.0); w.Occupy(sp, 1.0); }
+					const Vec2 cp = p - out * 5.5;
+					if (craneArc != k / 6 && !w.IsOccupied(cp, 1.4) && rng.Chance(0.35))
+					{
+						AddProp(w, "Crane_Wood_1", cp, YawAlong(out), 1.0, kSolid, 0, 1.3);
+						w.Occupy(cp, 1.4);
+						craneArc = k / 6;
+					}
+				}
+			}
+			// Portes : passage libre (pièce sans collision) entre deux tours, torches et
+			// bannières neutres sur la face extérieure des tours.
+			for (double ga : gates)
+			{
+				const Vec2 out = Dir(ga);
+				const Vec2 tan{ -out.z, out.x };
+				const Vec2 g = c.center + out * rw;
+				if (w.IsWater(g)) continue;
+				const double yaw = YawAlong(tan);
+				AddProp(w, "Gate_Rampart_Wood_1", g, yaw, 1.0, 0, 0);
+				for (const double s : { -1.0, 1.0 })
+				{
+					const Vec2 tp = g + tan * (s * (kGateHalfM + kTowerHalfM));
+					AddProp(w, "Tower_Rampart_Wood_1", tp, yaw, 1.0, wallFlags, 0);
+					w.Occupy(tp, kTowerHalfM + 0.6);
+					AddProp(w, "Torch_Metal", g + tan * (s * (kGateHalfM + 0.8)) + out * (kTowerHalfM + 0.3), YawFacing(out * -1.0), 1.0, 0, 1, 0.0, 3.2);
+					AddProp(w, s < 0 ? "Banner_1" : "Banner_2", tp + out * (kTowerHalfM + 0.12), YawFacing(out * -1.0), 1.0, 0, 0, 0.0, 9.0);
+				}
+			}
+		}
+
+		/// Donjon à flèche (apparence `donjon: tour_fleche`) au point haut de la ville : au
+		/// nord (lore : citadelle adossée à la montagne au nord), entre la rue circulaire et
+		/// le rempart, sur le premier emplacement libre en partant du nord. Flèche en
+		/// chantier si la ville est en reconstruction. À appeler après le tracé des rues et
+		/// avant les lots (réserve l'emprise). Effet de bord : w.scatter, w.Occupy.
+		/// \return true si le donjon a pu être posé.
+		bool PlaceKeep(World& w, const CityDef& c, double R)
+		{
+			const double rad = std::max(R * 0.62 + 14.0, R - 14.0);
+			const double north = -kPi / 2.0;   // -Z = nord (Z vers le sud)
+			for (int k = 0; k < 41; ++k)
+			{
+				const double a = north + ((k % 2) ? 1.0 : -1.0) * 0.08 * ((k + 1) / 2);
+				const Vec2 p = c.center + Dir(a) * rad;
+				if (w.IsWater(p) || w.IsOccupied(p, 11.0) || !w.InPlayableBounds(p, 40.0)) continue;
+				const Vec2 to{ c.center.x - p.x, c.center.z - p.z };
+				AddProp(w, c.state == "reconstruction" ? "Keep_Timber_Spire_Site_1" : "Keep_Timber_Spire_1", p,
+					YawFacing(to), 1.0, static_cast<uint8_t>(kSolid | kPiece | kOccluder), 0);
+				w.Occupy(p, 11.5);
+				// Pied de la flèche en chantier : matériaux devant la porte.
+				if (c.state == "reconstruction")
+				{
+					const double l = std::max(1e-6, std::hypot(to.x, to.z));
+					const Vec2 f{ to.x / l, to.z / l }, s{ -f.z, f.x };
+					AddProp(w, "Crate_Wooden", p + f * 9.5 + s * 2.5, 20.0, 1.0, kSolid, 1, 0.4);
+					AddProp(w, "Ladder_Wood_1", p + f * 9.0 - s * 3.0, YawAlong(s), 1.0, 0, 2);
+				}
+				return true;
+			}
+			w.Warn("donjon non pose pour " + c.id + " (pas d'emplacement libre au nord)");
+			return false;
+		}
+
+		/// Restes d'un siège passé (apparence `vestiges_siege`, BD T1 p.37-42) : une tour de
+		/// siège effondrée, deux mangonneaux brûlés, des mantelets, des échelles d'assaut à
+		/// terre, des lignes de pieux et des roues brisées, entre 30 et 110 m hors les murs,
+		/// loin des routes (> 12 m), hors eau et sur sol peu pentu. Placement tiré par `rng`
+		/// (propre aux vestiges). Effet de bord : w.scatter, w.Occupy.
+		/// \return nombre d'objets posés.
+		int PlaceSiegeRemnants(World& w, const CityDef& c, double R, Rng& rng)
+		{
+			struct Item { const char* mesh; double radius; uint8_t flags; uint8_t cull; int count; };
+			static const Item kItems[] = {
+				{ "SiegeTower_Wreck_1", 9.0, kSolid, 0, 1 },
+				{ "Catapult_Burnt_1", 3.6, kSolid, 0, 2 },
+				{ "Mantlet_1", 1.6, kSolid, 1, 4 },
+				{ "SiegeLadder_1", 5.2, 0, 1, 3 },
+				{ "Palisade_Stake_1", 4.5, kSolid, 1, 2 },   // ligne de 4 modules
+				{ "Debris_Wheel_1", 1.2, 0, 1, 3 },
+			};
+			int placed = 0;
+			for (const Item& it : kItems)
+				for (int n = 0; n < it.count; ++n)
+					for (int attempt = 0; attempt < 40; ++attempt)
+					{
+						const Vec2 dir = Dir(rng.Range(0.0, 2.0 * kPi));
+						const Vec2 p = c.center + dir * (R + rng.Range(30.0, 110.0));
+						if (w.IsWater(p) || !w.InPlayableBounds(p, 48.0) || w.IsOccupied(p, it.radius)) continue;
+						const int qi = w.roadDist.IndexX(p.x), qj = w.roadDist.IndexZ(p.z);
+						if (w.roadDist.InBounds(qi, qj) && w.roadDist.At(qi, qj) < 12.0f + it.radius) continue;
+						if (!GroundOk(w, p, std::min(it.radius, 6.0))) continue;
+						const double yaw = rng.Range(0.0, 360.0);
+						if (std::string(it.mesh) == "Palisade_Stake_1")
+						{
+							// Ligne de pieux face à la ville (4 modules de 2 m, tangente au cercle).
+							const Vec2 tan{ -dir.z, dir.x };
+							for (int s = 0; s < 4; ++s)
+								AddProp(w, it.mesh, p + tan * ((s - 1.5) * 2.0), YawAlong(tan), 1.0, it.flags, it.cull);
+						}
+						else AddProp(w, it.mesh, p, yaw, 1.0, it.flags, it.cull);
+						w.Occupy(p, it.radius);
+						++placed;
+						break;
+					}
+			return placed;
+		}
 	}
 
 	void BuildSettlements(World& w)
@@ -835,6 +1075,11 @@ namespace tools::world_gen
 							&& std::hypot(w.urban.WorldX(i) - c.center.x, w.urban.WorldZ(j) - c.center.z) <= R)
 							w.urban.At(i, j) = 1;
 			}
+
+			// --- Donjon à flèche au point haut (apparence `donjon`, v1.0.140) : posé avant
+			//     les lots pour réserver son emprise.
+			if (c.apparence.donjon == "tour_fleche" && c.state != "ruine" && c.procedural.empty())
+				PlaceKeep(w, c, R);
 
 			// --- Auberge face à la place (entre deux rues).
 			{
@@ -1073,6 +1318,15 @@ namespace tools::world_gen
 				if (!w.IsOccupied(tool, 0.4)) AddProp(w, kit[rng.Below(7)], tool, rng.Range(0, 360), 1.0, 0, 2);
 			}
 
+			// --- Rempart de rondins (apparence `enceinte: rempart_bois`, v1.0.140) : une porte
+			//     par route qui arrive (à défaut, à la première rue) ; générateur propre.
+			if (HasWoodRampart(c))
+			{
+				std::vector<double> gates(angles.begin(), angles.begin() + static_cast<std::ptrdiff_t>(std::max<size_t>(roadSpokes, 1)));
+				Rng wallRng(Hash(w.master.seed, HashString(c.id.c_str()), 2140));
+				BuildWoodRampart(w, c, R, gates, wallRng);
+			}
+
 			// --- Remparts / palissade, percés aux portes. Une ville en
 			//     reconstruction garde des BRÈCHES (gravats, pas de mur).
 			const bool walls = HasWalls(c), palisade = HasPalisade(c);
@@ -1283,6 +1537,14 @@ namespace tools::world_gen
 				w.Occupy(gy, 2.5);
 			}
 			else L.graveyard = c.center;
+
+			// --- Restes d'un siège passé hors les murs (apparence `vestiges_siege`, v1.0.140),
+			//     après les champs et le cimetière (qui gardent leur place).
+			if (c.apparence.vestigesSiege && c.procedural.empty())
+			{
+				Rng siegeRng(Hash(w.master.seed, HashString(c.id.c_str()), 2210));
+				PlaceSiegeRemnants(w, c, R, siegeRng);
+			}
 
 			// --- Jardin de capitale (atelier décors T4, pl.3-4) : kiosque à coupole entouré de
 			//     massifs d'iris et de lis, cyprès en bac de part et d'autre de l'entrée.

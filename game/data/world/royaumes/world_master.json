@@ -1032,6 +1032,7 @@
       "state": "reconstruction",
       "faction": "neutre",
       "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "cimetiere"],
+      "apparence": {"enceinte": "rempart_bois", "donjon": "tour_fleche", "bati": "planches", "vestiges_siege": true},
       "start_for": [],
       "source": "[BD] BD-T1 ; nom [DÉCISION] v1.0.94 (ancien nom Kendrhir Vale)",
       "description": "Cité des Grands Mages — prise par la horde de Ghorghor Bey puis dévastée par la tempête de Wismerhill à la fin du tome 1 ; en reconstruction : quartiers en ruine, brèches dans les murs, maisons et quartiers en chantier."

@@ -268,6 +268,41 @@
       "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
       "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
       "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+
+    "_comment_kendrhir": "v1.0.140 (atelier Kendrhir, BD T1) : enceinte de rondins (module 4 m, ligne des fûts en z = 0, extérieur en -z), tours, contreforts obliques, donjon. La porte (Gate_Rampart_Wood_1) et les brèches sont posées sans collision par le générateur (passages libres).",
+    "rampart_wood_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 9.80, "cz": 0.0, "hx": 2.0, "hy": 9.80, "hz": 0.25 }
+    },
+    "rampart_wood_new_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 9.80, "cz": 0.0, "hx": 2.0, "hy": 9.80, "hz": 0.25 }
+    },
+    "rampart_wood_burnt_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 6.50, "cz": 0.0, "hx": 2.0, "hy": 6.50, "hz": 0.25 }
+    },
+    "tower_rampart_wood_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 10.50, "cz": 0.0, "hx": 3.1, "hy": 10.50, "hz": 3.1 }
+    },
+    "tower_rampart_wood_ruined_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 7.50, "cz": 0.0, "hx": 3.1, "hy": 7.50, "hz": 3.1 }
+    },
+    "rampart_buttress_wood_1": {
+      "box_count": 2,
+      "box_0": { "cx": 0.0, "cy": 3.00, "cz": 0.0, "hx": 1.9, "hy": 3.00, "hz": 3.0 },
+      "box_1": { "cx": 0.0, "cy": 9.50, "cz": 1.6, "hx": 1.9, "hy": 3.50, "hz": 1.4 }
+    },
+    "keep_timber_spire_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 9.50, "cz": 0.0, "hx": 7.25, "hy": 9.50, "hz": 7.25 }
+    },
+    "keep_timber_spire_site_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 9.50, "cz": 0.0, "hx": 7.25, "hy": 9.50, "hz": 7.25 }
     }
   }
 }

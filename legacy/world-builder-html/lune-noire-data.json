@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.139",
+    "version": "1.0.140",
     "notes": [
+      "v1.0.140 : [DÉCISION] Kendrhir d'après le tome 1 (p.23 à 42 du PDF) : rempart de rondins de 20 m en reconstruction (pans neufs, calcinés, brèches), tours et portes de bois, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège ; références du tome 1 des décors réalignées sur le PDF.",
       "v1.0.139 : [DÉCISION] Camp de l'Oracle : océan de tentes de pèlerins (quinze rangs) ; rendu lointain corrigé (arbres, champs, horizon).",
       "v1.0.138 : [DÉCISION] Atelier décors étendu aux tomes 6 à 14 : 19 objets génériques (n° 195 à 213) modélisés et placés (clé decors), éléments signature retirés.",
       "v1.0.137 : [DÉCISION] Atelier décors (BD tomes 1 à 5) : 182 objets génériques modélisés et placés (clé decors), éléments signature retirés en attente d'autorisation, enseignes à pictogramme, tombes anciennes, grands champs.",
@@ -7901,6 +7902,12 @@
         "bibliotheque",
         "cimetiere"
       ],
+      "apparence": {
+        "enceinte": "rempart_bois",
+        "donjon": "tour_fleche",
+        "bati": "planches",
+        "vestiges_siege": true
+      },
       "features": [
         "ville en haut d'une falaise",
         "adossée au nord à la chaîne de la Faille de Kashogs ; pas de vue sur la mer",
@@ -7918,7 +7925,9 @@
         "[GD] v1.0.46 : intérieur de la cité proposé (quartiers, lieux et emplacement des PNJ de service, PNJ d'ambiance) — tout ce qui n'est pas montré dans la BD est marqué [INFÉRÉ]. Plan de référence : artefact « Plan de Kendrhir ».",
         "[GD] v1.0.47 : Kendrhir passe à l'état « reconstruction » (après le T1) — ruines, brèches et chantiers générés par tools/world_gen ; les quartiers et services décrits dans elements_principaux sont ceux de la cité relevée.",
         "[GD] (v1.0.58) Économie : reconstruction : achète bois, pierre et vivres, emploie maçons et charpentiers [GD] ; la horde a écumé les fermes alentour [BD-T1].",
-        "[DÉCISION] (v1.0.94) Nom affiché « Kendrhir » (décision du propriétaire du 12/11/2026, lot 22 : la BD dit Kendrhir [BD-T1], « Vale » était un ajout anglais ; c'est bien la cité des Grands Mages du T1, en reconstruction, aucune autre fiche Kendrhir) ; l'ancien nom « Kendrhir Vale » est gardé en alias. Identifiant inchangé (kendrhir_vale) (LORE_BD §16.23)."
+        "[DÉCISION] (v1.0.94) Nom affiché « Kendrhir » (décision du propriétaire du 12/11/2026, lot 22 : la BD dit Kendrhir [BD-T1], « Vale » était un ajout anglais ; c'est bien la cité des Grands Mages du T1, en reconstruction, aucune autre fiche Kendrhir) ; l'ancien nom « Kendrhir Vale » est gardé en alias. Identifiant inchangé (kendrhir_vale) (LORE_BD §16.23).",
+        "[DÉCISION] (v1.0.140) Décision du propriétaire (25/11/2026), d'après le tome 1 (p.23, 26, 32, 35, 37, 39 et 42 du PDF) : Kendrhir, détruite puis en reconstruction, reçoit un rempart de rondins de 20 m (comme le dit la fiche) au lieu d'une clôture : tours carrées de bois, porte entre deux tours à chaque route, contreforts obliques ; pans d'origine, pans reconstruits en bois neuf avec échafaudages, pans calcinés et trois brèches ; tours étêtées ; portes remises en état. Au point haut (nord), un donjon à flèche, réinterprétation générique (aucune reproduction de la citadelle des planches), flèche en chantier. Maisons de planches majoritaires, ruines de planches. Restes du siège hors les murs. Clé apparence (recopiée au master par tools/lore/sync_apparence.py). LORE_BD §16.66.",
+        "[À PRÉVOIR] (v1.0.140) Les p.35 à 42 du tome 1 montrent Kendrhir sous la neige : ignorée tant que le jeu n'a qu'une saison (décision v1.0.137) ; à reprendre avec le cycle des saisons (neige sur la ville, le rempart et les abords en hiver). LORE_BD §16.66."
       ],
       "dimensions_estimees": {
         "hauteur": "40m",
@@ -244427,7 +244436,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 3 entrées (Kendrhir d'après le tome 1 : enceinte, donjon, bâti et restes du siège ; références du tome 1 réalignées sur le PDF ; neige renvoyée au cycle des saisons ; docs/world/LORE_BD.md §16.66).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -247711,6 +247720,27 @@
           "nom": "Rendu lointain : arbres, champs et horizon",
           "decision": "Retour du propriétaire (23/11/2026) : arbres informes de loin, champs en rectangles, relief en « rectangles blancs ». Corrigés côté client et assets : réserve de matériaux et de textures du moteur portée de 64 à 2048 (les décors la saturaient), arbres sombres dotés de leurs niveaux de détail et d'un billboard, couvert texturé des cultures vu de loin, teinte de la perspective aérienne calculée avec le soleil réel (la nuit, le relief se fond dans le ciel nocturne). LORE_BD §16.65.",
           "version": "1.0.139"
+        },
+        {
+          "collection": "decors",
+          "id": "references_t1_pdf_v1140",
+          "nom": "Références du tome 1 réalignées sur le PDF",
+          "decision": "Décision du propriétaire (25/11/2026) : les pages du tome 1 citées par l'atelier décors sont celles du PDF de l'album (p.39 du PDF = page imprimée 37) ; les références [T1-Pxxx] des décors, faites sur un autre scan, sont réalignées (ancienne numérotation moins 6). LORE_BD §16.66.",
+          "version": "1.0.140"
+        },
+        {
+          "collection": "villes",
+          "id": "kendrhir_apparence_v1140",
+          "nom": "Kendrhir d'après le tome 1 : enceinte, donjon, bâti, restes du siège",
+          "decision": "Décision du propriétaire (25/11/2026) : Kendrhir (détruite, en reconstruction) reçoit un rempart de rondins de 20 m avec tours de bois, portes entre deux tours et contreforts obliques ; pans d'origine, reconstruits et calcinés, trois brèches, tours étêtées, portes remises en état ; donjon à flèche générique au point haut, flèche en chantier ; maisons de planches majoritaires ; restes du siège hors les murs ; grande baie grillagée au catalogue. Déclaré dans la clé apparence, recopiée au master. LORE_BD §16.66.",
+          "version": "1.0.140"
+        },
+        {
+          "collection": "villes",
+          "id": "kendrhir_neige_saisons_v1140",
+          "nom": "Neige de Kendrhir renvoyée au cycle des saisons",
+          "decision": "Décision du propriétaire (25/11/2026) : la neige des p.35 à 42 du tome 1 n'est pas rendue tant que le jeu n'a qu'une saison ; à prévoir avec le cycle des saisons. LORE_BD §16.66.",
+          "version": "1.0.140"
         }
       ]
     },
@@ -252345,7 +252375,8 @@
         "[DÉCISION] Décision du propriétaire (22/11/2026) : les cimetières reçoivent des tombes anciennes (pas récentes) : tas de cailloux moussus, croix de bois plus ou moins bien faites, vieilles stèles. LORE_BD §16.63.",
         "[DÉCISION] Décision du propriétaire (21/11/2026) : théière de l'Empire du Jade reportée à l'extension ; gibet gardé (sans pendu) aux capitales et forteresses ; ponts remplacés par les modules de l'atelier ; chapeau de paille renvoyé aux tenues des PNJ ; poupée de chiffon en décor seulement. LORE_BD §16.63.",
         "[DÉCISION] Décision du propriétaire (22/11/2026) : l'atelier décors est étendu aux tomes 6 à 14 ; 19 nouveaux objets génériques (n° 195 à 213) sont modélisés et placés (places en fête, cimetières des grandes villes, désert, forges naines, chantiers, camps, champs de bataille) ou mis au catalogue ; les tomes 11 à 14 n'apportent aucun objet générique nouveau. LORE_BD §16.64.",
-        "[DÉCISION] Décision du propriétaire (22/11/2026) : les éléments signature des tomes 6 à 14 (trônes, palais et cités, ordres et bannières, Négation, dragons, machine de guerre naine, Empire du Jade) restent retirés en attendant l'autorisation ; ceux de l'Empire du Jade sont réservés à l'extension. LORE_BD §16.64."
+        "[DÉCISION] Décision du propriétaire (22/11/2026) : les éléments signature des tomes 6 à 14 (trônes, palais et cités, ordres et bannières, Négation, dragons, machine de guerre naine, Empire du Jade) restent retirés en attendant l'autorisation ; ceux de l'Empire du Jade sont réservés à l'extension. LORE_BD §16.64.",
+        "[DÉCISION] Décision du propriétaire (25/11/2026) : Kendrhir est refaite d'après le tome 1 (enceinte de rondins de 20 m en reconstruction, tours, portes, contreforts obliques, donjon à flèche générique en chantier, maisons de planches, restes du siège ; objets n° 215 à 221) ; les références du tome 1 des décors suivent la numérotation du PDF (ancienne numérotation moins 6). LORE_BD §16.66."
       ]
     }
   ],
@@ -357395,10 +357426,10 @@
         "CommonTree_5"
       ],
       "references_bd": [
-        "T1-P012-C1 (cavalier 2,6 m)",
-        "T1-P012-C6",
+        "T1-P006-C1 (cavalier 2,6 m)",
+        "T1-P006-C6",
+        "T1-P009-C1",
         "T1-P015-C1",
-        "T1-P021-C1",
         "T3-P026-C2"
       ],
       "placement": "",
@@ -357420,8 +357451,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P022-C9 (personnage allongé)",
-        "T1-P015-C1",
+        "T1-P016-C9 (personnage allongé)",
+        "T1-P009-C1",
         "T3-P026-C2 (chênes énormes, forêt des Lutins)",
         "demande du propriétaire 21/11/2026"
       ],
@@ -357450,11 +357481,11 @@
         "TwistedTree_5"
       ],
       "references_bd": [
-        "T1-P013-C7 (personnages assis)",
+        "T1-P007-C7 (personnages assis)",
         "échelle générateur 0,45-0,75 -> 6-11 m",
-        "T1-P014-C1",
+        "T1-P008-C1",
         "T5-P003-C1",
-        "T1-P013-C6",
+        "T1-P007-C6",
         "T5-P007-C1"
       ],
       "placement": "",
@@ -357482,8 +357513,8 @@
         "Pine_5"
       ],
       "references_bd": [
-        "T1-P016-C9 (maisons)",
-        "T1-P041-C2",
+        "T1-P010-C9 (maisons)",
+        "T1-P035-C2",
         "T3-P027-C1",
         "T3-P027-C4",
         "T5-P004-C1"
@@ -357504,9 +357535,9 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P021-C5",
+        "T1-P015-C5",
         "T3-P028-C1",
-        "T1-P022-C7"
+        "T1-P016-C7"
       ],
       "placement": "",
       "generated": true,
@@ -357524,8 +357555,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P021-C4 (baigneuse)",
-        "T1-P021-C4",
+        "T1-P015-C4 (baigneuse)",
+        "T1-P015-C4",
         "saule pleureur, demande du propriétaire 21/11/2026"
       ],
       "placement": "",
@@ -357547,8 +357578,8 @@
         "Bush_Common_Flowers"
       ],
       "references_bd": [
-        "T1-P012-C2",
-        "T1-P021-C2"
+        "T1-P006-C2",
+        "T1-P015-C2"
       ],
       "placement": "",
       "generated": true,
@@ -357567,7 +357598,7 @@
         "Fern_1"
       ],
       "references_bd": [
-        "T1-P021-C2"
+        "T1-P015-C2"
       ],
       "placement": "",
       "generated": true,
@@ -357584,7 +357615,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P021-C2 (personnage)"
+        "T1-P015-C2 (personnage)"
       ],
       "placement": "",
       "generated": true,
@@ -357602,8 +357633,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P021-C4 (baigneuse)",
-        "T1-P022-C7"
+        "T1-P015-C4 (baigneuse)",
+        "T1-P016-C7"
       ],
       "placement": "",
       "generated": true,
@@ -357621,8 +357652,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P021-C4 (feuille Ø 0,3 m)",
-        "T1-P022-C7"
+        "T1-P015-C4 (feuille Ø 0,3 m)",
+        "T1-P016-C7"
       ],
       "placement": "",
       "generated": true,
@@ -357647,8 +357678,8 @@
         "Grass_Wispy_Tall"
       ],
       "references_bd": [
-        "T1-P024-C1",
-        "T1-P016-C7"
+        "T1-P018-C1",
+        "T1-P010-C7"
       ],
       "placement": "",
       "generated": true,
@@ -357665,7 +357696,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P024-C1 (champ de blé doré)",
+        "T1-P018-C1 (champ de blé doré)",
         "parcelle modulaire de 4 m posée en pavage dans les champs"
       ],
       "placement": "",
@@ -357689,7 +357720,7 @@
         "Rock_Medium_3"
       ],
       "references_bd": [
-        "T1-P030-C3",
+        "T1-P024-C3",
         "échelle générateur 0,7-3,2",
         "T2-P007-C2",
         "T3-P012-C1"
@@ -357731,11 +357762,11 @@
         "Pebble_Square_6"
       ],
       "references_bd": [
-        "T1-P019-C10",
+        "T1-P013-C10",
         "échelle générateur 2-4",
-        "T1-P019-C11",
-        "T1-P026-C9",
-        "T1-P027-C1"
+        "T1-P013-C11",
+        "T1-P020-C9",
+        "T1-P021-C1"
       ],
       "placement": "",
       "generated": true,
@@ -357754,8 +357785,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P026-C1 (cavaliers)",
-        "T1-P027-C1",
+        "T1-P020-C1 (cavaliers)",
+        "T1-P021-C1",
         "T2-P016-C1"
       ],
       "placement": "",
@@ -357774,7 +357805,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P023-C6 (Ghorghor ≈ 3 m)",
+        "T1-P017-C6 (Ghorghor ≈ 3 m)",
         "T2-P013-C6"
       ],
       "placement": "",
@@ -357798,10 +357829,11 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P029-C1",
-        "T1-P032-C4,C6",
-        "T1-P051-C3 (maisons de planches, bardeaux)",
+        "T1-P023-C1",
+        "T1-P026-C4,C6",
+        "T1-P045-C3 (maisons de planches, bardeaux)",
         "géométrie de Wall_Plaster_Straight (emboîtement du kit), matériaux de l'atelier",
+        "T1-P026-C7 (rue de Kendrhir)",
         "géométrie de Wall_Plaster_Window_Wide_Round (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Wall_Plaster_Window_Thin_Round (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Wall_Plaster_Door_Round (emboîtement du kit), matériaux de l'atelier",
@@ -357826,7 +357858,7 @@
         "Wall_Plaster_WoodGrid"
       ],
       "references_bd": [
-        "T1-P032-C6"
+        "T1-P026-C6"
       ],
       "placement": "",
       "generated": true,
@@ -357855,15 +357887,16 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P029-C1",
-        "T1-P032-C4,C6",
-        "T1-P051-C3 (maisons de planches, bardeaux)",
+        "T1-P023-C1",
+        "T1-P026-C4,C6",
+        "T1-P045-C3 (maisons de planches, bardeaux)",
         "géométrie de Roof_RoundTiles_4x4 (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Roof_RoundTiles_4x6 (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Roof_RoundTiles_4x8 (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Roof_RoundTiles_6x4 (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Roof_RoundTiles_6x6 (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Roof_RoundTiles_6x8 (emboîtement du kit), matériaux de l'atelier",
+        "T1-P026-C7 (rue de Kendrhir)",
         "géométrie de Roof_RoundTiles_6x10 (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Roof_RoundTiles_6x12 (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Roof_RoundTiles_6x14 (emboîtement du kit), matériaux de l'atelier",
@@ -357906,7 +357939,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P016-C1,C3",
+        "T1-P010-C1,C3",
         "T3-P028-C1 (pierre sèche, chaume)",
         "géométrie de Wall_Plaster_Straight (emboîtement du kit), matériaux de l'atelier",
         "géométrie de Wall_Plaster_Window_Wide_Round (emboîtement du kit), matériaux de l'atelier",
@@ -357946,7 +357979,7 @@
         "Prop_Support"
       ],
       "references_bd": [
-        "T1-P032-C6 (étai de chantier)"
+        "T1-P026-C6 (étai de chantier)"
       ],
       "placement": "",
       "generated": true,
@@ -357971,8 +358004,8 @@
         "Prop_Brick4"
       ],
       "references_bd": [
-        "T1-P015-C1",
-        "T1-P052-C3"
+        "T1-P009-C1",
+        "T1-P046-C3"
       ],
       "placement": "",
       "generated": true,
@@ -357995,9 +358028,9 @@
         "Prop_ExteriorBorder_Straight2"
       ],
       "references_bd": [
-        "T1-P016-C1",
-        "T1-P019-C1",
-        "T1-P020-C7"
+        "T1-P010-C1",
+        "T1-P013-C1",
+        "T1-P014-C7"
       ],
       "placement": "",
       "generated": false,
@@ -358014,8 +358047,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P030-C5",
-        "T1-P042-C2"
+        "T1-P024-C5",
+        "T1-P036-C2"
       ],
       "placement": "",
       "generated": true,
@@ -358032,7 +358065,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P043-C1 (échelles)"
+        "T1-P037-C1 (échelles)"
       ],
       "placement": "",
       "generated": false,
@@ -358055,8 +358088,8 @@
         "Balcony_Simple_Straight"
       ],
       "references_bd": [
-        "T1-P034-C5",
-        "T1-P041-C2"
+        "T1-P028-C5",
+        "T1-P035-C2"
       ],
       "placement": "",
       "generated": false,
@@ -358097,10 +358130,10 @@
         "Door_8_Round"
       ],
       "references_bd": [
-        "T1-P034-C2",
-        "T1-P035-C5,C7",
-        "T1-P051-C3",
-        "T1-P035-C5"
+        "T1-P028-C2",
+        "T1-P029-C5,C7",
+        "T1-P045-C3",
+        "T1-P029-C5"
       ],
       "placement": "",
       "generated": true,
@@ -358117,7 +358150,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P028-C1 (gardes)"
+        "T1-P022-C1 (gardes)"
       ],
       "placement": "",
       "generated": false,
@@ -358134,7 +358167,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P017-C1..C4"
+        "T1-P011-C1..C4"
       ],
       "placement": "",
       "generated": true,
@@ -358151,7 +358184,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P021-C1"
+        "T1-P015-C1"
       ],
       "placement": "",
       "generated": true,
@@ -358168,8 +358201,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P021-C1",
-        "T1-P023-C1"
+        "T1-P015-C1",
+        "T1-P017-C1"
       ],
       "placement": "",
       "generated": true,
@@ -358186,7 +358219,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P030-C5 (sans blason)"
+        "T1-P024-C5 (sans blason)"
       ],
       "placement": "",
       "generated": true,
@@ -358203,7 +358236,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P016-C5"
+        "T1-P010-C5"
       ],
       "placement": "",
       "generated": true,
@@ -358220,8 +358253,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P012-C8",
-        "T1-P013-C6"
+        "T1-P006-C8",
+        "T1-P007-C6"
       ],
       "placement": "",
       "generated": true,
@@ -358242,7 +358275,7 @@
         "Stall_Empty"
       ],
       "references_bd": [
-        "T1-P016-C6",
+        "T1-P010-C6",
         "T2-P008-C1"
       ],
       "placement": "",
@@ -358263,9 +358296,9 @@
         "Prop_Wagon"
       ],
       "references_bd": [
-        "T1-P023-C1,C2",
-        "T1-P030-C4",
-        "T1-P023-C1,C2 (chariot chargé)"
+        "T1-P017-C1,C2",
+        "T1-P024-C4",
+        "T1-P017-C1,C2 (chariot chargé)"
       ],
       "placement": "",
       "generated": true,
@@ -358285,8 +358318,8 @@
         "Cage_Small"
       ],
       "references_bd": [
-        "T1-P019-C5,C9",
-        "T1-P020-C3 (prisonnier debout)"
+        "T1-P013-C5,C9",
+        "T1-P014-C3 (prisonnier debout)"
       ],
       "placement": "",
       "generated": true,
@@ -358303,8 +358336,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P019-C1",
-        "T1-P020-C7"
+        "T1-P013-C1",
+        "T1-P014-C7"
       ],
       "placement": "",
       "generated": true,
@@ -358321,7 +358354,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P024-C6 (sans tête)"
+        "T1-P018-C6 (sans tête)"
       ],
       "placement": "",
       "generated": true,
@@ -358338,7 +358371,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P050-C1"
+        "T1-P044-C1"
       ],
       "placement": "",
       "generated": true,
@@ -358357,9 +358390,9 @@
         "Table_Large"
       ],
       "references_bd": [
-        "T1-P029-C3",
-        "T1-P036-C5",
-        "T1-P037-C1"
+        "T1-P023-C3",
+        "T1-P030-C5",
+        "T1-P031-C1"
       ],
       "placement": "",
       "generated": true,
@@ -358378,7 +358411,7 @@
         "Bench"
       ],
       "references_bd": [
-        "T1-P037-C1"
+        "T1-P031-C1"
       ],
       "placement": "",
       "generated": true,
@@ -358399,7 +358432,7 @@
         "Stool"
       ],
       "references_bd": [
-        "T1-P038-C2"
+        "T1-P032-C2"
       ],
       "placement": "",
       "generated": false,
@@ -358416,8 +358449,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P029-C3",
-        "T1-P020-C5"
+        "T1-P023-C3",
+        "T1-P014-C5"
       ],
       "placement": "",
       "generated": false,
@@ -358438,8 +358471,8 @@
         "Bed_Twin2"
       ],
       "references_bd": [
-        "T1-P036-C1",
-        "T1-P037-C8"
+        "T1-P030-C1",
+        "T1-P031-C8"
       ],
       "placement": "",
       "generated": false,
@@ -358458,8 +358491,8 @@
         "Chest_Wood"
       ],
       "references_bd": [
-        "T1-P036-C1",
-        "T1-P023-C1"
+        "T1-P030-C1",
+        "T1-P017-C1"
       ],
       "placement": "",
       "generated": true,
@@ -358480,10 +358513,10 @@
         "Barrel_Holder"
       ],
       "references_bd": [
-        "T1-P016-C6",
-        "T1-P036-C3",
-        "T1-P037-C1",
-        "T1-P039-C1"
+        "T1-P010-C6",
+        "T1-P030-C3",
+        "T1-P031-C1",
+        "T1-P033-C1"
       ],
       "placement": "",
       "generated": true,
@@ -358504,7 +358537,7 @@
         "CandleStick_Triple"
       ],
       "references_bd": [
-        "T1-P037-C1"
+        "T1-P031-C1"
       ],
       "placement": "",
       "generated": true,
@@ -358527,8 +358560,8 @@
         "Candle_2"
       ],
       "references_bd": [
-        "T1-P037-C7",
-        "T1-P039-C3"
+        "T1-P031-C7",
+        "T1-P033-C3"
       ],
       "placement": "",
       "generated": false,
@@ -358553,10 +358586,10 @@
         "Banner_2_Cloth"
       ],
       "references_bd": [
-        "T1-P033-C7 (motifs neutres)",
-        "T1-P035-C5 (motifs neutres)",
-        "T1-P033-C7",
-        "T1-P035-C5"
+        "T1-P027-C7 (motifs neutres)",
+        "T1-P029-C5 (motifs neutres)",
+        "T1-P027-C7",
+        "T1-P029-C5"
       ],
       "placement": "",
       "generated": true,
@@ -358573,7 +358606,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P036-C1"
+        "T1-P030-C1"
       ],
       "placement": "",
       "generated": false,
@@ -358592,8 +358625,8 @@
         "Shield_Wooden"
       ],
       "references_bd": [
-        "T1-P036-C1",
-        "T1-P046-C3 (sans blason)"
+        "T1-P030-C1",
+        "T1-P040-C3 (sans blason)"
       ],
       "placement": "",
       "generated": true,
@@ -358612,7 +358645,7 @@
         "WeaponStand"
       ],
       "references_bd": [
-        "T1-P036-C2"
+        "T1-P030-C2"
       ],
       "placement": "",
       "generated": false,
@@ -358631,7 +358664,7 @@
         "Torch_Metal"
       ],
       "references_bd": [
-        "T1-P033-C1"
+        "T1-P027-C1"
       ],
       "placement": "",
       "generated": true,
@@ -358648,7 +358681,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P035-C1"
+        "T1-P029-C1"
       ],
       "placement": "",
       "generated": false,
@@ -358665,7 +358698,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P028-C5,C6"
+        "T1-P022-C5,C6"
       ],
       "placement": "",
       "generated": false,
@@ -358697,7 +358730,7 @@
         "SmallBottles_1"
       ],
       "references_bd": [
-        "T1-P039-C2",
+        "T1-P033-C2",
         "T2-P023-C6"
       ],
       "placement": "",
@@ -358741,7 +358774,7 @@
         "Pot_1_Lid"
       ],
       "references_bd": [
-        "T1-P039-C3",
+        "T1-P033-C3",
         "T2-P025-C5"
       ],
       "placement": "",
@@ -358759,8 +358792,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P031-C1",
-        "T1-P039-C2"
+        "T1-P025-C1",
+        "T1-P033-C2"
       ],
       "placement": "",
       "generated": false,
@@ -358781,8 +358814,8 @@
         "Table_Plate"
       ],
       "references_bd": [
-        "T1-P036-C3,C5",
-        "T1-P036-C5"
+        "T1-P030-C3,C5",
+        "T1-P030-C5"
       ],
       "placement": "",
       "generated": true,
@@ -358799,7 +358832,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P020-C7"
+        "T1-P014-C7"
       ],
       "placement": "",
       "generated": false,
@@ -358816,7 +358849,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P042-C1 (fantassins)"
+        "T1-P036-C1 (fantassins)"
       ],
       "placement": "",
       "generated": true,
@@ -358833,8 +358866,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P030-C5",
-        "T1-P042-C3"
+        "T1-P024-C5",
+        "T1-P036-C3"
       ],
       "placement": "",
       "generated": true,
@@ -358851,8 +358884,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P030-C4",
-        "T1-P042-C2"
+        "T1-P024-C4",
+        "T1-P036-C2"
       ],
       "placement": "",
       "generated": true,
@@ -358869,7 +358902,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P043-C1,C2 (10 m, posée au sol)"
+        "T1-P037-C1,C2 (10 m, posée au sol)"
       ],
       "placement": "",
       "generated": true,
@@ -358886,7 +358919,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P010-C2"
+        "T1-P004-C2"
       ],
       "placement": "",
       "generated": false,
@@ -358903,8 +358936,9 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P028-C2",
-        "T1-P032-C1"
+        "T1-P022-C2",
+        "T1-P026-C1",
+        "T1-P023-C2"
       ],
       "placement": "",
       "generated": false,
@@ -358921,7 +358955,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P028-C2 (figure neutre)"
+        "T1-P022-C2 (figure neutre)"
       ],
       "placement": "",
       "generated": false,
@@ -360876,7 +360910,7 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P012-C1 (futaie, troncs droits clairs)",
+        "T1-P006-C1 (futaie, troncs droits clairs)",
         "demande du propriétaire 21/11/2026"
       ],
       "placement": "",
@@ -360895,8 +360929,8 @@
       ],
       "replaces": [],
       "references_bd": [
-        "T1-P021-C5,C6",
-        "T1-P022-C7 (rives)",
+        "T1-P015-C5,C6",
+        "T1-P016-C7 (rives)",
         "demande du propriétaire 21/11/2026"
       ],
       "placement": "",
@@ -361417,6 +361451,141 @@
       "placement": "Camp de l'Oracle : océan de tentes (quinze rangs)",
       "generated": true,
       "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_215",
+      "num": 215,
+      "name": "Rempart de rondins de 20 m (bois d'origine grisé, bois neuf des pans reconstruits)",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Rampart_Wood_1",
+        "Rampart_Wood_New_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P037-C1 (tours de siège ≈ 16 m)",
+        "T1-P039-C2",
+        "T1-P035-C1"
+      ],
+      "placement": "Kendrhir (apparence du master) : enceinte de rondins (enceinte rempart_bois)",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_216",
+      "num": 216,
+      "name": "Pan de rempart incendié aux têtes rompues, brèche de souches calcinées",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Rampart_Wood_Burnt_1",
+        "Rampart_Wood_Breach_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P037-C2 (rempart en feu)",
+        "T1-P026-C6",
+        "T1-P037-C2"
+      ],
+      "placement": "Kendrhir (apparence du master) : pans calcinés et trois brèches franchissables (ville en reconstruction)",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_217",
+      "num": 217,
+      "name": "Tour carrée de rempart en bois à hourd (intacte ou étêtée par l'incendie)",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Tower_Rampart_Wood_1",
+        "Tower_Rampart_Wood_Ruined_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P023-C1",
+        "T1-P039-C2",
+        "T1-P026-C6"
+      ],
+      "placement": "Kendrhir (apparence du master) : tours tous les ~44 m et de part et d'autre des portes",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_218",
+      "num": 218,
+      "name": "Porte de rempart en bois, vantaux ouverts, bretèche",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Gate_Rampart_Wood_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P026-C2 (portes enfoncées)"
+      ],
+      "placement": "Kendrhir (apparence du master) : une porte par route qui arrive",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_219",
+      "num": 219,
+      "name": "Contrefort oblique en caisson de rondins",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Rampart_Buttress_Wood_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P037-C1 (contreforts obliques)"
+      ],
+      "placement": "Kendrhir (apparence du master) : devant un pan sain sur cinq, côté extérieur",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_220",
+      "num": 220,
+      "name": "Donjon à flèche à pans de bois et galerie en encorbellement (réinterprétation générique ; flèche en chantier)",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Keep_Timber_Spire_1",
+        "Keep_Timber_Spire_Site_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P023-C1 (édifice à flèche)",
+        "T1-P039-C2",
+        "T1-P042-C2",
+        "T1-P023-C1"
+      ],
+      "placement": "Kendrhir (apparence du master) : point haut de la ville, au nord (donjon tour_fleche)",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_221",
+      "num": 221,
+      "name": "Restes de siège : tour de siège effondrée, mangonneau brûlé",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "SiegeTower_Wreck_1",
+        "Catapult_Burnt_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P037-C1",
+        "T1-P039-C2",
+        "T1-P042-C1"
+      ],
+      "placement": "Kendrhir (apparence du master) : abords hors les murs, loin des routes (vestiges_siege)",
+      "generated": true,
+      "source": "[BD] T1"
     }
   ]
 }

@@ -155,9 +155,9 @@ def _wood_material() -> bpy.types.Material:
     ramp = _node(nt, "ShaderNodeValToRGB", 80, 0)
     els = ramp.color_ramp.elements
     els[0].position = 0.25
-    els[0].color = (0.075, 0.035, 0.014, 1.0)  # brun foncé (veines)
+    els[0].color = (0.035, 0.015, 0.006, 1.0)  # brun foncé (veines)
     els[1].position = 0.95
-    els[1].color = (0.24, 0.12, 0.05, 1.0)     # brun chaud (linéaire)
+    els[1].color = (0.12, 0.055, 0.022, 1.0)   # brun chaud (linéaire) — foncé le 25/11
     nt.links.new(mix.outputs[0], ramp.inputs["Fac"])
     nt.links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
     bsdf.inputs["Roughness"].default_value = 0.45
@@ -204,6 +204,10 @@ def _cap_profile(x0: float, sign: float):
 
 def render_roll(out_dir: str) -> str:
     sc = _new_scene(1024, 160)
+    # Ambiance faible : bois sombre (retour du test visuel du 25/11/2026).
+    for n in sc.world.node_tree.nodes:
+        if n.bl_idname == "ShaderNodeBackground":
+            n.inputs[1].default_value = 0.12
     wood = _wood_material()
     half = BODY_LEN / 2
     body = _lathe("roll_body", [(-half, BODY_R), (half, BODY_R)])
@@ -216,8 +220,8 @@ def render_roll(out_dir: str) -> str:
     # reflet est uniforme le long du rouleau, le corps reste étirable.
     _camera_ortho(sc, VIEW_W, (0.0, -10.0, 0.0), (math.radians(90), 0.0, 0.0))
     for name, size_y, energy, loc, rx in (
-        ("key", 1.2, 650.0, (0.0, -3.0, 3.0), 45.0),
-        ("rim", 2.0, 120.0, (0.0, -2.0, -3.0), -145.0),
+        ("key", 1.2, 420.0, (0.0, -3.0, 3.0), 45.0),
+        ("rim", 2.0, 80.0, (0.0, -2.0, -3.0), -145.0),
     ):
         ld = bpy.data.lights.new(name, "AREA")
         ld.shape = "RECTANGLE"

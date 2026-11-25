@@ -11,7 +11,7 @@ mais le rendu n'est pas beau. Arbitrage du propriétaire : corriger les
   `tools/asset_pipeline/ui/map_parchment_blender.py` (Blender 5.1.2, Cycles,
   100 % procédural) : rouleau de bois tourné, parchemin répétable sans couture,
   bord usé.
-- **Rouleaux** : texture en 3 tranches (pommeaux non étirés), hauteur à
+- **Rouleaux** : bois foncé (2e retour visuel), texture en 3 tranches (pommeaux non étirés), hauteur à
   l'échelle de la police (`SkinScale`, base 16 px) au lieu de 18 px fixes,
   dessinés par-dessus le contenu (`DrawParchmentRolls`, avant `End`).
 - **Cadre** : fond de fenêtre en parchemin répété, bord usé en 9 tranches,

@@ -91,6 +91,8 @@ namespace engine::render::terrain
             static_cast<float>(config.GetDouble("render.terrain.grass_mask_visual_strength", 0.35));
         // v1.0.123 — Enfers : canal A du splat = lave lumineuse (zone.json générée).
         m_lavaLayer = config.GetBool("render.terrain.lava_layer", false);
+        // v1.0.140 — rocher de l'Oracle : canal A rendu en cristal bleu sous la roche peinte.
+        m_crystalLayer = !m_lavaLayer && config.GetBool("render.terrain.crystal_layer", false);
 
         LOG_INFO(Render,
                  "[TerrainRenderer] Init begin (heightmap='{}' splatmap='{}' grassmask='{}' holemask='{}' cliffs={})",
@@ -1593,7 +1595,8 @@ namespace engine::render::terrain
             ubo.terrainOrigin[1] = m_terrainOriginZ;
             // v1.0.123 — z = 1 si le canal A est la lave (Enfers), w = temps (s, cycle de
             // 600 s) pour l'animation de la croûte ; 0 / 0 ailleurs (rendu inchangé).
-            ubo.terrainOrigin[2] = m_lavaLayer ? 1.0f : 0.0f;
+            // v1.0.140 — z = 2 : canal A = cristal bleu (rocher de l'Oracle).
+            ubo.terrainOrigin[2] = m_lavaLayer ? 1.0f : (m_crystalLayer ? 2.0f : 0.0f);
             ubo.terrainOrigin[3] = m_lavaLayer
                 ? static_cast<float>(std::fmod(std::chrono::duration<double>(
                     std::chrono::steady_clock::now().time_since_epoch()).count(), 600.0))

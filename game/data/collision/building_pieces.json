@@ -268,6 +268,12 @@
       "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
       "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
       "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+
+    "_comment_oracle": "v1.0.140 : paroi sculptee de la salle de l'Oracle (Oracle_Hall_Wall, arc de 18 m, face concave vers -Z local) : une boite de 19 x 40 m, 2 m d'epaisseur, sur l'arc (les salles sont fermees par le relief derriere).",
+    "oracle_hall_wall": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 20.0, "cz": 0.0, "hx": 9.4, "hy": 20.0, "hz": 1.0 }
     }
   }
 }

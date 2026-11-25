@@ -368,6 +368,40 @@
       "model": {"mesh": "orcs", "scale": 0.9}
     },
     {
+      "_comment": "Lore v1.0.140 — raid de la salle des Echos (Camp de l'Oracle, porte E) : gardien de cristal, prevu pour un groupe de 3 a 5 (quete oracle_echos). Modele provisoire (nains agrandi) en attendant un modele de golem de cristal.",
+      "id": 170,
+      "name": "Gardien des Echos",
+      "level": 20,
+      "stats": {
+        "hp": 4200,
+        "damage": 55,
+        "accuracy": 88.0,
+        "rangeMeters": 5.0,
+        "critRate": 6.0,
+        "critMult": 1.8,
+        "attackPeriodMs": 2600
+      },
+      "xpReward": 900,
+      "model": {"mesh": "nains", "scale": 2.4}
+    },
+    {
+      "_comment": "Lore v1.0.140 — echos de cristal qui gardent la salle des Echos avec le Gardien (raid de la porte E du Camp de l'Oracle).",
+      "id": 171,
+      "name": "Echo de cristal",
+      "level": 18,
+      "stats": {
+        "hp": 520,
+        "damage": 26,
+        "accuracy": 85.0,
+        "rangeMeters": 3.0,
+        "critRate": 4.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 2000
+      },
+      "xpReward": 160,
+      "model": {"mesh": "nains", "scale": 1.1}
+    },
+    {
       "id": 200,
       "name": "Villageois",
       "level": 1,

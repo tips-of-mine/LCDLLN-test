@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.139",
+    "version": "1.0.140",
     "notes": [
+      "v1.0.140 : [DÉCISION] Camp de l'Oracle amélioré (T1 p.3-5, T2 p.44-46, T3 p.5-7) : rocher de cristal bleu, huit grandes portes réinterprétées sur socle de brique, escaliers de 6 m ; salle de l'Oracle creusée au cœur du rocher (porte SO, quête « L'Appel de l'Oracle ») et salle des Échos (porte E, raid « L'Épreuve des Échos », groupe d'au moins 3) ; tentes agrandies et de couleur, mâts à fanions, feux, bassins des pèlerins, menhirs bleus de 3 à 5 m.",
       "v1.0.139 : [DÉCISION] Camp de l'Oracle : océan de tentes de pèlerins (quinze rangs) ; rendu lointain corrigé (arbres, champs, horizon).",
       "v1.0.138 : [DÉCISION] Atelier décors étendu aux tomes 6 à 14 : 19 objets génériques (n° 195 à 213) modélisés et placés (clé decors), éléments signature retirés.",
       "v1.0.137 : [DÉCISION] Atelier décors (BD tomes 1 à 5) : 182 objets génériques modélisés et placés (clé decors), éléments signature retirés en attente d'autorisation, enseignes à pictogramme, tombes anciennes, grands champs.",
@@ -6899,7 +6900,10 @@
         "8 escaliers blanc tout autour",
         "8 portes identiques",
         "campement de tentes autour",
-        "puits interne"
+        "puits interne",
+        "[DÉCISION] (v1.0.140) salle de l'Oracle visitable (porte SO, sur appel de l'Oracle)",
+        "[DÉCISION] (v1.0.140) salle des Échos (porte E, raid)",
+        "[DÉCISION] (v1.0.140) bassins des pèlerins et abreuvoirs"
       ],
       "notes": [
         "[BD-T3] 'La nuit répandait ses ténèbres sur l'océan de tentes qui venait se briser au pied de l'Oracle.'",
@@ -6915,7 +6919,11 @@
         "[GD] (v1.0.58) Économie : économie de pèlerinage : devins à 5 pièces d'argent, faux voyants, charlatans [BD-T2 p.47], marchands de boules de cristal (loot_boule_cristal) ; carrefour de la Via Magna et de la route du métal nain.",
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
         "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : au Camp de l'Oracle, caravaniers et devins mettent en garde contre « les falaises de grès du nord-est » et leur feu doré (premier-né de Xygga, 66-70, N002_E004) ; ils ignorent où le dragon gîte.",
-        "[GD] (v1.0.113) Escaliers de l'Oracle : la rampe et l'escalier de briques du T2 (approche par le chemin des échoppes) et les huit escaliers blancs du T3 (tour du rocher) coexistent — deux vues du même site. Les « lacs du destin » (T11), la colline à sanctuaire (T12) et l'antre où il est enchaîné (T14) sont postérieurs à l'époque du jeu : hors de l'état du lieu (arbitrage demandé par le propriétaire, 13/11/2026)."
+        "[GD] (v1.0.113) Escaliers de l'Oracle : la rampe et l'escalier de briques du T2 (approche par le chemin des échoppes) et les huit escaliers blancs du T3 (tour du rocher) coexistent — deux vues du même site. Les « lacs du destin » (T11), la colline à sanctuaire (T12) et l'antre où il est enchaîné (T14) sont postérieurs à l'époque du jeu : hors de l'état du lieu (arbitrage demandé par le propriétaire, 13/11/2026).",
+        "[DÉCISION] (v1.0.140) Demande du propriétaire (25/11/2026) : visuel du camp encore amélioré d'après T1 p.3-5 (intérieur), T2 p.44 (camp), p.45 (escalier), p.46 (porte), T3 p.5 (camp de nuit), p.6-7 (intérieur). Le rocher est rendu en cristal bleu (couche de cristal du terrain et dalles de cristal), les huit portes sont des vantaux peints (phases de lune, rosace, croissant) réinterprétés sans le visage de la BD, posés sur un socle de brique rouge sombre ; escaliers de 6 m.",
+        "[DÉCISION] (v1.0.140) Salle de l'Oracle creusée au cœur du rocher, au niveau des portes : parois sculptées à niches, seize colonnes, dais gravé à gradins, colonne de brume figée et de lumière (la figure de l'Oracle n'est pas représentée), chaînes, voûte de cristal. On y entre par la grande porte du sud-ouest une fois la quête « L'Appel de l'Oracle » acceptée (veilleur au pied de l'escalier) ; la prêtresse du dais y reçoit les appelés. Les autres portes restent closes, sauf celle de l'est.",
+        "[DÉCISION] (v1.0.140) Salle des Échos sous la facette est : raid « L'Épreuve des Échos » (Gardien des Échos et quatre échos de cristal), porte de l'est ouverte à un groupe d'au moins trois compagnons engagés dans la quête. Choix du propriétaire, prioritaire sur la BD : la règle « pas de combat à l'Oracle » vaut pour le camp et la salle de l'Oracle, le combat est confiné à la salle des Échos ; la salle de l'Oracle reçoit plusieurs joueurs à la fois (jeu en ligne), contrairement à la BD (« un être à la fois »).",
+        "[DÉCISION] (v1.0.140) Camp extérieur : tentes de pèlerins agrandies (environ 2,7 à 3,3 m au faîte : les pèlerins s'y tiennent debout, retour du propriétaire), toiles de couleur (rouge sombre, bleu-gris) en plus des toiles écrues, mâts à longs fanions jaunes, feux de familles éclairés la nuit, quatre bassins des pèlerins dans la plaine et abreuvoirs le long de l'allée, menhirs bleus ramenés à 3-5 m (T2 p.44). LORE_BD §16.66."
       ],
       "dimensions_estimees": {
         "hauteur": "environ 300m pour le rocher central",
@@ -44660,6 +44668,117 @@
       ],
       "quest_kind": "group",
       "has_counter_quest": true
+    },
+    {
+      "id": "quest_oracle_appel",
+      "name": "L'Appel de l'Oracle",
+      "description": "Le veilleur de la grande porte reconnaît un appelé : la grande porte du sud-ouest s'ouvre devant lui, la prêtresse du dais le reçoit dans la salle de l'Oracle.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "oracle",
+        "camp_de_l_oracle"
+      ],
+      "difficulty": 1,
+      "repeatable": false,
+      "type": "[GD] Quête du Camp de l'Oracle (v1.0.140)",
+      "steps": [
+        "Parler au veilleur de la grande porte, au pied de l'escalier du sud-ouest.",
+        "Monter l'escalier : la grande porte s'ouvre devant l'appelé.",
+        "Parler à la prêtresse du dais, dans la salle de l'Oracle."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Parler au veilleur de la grande porte, au pied de l'escalier du sud-ouest.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Monter l'escalier : la grande porte s'ouvre devant l'appelé.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Parler à la prêtresse du dais, dans la salle de l'Oracle.",
+          "ville_id": "ville_oracle_camp"
+        }
+      ],
+      "source_lore": [
+        "ville_oracle_camp"
+      ],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "via_magna",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[DÉCISION] (v1.0.140) Accès à la salle de l'Oracle par la porte SO (passage conditionnel du shard). Jeu : quest_definitions.json, id oracle_appel."
+      ],
+      "quest_kind": "",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_oracle_echos",
+      "name": "L'Épreuve des Échos",
+      "description": "Derrière la porte de l'est, la salle des Échos garde ce que l'Oracle tait : un groupe d'au moins trois compagnons y affronte le Gardien des Échos.",
+      "category": "raid",
+      "tags": [
+        "[GD]",
+        "oracle",
+        "camp_de_l_oracle"
+      ],
+      "difficulty": 4,
+      "repeatable": true,
+      "type": "[GD] Quête du Camp de l'Oracle (v1.0.140)",
+      "steps": [
+        "Recevoir l'épreuve de la prêtresse du dais.",
+        "Réunir un groupe d'au moins trois compagnons et se présenter ensemble à la porte de l'est.",
+        "Abattre le Gardien des Échos.",
+        "Revenir auprès de la prêtresse du dais."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir l'épreuve de la prêtresse du dais.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Réunir un groupe d'au moins trois compagnons et se présenter ensemble à la porte de l'est.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Abattre le Gardien des Échos.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Revenir auprès de la prêtresse du dais.",
+          "ville_id": "ville_oracle_camp"
+        }
+      ],
+      "source_lore": [
+        "ville_oracle_camp"
+      ],
+      "rewards": {},
+      "min_players": 3,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        "quest_oracle_appel"
+      ],
+      "region_id": "via_magna",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[DÉCISION] (v1.0.140) Raid de la salle des Échos, renouvelable chaque semaine, crédit partagé dans le groupe. Jeu : quest_definitions.json, id oracle_echos ; créatures 170 et 171."
+      ],
+      "quest_kind": "",
+      "has_counter_quest": false
     }
   ],
   "mounts": [
@@ -46188,6 +46307,31 @@
       "niveau_ref": {
         "min": 60,
         "max": 60
+      }
+    },
+    {
+      "id": "raid_salle_des_echos",
+      "name": "La Salle des Échos",
+      "description": "Sous la facette est du rocher de l'Oracle, la salle des Échos : un gardien de cristal et quatre échos veillent sur ce que l'Oracle tait. On y entre par la porte de l'est, en groupe d'au moins trois, engagé dans « L'Épreuve des Échos ».",
+      "min_teams": 1,
+      "min_players_per_team": 3,
+      "min_players_total": 3,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "difficulty": 4,
+      "location_ville_id": "ville_oracle_camp",
+      "rewards": {
+        "title": "",
+        "reward": "Expérience et or (quête oracle_echos : 2 500 XP, 150 or).",
+        "power": ""
+      },
+      "notes": [
+        "[DÉCISION] (v1.0.140) Demande du propriétaire (25/11/2026) : la porte E du rocher de l'Oracle donne accès à une quête et à un raid. Gardien des Échos (niveau 20) et quatre échos de cristal (niveau 18), salle sombre éclairée par les cristaux. LORE_BD §16.66."
+      ],
+      "niveau_ref": {
+        "min": 18,
+        "max": 25
       }
     }
   ],
@@ -244427,7 +244571,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Camp de l'Oracle : salle de l'Oracle, salle des Échos, rocher de cristal et portes, camp extérieur ; docs/world/LORE_BD.md §16.66).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -247711,6 +247855,34 @@
           "nom": "Rendu lointain : arbres, champs et horizon",
           "decision": "Retour du propriétaire (23/11/2026) : arbres informes de loin, champs en rectangles, relief en « rectangles blancs ». Corrigés côté client et assets : réserve de matériaux et de textures du moteur portée de 64 à 2048 (les décors la saturaient), arbres sombres dotés de leurs niveaux de détail et d'un billboard, couvert texturé des cultures vu de loin, teinte de la perspective aérienne calculée avec le soleil réel (la nuit, le relief se fond dans le ciel nocturne). LORE_BD §16.65.",
           "version": "1.0.139"
+        },
+        {
+          "collection": "villes",
+          "id": "oracle_salle_v1140",
+          "nom": "Camp de l'Oracle : salle de l'Oracle",
+          "decision": "Salle creusée au cœur du rocher, au niveau des portes (parois sculptées, colonnes, dais gravé, colonne de brume figée et de lumière, chaînes, voûte de cristal) ; entrée par la porte SO une fois « L'Appel de l'Oracle » acceptée ; figure de l'Oracle non représentée. LORE_BD §16.66.",
+          "version": "1.0.140"
+        },
+        {
+          "collection": "raids",
+          "id": "raid_salle_des_echos",
+          "nom": "Camp de l'Oracle : salle des Échos (raid)",
+          "decision": "Porte E : quête « L'Épreuve des Échos » et groupe d'au moins 3 ; combat confiné à la salle des Échos (choix du propriétaire prioritaire sur la règle de la BD « pas de combat à l'Oracle »). LORE_BD §16.66.",
+          "version": "1.0.140"
+        },
+        {
+          "collection": "decors",
+          "id": "oracle_cristal_portes_v1140",
+          "nom": "Camp de l'Oracle : rocher de cristal et grandes portes",
+          "decision": "Rocher rendu en cristal bleu (couche de cristal du terrain, dalles de cristal), grandes portes peintes réinterprétées (emblème abstrait, sans visage) sur socle de brique, escaliers de 6 m. LORE_BD §16.66.",
+          "version": "1.0.140"
+        },
+        {
+          "collection": "decors",
+          "id": "oracle_camp_exterieur_v1140",
+          "nom": "Camp de l'Oracle : tentes agrandies, couleurs, eau",
+          "decision": "Tentes de pèlerins agrandies (×1,5, la longue ×1,4 : on s'y tient debout), toiles rouge sombre et bleu-gris, mâts à fanions jaunes, feux éclairés la nuit, quatre bassins des pèlerins et abreuvoirs, menhirs bleus de 3 à 5 m. LORE_BD §16.66.",
+          "version": "1.0.140"
         }
       ]
     },
@@ -358103,7 +358275,7 @@
         "T1-P035-C5"
       ],
       "placement": "",
-      "generated": true,
+      "generated": false,
       "source": "[BD] T1"
     },
     {
@@ -361406,17 +361578,241 @@
         "Tent_Pilgrim_1",
         "Tent_Pilgrim_2",
         "Tent_Pilgrim_3",
-        "Tent_Pilgrim_Long_1"
+        "Tent_Pilgrim_Long_1",
+        "Tent_Pilgrim_4",
+        "Tent_Pilgrim_5"
       ],
       "replaces": [],
       "references_bd": [
         "T2-P012",
         "T5-P021",
-        "demande du propriétaire (23/11/2026)"
+        "demande du propriétaire (23/11/2026)",
+        "agrandie ×1,5 (retour du propriétaire du 25/11/2026)",
+        "agrandie ×1,4 (retour du propriétaire du 25/11/2026)",
+        "T2-P045-C1",
+        "T3-P005-C1 (toiles de couleur)",
+        "demande du propriétaire (25/11/2026)"
       ],
       "placement": "Camp de l'Oracle : océan de tentes (quinze rangs)",
       "generated": true,
       "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_215",
+      "num": 215,
+      "name": "Dalle de cristal géante du rocher de l'Oracle",
+      "tome": 2,
+      "family": "mineral",
+      "meshes": [
+        "Oracle_Crystal_Slab_1",
+        "Oracle_Crystal_Slab_2",
+        "Oracle_Crystal_Slab_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P044-C1 (tumulus bleu)",
+        "T3-P005-C1",
+        "T3-P006-C1"
+      ],
+      "placement": "Camp de l'Oracle : parois et couronne du rocher",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_216",
+      "num": 216,
+      "name": "Amas de cristaux lumineux",
+      "tome": 3,
+      "family": "magique",
+      "meshes": [
+        "Oracle_Crystal_Cluster_1",
+        "Oracle_Crystal_Cluster_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P006-C1",
+        "T3-P007-C1"
+      ],
+      "placement": "Camp de l'Oracle : salle de l'Oracle et salle des Échos",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_217",
+      "num": 217,
+      "name": "Grande porte de l'Oracle (vantaux peints, croissant)",
+      "tome": 2,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Door_Grand"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P046-C1 (réinterprétation : emblème abstrait, sans visage",
+        "décision du propriétaire du 25/11/2026)"
+      ],
+      "placement": "Camp de l'Oracle : huit portes du rocher",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_218",
+      "num": 218,
+      "name": "Socle de brique de la grande porte",
+      "tome": 2,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Door_Podium"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P046-C1 (socle de brique)"
+      ],
+      "placement": "Camp de l'Oracle : paliers des huit portes",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_219",
+      "num": 219,
+      "name": "Colonne sculptée de la salle de l'Oracle",
+      "tome": 1,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Hall_Column"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P003-C1",
+        "T3-P007-C1"
+      ],
+      "placement": "Camp de l'Oracle : salle de l'Oracle et salle des Échos",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_220",
+      "num": 220,
+      "name": "Paroi sculptée à niches de la salle",
+      "tome": 1,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Hall_Wall"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P003-C1"
+      ],
+      "placement": "Camp de l'Oracle : salle de l'Oracle et salle des Échos",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_221",
+      "num": 221,
+      "name": "Dais circulaire gravé à gradins",
+      "tome": 1,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Hall_Dais"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P003-C1",
+        "T1-P004-C3",
+        "T3-P007-C1"
+      ],
+      "placement": "Camp de l'Oracle : centre de la salle de l'Oracle",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_222",
+      "num": 222,
+      "name": "Voûte de cristal de la salle",
+      "tome": 1,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Vault"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P005-C1",
+        "T3-P006-C1"
+      ],
+      "placement": "Camp de l'Oracle : couvre la salle de l'Oracle et la salle des Échos",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_223",
+      "num": 223,
+      "name": "Colonne de brume figée et de lumière",
+      "tome": 1,
+      "family": "magique",
+      "meshes": [
+        "Oracle_Light_Pillar"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P003-C1",
+        "T3-P007-C1 (brume figée, sans figure)"
+      ],
+      "placement": "Camp de l'Oracle : sur le dais de la salle de l'Oracle",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_224",
+      "num": 224,
+      "name": "Chaîne suspendue",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Oracle_Chain_Hanging"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P005-C1"
+      ],
+      "placement": "Camp de l'Oracle : voûte de la salle de l'Oracle",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_225",
+      "num": 225,
+      "name": "Menhir bleu",
+      "tome": 2,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Menhir_1",
+        "Oracle_Menhir_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P044-C1 (menhirs bleus)"
+      ],
+      "placement": "Camp de l'Oracle : grand cercle de la plaine",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_226",
+      "num": 226,
+      "name": "Mât à long fanion des pèlerins",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Pennant_Pole_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P045-C1 (fanions jaunes du camp)"
+      ],
+      "placement": "Camp de l'Oracle : océan de tentes",
+      "generated": true,
+      "source": "[BD] T2"
     }
   ]
 }

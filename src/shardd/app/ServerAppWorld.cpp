@@ -163,6 +163,66 @@ namespace engine::server
 		}
 	}
 
+	void ServerApp::MaybeApplyDoorPassage(ConnectedClient& client)
+	{
+		if (!m_cellWorld || m_doorPassages.Count() == 0u || !engine::world::cells::IsCellZoneId(client.zoneId))
+		{
+			return;
+		}
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		const bool alive = client.stats.currentHealth > 0u && (client.stateFlags & kEntityStateDead) == 0u;
+		// Conditions : quêtes acceptées, prêtes à rendre ou terminées ; taille du groupe.
+		auto questSatisfied = [&client](std::string_view questId) {
+			for (const QuestState& q : client.questStates)
+			{
+				if (q.questId != questId)
+					continue;
+				return q.status == QuestStatus::Active || q.status == QuestStatus::ReadyToTurnIn
+					|| q.status == QuestStatus::Completed;
+			}
+			return false;
+		};
+		const Party* party = m_partySystem.FindPartyByMember(client.clientId);
+		const uint32_t groupSize = party != nullptr ? static_cast<uint32_t>(party->members.size()) : 1u;
+		const DoorPassageResult result = m_doorPassages.Update(client.doorPassageTravel, ClientCellMap(client),
+			client.positionMetersX, client.positionMetersZ, alive, nowMs,
+			[&](const DoorPassage& p) { return DoorPassages::ConditionsMet(p, questSatisfied, groupSize); });
+		if (result.outcome == DoorPassageOutcome::None || result.passage == nullptr)
+		{
+			return;
+		}
+		const DoorPassage& p = *result.passage;
+		if (result.outcome == DoorPassageOutcome::Denied)
+		{
+			LOG_INFO(Net, "[ServerApp] Passage '{}' refuse (client_id={}, groupe={})", p.id, client.clientId, groupSize);
+			if (!p.deniedMessage.empty())
+				SendChatSystemNotice(client, p.deniedMessage);
+			return;
+		}
+		if (!IsInsideGeneratedWorld(static_cast<float>(p.toX), static_cast<float>(p.toZ), ClientCellMap(client)))
+		{
+			LOG_WARN(Net, "[ServerApp] Passage '{}' : arrivee hors des cellules generees (ignore, client_id={})",
+				p.id, client.clientId);
+			return;
+		}
+		// Même carte : téléport (comme /tp d'un MJ) — position imposée au client dans une
+		// nouvelle époque de mouvement, trace anti-triche remise à zéro, portails désarmés.
+		client.positionMetersX = static_cast<float>(p.toX);
+		client.positionMetersY = static_cast<float>(p.toY);
+		client.positionMetersZ = static_cast<float>(p.toZ);
+		client.velocityMetersPerSecondX = 0.0f;
+		client.velocityMetersPerSecondY = 0.0f;
+		client.velocityMetersPerSecondZ = 0.0f;
+		PortalNetwork::Disarm(client.portalTravel);
+		m_antiCheat.Reset(client.persistenceCharacterKey);
+		SendForcePosition(client, kForcePositionReasonTeleport);
+		client.movement.trustNextHeight = false;
+		UpdateClientInterest(client);
+		LOG_INFO(Net, "[ServerApp] Passage '{}' franchi (client_id={}, vers=({:.1f},{:.1f},{:.1f}))",
+			p.id, client.clientId, p.toX, p.toY, p.toZ);
+	}
+
 	void ServerApp::InitLavaHazard()
 	{
 		namespace cells = engine::world::cells;
@@ -271,6 +331,7 @@ namespace engine::server
 		client.spawnPositionMetersY = client.positionMetersY;
 		client.spawnPositionMetersZ = client.positionMetersZ;
 		PortalNetwork::Disarm(client.portalTravel);
+		DoorPassages::Disarm(client.doorPassageTravel);
 		LOG_INFO(Net, "[ServerApp] Changement de carte (client_id={}, raison={}, {} -> {}, pos=({:.1f}, {:.1f}, {:.1f}))",
 			client.clientId, reason,
 			cells::MapCellFromZoneId(previousZoneId) ? cells::MapCellLabel(*cells::MapCellFromZoneId(previousZoneId)) : std::to_string(previousZoneId),
@@ -390,6 +451,17 @@ namespace engine::server
 		}
 		LOG_INFO(Net, "[ServerApp] Portails entre cartes : {} charge(s), {} utilisable(s){}{}",
 			m_portalNetwork.Count(), usablePortals, portalWarning.empty() ? "" : " — ", portalWarning);
+		// Lore v1.0.140 — passages conditionnels (portes de l'Oracle) : absents = aucun
+		// passage (non bloquant) ; invalides = refus du démarrage, comme les portails.
+		std::string passageError;
+		std::string passageWarning;
+		if (!m_doorPassages.LoadForCellWorld(m_config, passageError, passageWarning))
+		{
+			LOG_ERROR(Net, "[ServerApp] Passages conditionnels : {}", passageError);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] Passages conditionnels : {} charge(s){}{}", m_doorPassages.Count(),
+			passageWarning.empty() ? "" : " — ", passageWarning);
 		return true;
 	}
 

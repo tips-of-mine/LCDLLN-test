@@ -143,6 +143,12 @@ namespace engine
 					if (!rep->ormUri.empty())
 						if (auto o = m_assetRegistry.LoadTexture(meshDir + rep->ormUri, false); o.IsValid()) mat.orm = o;
 					if (rep->alphaCutout) mat.flags = engine::render::MaterialFlags::AlphaCutout;
+					// v1.0.140 — cristaux et brume de l'Oracle : matériau émissif (opaque).
+					if (rep->emissive > 0.0f && !rep->alphaCutout)
+					{
+						mat.flags = engine::render::MaterialFlags::Emissive;
+						mat.emissive = rep->emissive;
+					}
 					idx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
 				}
 			}

@@ -60,5 +60,13 @@
     {"questId": "demons_accueil", "role": 1},
     {"questId": "demons_chasse", "role": 0},
     {"questId": "demons_chasse", "role": 1}
+  ],
+  "npc:oracle_veilleur": [
+    {"questId": "oracle_appel", "role": 0}
+  ],
+  "npc:oracle_pretresse": [
+    {"questId": "oracle_appel", "role": 1},
+    {"questId": "oracle_echos", "role": 0},
+    {"questId": "oracle_echos", "role": 1}
   ]
 }

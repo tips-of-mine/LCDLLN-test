@@ -1212,6 +1212,78 @@
       "nom": "Tente de pèlerin à deux pans",
       "tome": 0,
       "placement_prevu": "Camp de l'Oracle : océan de tentes (quinze rangs)"
+    },
+    {
+      "num": 215,
+      "nom": "Dalle de cristal géante du rocher de l'Oracle",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : parois et couronne du rocher"
+    },
+    {
+      "num": 216,
+      "nom": "Amas de cristaux lumineux",
+      "tome": 3,
+      "placement_prevu": "Camp de l'Oracle : salle de l'Oracle et salle des Échos"
+    },
+    {
+      "num": 217,
+      "nom": "Grande porte de l'Oracle (vantaux peints, croissant)",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : huit portes du rocher"
+    },
+    {
+      "num": 218,
+      "nom": "Socle de brique de la grande porte",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : paliers des huit portes"
+    },
+    {
+      "num": 219,
+      "nom": "Colonne sculptée de la salle de l'Oracle",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : salle de l'Oracle et salle des Échos"
+    },
+    {
+      "num": 220,
+      "nom": "Paroi sculptée à niches de la salle",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : salle de l'Oracle et salle des Échos"
+    },
+    {
+      "num": 221,
+      "nom": "Dais circulaire gravé à gradins",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : centre de la salle de l'Oracle"
+    },
+    {
+      "num": 222,
+      "nom": "Voûte de cristal de la salle",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : couvre la salle de l'Oracle et la salle des Échos"
+    },
+    {
+      "num": 223,
+      "nom": "Colonne de brume figée et de lumière",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : sur le dais de la salle de l'Oracle"
+    },
+    {
+      "num": 224,
+      "nom": "Chaîne suspendue",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : voûte de la salle de l'Oracle"
+    },
+    {
+      "num": 225,
+      "nom": "Menhir bleu",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : grand cercle de la plaine"
+    },
+    {
+      "num": 226,
+      "nom": "Mât à long fanion des pèlerins",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : océan de tentes"
     }
   ]
 }

@@ -4068,12 +4068,17 @@ def p_tent_pilgrim(spec, lod):
     tentes » du Camp de l'Oracle). Faîtage selon X, entrée à l'extrémité -X (rabat
     relevé), pignon arrière fermé, mâts aux deux bouts, haubans et piquets au LOD0.
     Variantes : _1 toile écrue, _2 toile rapiécée (pièces ocre), _3 peaux tannées,
-    Tent_Pilgrim_Long_1 tente longue de famille."""
+    _4 toile rouge sombre, _5 toile bleu-gris (25/11/2026), Tent_Pilgrim_Long_1 tente
+    longue de famille."""
     m = M()
     sid = spec["id"]
     long_ = "Long" in sid
-    L, W, H = (5.0, 2.8, 2.3) if long_ else {"1": (3.0, 2.2, 1.8), "2": (3.2, 2.3, 1.85), "3": (2.6, 2.0, 1.6)}[sid[-1]]
-    mat = "Leather" if sid.endswith("_3") and not long_ else "Canvas"
+    L, W, H = (5.0, 2.8, 2.3) if long_ else {"1": (3.0, 2.2, 1.8), "2": (3.2, 2.3, 1.85), "3": (2.6, 2.0, 1.6),
+                                             "4": (3.0, 2.2, 1.8), "5": (3.4, 2.4, 1.9)}[sid[-1]]
+    # 25/11/2026 : toiles de couleur (T2-P045-C1, T3-P005-C1) : _4 rouge sombre, _5 bleu-gris.
+    mat = "Canvas"
+    if not long_:
+        mat = {"3": "Leather", "4": "Cloth_Red", "5": "Cloth_Blue"}.get(sid[-1], "Canvas")
     c = m.p(mat)
     hx, hw = L / 2, W / 2
     # deux pans (légèrement débordants)
@@ -4128,6 +4133,388 @@ def p_tent_pilgrim(spec, lod):
         for x in (-hx * 0.6, hx * 0.6):
             for side in (-1, 1):
                 cyl(w, (x, side * (hw + 0.25), 0), (x, side * (hw + 0.25), 0.2), 0.02, 0.015, 4)
+    # Retour du propriétaire du 25/11/2026 (« les tentes sont trop petites par rapport au
+    # joueur », 1,78 m) : agrandissement uniforme ×1,5 (×1,4 pour la tente longue), comme
+    # les tentes de T2-P045 où les pèlerins se tiennent debout à l'entrée.
+    k = 1.4 if long_ else 1.5
+    for part in m.parts.values():
+        part.v = [v * k for v in part.v]
+    return m.out()
+
+
+# ================================================ Camp de l'Oracle, amélioration (25/11/2026)
+# Lecture : T1-P003..005 et T3-P005..007 (salle de l'Oracle), T2-P044..046 (tumulus,
+# escalier, grande porte). Décisions du propriétaire (25/11/2026) : rocher en cristal
+# bleu, porte réinterprétée (emblème abstrait, pas de visage), brume figée lumineuse
+# sans figure de l'Oracle.
+def _prism(part, base, sides_xy, h, tip, lean, uv=0.15):
+    """Prisme de cristal : polygone de base (liste de (x, y) relatifs à base), pointe
+    oblique au sommet (tip : décalage (x, y) de la pointe), inclinaison lean (x, y) par
+    mètre de hauteur. Faces planes (rendu à facettes)."""
+    b = Vector(base)
+    n = len(sides_xy)
+    lo = [b + Vector((x, y, 0)) for x, y in sides_xy]
+    mid = [b + Vector((x * 0.92 + lean[0] * h * 0.7, y * 0.92 + lean[1] * h * 0.7, h * 0.72)) for x, y in sides_xy]
+    top = b + Vector((tip[0] + lean[0] * h, tip[1] + lean[1] * h, h))
+    for k in range(n):
+        k2 = (k + 1) % n
+        e = (lo[k2] - lo[k]).length
+        _quad(part, lo[k], lo[k2], mid[k2], mid[k], ((0, 0), (e * uv, 0), (e * uv, h * 0.72 * uv), (0, h * 0.72 * uv)))
+        i = len(part.v)
+        part.v += [mid[k], mid[k2], top]
+        part.f.append((i, i + 1, i + 2))
+        part.uv.append([(0, 0), (e * uv, 0), (e * uv * 0.5, h * 0.28 * uv)])
+        part.cn.append(None)
+    part.smooth = False
+
+
+def _poly(rng, r, n):
+    """Polygone irrégulier convexe de n côtés, rayon moyen r."""
+    a0 = rng.uniform(0, 2 * math.pi)
+    return [(r * rng.uniform(0.75, 1.1) * math.cos(a0 + 2 * math.pi * k / n),
+             r * rng.uniform(0.75, 1.1) * math.sin(a0 + 2 * math.pi * k / n)) for k in range(n)]
+
+
+def p_oracle_crystal_slab(spec, lod):
+    """Dalle de cristal géante du rocher de l'Oracle (T2-P044-C1, T3-P006-C1) : un grand
+    prisme penché et deux à quatre prismes plus petits accolés ; quelques veines
+    lumineuses (Crystal_Glow, émissif) sur le grand prisme au LOD0/LOD1. Mis à la cote
+    par normalize_dims (hauteur et largeur du registre)."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    c = m.p("Crystal_Blue")
+    sides = 6 if lod < 2 else 5
+    _prism(c, (0, 0, 0), _poly(rng, 1.0, sides), 6.0, (rng.uniform(-0.3, 0.3), rng.uniform(-0.3, 0.3)),
+           (rng.uniform(-0.05, 0.05), rng.uniform(-0.05, 0.05)), 0.4)
+    extra = {0: 4, 1: 3, 2: 2}[lod]
+    for k in range(extra):
+        a = rng.uniform(0, 2 * math.pi)
+        d = rng.uniform(0.8, 1.3)
+        _prism(c, (d * math.cos(a), d * math.sin(a), 0), _poly(rng, rng.uniform(0.35, 0.6), 5),
+               rng.uniform(2.0, 4.0), (0, 0), (math.cos(a) * rng.uniform(0.05, 0.15), math.sin(a) * rng.uniform(0.05, 0.15)), 0.4)
+    if lod < 2:
+        g = m.p("Crystal_Glow")
+        for k in range(3 if lod == 0 else 1):
+            z0, z1 = rng.uniform(0.5, 2.0), rng.uniform(3.5, 5.0)
+            a = rng.uniform(0, 2 * math.pi)
+            r0 = 1.02
+            p0 = Vector((r0 * math.cos(a), r0 * math.sin(a), z0))
+            p1 = Vector((r0 * 0.93 * math.cos(a + 0.2), r0 * 0.93 * math.sin(a + 0.2), z1))
+            t = Vector((-math.sin(a), math.cos(a), 0)) * 0.06
+            _quad(g, p0 - t, p0 + t, p1 + t, p1 - t)
+    return m.out()
+
+
+def p_oracle_crystal_cluster(spec, lod):
+    """Amas de cristaux de la salle de l'Oracle (T3-P006-C1, T3-P007-C1) : 7 à 11
+    prismes rayonnants depuis la base, pointes lumineuses (Crystal_Glow, émissif)."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    c, g = m.p("Crystal_Blue"), m.p("Crystal_Glow")
+    n = {0: 11, 1: 7, 2: 4}[lod]
+    for k in range(n):
+        a = 2 * math.pi * k / n + rng.uniform(-0.2, 0.2)
+        tilt = rng.uniform(0.05, 0.45) if k else 0.0
+        h = rng.uniform(1.6, 3.0) if k else 3.4
+        r = rng.uniform(0.22, 0.4) if k else 0.5
+        base = (math.cos(a) * 0.35 * (k > 0), math.sin(a) * 0.35 * (k > 0), 0)
+        pts = _poly(rng, r, 6 if lod == 0 else 5)
+        _prism(c, base, pts, h * 0.85, (0, 0), (math.cos(a) * tilt, math.sin(a) * tilt), 0.6)
+        # pointe lumineuse
+        b = Vector(base) + Vector((math.cos(a) * tilt * h * 0.85, math.sin(a) * tilt * h * 0.85, h * 0.85))
+        _prism(g, tuple(b), [(x * 0.45, y * 0.45) for x, y in pts], h * 0.18, (0, 0),
+               (math.cos(a) * tilt, math.sin(a) * tilt), 0.6)
+    return m.out()
+
+
+def p_oracle_door_grand(spec, lod):
+    """Grande porte de l'Oracle (T2-P046-C1, réinterprétée) : encadrement de pierre
+    sculptée, deux vantaux peints (Door_Oracle : phases de lune, rosace, croissant,
+    glyphes inventés), croissant en relief lumineux. Face avant vers +Y.
+    Cote : 10 x 14,5 x 1,2 m."""
+    m = M()
+    st, dr = m.p("Stone_Oracle"), m.p("Door_Oracle")
+    W, H, D = 10.0, 14.5, 1.2
+    # jambages et linteau (pierre)
+    box(st, (-W / 2, -D / 2, 0), (-W / 2 + 1.0, D / 2, H - 1.4), 0.25)
+    box(st, (W / 2 - 1.0, -D / 2, 0), (W / 2, D / 2, H - 1.4), 0.25)
+    box(st, (-W / 2 - 0.3, -D / 2 - 0.1, H - 1.4), (W / 2 + 0.3, D / 2 + 0.1, H), 0.25)
+    if lod < 2:
+        box(st, (-W / 2 - 0.4, -D / 2 - 0.15, 0), (W / 2 + 0.4, D / 2 + 0.15, 0.5), 0.25)   # seuil
+        box(st, (-1.2, D / 2, H - 1.2), (1.2, D / 2 + 0.25, H - 0.2), 0.25)                   # clé
+    # vantaux (recul de 0,3 m), joint central
+    x0, x1, z0, z1, y = -W / 2 + 1.0, W / 2 - 1.0, 0.5 if lod < 2 else 0.0, H - 1.4, D / 2 - 0.3
+    gap = 0.03
+    _quad(dr, (x0, y, z0), (-gap, y, z0), (-gap, y, z1), (x0, y, z1), ((0, 0), (0.5, 0), (0.5, 1), (0, 1)))
+    _quad(dr, (gap, y, z0), (x1, y, z0), (x1, y, z1), (gap, y, z1), ((0.5, 0), (1, 0), (1, 1), (0.5, 1)))
+    box(st, (x0, -D / 2, z0), (x1, y - 0.02, z1), 0.25)   # âme des vantaux (dos)
+    # croissant en relief au centre de la rosace (v = 0,45 de la texture)
+    if lod < 2:
+        g = m.p("Crystal_Glow")
+        cz = z0 + (z1 - z0) * 0.45
+        R = (x1 - x0) * 0.17
+        n = S(lod, 14)
+        for k in range(n):
+            a0 = math.radians(60 + 240 * k / n)
+            a1 = math.radians(60 + 240 * (k + 1) / n)
+            ro = R
+            ri = R * 0.55
+            def pt(a, r, dx):
+                return Vector((r * math.cos(a) - dx, y + 0.08, cz + r * math.sin(a)))
+            _quad(g, pt(a0, ri, -R * 0.25), pt(a0, ro, 0), pt(a1, ro, 0), pt(a1, ri, -R * 0.25))
+    return m.out()
+
+
+def p_oracle_door_podium(spec, lod):
+    """Socle de brique rouge sombre de la grande porte (T2-P046-C1) : plateau de
+    18 x 12 m, 1,2 m de haut, dalle de pierre sculptée, trois marches à l'avant (+Y)."""
+    m = M()
+    br, st = m.p("Brick_Oracle"), m.p("Stone_Oracle")
+    W, Dp, H = 18.0, 12.0, 1.2
+    box(br, (-W / 2, -Dp / 2, 0), (W / 2, Dp / 2 - 1.5, H - 0.15), 0.3)
+    box(st, (-W / 2 - 0.1, -Dp / 2 - 0.1, H - 0.15), (W / 2 + 0.1, Dp / 2 - 1.4, H), 0.2)
+    steps = 3 if lod < 2 else 1
+    for k in range(steps):
+        z = H * (steps - k) / (steps + 1) if steps > 1 else H * 0.5
+        y0 = Dp / 2 - 1.5 + k * 0.5 if steps > 1 else Dp / 2 - 1.5
+        box(br, (-W / 2 + 2.0, y0, 0), (W / 2 - 2.0, y0 + 0.5 if steps > 1 else Dp / 2, z), 0.3)
+    return m.out()
+
+
+def p_oracle_hall_column(spec, lod):
+    """Colonne sculptée de la salle de l'Oracle (T1-P003-C1, T3-P007-C1) : base
+    carrée, fût annelé (bagues tous les 5 m), chapiteau évasé. Cote : 3,6 x 40 m."""
+    m = M()
+    st = m.p("Stone_Oracle")
+    H = 40.0
+    sides = S(lod, 16)
+    box(st, (-1.8, -1.8, 0), (1.8, 1.8, 1.2), 0.3)
+    cyl(st, (0, 0, 1.2), (0, 0, H - 3.0), 1.3, 1.15, sides, True, 0.08)
+    cyl(st, (0, 0, H - 3.0), (0, 0, H - 0.8), 1.15, 1.75, sides, False, 0.08)
+    box(st, (-1.8, -1.8, H - 0.8), (1.8, 1.8, H), 0.3)
+    if lod < 2:
+        for k in range(1, 8):
+            z = 1.2 + k * 5.0
+            if z > H - 3.5:
+                break
+            cyl(st, (0, 0, z - 0.25), (0, 0, z + 0.25), 1.42, 1.42, sides, False, 0.1)
+    return m.out()
+
+
+def p_oracle_hall_wall(spec, lod):
+    """Panneau de paroi sculpté de la salle (T1-P003-C1) : arc de 18 m (rayon 44,5 m,
+    face concave vers +Y = vers le centre), 40 m de haut, trois rangs de niches en
+    plein cintre au LOD0/LOD1. Dos rocheux (Crystal_Blue)."""
+    m = M()
+    st, back = m.p("Stone_Oracle"), m.p("Crystal_Blue")
+    W, H, R, T = 18.0, 40.0, 44.5, 2.5
+    n = {0: 8, 1: 5, 2: 3}[lod]
+    half = math.asin(W / 2 / R)
+    def at(a, r, z):
+        # centre de l'arc en (0, R) : le panneau est concave vers +Y
+        return Vector((r * math.sin(a), R - r * math.cos(a), z))
+    for k in range(n):
+        a0 = -half + 2 * half * k / n
+        a1 = -half + 2 * half * (k + 1) / n
+        u0, u1 = k / n * W * 0.1, (k + 1) / n * W * 0.1
+        _quad(st, at(a0, R, 0), at(a1, R, 0), at(a1, R, H), at(a0, R, H), ((u0, 0), (u1, 0), (u1, H * 0.1), (u0, H * 0.1)))
+        _quad(back, at(a1, R + T, 0), at(a0, R + T, 0), at(a0, R + T, H), at(a1, R + T, H))
+        _quad(st, at(a0, R, H), at(a1, R, H), at(a1, R + T, H), at(a0, R + T, H))
+    for a in (-half, half):
+        sgn = 1 if a > 0 else -1
+        q = [at(a, R, 0), at(a, R + T, 0), at(a, R + T, H), at(a, R, H)]
+        _quad(st, *(q if sgn > 0 else [q[1], q[0], q[3], q[2]]))
+    if lod < 2:
+        # niches : cadres en saillie (montants, arc) sur la face avant
+        for row in range(3):
+            zb = 4.0 + row * 12.0
+            for col in (-1, 0, 1):
+                a = col * half * 0.62
+                c = at(a, R - 0.3, 0)
+                tang = Vector((math.cos(a), math.sin(a), 0))
+                for side in (-1, 1):
+                    p0 = c + tang * (side * 1.8)
+                    box(st, (p0.x - 0.3, p0.y - 0.3, zb), (p0.x + 0.3, p0.y + 0.3, zb + 7.0), 0.3)
+                segs = S(lod, 8)
+                for s in range(segs):
+                    t0 = math.pi * s / segs
+                    t1 = math.pi * (s + 1) / segs
+                    pa = c + tang * (-1.8 * math.cos(t0)) + Vector((0, 0, zb + 7.0 + 1.8 * math.sin(t0)))
+                    pb = c + tang * (-1.8 * math.cos(t1)) + Vector((0, 0, zb + 7.0 + 1.8 * math.sin(t1)))
+                    cyl(st, tuple(pa), tuple(pb), 0.3, 0.3, 4, False)
+    return m.out()
+
+
+def p_oracle_hall_dais(spec, lod):
+    """Dais circulaire gravé de la salle (T1-P003-C1, T1-P004-C3, T3-P007-C1) : trois
+    gradins (rayons 13, 11 et 9 m, 0,5 m chacun), dessus en Floor_Oracle (anneaux et
+    rayons), gradins en pierre sculptée. Cote : 26 x 1,5 m."""
+    m = M()
+    st, fl = m.p("Stone_Oracle"), m.p("Floor_Oracle")
+    sides = S(lod, 48)
+    tiers = ((13.0, 0.5), (11.0, 1.0), (9.0, 1.5))
+    zprev = 0.0
+    for r, z in tiers:
+        cyl(st, (0, 0, zprev), (0, 0, z), r, r, sides, False, 0.2)
+        if r != 9.0:
+            # couronne horizontale du gradin
+            nr = 11.0 if r == 13.0 else 9.0
+            for k in range(sides):
+                a0, a1 = 2 * math.pi * k / sides, 2 * math.pi * (k + 1) / sides
+                _quad(st, (r * math.cos(a0), r * math.sin(a0), z), (r * math.cos(a1), r * math.sin(a1), z),
+                      (nr * math.cos(a1), nr * math.sin(a1), z), (nr * math.cos(a0), nr * math.sin(a0), z))
+        zprev = z
+    # dessus gravé (UV : disque entier)
+    ci = len(fl.v)
+    fl.v.append(Vector((0, 0, 1.5)))
+    for k in range(sides):
+        a0, a1 = 2 * math.pi * k / sides, 2 * math.pi * (k + 1) / sides
+        fl.v += [Vector((9.0 * math.cos(a0), 9.0 * math.sin(a0), 1.5)), Vector((9.0 * math.cos(a1), 9.0 * math.sin(a1), 1.5))]
+        fl.f.append((ci, len(fl.v) - 2, len(fl.v) - 1))
+        fl.uv.append([(0.5, 0.5), (0.5 + 0.5 * math.cos(a0), 0.5 + 0.5 * math.sin(a0)),
+                      (0.5 + 0.5 * math.cos(a1), 0.5 + 0.5 * math.sin(a1))])
+        fl.cn.append(None)
+    fl.smooth = False
+    return m.out()
+
+
+def p_oracle_vault(spec, lod):
+    """Voûte de la salle de l'Oracle (T1-P005-C1, T3-P006-C1) : calotte de 104 m de
+    diamètre et 22 m de flèche, intrados en pierre sculptée nervurée (vers le bas),
+    extrados en cristal bleu. Posée par le générateur avec un décalage vertical (base
+    de la calotte = naissance de la voûte)."""
+    m = M()
+    st, cr = m.p("Stone_Oracle"), m.p("Crystal_Blue")
+    R, Hc = 52.0, 22.0
+    seg = S(lod, 32)
+    rings = {0: 8, 1: 5, 2: 3}[lod]
+    def pt(i, j, off):
+        t = j / rings
+        r = R * math.cos(t * math.pi / 2)
+        z = Hc * math.sin(t * math.pi / 2) + off
+        a = 2 * math.pi * i / seg
+        return Vector((r * math.cos(a), r * math.sin(a), z))
+    for j in range(rings):
+        for i in range(seg):
+            # intrados (normale vers le bas/l'intérieur)
+            _quad(st, pt(i, j, 0), pt(i, j + 1, 0), pt(i + 1, j + 1, 0), pt(i + 1, j, 0),
+                  ((i * 0.5, j * 0.5), (i * 0.5, (j + 1) * 0.5), ((i + 1) * 0.5, (j + 1) * 0.5), ((i + 1) * 0.5, j * 0.5)))
+            # extrados
+            _quad(cr, pt(i, j, 1.5), pt(i + 1, j, 1.5), pt(i + 1, j + 1, 1.5), pt(i, j + 1, 1.5),
+                  ((i * 0.6, j * 0.6), ((i + 1) * 0.6, j * 0.6), ((i + 1) * 0.6, (j + 1) * 0.6), (i * 0.6, (j + 1) * 0.6)))
+    if lod == 0:
+        for i in range(0, seg, 2):
+            prev = None
+            for j in range(1, rings + 1):  # nervures au-dessus de la naissance (base au sol)
+                p = pt(i, j, -0.6)
+                if prev is not None:
+                    cyl(st, tuple(prev), tuple(p), 0.6, 0.6, 4, False, 0.2)
+                prev = p
+    return m.out()
+
+
+def p_oracle_light_pillar(spec, lod):
+    """Colonne de brume figée et de lumière de l'Oracle (T1-P003-C1, T3-P007-C1) :
+    torsade de brume (Mist_Frozen, émissif) qui s'évase en volutes au sommet, cœur de
+    cristal lumineux (Crystal_Glow). Aucune figure. Mise à la cote par normalize_dims."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    mi, g = m.p("Mist_Frozen"), m.p("Crystal_Glow")
+    H = 30.0
+    steps = {0: 16, 1: 10, 2: 6}[lod]
+    for strand in range({0: 3, 1: 2, 2: 1}[lod]):
+        ph = 2 * math.pi * strand / 3
+        pts, radii = [], []
+        for k in range(steps + 1):
+            t = k / steps
+            r = 1.2 + 1.0 * math.sin(t * 9 + ph) * 0.3 + (2.6 * t ** 3)
+            off = 0.8 * (1 - t) + 2.2 * t ** 2
+            a = ph + t * 4.0
+            pts.append(Vector((off * math.cos(a), off * math.sin(a), H * t)))
+            radii.append(r * (1.0 - 0.25 * strand))
+        API["tube"](mi, pts, radii, S(lod, 10), 0.08)
+    # volutes du sommet
+    for k in range({0: 6, 1: 4, 2: 2}[lod]):
+        a = 2 * math.pi * k / 6 + rng.uniform(-0.3, 0.3)
+        c = Vector((3.2 * math.cos(a), 3.2 * math.sin(a), H * rng.uniform(0.86, 0.96)))
+        cyl(mi, tuple(c - Vector((0, 0, 1.4))), tuple(c + Vector((0, 0, 1.4))), 2.2, 1.0, S(lod, 8), True, 0.1)
+    _prism(g, (0, 0, 0), _poly(rng, 0.7, 6 if lod == 0 else 5), H * 0.85, (0, 0), (0, 0), 0.3)
+    return m.out()
+
+
+def p_oracle_chain(spec, lod):
+    """Chaîne suspendue de la voûte (T1-P005-C1) : maillons alternés de 0,6 m, 20 m de
+    long, crochet en haut. Base de l'objet = bout bas de la chaîne (posé en hauteur par
+    le générateur)."""
+    m = M()
+    fe = m.p("Iron")
+    L, link = 20.0, 0.6
+    n = int(L / (link * 0.8))
+    for k in range(n):
+        z = k * link * 0.8
+        if lod == 2 and k % 2:
+            continue
+        if k % 2 == 0:
+            box(fe, (-0.2, -0.04, z), (0.2, 0.04, z + link), 2.0)
+        else:
+            box(fe, (-0.04, -0.2, z), (0.04, 0.2, z + link), 2.0)
+    if lod < 2:
+        cyl(fe, (0, 0, n * link * 0.8), (0, 0, L), 0.12, 0.08, 6)
+    return m.out()
+
+
+def p_oracle_menhir(spec, lod):
+    """Menhir bleu du grand cercle de l'Oracle (T2-P044-C1) : pierre dressée à pans,
+    sommet arrondi biais. Mise à la cote par normalize_dims."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    s = m.p("Stone_Menhir")
+    n = S(lod, 8)
+    base = _poly(rng, 0.7, n)
+    rings = [(0.0, 1.0), (0.45, 0.92), (0.8, 0.75), (0.95, 0.45)]
+    lvl = []
+    for z, k in rings:
+        lvl.append([Vector((x * k * (1.0 + 0.4 * (z > 0) * rng.uniform(-0.05, 0.05)), y * k * 0.55, z * 4.0)) for x, y in base])
+    for a, b in zip(lvl[:-1], lvl[1:]):
+        for k in range(n):
+            k2 = (k + 1) % n
+            _quad(s, a[k], a[k2], b[k2], b[k], ((k / n, 0), ((k + 1) / n, 0), ((k + 1) / n, 0.5), (k / n, 0.5)))
+    top = Vector((0.1, 0, 4.0 * 1.03))
+    for k in range(n):
+        k2 = (k + 1) % n
+        i = len(s.v)
+        s.v += [lvl[-1][k], lvl[-1][k2], top]
+        s.f.append((i, i + 1, i + 2))
+        s.uv.append([(k / n, 0.5), ((k + 1) / n, 0.5), ((k + 0.5) / n, 0.6)])
+        s.cn.append(None)
+    s.smooth = False
+    return m.out()
+
+
+def p_pennant_pole(spec, lod):
+    """Mât à long fanion des pèlerins (T2-P045-C1, fanions jaunes au-dessus des tentes) :
+    mât de 7 m, fanion triangulaire de 2,6 m (Cloth_Yellow) légèrement ondulé, pied
+    calé de pierres au LOD0."""
+    m = M()
+    w, c = m.p("Wood_Dark"), m.p("Cloth_Yellow")
+    H = 7.0
+    cyl(w, (0, 0, 0), (0, 0, H), 0.06, 0.045, S(lod, 6))
+    n = {0: 6, 1: 3, 2: 1}[lod]
+    top, bot = H - 0.15, H - 1.0
+    for k in range(n):
+        x0, x1 = 2.6 * k / n, 2.6 * (k + 1) / n
+        t0, t1 = 1 - k / n, 1 - (k + 1) / n
+        y0 = 0.12 * math.sin(k * 1.3)
+        y1 = 0.12 * math.sin((k + 1) * 1.3)
+        mid0, mid1 = (top + bot) / 2, (top + bot) / 2 - 0.05 * (k + 1)
+        _quad(c, (x0 + 0.05, y0, mid0 - (mid0 - bot) * t0), (x1 + 0.05, y1, mid1 - (mid1 - bot) * t1),
+              (x1 + 0.05, y1, mid1 + (top - mid1) * t1), (x0 + 0.05, y0, mid0 + (top - mid0) * t0),
+              ((x0 / 2.6, 0), (x1 / 2.6, 0), (x1 / 2.6, 1), (x0 / 2.6, 1)))
+    if lod == 0:
+        for k in range(4):
+            a = k * math.pi / 2
+            box(m.p("Stone_Wall"), (0.18 * math.cos(a) - 0.1, 0.18 * math.sin(a) - 0.1, 0),
+                (0.18 * math.cos(a) + 0.1, 0.18 * math.sin(a) + 0.1, 0.16))
     return m.out()
 
 

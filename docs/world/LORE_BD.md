@@ -1075,6 +1075,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.63](#1663-atelier-décors--de-la-bd-au-jeu-v10137) | v1.0.137 | Atelier décors : de la BD au jeu | 182 objets génériques des tomes 1 à 5 modélisés (3 LOD, billboard), placés par le générateur ou au catalogue ; collection `decors` du lore ; signatures retirées ; enseignes à pictogramme ; tombes anciennes ; grands champs. |
 | [16.64](#1664-atelier-décors--tomes-6-à-14-v10138) | v1.0.138 | Atelier décors : tomes 6 à 14 | 19 objets génériques (n° 195 à 213) modélisés et placés ; tomes 11 à 14 sans objet générique nouveau ; signatures retirées, Empire du Jade réservé à l'extension. |
 | [16.65](#1665-rendu-lointain-et-océan-de-tentes-de-loracle-v10139) | v1.0.139 | Rendu lointain et océan de tentes de l'Oracle | Réserve matériaux 64 → 2048, LOD et billboards des arbres sombres, couvert des cultures, teinte aérienne au soleil réel ; quinze rangs de tentes de pèlerins (decor_214). |
+| [16.66](#1666-camp-de-loracle--salles-intérieures-portes-de-cristal-et-camp-extérieur-v10140) | v1.0.140 | Camp de l'Oracle : salles intérieures, portes de cristal et camp extérieur | Rocher de cristal bleu, 8 grandes portes peintes sur socle de brique, escaliers de 6 m ; salle de l'Oracle (porte SO, quête) et salle des Échos (porte E, raid de 3+) ; passages conditionnels du shard ; tentes agrandies et de couleur, fanions, feux, bassins, menhirs de 3-5 m. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5403,6 +5404,7 @@ village par :
   une teinte côté client (shader du terrain).
 - Non fait : puits intérieur (8, invisible de l'extérieur), visage blanc, phases de lune et brume de la porte (pas de
   mesh ni de particules).
+- **Mis à jour en v1.0.140** (16.66) : rocher de cristal, grandes portes, escaliers de 6 m, salles intérieures, menhirs de 3-5 m.
 
 **Contrôles** : `world_gen_tests` (`TestOracleV1136` : aucune maison dans le camp, ≥ 40 tentes, 8 escaliers et 8 portes,
 ≥ 18 menhirs et leurs lueurs bleues, rocher ≥ 50 m au-dessus de la plaine à parois > 45°, aucune route sur le rocher,
@@ -5508,6 +5510,45 @@ l'Oracle, il n'y a pas assez de tentes autour du rocher.
 | Champs en rectangles | Rangs de cartes verticales seuls | Couvert horizontal texturé (rangs, sillons, fleurs) sur les LOD1/LOD2 des parcelles |
 | Relief lointain blanc la nuit | Teinte de la perspective aérienne calculée avec la lune comme soleil | Teinte calculée avec le soleil réel, comme le ciel |
 | Camp de l'Oracle clairsemé | Six rangs de tentes en panneaux de toit | Quinze rangs (≈ 3 000 tentes) de tentes de pèlerins modélisées (`decor_214`), tentes longues de familles avec leur feu |
+
+### 16.66 Camp de l'Oracle : salles intérieures, portes de cristal et camp extérieur (v1.0.140)
+
+**Demande du propriétaire** (25/11/2026) : « le camp de l'Oracle, le visuel doit être encore amélioré » d'après
+T1 p.3-5 (intérieur), T2 p.44 (camp), p.45 (escalier), p.46 (porte), T3 p.5 (camp de nuit), p.6-7 (intérieur) —
+numéros de page des PDF fournis (T1 p.3-5 = album p.9-11 ; T2 p.46 = illustration finale, « T2 p.48 » en 16.62) ;
+puis, pendant le chantier : ajuster aussi l'extérieur (tentes, eau, autres éléments) et agrandir les tentes, trop
+petites par rapport au joueur. **Arbitrages** (validés par numéros) : salle creusée dans le relief et couverte d'une
+voûte (pas d'instance) ; porte SO ouverte sur quête ; porte E vers une quête et un raid ; éclairage intérieur par zone
+d'ambiance ; rocher de cristal (maillage de près, couche de cristal du terrain de loin) ; porte réinterprétée
+(emblème abstrait, sans visage) ; brume figée lumineuse et émissif des décors ; échelles d'escalier et de menhirs
+ramenées à la BD.
+
+| Élément | Avant (16.62, 16.65) | v1.0.140 |
+|---|---|---|
+| Rocher | Roche pâle du splat, bleu des seules lumières | Canal A du splat rendu en **cristal bleu** sous la roche peinte (zone.json `render.terrain.crystal_layer`, `terrain.frag`) ; 56 dalles de cristal (`decor_215`) au pied des parois et sur la couronne |
+| Portes | Façade de murs de brique, porte ronde | 8 **grandes portes** peintes 10 × 14,5 m (`decor_217` : phases de lune, rosace, croissant lumineux, glyphes inventés) sur **socle de brique** rouge sombre (`decor_218`) ; amas de cristaux de part et d'autre |
+| Escaliers | 12 m de large (33 pièces) | **6 m** (15 rangs de 2 pièces de 3 m), palier entaillé de 10 m au lieu de 16 |
+| Intérieur | Aucun (porte fermée sur la roche) | **Salle de l'Oracle** : cratère de 50 m de rayon au niveau des paliers, 16 parois sculptées à niches (`decor_220`), 16 colonnes (`decor_219`), dais gravé à gradins (`decor_221`), colonne de brume figée et de lumière (`decor_223`, sans figure), chaînes (`decor_224`), amas de cristaux (`decor_216`), voûte de cristal (`decor_222`) ; zone d'ambiance sombre, lumière froide |
+| Raid | — | **Salle des Échos** sous la facette est (94 m du centre, rayon 28 m) : Gardien des Échos (créature 170, niveau 20) et 4 échos de cristal (171, niveau 18) |
+| Accès | — | **Passages conditionnels** (`world/<monde>/passages.json`, généré ; shard `DoorPassages`) : porte SO → salle de l'Oracle si « L'Appel de l'Oracle » est acceptée ; porte E → salle des Échos si « L'Épreuve des Échos » est acceptée et le groupe compte au moins 3 membres ; sorties sans condition ; refus signalé une fois par message système |
+| PNJ de quête | — | Veilleur de la grande porte (pied de l'escalier SO, donne `oracle_appel`), prêtresse du dais (salle de l'Oracle, reçoit `oracle_appel`, donne et reçoit `oracle_echos`, hebdomadaire, crédit partagé) |
+| Tentes | Faîte de 1,6 à 2,3 m | **Agrandies ×1,5** (×1,4 la tente longue) : 2,7 à 3,3 m au faîte ; toiles **rouge sombre** et **bleu-gris** (`Tent_Pilgrim_4`, `_5`) ; pavillon de l'auberge et tentes des échoppes agrandis |
+| Plaine | — | Mâts à longs fanions jaunes (`decor_226`), feux de familles éclairés la nuit (au plus 90), **4 bassins des pèlerins** (eau, `water.bin`) à 618 m du centre avec abreuvoirs, abreuvoirs le long de l'allée |
+| Menhirs | Dalles de 6 à 10 m | **Menhirs bleus de 3 à 5 m** (`decor_225`, T2 p.44) |
+
+- **Émissif des décors** (client) : `emissiveFactor` du glTF (atelier décors : `Crystal_Glow` 0,55, `Mist_Frozen` 0,35)
+  → bit `Emissive` du matériau → `GBufferC.a` (comme la lave) ; les cristaux et la brume brillent de jour comme de nuit.
+- **Collision** : parois de salle par boîte de catalogue (`building_pieces.json`, `oracle_hall_wall`) ; salles fermées par le
+  relief (parois d'au moins 30 m) : on n'y entre que par les passages du shard.
+- **BD et jeu** : la règle « pas de combat à l'Oracle » vaut pour le camp et la salle de l'Oracle ; le combat est confiné à
+  la salle des Échos (choix du propriétaire). La salle de l'Oracle reçoit plusieurs joueurs à la fois (la BD : « un être à la fois »).
+- **Modèles provisoires** : Gardien et échos sur le modèle `nains` agrandi, en attendant un modèle de golem de cristal.
+- **Économie** : `oracle_appel` 400 XP et 20 or (une fois) ; `oracle_echos` 2 500 XP et 150 or par semaine et par joueur
+  du groupe (crédit partagé) ; aucun objet.
+
+**Contrôles** : `world_gen_tests` (`TestOracleV1136` étendu : salles creusées et fermées, 32 parois, 2 voûtes, dais et
+colonne de brume, dalles et couche de cristal, tentes de couleur et fanions, bassins et abreuvoirs, 4 passages et leurs
+conditions, 2 PNJ, raid, zones d'ambiance) ; `door_passages_tests` (shard) ; `validate_decor.py`.
 
 ## 17. Questions ouvertes
 

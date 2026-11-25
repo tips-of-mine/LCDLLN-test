@@ -1,0 +1,82 @@
+{
+    "_comment": "Lore v1.0.140 — Camp de l'Oracle : veilleur de la grande porte (PNJ de quete pose par tools/world_gen, Oracle.cpp). Propose « L'Appel de l'Oracle ». Les boutons Accepter/Rendre sont injectes a l'execution (UIModel.giverList), pas dans ce JSON.",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Halte, pèlerin. Des milliers attendent ici que l'Oracle les appelle ; certains depuis des mois."
+                },
+                "1": {
+                    "text": "(Le veilleur garde les yeux fixés sur la grande porte bleue, au sommet de l'escalier.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Comment l'Oracle appelle-t-il ?",
+                    "next": "appel"
+                },
+                "1": {
+                    "text": "Que sont ces échoppes ?",
+                    "next": "echoppes"
+                },
+                "2": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "appel",
+            "lines": {
+                "count": 3,
+                "0": {
+                    "text": "On le sent dans sa tête, comme une voix qui connaît ton nom. Et toi... je crois bien qu'il t'a déjà choisi."
+                },
+                "1": {
+                    "text": "Accepte l'appel, monte l'escalier du sud-ouest : la porte s'ouvrira. Les autres portes restent closes à qui n'est pas attendu."
+                },
+                "2": {
+                    "text": "(Pour t'engager, choisis « Accepter » ci-dessous.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Revenir.",
+                    "next": "intro"
+                },
+                "1": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "echoppes",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Des faux voyants, des magiciens, et quelques vrais devins. Ils vivent de ceux qui attendent. Garde ta bourse fermée."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Revenir.",
+                    "next": "intro"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

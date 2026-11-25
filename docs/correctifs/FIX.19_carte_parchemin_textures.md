@@ -28,3 +28,14 @@ fenêtre.
 ## Déploiement
 
 Client uniquement (rendu, données UI), pas de redéploiement serveur.
+
+## Complément — bord flou de la zone découverte (25/11/2026)
+
+Retour : le contour de la zone découverte est trop net. En régime fin, les
+sous-cases de bord ne sont plus voilées en tout-ou-rien (seuil 0,5 de la
+couverture gaussienne) : l'opacité du voile suit la couverture lissée
+(`WorldMapFogAlpha`, smoothstep de 0,02 à 0,95, 16 niveaux regroupés en séries
+par `WorldMapFogLevel`). Le papier vierge se fond donc dans la carte sur
+environ deux cases (≈ 125 m), signe qu'il reste des zones à explorer. Villes et
+lieux restent masqués selon le test d'origine. Vue très éloignée (case < 1,5 px) :
+inchangée.

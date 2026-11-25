@@ -384,14 +384,18 @@ namespace engine::render
 			const int N = dsc::kTilesPerSide;
 			const double vx0 = std::min(wx0, wx1), vx1 = std::max(wx0, wx1);
 			const double vz0 = std::min(wz0, wz1), vz1 = std::max(wz0, wz1);
-			auto rect = [&](double xa, double za, double xb, double zb) {
+			// Rectangle de voile (monde) ; \p alpha255 = opacité (255 = opaque, bord flou en dessous).
+			auto rect = [&](double xa, double za, double xb, double zb, int alpha255 = 255) {
 				const ImVec2 a = worldToScreen(static_cast<float>(xa), static_cast<float>(za));
 				const ImVec2 b = worldToScreen(static_cast<float>(xb), static_cast<float>(zb));
 				const ImVec2 lo(std::min(a.x, b.x), std::min(a.y, b.y)), hi(std::max(a.x, b.x), std::max(a.y, b.y));
+				const auto withAlpha = [alpha255](ImU32 c) {
+					return (c & ~IM_COL32_A_MASK) | (static_cast<ImU32>(alpha255) << IM_COL32_A_SHIFT);
+				};
 				if (fogTex != 0)
-					AddTiledImage(dl, fogTex, lo, hi, tileOrigin, tilePx, kFogTint);
+					AddTiledImage(dl, fogTex, lo, hi, tileOrigin, tilePx, withAlpha(kFogTint));
 				else
-					dl->AddRectFilled(lo, hi, kFogFlat);
+					dl->AddRectFilled(lo, hi, withAlpha(kFogFlat));
 			};
 			// Taille d'une case à l'écran (px), mesurée près de la vue.
 			const float pxPerTile = std::fabs(worldToScreen(static_cast<float>(vx0 + T), static_cast<float>(vz0)).x
@@ -479,7 +483,9 @@ namespace engine::render
 				// Sous-case (sx, sz) de la case (tx, tz) affichée « découverte » : moyenne
 				// gaussienne séparable du voisinage (2R + 1)² lu dans la grille locale
 				// (équivalent de dsc::IsPointRevealedSmooth, cf. wSub).
-				auto revealed = [&](int tx, int tz, int sx, int sz) -> bool {
+				// 25/11/2026 : renvoie la COUVERTURE lissée dans [0, 1] (et non plus le
+				// seul test ≥ 0,5) : le bord de zone est voilé en fondu (WorldMapFogAlpha).
+				auto coverage = [&](int tx, int tz, int sx, int sz) -> float {
 					const double* wx = &wSub[static_cast<size_t>(sx) * static_cast<size_t>(K)];
 					const double* wz = &wSub[static_cast<size_t>(sz) * static_cast<size_t>(K)];
 					const size_t lx0 = static_cast<size_t>(tx - tx0), lz0 = static_cast<size_t>(tz - tz0);
@@ -493,8 +499,13 @@ namespace engine::render
 								rowSum += wx[di];
 						f += wz[dj] * rowSum;
 					}
-					return f >= 0.5 * wSum[static_cast<size_t>(sx)] * wSum[static_cast<size_t>(sz)];
+					return static_cast<float>(f / (wSum[static_cast<size_t>(sx)] * wSum[static_cast<size_t>(sz)]));
 				};
+				// Niveau d'opacité quantifié d'une sous-case (0 = pas de voile).
+				auto fogLevel = [&](int tx, int tz, int sx, int sz) -> int {
+					return engine::client::WorldMapFogLevel(engine::client::WorldMapFogAlpha(coverage(tx, tz, sx, sz)));
+				};
+				const int maxLevel = engine::client::kWorldMapFogLevels - 1;
 				// État du voisinage 5 × 5 d'une case : 0 rien, 1 mélange, 2 tout découvert.
 				const int all = (2 * R + 1) * (2 * R + 1);
 				auto neighbourhood = [&](int tx, int tz) -> int {
@@ -512,17 +523,24 @@ namespace engine::render
 						if (state == 2) { ++tx; continue; }
 						if (state == 1)
 						{
-							// Bord de zone : sous-cases voilées par séries horizontales.
+							// Bord de zone : sous-cases voilées en fondu, par séries
+							// horizontales de même niveau d'opacité.
+							int rowLvl[12];
 							for (int sz = 0; sz < sub; ++sz)
 							{
+								// Niveaux de la rangée calculés une seule fois (sub ≤ 12).
+								for (int k = 0; k < sub; ++k)
+									rowLvl[k] = fogLevel(tx, tz, k, sz);
 								int sx = 0;
 								while (sx < sub)
 								{
-									if (revealed(tx, tz, sx, sz)) { ++sx; continue; }
+									const int lvl = rowLvl[sx];
+									if (lvl == 0) { ++sx; continue; }
 									const int s0 = sx;
-									while (sx < sub && !revealed(tx, tz, sx, sz)) ++sx;
+									while (sx < sub && rowLvl[sx] == lvl) ++sx;
 									rect(mn.x + tx * T + s0 * subM, mn.z + tz * T + sz * subM,
-										mn.x + tx * T + sx * subM, mn.z + tz * T + (sz + 1) * subM);
+										mn.x + tx * T + sx * subM, mn.z + tz * T + (sz + 1) * subM,
+										lvl * 255 / maxLevel);
 								}
 							}
 							++tx;

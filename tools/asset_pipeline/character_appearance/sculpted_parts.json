@@ -1,0 +1,1648 @@
+{
+ "licence": "Pièces sculptées générées pour LCDLLN (références SDXL génériques, aucune image de la BD ; maillages TRELLIS.2, licence MIT) — CC0 du projet",
+ "races": {
+  "humains": {
+   "male": {
+    "slots": {
+     "face": [
+      {
+       "id": "face_1",
+       "name": "Visage 1",
+       "lods": [
+        "models/characters/appearance/humains/male/face_1_lod0.glb",
+        "models/characters/appearance/humains/male/face_1_lod1.glb",
+        "models/characters/appearance/humains/male/face_1_lod2.glb"
+       ],
+       "texture": "textures/characters/appearance/humains/T_Face_Male_BaseColor.png",
+       "normal": "textures/characters/appearance/humains/T_Face_Male_Normal.png"
+      },
+      {
+       "id": "face_2",
+       "name": "Visage 2",
+       "lods": [
+        "models/characters/appearance/humains/male/face_2_lod0.glb",
+        "models/characters/appearance/humains/male/face_2_lod1.glb",
+        "models/characters/appearance/humains/male/face_2_lod2.glb"
+       ],
+       "texture": "textures/characters/appearance/humains/T_Face_Male_BaseColor.png",
+       "normal": "textures/characters/appearance/humains/T_Face_Male_Normal.png"
+      },
+      {
+       "id": "face_3",
+       "name": "Visage 3",
+       "lods": [
+        "models/characters/appearance/humains/male/face_3_lod0.glb",
+        "models/characters/appearance/humains/male/face_3_lod1.glb",
+        "models/characters/appearance/humains/male/face_3_lod2.glb"
+       ],
+       "texture": "textures/characters/appearance/humains/T_Face_Male_BaseColor.png",
+       "normal": "textures/characters/appearance/humains/T_Face_Male_Normal.png"
+      }
+     ],
+     "hair": [
+      {
+       "id": "cropped",
+       "name": "Ras",
+       "lods": [
+        "models/characters/appearance/humains/male/hair_cropped_lod0.glb",
+        "models/characters/appearance/humains/male/hair_cropped_lod1.glb",
+        "models/characters/appearance/humains/male/hair_cropped_lod2.glb"
+       ]
+      },
+      {
+       "id": "short",
+       "name": "Courts",
+       "lods": [
+        "models/characters/appearance/humains/male/hair_short_lod0.glb",
+        "models/characters/appearance/humains/male/hair_short_lod1.glb",
+        "models/characters/appearance/humains/male/hair_short_lod2.glb"
+       ]
+      },
+      {
+       "id": "swept",
+       "name": "Plaqués en arrière",
+       "lods": [
+        "models/characters/appearance/humains/male/hair_swept_lod0.glb",
+        "models/characters/appearance/humains/male/hair_swept_lod1.glb",
+        "models/characters/appearance/humains/male/hair_swept_lod2.glb"
+       ]
+      },
+      {
+       "id": "medium",
+       "name": "Mi-longs",
+       "lods": [
+        "models/characters/appearance/humains/male/hair_medium_lod0.glb",
+        "models/characters/appearance/humains/male/hair_medium_lod1.glb",
+        "models/characters/appearance/humains/male/hair_medium_lod2.glb"
+       ]
+      },
+      {
+       "id": "long",
+       "name": "Longs",
+       "lods": [
+        "models/characters/appearance/humains/male/hair_long_lod0.glb",
+        "models/characters/appearance/humains/male/hair_long_lod1.glb",
+        "models/characters/appearance/humains/male/hair_long_lod2.glb"
+       ]
+      },
+      {
+       "id": "ponytail",
+       "name": "Queue de cheval",
+       "lods": [
+        "models/characters/appearance/humains/male/hair_ponytail_lod0.glb",
+        "models/characters/appearance/humains/male/hair_ponytail_lod1.glb",
+        "models/characters/appearance/humains/male/hair_ponytail_lod2.glb"
+       ]
+      }
+     ],
+     "beard": [
+      {
+       "id": "short_beard",
+       "name": "Barbe courte",
+       "lods": [
+        "models/characters/appearance/humains/male/beard_short_beard_lod0.glb",
+        "models/characters/appearance/humains/male/beard_short_beard_lod1.glb",
+        "models/characters/appearance/humains/male/beard_short_beard_lod2.glb"
+       ]
+      },
+      {
+       "id": "full_beard",
+       "name": "Barbe fournie",
+       "lods": [
+        "models/characters/appearance/humains/male/beard_full_beard_lod0.glb",
+        "models/characters/appearance/humains/male/beard_full_beard_lod1.glb",
+        "models/characters/appearance/humains/male/beard_full_beard_lod2.glb"
+       ]
+      },
+      {
+       "id": "goatee",
+       "name": "Bouc",
+       "lods": [
+        "models/characters/appearance/humains/male/beard_goatee_lod0.glb",
+        "models/characters/appearance/humains/male/beard_goatee_lod1.glb",
+        "models/characters/appearance/humains/male/beard_goatee_lod2.glb"
+       ]
+      },
+      {
+       "id": "long_beard",
+       "name": "Longue barbe",
+       "lods": [
+        "models/characters/appearance/humains/male/beard_long_beard_lod0.glb",
+        "models/characters/appearance/humains/male/beard_long_beard_lod1.glb",
+        "models/characters/appearance/humains/male/beard_long_beard_lod2.glb"
+       ]
+      },
+      {
+       "id": "chin_strap",
+       "name": "Collier",
+       "lods": [
+        "models/characters/appearance/humains/male/beard_chin_strap_lod0.glb",
+        "models/characters/appearance/humains/male/beard_chin_strap_lod1.glb",
+        "models/characters/appearance/humains/male/beard_chin_strap_lod2.glb"
+       ]
+      }
+     ],
+     "moustache": [
+      {
+       "id": "drooping",
+       "name": "Tombante",
+       "lods": [
+        "models/characters/appearance/humains/male/moustache_drooping_lod0.glb",
+        "models/characters/appearance/humains/male/moustache_drooping_lod1.glb",
+        "models/characters/appearance/humains/male/moustache_drooping_lod2.glb"
+       ]
+      },
+      {
+       "id": "thin",
+       "name": "Fine",
+       "lods": [
+        "models/characters/appearance/humains/male/moustache_thin_lod0.glb",
+        "models/characters/appearance/humains/male/moustache_thin_lod1.glb",
+        "models/characters/appearance/humains/male/moustache_thin_lod2.glb"
+       ]
+      },
+      {
+       "id": "thick",
+       "name": "Épaisse",
+       "lods": [
+        "models/characters/appearance/humains/male/moustache_thick_lod0.glb",
+        "models/characters/appearance/humains/male/moustache_thick_lod1.glb",
+        "models/characters/appearance/humains/male/moustache_thick_lod2.glb"
+       ]
+      },
+      {
+       "id": "handlebar",
+       "name": "Guidon",
+       "lods": [
+        "models/characters/appearance/humains/male/moustache_handlebar_lod0.glb",
+        "models/characters/appearance/humains/male/moustache_handlebar_lod1.glb",
+        "models/characters/appearance/humains/male/moustache_handlebar_lod2.glb"
+       ]
+      }
+     ]
+    },
+    "hairTexture": "textures/characters/appearance/humains/T_HairSculpt_Male.png"
+   },
+   "female": {
+    "slots": {
+     "face": [
+      {
+       "id": "face_1",
+       "name": "Visage 1",
+       "lods": [
+        "models/characters/appearance/humains/female/face_1_lod0.glb",
+        "models/characters/appearance/humains/female/face_1_lod1.glb",
+        "models/characters/appearance/humains/female/face_1_lod2.glb"
+       ],
+       "texture": "textures/characters/appearance/humains/T_Face_Female_BaseColor.png",
+       "normal": "textures/characters/appearance/humains/T_Face_Female_Normal.png"
+      },
+      {
+       "id": "face_2",
+       "name": "Visage 2",
+       "lods": [
+        "models/characters/appearance/humains/female/face_2_lod0.glb",
+        "models/characters/appearance/humains/female/face_2_lod1.glb",
+        "models/characters/appearance/humains/female/face_2_lod2.glb"
+       ],
+       "texture": "textures/characters/appearance/humains/T_Face_Female_BaseColor.png",
+       "normal": "textures/characters/appearance/humains/T_Face_Female_Normal.png"
+      },
+      {
+       "id": "face_3",
+       "name": "Visage 3",
+       "lods": [
+        "models/characters/appearance/humains/female/face_3_lod0.glb",
+        "models/characters/appearance/humains/female/face_3_lod1.glb",
+        "models/characters/appearance/humains/female/face_3_lod2.glb"
+       ],
+       "texture": "textures/characters/appearance/humains/T_Face_Female_BaseColor.png",
+       "normal": "textures/characters/appearance/humains/T_Face_Female_Normal.png"
+      }
+     ],
+     "hair": [
+      {
+       "id": "short",
+       "name": "Courts",
+       "lods": [
+        "models/characters/appearance/humains/female/hair_short_lod0.glb",
+        "models/characters/appearance/humains/female/hair_short_lod1.glb",
+        "models/characters/appearance/humains/female/hair_short_lod2.glb"
+       ]
+      },
+      {
+       "id": "long",
+       "name": "Longs",
+       "lods": [
+        "models/characters/appearance/humains/female/hair_long_lod0.glb",
+        "models/characters/appearance/humains/female/hair_long_lod1.glb",
+        "models/characters/appearance/humains/female/hair_long_lod2.glb"
+       ]
+      },
+      {
+       "id": "ponytail",
+       "name": "Queue de cheval",
+       "lods": [
+        "models/characters/appearance/humains/female/hair_ponytail_lod0.glb",
+        "models/characters/appearance/humains/female/hair_ponytail_lod1.glb",
+        "models/characters/appearance/humains/female/hair_ponytail_lod2.glb"
+       ]
+      },
+      {
+       "id": "high_tail",
+       "name": "Queue haute",
+       "lods": [
+        "models/characters/appearance/humains/female/hair_high_tail_lod0.glb",
+        "models/characters/appearance/humains/female/hair_high_tail_lod1.glb",
+        "models/characters/appearance/humains/female/hair_high_tail_lod2.glb"
+       ]
+      },
+      {
+       "id": "bun",
+       "name": "Chignon",
+       "lods": [
+        "models/characters/appearance/humains/female/hair_bun_lod0.glb",
+        "models/characters/appearance/humains/female/hair_bun_lod1.glb",
+        "models/characters/appearance/humains/female/hair_bun_lod2.glb"
+       ]
+      },
+      {
+       "id": "braid",
+       "name": "Tresse",
+       "lods": [
+        "models/characters/appearance/humains/female/hair_braid_lod0.glb",
+        "models/characters/appearance/humains/female/hair_braid_lod1.glb",
+        "models/characters/appearance/humains/female/hair_braid_lod2.glb"
+       ]
+      },
+      {
+       "id": "twin_braids",
+       "name": "Deux tresses",
+       "lods": [
+        "models/characters/appearance/humains/female/hair_twin_braids_lod0.glb",
+        "models/characters/appearance/humains/female/hair_twin_braids_lod1.glb",
+        "models/characters/appearance/humains/female/hair_twin_braids_lod2.glb"
+       ]
+      },
+      {
+       "id": "bob",
+       "name": "Carré",
+       "lods": [
+        "models/characters/appearance/humains/female/hair_bob_lod0.glb",
+        "models/characters/appearance/humains/female/hair_bob_lod1.glb",
+        "models/characters/appearance/humains/female/hair_bob_lod2.glb"
+       ]
+      }
+     ]
+    },
+    "hairTexture": "textures/characters/appearance/humains/T_HairSculpt_Female.png"
+   }
+  }
+ },
+ "stats": {
+  "models/characters/appearance/humains/male/face_1_lod0.glb": {
+   "vertices": 4662,
+   "triangles": 8960,
+   "bbox_min": [
+    -0.0904,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0879,
+    0.094,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_1_lod1.glb": {
+   "vertices": 2044,
+   "triangles": 3848,
+   "bbox_min": [
+    -0.0874,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0867,
+    0.0937,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_1_lod2.glb": {
+   "vertices": 832,
+   "triangles": 1518,
+   "bbox_min": [
+    -0.0842,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0861,
+    0.085,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_2_lod0.glb": {
+   "vertices": 4652,
+   "triangles": 8960,
+   "bbox_min": [
+    -0.0961,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0912,
+    0.1077,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_2_lod1.glb": {
+   "vertices": 2034,
+   "triangles": 3848,
+   "bbox_min": [
+    -0.0933,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0909,
+    0.1079,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_2_lod2.glb": {
+   "vertices": 832,
+   "triangles": 1518,
+   "bbox_min": [
+    -0.0891,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0868,
+    0.0935,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_3_lod0.glb": {
+   "vertices": 4663,
+   "triangles": 8960,
+   "bbox_min": [
+    -0.0876,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0884,
+    0.0917,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_3_lod1.glb": {
+   "vertices": 2046,
+   "triangles": 3848,
+   "bbox_min": [
+    -0.0869,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0872,
+    0.0914,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_3_lod2.glb": {
+   "vertices": 834,
+   "triangles": 1518,
+   "bbox_min": [
+    -0.0876,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0875,
+    0.0784,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_cropped_lod0.glb": {
+   "vertices": 4317,
+   "triangles": 8254,
+   "bbox_min": [
+    -0.0916,
+    -0.1419,
+    1.62
+   ],
+   "bbox_max": [
+    0.09,
+    0.0781,
+    1.8242
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_cropped_lod1.glb": {
+   "vertices": 1904,
+   "triangles": 3562,
+   "bbox_min": [
+    -0.092,
+    -0.1388,
+    1.6207
+   ],
+   "bbox_max": [
+    0.0898,
+    0.0753,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_cropped_lod2.glb": {
+   "vertices": 733,
+   "triangles": 1316,
+   "bbox_min": [
+    -0.0875,
+    -0.1388,
+    1.6422
+   ],
+   "bbox_max": [
+    0.0901,
+    0.0752,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_short_lod0.glb": {
+   "vertices": 4222,
+   "triangles": 8056,
+   "bbox_min": [
+    -0.0916,
+    -0.1406,
+    1.6372
+   ],
+   "bbox_max": [
+    0.09,
+    0.0653,
+    1.8242
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_short_lod1.glb": {
+   "vertices": 1864,
+   "triangles": 3472,
+   "bbox_min": [
+    -0.092,
+    -0.1404,
+    1.6389
+   ],
+   "bbox_max": [
+    0.0898,
+    0.067,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_short_lod2.glb": {
+   "vertices": 716,
+   "triangles": 1278,
+   "bbox_min": [
+    -0.0875,
+    -0.1404,
+    1.6422
+   ],
+   "bbox_max": [
+    0.0901,
+    0.0663,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_swept_lod0.glb": {
+   "vertices": 4192,
+   "triangles": 7980,
+   "bbox_min": [
+    -0.0916,
+    -0.1388,
+    1.6372
+   ],
+   "bbox_max": [
+    0.09,
+    0.0667,
+    1.8242
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_swept_lod1.glb": {
+   "vertices": 1848,
+   "triangles": 3440,
+   "bbox_min": [
+    -0.092,
+    -0.1388,
+    1.6389
+   ],
+   "bbox_max": [
+    0.0898,
+    0.0648,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_swept_lod2.glb": {
+   "vertices": 853,
+   "triangles": 1520,
+   "bbox_min": [
+    -0.0882,
+    -0.1388,
+    1.6305
+   ],
+   "bbox_max": [
+    0.0891,
+    0.0698,
+    1.8235
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_medium_lod0.glb": {
+   "vertices": 4800,
+   "triangles": 9064,
+   "bbox_min": [
+    -0.1047,
+    -0.1775,
+    1.4337
+   ],
+   "bbox_max": [
+    0.1163,
+    0.0754,
+    1.8242
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_medium_lod1.glb": {
+   "vertices": 2145,
+   "triangles": 3940,
+   "bbox_min": [
+    -0.1003,
+    -0.1772,
+    1.4453
+   ],
+   "bbox_max": [
+    0.1161,
+    0.0753,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_medium_lod2.glb": {
+   "vertices": 833,
+   "triangles": 1460,
+   "bbox_min": [
+    -0.0993,
+    -0.1769,
+    1.4451
+   ],
+   "bbox_max": [
+    0.1161,
+    0.0752,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/female/face_1_lod0.glb": {
+   "vertices": 4668,
+   "triangles": 8960,
+   "bbox_min": [
+    -0.0826,
+    -0.1312,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0803,
+    0.0616,
+    1.7634
+   ]
+  },
+  "models/characters/appearance/humains/female/face_1_lod1.glb": {
+   "vertices": 2045,
+   "triangles": 3848,
+   "bbox_min": [
+    -0.0825,
+    -0.1312,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0802,
+    0.0613,
+    1.7622
+   ]
+  },
+  "models/characters/appearance/humains/female/face_1_lod2.glb": {
+   "vertices": 840,
+   "triangles": 1518,
+   "bbox_min": [
+    -0.0821,
+    -0.1311,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0791,
+    0.0549,
+    1.7621
+   ]
+  },
+  "models/characters/appearance/humains/female/face_2_lod0.glb": {
+   "vertices": 4668,
+   "triangles": 8960,
+   "bbox_min": [
+    -0.0844,
+    -0.1312,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0806,
+    0.0769,
+    1.7634
+   ]
+  },
+  "models/characters/appearance/humains/female/face_2_lod1.glb": {
+   "vertices": 2045,
+   "triangles": 3848,
+   "bbox_min": [
+    -0.0827,
+    -0.1312,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0805,
+    0.0769,
+    1.7622
+   ]
+  },
+  "models/characters/appearance/humains/female/face_2_lod2.glb": {
+   "vertices": 836,
+   "triangles": 1518,
+   "bbox_min": [
+    -0.0778,
+    -0.1311,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0806,
+    0.0637,
+    1.7621
+   ]
+  },
+  "models/characters/appearance/humains/female/face_3_lod0.glb": {
+   "vertices": 4667,
+   "triangles": 8960,
+   "bbox_min": [
+    -0.0879,
+    -0.1312,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0828,
+    0.0705,
+    1.7634
+   ]
+  },
+  "models/characters/appearance/humains/female/face_3_lod1.glb": {
+   "vertices": 2047,
+   "triangles": 3848,
+   "bbox_min": [
+    -0.0873,
+    -0.1312,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0835,
+    0.069,
+    1.7622
+   ]
+  },
+  "models/characters/appearance/humains/female/face_3_lod2.glb": {
+   "vertices": 836,
+   "triangles": 1518,
+   "bbox_min": [
+    -0.0868,
+    -0.1311,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0792,
+    0.0591,
+    1.7621
+   ]
+  },
+  "models/characters/appearance/humains/male/face_3816_lod0.glb": {
+   "vertices": 4662,
+   "triangles": 8960,
+   "bbox_min": [
+    -0.0904,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0879,
+    0.094,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_3816_lod1.glb": {
+   "vertices": 2044,
+   "triangles": 3848,
+   "bbox_min": [
+    -0.0891,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0867,
+    0.0937,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_3816_lod2.glb": {
+   "vertices": 832,
+   "triangles": 1518,
+   "bbox_min": [
+    -0.0867,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0861,
+    0.085,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_27_lod0.glb": {
+   "vertices": 4663,
+   "triangles": 8960,
+   "bbox_min": [
+    -0.0876,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0884,
+    0.0917,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_27_lod1.glb": {
+   "vertices": 2046,
+   "triangles": 3848,
+   "bbox_min": [
+    -0.0869,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0872,
+    0.0914,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/male/face_27_lod2.glb": {
+   "vertices": 834,
+   "triangles": 1518,
+   "bbox_min": [
+    -0.0876,
+    -0.1376,
+    1.555
+   ],
+   "bbox_max": [
+    0.0875,
+    0.0769,
+    1.8222
+   ]
+  },
+  "models/characters/appearance/humains/female/face_52_lod0.glb": {
+   "vertices": 4667,
+   "triangles": 8960,
+   "bbox_min": [
+    -0.0879,
+    -0.1312,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0828,
+    0.0705,
+    1.7634
+   ]
+  },
+  "models/characters/appearance/humains/female/face_52_lod1.glb": {
+   "vertices": 2047,
+   "triangles": 3848,
+   "bbox_min": [
+    -0.0873,
+    -0.1312,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0835,
+    0.069,
+    1.7622
+   ]
+  },
+  "models/characters/appearance/humains/female/face_52_lod2.glb": {
+   "vertices": 836,
+   "triangles": 1518,
+   "bbox_min": [
+    -0.0868,
+    -0.1311,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0792,
+    0.0591,
+    1.7621
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_long_lod0.glb": {
+   "vertices": 4571,
+   "triangles": 8710,
+   "bbox_min": [
+    -0.1497,
+    -0.2247,
+    1.4723
+   ],
+   "bbox_max": [
+    0.1546,
+    0.0628,
+    1.8242
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_long_lod1.glb": {
+   "vertices": 2035,
+   "triangles": 3792,
+   "bbox_min": [
+    -0.146,
+    -0.2243,
+    1.4741
+   ],
+   "bbox_max": [
+    0.1562,
+    0.0636,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_long_lod2.glb": {
+   "vertices": 788,
+   "triangles": 1410,
+   "bbox_min": [
+    -0.1369,
+    -0.2228,
+    1.4675
+   ],
+   "bbox_max": [
+    0.1549,
+    0.0626,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_ponytail_lod0.glb": {
+   "vertices": 4494,
+   "triangles": 8550,
+   "bbox_min": [
+    -0.0879,
+    -0.1858,
+    1.4408
+   ],
+   "bbox_max": [
+    0.09,
+    0.0736,
+    1.8242
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_ponytail_lod1.glb": {
+   "vertices": 1996,
+   "triangles": 3710,
+   "bbox_min": [
+    -0.0896,
+    -0.1855,
+    1.4408
+   ],
+   "bbox_max": [
+    0.0898,
+    0.0731,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/male/hair_ponytail_lod2.glb": {
+   "vertices": 781,
+   "triangles": 1400,
+   "bbox_min": [
+    -0.0868,
+    -0.1865,
+    1.441
+   ],
+   "bbox_max": [
+    0.09,
+    0.0717,
+    1.8238
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_long_lod0.glb": {
+   "vertices": 4581,
+   "triangles": 8738,
+   "bbox_min": [
+    -0.1427,
+    -0.2152,
+    1.4377
+   ],
+   "bbox_max": [
+    0.1472,
+    0.0545,
+    1.7653
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_long_lod1.glb": {
+   "vertices": 2041,
+   "triangles": 3808,
+   "bbox_min": [
+    -0.1434,
+    -0.2147,
+    1.4374
+   ],
+   "bbox_max": [
+    0.1475,
+    0.054,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_long_lod2.glb": {
+   "vertices": 788,
+   "triangles": 1410,
+   "bbox_min": [
+    -0.1293,
+    -0.2129,
+    1.4239
+   ],
+   "bbox_max": [
+    0.1478,
+    0.05,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_ponytail_lod0.glb": {
+   "vertices": 4417,
+   "triangles": 8364,
+   "bbox_min": [
+    -0.0815,
+    -0.1736,
+    1.403
+   ],
+   "bbox_max": [
+    0.0783,
+    0.0592,
+    1.7653
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_ponytail_lod1.glb": {
+   "vertices": 1962,
+   "triangles": 3624,
+   "bbox_min": [
+    -0.0816,
+    -0.1734,
+    1.403
+   ],
+   "bbox_max": [
+    0.0773,
+    0.0588,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_ponytail_lod2.glb": {
+   "vertices": 772,
+   "triangles": 1370,
+   "bbox_min": [
+    -0.0815,
+    -0.1743,
+    1.4041
+   ],
+   "bbox_max": [
+    0.077,
+    0.0576,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_high_tail_lod0.glb": {
+   "vertices": 4417,
+   "triangles": 8364,
+   "bbox_min": [
+    -0.0815,
+    -0.202,
+    1.4195
+   ],
+   "bbox_max": [
+    0.0783,
+    0.0592,
+    1.7653
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_high_tail_lod1.glb": {
+   "vertices": 1962,
+   "triangles": 3624,
+   "bbox_min": [
+    -0.0816,
+    -0.203,
+    1.4195
+   ],
+   "bbox_max": [
+    0.0773,
+    0.0588,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_high_tail_lod2.glb": {
+   "vertices": 772,
+   "triangles": 1370,
+   "bbox_min": [
+    -0.0815,
+    -0.2018,
+    1.4201
+   ],
+   "bbox_max": [
+    0.077,
+    0.0576,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_bun_lod0.glb": {
+   "vertices": 4487,
+   "triangles": 8460,
+   "bbox_min": [
+    -0.0815,
+    -0.2004,
+    1.5922
+   ],
+   "bbox_max": [
+    0.0783,
+    0.0592,
+    1.7653
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_bun_lod1.glb": {
+   "vertices": 1992,
+   "triangles": 3656,
+   "bbox_min": [
+    -0.0816,
+    -0.1966,
+    1.5936
+   ],
+   "bbox_max": [
+    0.0773,
+    0.0588,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_bun_lod2.glb": {
+   "vertices": 794,
+   "triangles": 1394,
+   "bbox_min": [
+    -0.0815,
+    -0.194,
+    1.5969
+   ],
+   "bbox_max": [
+    0.077,
+    0.0576,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_braid_lod0.glb": {
+   "vertices": 4633,
+   "triangles": 8796,
+   "bbox_min": [
+    -0.0815,
+    -0.1561,
+    1.3253
+   ],
+   "bbox_max": [
+    0.0783,
+    0.0592,
+    1.7653
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_braid_lod1.glb": {
+   "vertices": 2058,
+   "triangles": 3816,
+   "bbox_min": [
+    -0.0816,
+    -0.1559,
+    1.3252
+   ],
+   "bbox_max": [
+    0.0773,
+    0.0588,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_braid_lod2.glb": {
+   "vertices": 820,
+   "triangles": 1466,
+   "bbox_min": [
+    -0.0815,
+    -0.1539,
+    1.3258
+   ],
+   "bbox_max": [
+    0.077,
+    0.0576,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_twin_braids_lod0.glb": {
+   "vertices": 5067,
+   "triangles": 9660,
+   "bbox_min": [
+    -0.0815,
+    -0.1454,
+    1.3694
+   ],
+   "bbox_max": [
+    0.0783,
+    0.0592,
+    1.7653
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_twin_braids_lod1.glb": {
+   "vertices": 1811,
+   "triangles": 3350,
+   "bbox_min": [
+    -0.081,
+    -0.1454,
+    1.369
+   ],
+   "bbox_max": [
+    0.0779,
+    0.0571,
+    1.7652
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_twin_braids_lod2.glb": {
+   "vertices": 755,
+   "triangles": 1344,
+   "bbox_min": [
+    -0.0809,
+    -0.1442,
+    1.3693
+   ],
+   "bbox_max": [
+    0.0885,
+    0.0545,
+    1.7645
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_bob_lod0.glb": {
+   "vertices": 4550,
+   "triangles": 8692,
+   "bbox_min": [
+    -0.1322,
+    -0.1908,
+    1.4633
+   ],
+   "bbox_max": [
+    0.1153,
+    0.0545,
+    1.7653
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_bob_lod1.glb": {
+   "vertices": 2032,
+   "triangles": 3792,
+   "bbox_min": [
+    -0.1226,
+    -0.1918,
+    1.4647
+   ],
+   "bbox_max": [
+    0.1134,
+    0.054,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_bob_lod2.glb": {
+   "vertices": 783,
+   "triangles": 1402,
+   "bbox_min": [
+    -0.1204,
+    -0.1863,
+    1.4678
+   ],
+   "bbox_max": [
+    0.1131,
+    0.05,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_short_beard_lod0.glb": {
+   "vertices": 3141,
+   "triangles": 5816,
+   "bbox_min": [
+    -0.091,
+    -0.0546,
+    1.5855
+   ],
+   "bbox_max": [
+    0.0898,
+    0.0727,
+    1.6974
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_short_beard_lod1.glb": {
+   "vertices": 828,
+   "triangles": 1428,
+   "bbox_min": [
+    -0.0913,
+    -0.0539,
+    1.5852
+   ],
+   "bbox_max": [
+    0.0886,
+    0.0726,
+    1.6964
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_short_beard_lod2.glb": {
+   "vertices": 563,
+   "triangles": 948,
+   "bbox_min": [
+    -0.0912,
+    -0.0533,
+    1.5851
+   ],
+   "bbox_max": [
+    0.0883,
+    0.0724,
+    1.6978
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_full_beard_lod0.glb": {
+   "vertices": 2773,
+   "triangles": 5124,
+   "bbox_min": [
+    -0.091,
+    -0.0546,
+    1.5852
+   ],
+   "bbox_max": [
+    0.0891,
+    0.0727,
+    1.6974
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_full_beard_lod1.glb": {
+   "vertices": 1276,
+   "triangles": 2276,
+   "bbox_min": [
+    -0.0907,
+    -0.0553,
+    1.5854
+   ],
+   "bbox_max": [
+    0.0892,
+    0.0728,
+    1.6969
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_full_beard_lod2.glb": {
+   "vertices": 498,
+   "triangles": 828,
+   "bbox_min": [
+    -0.0912,
+    -0.0533,
+    1.5851
+   ],
+   "bbox_max": [
+    0.0883,
+    0.0724,
+    1.6978
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_goatee_lod0.glb": {
+   "vertices": 920,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.0287,
+    0.04,
+    1.5848
+   ],
+   "bbox_max": [
+    0.0286,
+    0.0731,
+    1.6172
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_goatee_lod1.glb": {
+   "vertices": 920,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.0287,
+    0.04,
+    1.5848
+   ],
+   "bbox_max": [
+    0.0286,
+    0.0731,
+    1.6172
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_goatee_lod2.glb": {
+   "vertices": 239,
+   "triangles": 412,
+   "bbox_min": [
+    -0.0284,
+    0.0402,
+    1.5852
+   ],
+   "bbox_max": [
+    0.0283,
+    0.0727,
+    1.6169
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_drooping_lod0.glb": {
+   "vertices": 419,
+   "triangles": 706,
+   "bbox_min": [
+    -0.0448,
+    0.0489,
+    1.5997
+   ],
+   "bbox_max": [
+    0.0449,
+    0.0837,
+    1.6643
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_drooping_lod1.glb": {
+   "vertices": 189,
+   "triangles": 288,
+   "bbox_min": [
+    -0.0454,
+    0.0488,
+    1.598
+   ],
+   "bbox_max": [
+    0.0453,
+    0.0837,
+    1.6626
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_drooping_lod2.glb": {
+   "vertices": 122,
+   "triangles": 178,
+   "bbox_min": [
+    -0.0458,
+    0.049,
+    1.5996
+   ],
+   "bbox_max": [
+    0.0458,
+    0.0836,
+    1.6633
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_long_beard_lod0.glb": {
+   "vertices": 2626,
+   "triangles": 4852,
+   "bbox_min": [
+    -0.091,
+    -0.0546,
+    1.5855
+   ],
+   "bbox_max": [
+    0.0891,
+    0.0727,
+    1.6974
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_long_beard_lod1.glb": {
+   "vertices": 1206,
+   "triangles": 2148,
+   "bbox_min": [
+    -0.0907,
+    -0.0553,
+    1.5855
+   ],
+   "bbox_max": [
+    0.0892,
+    0.0728,
+    1.6969
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_long_beard_lod2.glb": {
+   "vertices": 476,
+   "triangles": 792,
+   "bbox_min": [
+    -0.0912,
+    -0.0533,
+    1.5851
+   ],
+   "bbox_max": [
+    0.0883,
+    0.0724,
+    1.6978
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_chin_strap_lod0.glb": {
+   "vertices": 1454,
+   "triangles": 2634,
+   "bbox_min": [
+    -0.0907,
+    -0.0553,
+    1.5867
+   ],
+   "bbox_max": [
+    0.0892,
+    0.0728,
+    1.6969
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_chin_strap_lod1.glb": {
+   "vertices": 834,
+   "triangles": 1460,
+   "bbox_min": [
+    -0.0913,
+    -0.0539,
+    1.5864
+   ],
+   "bbox_max": [
+    0.0886,
+    0.0726,
+    1.6964
+   ]
+  },
+  "models/characters/appearance/humains/male/beard_chin_strap_lod2.glb": {
+   "vertices": 567,
+   "triangles": 968,
+   "bbox_min": [
+    -0.0912,
+    -0.0533,
+    1.5874
+   ],
+   "bbox_max": [
+    0.0883,
+    0.0724,
+    1.6978
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_thin_lod0.glb": {
+   "vertices": 436,
+   "triangles": 732,
+   "bbox_min": [
+    -0.0397,
+    0.0576,
+    1.6409
+   ],
+   "bbox_max": [
+    0.0397,
+    0.0873,
+    1.6606
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_thin_lod1.glb": {
+   "vertices": 126,
+   "triangles": 182,
+   "bbox_min": [
+    -0.0388,
+    0.0579,
+    1.6423
+   ],
+   "bbox_max": [
+    0.0388,
+    0.0871,
+    1.6613
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_thin_lod2.glb": {
+   "vertices": 126,
+   "triangles": 182,
+   "bbox_min": [
+    -0.0388,
+    0.0579,
+    1.6423
+   ],
+   "bbox_max": [
+    0.0388,
+    0.0871,
+    1.6613
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_thick_lod0.glb": {
+   "vertices": 332,
+   "triangles": 556,
+   "bbox_min": [
+    -0.056,
+    0.0421,
+    1.6346
+   ],
+   "bbox_max": [
+    0.0558,
+    0.0897,
+    1.6661
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_thick_lod1.glb": {
+   "vertices": 128,
+   "triangles": 186,
+   "bbox_min": [
+    -0.0545,
+    0.0425,
+    1.638
+   ],
+   "bbox_max": [
+    0.0544,
+    0.0897,
+    1.6643
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_thick_lod2.glb": {
+   "vertices": 96,
+   "triangles": 138,
+   "bbox_min": [
+    -0.0537,
+    0.0422,
+    1.6326
+   ],
+   "bbox_max": [
+    0.0535,
+    0.0895,
+    1.6649
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_handlebar_lod0.glb": {
+   "vertices": 278,
+   "triangles": 460,
+   "bbox_min": [
+    -0.0464,
+    0.0457,
+    1.6346
+   ],
+   "bbox_max": [
+    0.0505,
+    0.0837,
+    1.6652
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_handlebar_lod1.glb": {
+   "vertices": 278,
+   "triangles": 460,
+   "bbox_min": [
+    -0.0464,
+    0.0457,
+    1.6346
+   ],
+   "bbox_max": [
+    0.0505,
+    0.0837,
+    1.6652
+   ]
+  },
+  "models/characters/appearance/humains/male/moustache_handlebar_lod2.glb": {
+   "vertices": 108,
+   "triangles": 154,
+   "bbox_min": [
+    -0.0451,
+    0.0456,
+    1.638
+   ],
+   "bbox_max": [
+    0.0508,
+    0.0837,
+    1.6634
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_short_lod0.glb": {
+   "vertices": 4351,
+   "triangles": 8326,
+   "bbox_min": [
+    -0.0821,
+    -0.1324,
+    1.5831
+   ],
+   "bbox_max": [
+    0.0789,
+    0.056,
+    1.7653
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_short_lod1.glb": {
+   "vertices": 1918,
+   "triangles": 3586,
+   "bbox_min": [
+    -0.0822,
+    -0.1324,
+    1.5931
+   ],
+   "bbox_max": [
+    0.0785,
+    0.0559,
+    1.7651
+   ]
+  },
+  "models/characters/appearance/humains/female/hair_short_lod2.glb": {
+   "vertices": 736,
+   "triangles": 1322,
+   "bbox_min": [
+    -0.0815,
+    -0.1324,
+    1.5969
+   ],
+   "bbox_max": [
+    0.0776,
+    0.0556,
+    1.7651
+   ]
+  }
+ }
+}

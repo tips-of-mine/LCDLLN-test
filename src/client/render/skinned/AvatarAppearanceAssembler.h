@@ -95,9 +95,23 @@ namespace engine::render::skinned
 		void WarmUpMaterials();
 		/// Teinte de peau effective (blanc -> aucun drapeau de teinte).
 		static uint32_t SkinFlags(uint32_t tint);
-		/// Index matériau d'un sous-maillage de pièce selon son nom de matériau glTF.
-		uint32_t RouteMaterial(const std::string& materialName, uint32_t skin, uint32_t hair, uint32_t eye,
-		                       uint32_t horn, uint32_t tusk) const;
+		/// Drapeaux des matériaux de pilosité : teinte + découpe alpha.
+		static uint32_t HairFlags();
+		/// Matériaux résolus pour un avatar, par famille de matériau glTF.
+		struct RoutedMaterials
+		{
+			uint32_t skin = 0;     ///< peau du corps (et anciens visages procéduraux)
+			uint32_t hair = 0;     ///< cheveux, pilosité
+			uint32_t eye = 0;      ///< anciens globes oculaires
+			uint32_t horn = 0;     ///< corne
+			uint32_t tusk = 0;     ///< ivoire
+			uint32_t face = 0;     ///< peau du visage (atlas du visage, teinte de peau)
+			uint32_t faceEye = 0;  ///< yeux peints dans l'atlas du visage (teinte des yeux)
+		};
+		/// Index matériau d'un sous-maillage de pièce selon son nom de matériau glTF
+		/// (MI_Face / MI_FaceEye : atlas du visage ; noms de peau ; MI_Hair ; MI_Eye ;
+		/// MI_Horn ; MI_Tusk ; sinon la tenue).
+		uint32_t RouteMaterial(const std::string& materialName, const RoutedMaterials& m) const;
 
 		VkDevice m_device = VK_NULL_HANDLE;
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;

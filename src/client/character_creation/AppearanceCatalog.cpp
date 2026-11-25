@@ -121,6 +121,7 @@ namespace engine::client
 						o.name = cfg.GetString(op + ".name", o.id);
 						o.lods = ReadStrings(cfg, op + ".lods");
 						o.texture = cfg.GetString(op + ".texture", cfg.GetString(op + ".basecolor", ""));
+						o.normal = cfg.GetString(op + ".normal", "");
 						o.hex = cfg.GetString(op + ".hex", "");
 						o.tintRgba8 = ParseHexColorRgba8(cfg.GetString(op + ".tint", ""));
 						rg.slots[s].push_back(std::move(o));
@@ -151,6 +152,8 @@ namespace engine::client
 			m_skinMaterials = { "MI_Regular_Male", "MI_Regular_Female" };
 		m_hairMaterial = cfg.GetString("materials.hair", "MI_Hair");
 		m_eyeMaterial = cfg.GetString("materials.eye", "MI_Eye");
+		m_faceMaterial = cfg.GetString("materials.face", "MI_Face");
+		m_faceEyeMaterial = cfg.GetString("materials.faceEye", "MI_FaceEye");
 		m_hornMaterial = cfg.GetString("materials.horn", "MI_Horn");
 		m_tuskMaterial = cfg.GetString("materials.tusk", "MI_Tusk");
 		m_hornTexture = cfg.GetString("hornTexture", "");
@@ -200,6 +203,7 @@ namespace engine::client
 			const std::size_t li = std::min<std::size_t>(static_cast<std::size_t>(lod), o->lods.size() - 1u);
 			out.parts.push_back(o->lods[li]);
 		}
+		if (const AppearanceOption* o = option(AppearanceSlot::Face)) { out.faceTexture = o->texture; out.faceNormal = o->normal; }
 		if (const AppearanceOption* o = option(AppearanceSlot::SkinTone)) { out.skinTexture = o->texture; out.skinTint = o->tintRgba8; }
 		if (const AppearanceOption* o = option(AppearanceSlot::HairColor)) { out.hairTexture = o->texture; out.hairTint = o->tintRgba8; }
 		if (const AppearanceOption* o = option(AppearanceSlot::EyeColor)) { out.eyeTexture = o->texture; out.eyeTint = o->tintRgba8; }
@@ -229,6 +233,7 @@ namespace engine::client
 					for (const auto& l : o.lods)
 						add(l);
 					add(o.texture);
+					add(o.normal);
 				}
 			}
 		}

@@ -18,7 +18,7 @@ struct MaterialGpuData
     vec2 padding;
 };
 
-layout(set = 0, binding = 0) uniform sampler2D uTextures[64];
+layout(set = 0, binding = 0) uniform sampler2D uTextures[128];
 layout(set = 0, binding = 1) readonly buffer MaterialBuffer
 {
     MaterialGpuData materials[];
@@ -39,6 +39,9 @@ void main() {
     MaterialGpuData mat = uMaterialBuffer.materials[pc.materialIndex];
     vec2 uv = vUv * mat.tiling;
     vec4 base = texture(uTextures[mat.baseColorIndex], uv); // sRGB -> linéaire au sample
+    // Découpe alpha (MaterialFlags::AlphaCutout = 4) : contour des coiffures sculptées.
+    if ((mat.flags & 4u) != 0u && base.a < 0.5)
+        discard;
 
     // Personnalisation des personnages : teinte du matériau (MaterialFlags::Tint = 8,
     // TintMasked = 16). La teinte RGBA8 est rangée dans les bits de padding.x
@@ -58,5 +61,6 @@ void main() {
     vec3 lit = base.rgb * (ambient + diff * 0.85);
 
     // Cible couleur en UNORM (pas sRGB) : on ré-encode gamma pour un affichage correct.
-    outColor = vec4(pow(lit, vec3(1.0 / 2.2)), base.a);
+    // Alpha forcé à 1 : l'alpha des atlas sert de masque (yeux, découpe), pas d'opacité.
+    outColor = vec4(pow(lit, vec3(1.0 / 2.2)), 1.0);
 }

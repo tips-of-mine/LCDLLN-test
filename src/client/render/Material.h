@@ -28,7 +28,7 @@ namespace engine::render
 		/// Personnalisation des personnages : l'albedo est multiplié par la teinte du
 		/// matériau (Material::tintRgba8). Une seule texture neutre sert ainsi toutes
 		/// les couleurs d'une palette (cheveux, teintes de peau) sans consommer de
-		/// place dans le tableau de 64 textures du shader.
+		/// place dans le tableau de 128 textures du shader.
 		Tint = 1u << 3,
 		/// Comme Tint, mais seulement là où l'alpha de la texture est faible
 		/// (facteur 1 - alpha) : iris teinté, sclère et pupille intactes.
@@ -91,7 +91,7 @@ namespace engine::render
 
 		/// Creates samplers, fallback textures, the global descriptor set, and the material buffer.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
-		          uint32_t maxTextures = 64,
+		          uint32_t maxTextures = 128,
 		          uint32_t maxMaterials = 256);
 
 		/// Allocates a material slot, resolves its texture slots in the global array, and writes it into the GPU material buffer.

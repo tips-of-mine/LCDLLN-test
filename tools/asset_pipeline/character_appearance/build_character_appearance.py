@@ -55,6 +55,10 @@ APPEARANCE_MODELS = MODELS / "appearance"
 TEX = DATA / "textures" / "characters"
 CATALOG = DATA / "configuration" / "customization" / "appearance_catalog.json"
 REPORT = HERE / "appearance_report.json"
+# Pièces sculptées (TRELLIS.2 + Blender) importées par trellis_import.py : elles
+# remplacent, pour les races et genres listés, les pièces procédurales des
+# emplacements correspondants (visages, coiffures, barbes, moustaches).
+SCULPTED_MANIFEST = HERE / "sculpted_parts.json"
 
 CATALOG_VERSION = 1
 LICENCE = "CC0 — création originale du projet LCDLLN (générée par tools/asset_pipeline/character_appearance)"
@@ -229,6 +233,17 @@ def prim(material: str, m: Mesh, joints_weights) -> Primitive:
     return Primitive(material, m.v, m.normals(), m.uv, m.f.ravel(), j, w)
 
 
+def ordered(options: list, wanted: list) -> list:
+    """Options sculptées rangées dans l'ordre du catalogue (``RACE_OPTIONS``) ;
+    échoue si une option du catalogue n'a pas de pièce sculptée (elle serait
+    texturée avec le mauvais atlas)."""
+    by_id = {o["id"]: o for o in options}
+    missing = [w for w in wanted if w != "none" and w not in by_id]
+    if missing:
+        raise SystemExit(f"pièces sculptées manquantes : {missing}")
+    return [by_id[w] for w in wanted if w != "none"]
+
+
 def build_textures() -> dict:
     """Génère les textures (cheveux, yeux, corne, ivoire) et calcule les teintes.
 
@@ -285,13 +300,16 @@ def main() -> None:
         "raceOrder": list(RACE_OPTIONS.keys()),
         "slotLabels": SLOT_LABELS,
         "materials": {"skin": ["MI_Regular_Male", "MI_Regular_Female"], "hair": HAIR_MATERIAL,
-                      "eye": "MI_Eye", "horn": HORN_MATERIAL, "tusk": TUSK_MATERIAL},
+                      "eye": "MI_Eye", "horn": HORN_MATERIAL, "tusk": TUSK_MATERIAL,
+                      "face": "MI_Face", "faceEye": "MI_FaceEye"},
         "hornTexture": tex["horn"],
         "tuskTexture": tex["tusk"],
         "budgets": {k: list(v) for k, v in BUDGETS.items()},
         "races": {},
     }
 
+    sculpted = (json.loads(SCULPTED_MANIFEST.read_text(encoding="utf-8"))["races"]
+                if SCULPTED_MANIFEST.exists() else {})
     for race, per_gender in RACE_OPTIONS.items():
         catalog["races"][race] = {}
         for gender in GENDERS:
@@ -317,10 +335,13 @@ def main() -> None:
             for k in ("nose", "nose_width", "brow", "jaw", "chin", "cheek", "lips"):
                 setattr(cranium, k, getattr(human0, k))
             slots = {}
+            sculpt = sculpted.get(race, {}).get(gender, {})
+            sculpt_slots = sculpt.get("slots", {})
+            hair_texture = sculpt.get("hairTexture", tex["hair"])
 
             # ---- Visages (tête + yeux + sourcils + oreilles de la race) ----
             face_opts = []
-            for vi, shape in enumerate(shapes):
+            for vi, shape in enumerate([] if "face" in sculpt_slots else shapes):
                 lods = []
                 for lod, (nu, nv, eu, ev) in enumerate(LOD_HEAD):
                     head = build_head(shape, ew, nu, nv)
@@ -334,7 +355,7 @@ def main() -> None:
                     prims.append(prim(HAIR_MATERIAL, brows, rigid_weights(len(brows.v), hj)))
                     lods.append(writer.write(outdir / f"face_{vi + 1}_lod{lod}.glb", skel, prims, "face", "face", lod))
                 face_opts.append({"id": f"face_{vi + 1}", "name": f"Visage {vi + 1}", "lods": lods})
-            slots["face"] = face_opts
+            slots["face"] = sculpt_slots.get("face", face_opts)
 
             # ---- Teintes de peau ----
             slots["skinTone"] = [{"id": tid, "name": name, "basecolor": tex["skin"][(race, gender, tid)][0],
@@ -343,7 +364,7 @@ def main() -> None:
 
             # ---- Coiffures ----
             hair_opts = []
-            for hid in opts["hair"]:
+            for hid in ([] if "hair" in sculpt_slots else opts["hair"]):
                 if hid == "none":
                     hair_opts.append({"id": "none", "name": NONE_LABEL["hair"], "lods": []})
                     continue
@@ -354,8 +375,11 @@ def main() -> None:
                                              [prim(HAIR_MATERIAL, m, rigid_weights(len(m.v), hj))], "hair", "hair", lod))
                 hair_opts.append({"id": hid, "name": HAIR_STYLES[hid][0], "lods": lods})
             slots["hair"] = hair_opts
+            if "hair" in sculpt_slots:
+                slots["hair"] = ([{"id": "none", "name": NONE_LABEL["hair"], "lods": []}]
+                                 if "none" in opts["hair"] else []) + ordered(sculpt_slots["hair"], opts["hair"])
             slots["hairColor"] = [{"id": c, "name": HAIR_COLORS[c][0], "hex": HAIR_COLORS[c][1],
-                                   "texture": tex["hair"], "tint": textures.tint_for(HAIR_COLORS[c][1], (0.80,) * 3)}
+                                   "texture": hair_texture, "tint": textures.tint_for(HAIR_COLORS[c][1], (0.80,) * 3)}
                                   for c in opts["hairColor"]]
             slots["eyeColor"] = [{"id": c, "name": EYE_COLORS[c][0], "hex": EYE_COLORS[c][1],
                                   "texture": tex["eye"], "tint": textures.tint_for(EYE_COLORS[c][1], (0.80,) * 3)}
@@ -367,6 +391,10 @@ def main() -> None:
                 if slot not in opts:
                     continue
                 lst = []
+                if slot in sculpt_slots:
+                    slots[slot] = ([{"id": "none", "name": NONE_LABEL[slot], "lods": []}]
+                                   if "none" in opts[slot] else []) + ordered(sculpt_slots[slot], opts[slot])
+                    continue
                 for sid in opts[slot]:
                     if sid == "none":
                         lst.append({"id": "none", "name": NONE_LABEL[slot], "lods": []})

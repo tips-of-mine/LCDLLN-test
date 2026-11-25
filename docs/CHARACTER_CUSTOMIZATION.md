@@ -150,11 +150,11 @@ assets :
 
 | Couche | Emplacement | Rôle |
 |--------|-------------|------|
-| Génération (sans Blender) | `tools/asset_pipeline/character_appearance/` | Corps de race, pièces .glb (3 LOD), textures, catalogue ; voir le README du dossier |
+| Génération (sans Blender) | `tools/asset_pipeline/character_appearance/` | Corps de race, pièces .glb (3 LOD), textures, catalogue ; visages et pilosité sculptés des humains (SDXL + TRELLIS.2) ; voir le README du dossier |
 | Catalogue | `game/data/configuration/customization/appearance_catalog.json` | Par race jouable et genre : corps, maillages à masquer, options par emplacement |
 | Format partagé | `src/shared/network/CharacterAppearance.h` | Apparence = un indice par emplacement + proportions (bloc binaire versionné, 20 octets) |
 | Client — données | `src/client/character_creation/AppearanceCatalog.{h,cpp}` | Lecture, bornage des indices, résolution en chemins |
-| Client — rendu | `src/client/render/skinned/AvatarAppearanceAssembler.{h,cpp}` | Corps + pièces + matériaux teintés ; `SkinnedRenderer::RecordParts` (un slot du ring par avatar) |
+| Client — rendu | `src/client/render/skinned/AvatarAppearanceAssembler.{h,cpp}` | Corps + pièces + matériaux teintés ; atlas du visage (`MI_Face`, `MI_FaceEye`), découpe alpha des coiffures ; `SkinnedRenderer::RecordParts` (un slot du ring par avatar) |
 | Contrôle CI | `validate_appearance.py` (workflow `character-appearance-assets`) | Races, ≥ 5 emplacements, LOD, squelette, budgets, textures |
 
 Emplacements (`AppearanceSlot`, ordre figé — n'ajouter qu'en fin) : visage,

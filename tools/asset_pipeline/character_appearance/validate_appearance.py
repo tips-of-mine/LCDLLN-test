@@ -11,7 +11,8 @@ et tout ce qu'il référence :
   les matrices d'os à l'exécution ;
 * budgets de triangles par catégorie et par LOD, LOD décroissants ;
 * boîte englobante plausible (pièce collée au personnage, entre le sol et 2,4 m) ;
-* textures et corps référencés présents, teintes « #RRGGBB » valides ;
+* textures et corps référencés présents (dont les atlas des visages sculptés),
+  teintes « #RRGGBB » valides ;
 * licence tracée.
 
 Lancement : ``python tools/asset_pipeline/character_appearance/validate_appearance.py``
@@ -135,6 +136,10 @@ def main() -> int:
                         continue
                     if slot not in GEOMETRY_SLOTS:
                         continue
+                    # Visages sculptés : atlas de peau du visage et normal map.
+                    for key in ("texture", "normal"):
+                        if o.get(key) and not (DATA / o[key]).is_file():
+                            errors.append(f"{label} : {key} absente ({o[key]})")
                     lods = o.get("lods", [])
                     if not lods:
                         continue  # option « aucune » (Rasé, Sans ailes…)

@@ -45,7 +45,9 @@
     "hair": "MI_Hair",
     "eye": "MI_Eye",
     "horn": "MI_Horn",
-    "tusk": "MI_Tusk"
+    "tusk": "MI_Tusk",
+    "face": "MI_Face",
+    "faceEye": "MI_FaceEye"
   },
   "hornTexture": "textures/characters/appearance/T_Horn.png",
   "tuskTexture": "textures/characters/appearance/T_Tusk.png",
@@ -112,7 +114,9 @@
                 "models/characters/appearance/humains/male/face_1_lod0.glb",
                 "models/characters/appearance/humains/male/face_1_lod1.glb",
                 "models/characters/appearance/humains/male/face_1_lod2.glb"
-              ]
+              ],
+              "texture": "textures/characters/appearance/humains/T_Face_Male_BaseColor.png",
+              "normal": "textures/characters/appearance/humains/T_Face_Male_Normal.png"
             },
             {
               "id": "face_2",
@@ -121,7 +125,9 @@
                 "models/characters/appearance/humains/male/face_2_lod0.glb",
                 "models/characters/appearance/humains/male/face_2_lod1.glb",
                 "models/characters/appearance/humains/male/face_2_lod2.glb"
-              ]
+              ],
+              "texture": "textures/characters/appearance/humains/T_Face_Male_BaseColor.png",
+              "normal": "textures/characters/appearance/humains/T_Face_Male_Normal.png"
             },
             {
               "id": "face_3",
@@ -130,7 +136,9 @@
                 "models/characters/appearance/humains/male/face_3_lod0.glb",
                 "models/characters/appearance/humains/male/face_3_lod1.glb",
                 "models/characters/appearance/humains/male/face_3_lod2.glb"
-              ]
+              ],
+              "texture": "textures/characters/appearance/humains/T_Face_Male_BaseColor.png",
+              "normal": "textures/characters/appearance/humains/T_Face_Male_Normal.png"
             }
           ],
           "skinTone": [
@@ -173,7 +181,7 @@
             },
             {
               "id": "short",
-              "name": "Court",
+              "name": "Courts",
               "lods": [
                 "models/characters/appearance/humains/male/hair_short_lod0.glb",
                 "models/characters/appearance/humains/male/hair_short_lod1.glb",
@@ -182,7 +190,7 @@
             },
             {
               "id": "swept",
-              "name": "Coiffé en arrière",
+              "name": "Plaqués en arrière",
               "lods": [
                 "models/characters/appearance/humains/male/hair_swept_lod0.glb",
                 "models/characters/appearance/humains/male/hair_swept_lod1.glb",
@@ -191,7 +199,7 @@
             },
             {
               "id": "medium",
-              "name": "Mi-long",
+              "name": "Mi-longs",
               "lods": [
                 "models/characters/appearance/humains/male/hair_medium_lod0.glb",
                 "models/characters/appearance/humains/male/hair_medium_lod1.glb",
@@ -200,7 +208,7 @@
             },
             {
               "id": "long",
-              "name": "Long",
+              "name": "Longs",
               "lods": [
                 "models/characters/appearance/humains/male/hair_long_lod0.glb",
                 "models/characters/appearance/humains/male/hair_long_lod1.glb",
@@ -222,56 +230,56 @@
               "id": "noir",
               "name": "Noir",
               "hex": "#1C1611",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Male.png",
               "tint": "#231B15"
             },
             {
               "id": "brun_fonce",
               "name": "Brun foncé",
               "hex": "#3A2416",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Male.png",
               "tint": "#482D1B"
             },
             {
               "id": "chatain",
               "name": "Châtain",
               "hex": "#6A4428",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Male.png",
               "tint": "#845532"
             },
             {
               "id": "auburn",
               "name": "Auburn",
               "hex": "#7E3A1E",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Male.png",
               "tint": "#9E4825"
             },
             {
               "id": "roux",
               "name": "Roux",
               "hex": "#A2552C",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Male.png",
               "tint": "#CA6A37"
             },
             {
               "id": "blond",
               "name": "Blond",
               "hex": "#B9965A",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Male.png",
               "tint": "#E7BB70"
             },
             {
               "id": "blond_cendre",
               "name": "Blond cendré",
               "hex": "#A89A7E",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Male.png",
               "tint": "#D2C09E"
             },
             {
               "id": "gris",
               "name": "Gris",
               "hex": "#86837E",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Male.png",
               "tint": "#A8A49E"
             }
           ],
@@ -423,7 +431,9 @@
                 "models/characters/appearance/humains/female/face_1_lod0.glb",
                 "models/characters/appearance/humains/female/face_1_lod1.glb",
                 "models/characters/appearance/humains/female/face_1_lod2.glb"
-              ]
+              ],
+              "texture": "textures/characters/appearance/humains/T_Face_Female_BaseColor.png",
+              "normal": "textures/characters/appearance/humains/T_Face_Female_Normal.png"
             },
             {
               "id": "face_2",
@@ -432,7 +442,9 @@
                 "models/characters/appearance/humains/female/face_2_lod0.glb",
                 "models/characters/appearance/humains/female/face_2_lod1.glb",
                 "models/characters/appearance/humains/female/face_2_lod2.glb"
-              ]
+              ],
+              "texture": "textures/characters/appearance/humains/T_Face_Female_BaseColor.png",
+              "normal": "textures/characters/appearance/humains/T_Face_Female_Normal.png"
             },
             {
               "id": "face_3",
@@ -441,7 +453,9 @@
                 "models/characters/appearance/humains/female/face_3_lod0.glb",
                 "models/characters/appearance/humains/female/face_3_lod1.glb",
                 "models/characters/appearance/humains/female/face_3_lod2.glb"
-              ]
+              ],
+              "texture": "textures/characters/appearance/humains/T_Face_Female_BaseColor.png",
+              "normal": "textures/characters/appearance/humains/T_Face_Female_Normal.png"
             }
           ],
           "skinTone": [
@@ -470,7 +484,7 @@
           "hair": [
             {
               "id": "short",
-              "name": "Court",
+              "name": "Courts",
               "lods": [
                 "models/characters/appearance/humains/female/hair_short_lod0.glb",
                 "models/characters/appearance/humains/female/hair_short_lod1.glb",
@@ -488,7 +502,7 @@
             },
             {
               "id": "long",
-              "name": "Long",
+              "name": "Longs",
               "lods": [
                 "models/characters/appearance/humains/female/hair_long_lod0.glb",
                 "models/characters/appearance/humains/female/hair_long_lod1.glb",
@@ -546,56 +560,56 @@
               "id": "noir",
               "name": "Noir",
               "hex": "#1C1611",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Female.png",
               "tint": "#231B15"
             },
             {
               "id": "brun_fonce",
               "name": "Brun foncé",
               "hex": "#3A2416",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Female.png",
               "tint": "#482D1B"
             },
             {
               "id": "chatain",
               "name": "Châtain",
               "hex": "#6A4428",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Female.png",
               "tint": "#845532"
             },
             {
               "id": "auburn",
               "name": "Auburn",
               "hex": "#7E3A1E",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Female.png",
               "tint": "#9E4825"
             },
             {
               "id": "roux",
               "name": "Roux",
               "hex": "#A2552C",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Female.png",
               "tint": "#CA6A37"
             },
             {
               "id": "blond",
               "name": "Blond",
               "hex": "#B9965A",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Female.png",
               "tint": "#E7BB70"
             },
             {
               "id": "blond_cendre",
               "name": "Blond cendré",
               "hex": "#A89A7E",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Female.png",
               "tint": "#D2C09E"
             },
             {
               "id": "gris",
               "name": "Gris",
               "hex": "#86837E",
-              "texture": "textures/characters/appearance/T_Hair.png",
+              "texture": "textures/characters/appearance/humains/T_HairSculpt_Female.png",
               "tint": "#A8A49E"
             }
           ],
@@ -703,45 +717,45 @@
               "id": "short",
               "name": "Court",
               "lods": [
-                "models/characters/appearance/humains/male/hair_short_lod0.glb",
-                "models/characters/appearance/humains/male/hair_short_lod1.glb",
-                "models/characters/appearance/humains/male/hair_short_lod2.glb"
+                "models/characters/appearance/elfes/male/hair_short_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_short_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_short_lod2.glb"
               ]
             },
             {
               "id": "swept",
               "name": "Coiffé en arrière",
               "lods": [
-                "models/characters/appearance/humains/male/hair_swept_lod0.glb",
-                "models/characters/appearance/humains/male/hair_swept_lod1.glb",
-                "models/characters/appearance/humains/male/hair_swept_lod2.glb"
+                "models/characters/appearance/elfes/male/hair_swept_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_swept_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_swept_lod2.glb"
               ]
             },
             {
               "id": "medium",
               "name": "Mi-long",
               "lods": [
-                "models/characters/appearance/humains/male/hair_medium_lod0.glb",
-                "models/characters/appearance/humains/male/hair_medium_lod1.glb",
-                "models/characters/appearance/humains/male/hair_medium_lod2.glb"
+                "models/characters/appearance/elfes/male/hair_medium_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_medium_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_medium_lod2.glb"
               ]
             },
             {
               "id": "long",
               "name": "Long",
               "lods": [
-                "models/characters/appearance/humains/male/hair_long_lod0.glb",
-                "models/characters/appearance/humains/male/hair_long_lod1.glb",
-                "models/characters/appearance/humains/male/hair_long_lod2.glb"
+                "models/characters/appearance/elfes/male/hair_long_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_long_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_long_lod2.glb"
               ]
             },
             {
               "id": "ponytail",
               "name": "Queue de cheval",
               "lods": [
-                "models/characters/appearance/humains/male/hair_ponytail_lod0.glb",
-                "models/characters/appearance/humains/male/hair_ponytail_lod1.glb",
-                "models/characters/appearance/humains/male/hair_ponytail_lod2.glb"
+                "models/characters/appearance/elfes/male/hair_ponytail_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_ponytail_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_ponytail_lod2.glb"
               ]
             },
             {
@@ -936,54 +950,54 @@
               "id": "long",
               "name": "Long",
               "lods": [
-                "models/characters/appearance/humains/female/hair_long_lod0.glb",
-                "models/characters/appearance/humains/female/hair_long_lod1.glb",
-                "models/characters/appearance/humains/female/hair_long_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_long_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_long_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_long_lod2.glb"
               ]
             },
             {
               "id": "bob",
               "name": "Carré",
               "lods": [
-                "models/characters/appearance/humains/female/hair_bob_lod0.glb",
-                "models/characters/appearance/humains/female/hair_bob_lod1.glb",
-                "models/characters/appearance/humains/female/hair_bob_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_bob_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_bob_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_bob_lod2.glb"
               ]
             },
             {
               "id": "braid",
               "name": "Tresse",
               "lods": [
-                "models/characters/appearance/humains/female/hair_braid_lod0.glb",
-                "models/characters/appearance/humains/female/hair_braid_lod1.glb",
-                "models/characters/appearance/humains/female/hair_braid_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_braid_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_braid_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_braid_lod2.glb"
               ]
             },
             {
               "id": "twin_braids",
               "name": "Deux tresses",
               "lods": [
-                "models/characters/appearance/humains/female/hair_twin_braids_lod0.glb",
-                "models/characters/appearance/humains/female/hair_twin_braids_lod1.glb",
-                "models/characters/appearance/humains/female/hair_twin_braids_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_twin_braids_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_twin_braids_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_twin_braids_lod2.glb"
               ]
             },
             {
               "id": "high_tail",
               "name": "Queue haute",
               "lods": [
-                "models/characters/appearance/humains/female/hair_high_tail_lod0.glb",
-                "models/characters/appearance/humains/female/hair_high_tail_lod1.glb",
-                "models/characters/appearance/humains/female/hair_high_tail_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_high_tail_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_high_tail_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_high_tail_lod2.glb"
               ]
             },
             {
               "id": "bun",
               "name": "Chignon",
               "lods": [
-                "models/characters/appearance/humains/female/hair_bun_lod0.glb",
-                "models/characters/appearance/humains/female/hair_bun_lod1.glb",
-                "models/characters/appearance/humains/female/hair_bun_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_bun_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_bun_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_bun_lod2.glb"
               ]
             }
           ],
@@ -2090,36 +2104,36 @@
               "id": "short",
               "name": "Court",
               "lods": [
-                "models/characters/appearance/humains/male/hair_short_lod0.glb",
-                "models/characters/appearance/humains/male/hair_short_lod1.glb",
-                "models/characters/appearance/humains/male/hair_short_lod2.glb"
+                "models/characters/appearance/elfes/male/hair_short_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_short_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_short_lod2.glb"
               ]
             },
             {
               "id": "swept",
               "name": "Coiffé en arrière",
               "lods": [
-                "models/characters/appearance/humains/male/hair_swept_lod0.glb",
-                "models/characters/appearance/humains/male/hair_swept_lod1.glb",
-                "models/characters/appearance/humains/male/hair_swept_lod2.glb"
+                "models/characters/appearance/elfes/male/hair_swept_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_swept_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_swept_lod2.glb"
               ]
             },
             {
               "id": "medium",
               "name": "Mi-long",
               "lods": [
-                "models/characters/appearance/humains/male/hair_medium_lod0.glb",
-                "models/characters/appearance/humains/male/hair_medium_lod1.glb",
-                "models/characters/appearance/humains/male/hair_medium_lod2.glb"
+                "models/characters/appearance/elfes/male/hair_medium_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_medium_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_medium_lod2.glb"
               ]
             },
             {
               "id": "long",
               "name": "Long",
               "lods": [
-                "models/characters/appearance/humains/male/hair_long_lod0.glb",
-                "models/characters/appearance/humains/male/hair_long_lod1.glb",
-                "models/characters/appearance/humains/male/hair_long_lod2.glb"
+                "models/characters/appearance/elfes/male/hair_long_lod0.glb",
+                "models/characters/appearance/elfes/male/hair_long_lod1.glb",
+                "models/characters/appearance/elfes/male/hair_long_lod2.glb"
               ]
             },
             {
@@ -2365,45 +2379,45 @@
               "id": "long",
               "name": "Long",
               "lods": [
-                "models/characters/appearance/humains/female/hair_long_lod0.glb",
-                "models/characters/appearance/humains/female/hair_long_lod1.glb",
-                "models/characters/appearance/humains/female/hair_long_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_long_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_long_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_long_lod2.glb"
               ]
             },
             {
               "id": "bob",
               "name": "Carré",
               "lods": [
-                "models/characters/appearance/humains/female/hair_bob_lod0.glb",
-                "models/characters/appearance/humains/female/hair_bob_lod1.glb",
-                "models/characters/appearance/humains/female/hair_bob_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_bob_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_bob_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_bob_lod2.glb"
               ]
             },
             {
               "id": "high_tail",
               "name": "Queue haute",
               "lods": [
-                "models/characters/appearance/humains/female/hair_high_tail_lod0.glb",
-                "models/characters/appearance/humains/female/hair_high_tail_lod1.glb",
-                "models/characters/appearance/humains/female/hair_high_tail_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_high_tail_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_high_tail_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_high_tail_lod2.glb"
               ]
             },
             {
               "id": "braid",
               "name": "Tresse",
               "lods": [
-                "models/characters/appearance/humains/female/hair_braid_lod0.glb",
-                "models/characters/appearance/humains/female/hair_braid_lod1.glb",
-                "models/characters/appearance/humains/female/hair_braid_lod2.glb"
+                "models/characters/appearance/elfes/female/hair_braid_lod0.glb",
+                "models/characters/appearance/elfes/female/hair_braid_lod1.glb",
+                "models/characters/appearance/elfes/female/hair_braid_lod2.glb"
               ]
             },
             {
               "id": "short",
               "name": "Court",
               "lods": [
-                "models/characters/appearance/humains/female/hair_short_lod0.glb",
-                "models/characters/appearance/humains/female/hair_short_lod1.glb",
-                "models/characters/appearance/humains/female/hair_short_lod2.glb"
+                "models/characters/appearance/demons/female/hair_short_lod0.glb",
+                "models/characters/appearance/demons/female/hair_short_lod1.glb",
+                "models/characters/appearance/demons/female/hair_short_lod2.glb"
               ]
             },
             {
@@ -2589,7 +2603,7 @@
     }
   },
   "stats": {
-    "files": 351,
-    "bytes": 32450416
+    "files": 300,
+    "bytes": 27853352
   }
 }

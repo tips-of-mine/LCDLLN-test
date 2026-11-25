@@ -108,6 +108,14 @@ namespace engine::render::skinned
 		return part;
 	}
 
+	uint32_t AvatarAppearanceAssembler::HairFlags()
+	{
+		// Teinte de couleur + découpe alpha : l'atlas des coiffures sculptées porte le
+		// contour fin de la chevelure dans son alpha (les textures sans alpha valent 1).
+		return static_cast<uint32_t>(engine::render::MaterialFlags::Tint)
+			| static_cast<uint32_t>(engine::render::MaterialFlags::AlphaCutout);
+	}
+
 	uint32_t AvatarAppearanceAssembler::SkinFlags(uint32_t tint)
 	{
 		return tint == 0xFFFFFFFFu ? 0u : static_cast<uint32_t>(engine::render::MaterialFlags::Tint);
@@ -117,8 +125,8 @@ namespace engine::render::skinned
 	{
 		using engine::network::AppearanceSlot;
 		m_allowMaterialCreation = true;
-		const uint32_t tint = static_cast<uint32_t>(engine::render::MaterialFlags::Tint);
 		const uint32_t tintMasked = static_cast<uint32_t>(engine::render::MaterialFlags::TintMasked);
+		const uint32_t hairFlags = HairFlags();
 		for (const std::string& race : m_catalog->Races())
 		{
 			for (const char* gender : { "male", "female" })
@@ -130,9 +138,19 @@ namespace engine::render::skinned
 				for (const auto& o : rg->Options(AppearanceSlot::SkinTone))
 					(void)GetMaterial(o.texture, m_skinNormal[female ? 1 : 0], o.tintRgba8, SkinFlags(o.tintRgba8));
 				for (const auto& o : rg->Options(AppearanceSlot::HairColor))
-					(void)GetMaterial(o.texture, std::string(), o.tintRgba8, tint);
+					(void)GetMaterial(o.texture, std::string(), o.tintRgba8, hairFlags);
 				for (const auto& o : rg->Options(AppearanceSlot::EyeColor))
 					(void)GetMaterial(o.texture, std::string(), o.tintRgba8, tintMasked);
+				// Visages à atlas propre : peau du visage par teinte de peau, yeux par couleur.
+				for (const auto& f : rg->Options(AppearanceSlot::Face))
+				{
+					if (f.texture.empty())
+						continue;
+					for (const auto& o : rg->Options(AppearanceSlot::SkinTone))
+						(void)GetMaterial(f.texture, f.normal, o.tintRgba8, SkinFlags(o.tintRgba8));
+					for (const auto& o : rg->Options(AppearanceSlot::EyeColor))
+						(void)GetMaterial(f.texture, std::string(), o.tintRgba8, tintMasked);
+				}
 			}
 		}
 		(void)GetMaterial(m_catalog->HornTexture(), std::string(), 0xFFFFFFFFu, 0u);
@@ -173,9 +191,13 @@ namespace engine::render::skinned
 		return id;
 	}
 
-	uint32_t AvatarAppearanceAssembler::RouteMaterial(const std::string& materialName, uint32_t skin, uint32_t hair,
-	                                                  uint32_t eye, uint32_t horn, uint32_t tusk) const
+	uint32_t AvatarAppearanceAssembler::RouteMaterial(const std::string& materialName, const RoutedMaterials& m) const
 	{
+		const uint32_t skin = m.skin, hair = m.hair, eye = m.eye, horn = m.horn, tusk = m.tusk;
+		if (materialName == m_catalog->FaceMaterialName())
+			return m.face;
+		if (materialName == m_catalog->FaceEyeMaterialName())
+			return m.faceEye;
 		const auto& skins = m_catalog->SkinMaterialNames();
 		if (std::find(skins.begin(), skins.end(), materialName) != skins.end())
 			return skin;
@@ -202,13 +224,18 @@ namespace engine::render::skinned
 		if (r.body.empty())
 			return false;
 		const bool female = (gender == "female");
-		const uint32_t tint = static_cast<uint32_t>(engine::render::MaterialFlags::Tint);
 		const uint32_t tintMasked = static_cast<uint32_t>(engine::render::MaterialFlags::TintMasked);
 		const uint32_t skin = GetMaterial(r.skinTexture, m_skinNormal[female ? 1 : 0], r.skinTint, SkinFlags(r.skinTint));
-		const uint32_t hair = GetMaterial(r.hairTexture, std::string(), r.hairTint, tint);
+		const uint32_t hair = GetMaterial(r.hairTexture, std::string(), r.hairTint, HairFlags());
 		const uint32_t eye = GetMaterial(r.eyeTexture, std::string(), r.eyeTint, tintMasked);
 		const uint32_t horn = GetMaterial(m_catalog->HornTexture(), std::string(), 0xFFFFFFFFu, 0u);
 		const uint32_t tusk = GetMaterial(m_catalog->TuskTexture(), std::string(), 0xFFFFFFFFu, 0u);
+		RoutedMaterials routed{ skin, hair, eye, horn, tusk, skin, eye };
+		if (!r.faceTexture.empty())
+		{
+			routed.face = GetMaterial(r.faceTexture, r.faceNormal, r.skinTint, SkinFlags(r.skinTint));
+			routed.faceEye = GetMaterial(r.faceTexture, std::string(), r.eyeTint, tintMasked);
+		}
 
 		// Corps : peau / tenue par sous-maillage ; la capuche est masquée (la tête
 		// personnalisée la remplace).
@@ -221,7 +248,7 @@ namespace engine::render::skinned
 			if (IsHidden(sub.meshName, r.hiddenBodyMeshes))
 				bodyPart.submeshMaterialIndices.push_back(SkinnedRenderer::kSkipSubmesh);
 			else
-				bodyPart.submeshMaterialIndices.push_back(RouteMaterial(sub.materialName, skin, hair, eye, horn, tusk));
+				bodyPart.submeshMaterialIndices.push_back(RouteMaterial(sub.materialName, routed));
 		}
 		out.parts.push_back(std::move(bodyPart));
 
@@ -235,7 +262,7 @@ namespace engine::render::skinned
 			p.materialIndex = skin;
 			p.submeshMaterialIndices.reserve(mesh->submeshes.size());
 			for (const auto& sub : mesh->submeshes)
-				p.submeshMaterialIndices.push_back(RouteMaterial(sub.materialName, skin, hair, eye, horn, tusk));
+				p.submeshMaterialIndices.push_back(RouteMaterial(sub.materialName, routed));
 			out.parts.push_back(std::move(p));
 		}
 		out.skinMaterialId = skin;

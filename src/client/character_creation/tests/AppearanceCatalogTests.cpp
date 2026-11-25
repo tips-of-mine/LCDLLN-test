@@ -6,7 +6,7 @@
 //     référencé (pièces .glb, corps, textures) existe sous game/data.
 //  2. Bornage : un indice hors liste est ramené à la première option ; une race
 //     inconnue donne une résolution vide (repli de l'appelant).
-//  3. Résolution : pièces du LOD demandé, couleurs, proportions.
+//  3. Résolution : pièces du LOD demandé, couleurs, atlas du visage, proportions.
 
 #include "src/client/character_creation/AppearanceCatalog.h"
 #include "src/shared/core/Config.h"
@@ -92,7 +92,8 @@ namespace
 		    "body": "b.glb", "hiddenBodyMeshes": ["Head_Hood"],
 		    "slots": {
 		      "face": [{"id": "f1", "lods": ["f1_0.glb", "f1_1.glb", "f1_2.glb"]},
-		               {"id": "f2", "lods": ["f2_0.glb", "f2_1.glb", "f2_2.glb"]}],
+		               {"id": "f2", "lods": ["f2_0.glb", "f2_1.glb", "f2_2.glb"],
+		                "texture": "visage.png", "normal": "visage_n.png"}],
 		      "hair": [{"id": "none", "lods": []}, {"id": "long", "lods": ["h_0.glb", "h_1.glb", "h_2.glb"]}],
 		      "hairColor": [{"id": "noir", "texture": "noir.png", "hex": "#000000", "tint": "#102030"}],
 		      "skinTone": [{"id": "claire", "basecolor": "peau.png"}]
@@ -117,6 +118,11 @@ namespace
 		REQUIRE(r.parts.size() == 2u);
 		REQUIRE(r.parts.size() == 2u && r.parts[0] == "f2_1.glb" && r.parts[1] == "h_1.glb");
 		REQUIRE(r.hairTexture == "noir.png");
+		// Visage sculpté : atlas de peau du visage et normal map de l'option choisie.
+		REQUIRE(r.faceTexture == "visage.png");
+		REQUIRE(r.faceNormal == "visage_n.png");
+		REQUIRE(cat.FaceMaterialName() == "MI_Face");
+		REQUIRE(cat.FaceEyeMaterialName() == "MI_FaceEye");
 		REQUIRE(r.hairTint == 0xFF302010u);   // R octet de poids faible
 		REQUIRE(r.skinTint == 0xFFFFFFFFu);   // pas de teinte -> blanc
 		REQUIRE(engine::client::ParseHexColorRgba8("pas une couleur", 7u) == 7u);

@@ -43,8 +43,8 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Dépendances des tests (numpy, Pillow)
-        run: python -m pip install --quiet numpy pillow
+      - name: Dépendances des tests (numpy, scipy, Pillow)
+        run: python -m pip install --quiet numpy scipy pillow
 
       - name: Contrôle des assets de personnalisation
         run: python tools/asset_pipeline/character_appearance/validate_appearance.py

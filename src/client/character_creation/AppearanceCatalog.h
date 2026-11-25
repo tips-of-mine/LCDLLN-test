@@ -39,7 +39,8 @@ namespace engine::client
 		std::string id;                  ///< identifiant stable (ex. « long », « roux »)
 		std::string name;                ///< libellé affiché (français)
 		std::vector<std::string> lods;   ///< pièces .glb LOD0..2 (vide = aucune pièce, ex. « Rasé »)
-		std::string texture;             ///< couleurs : texture BaseColor (cheveux, yeux, peau)
+		std::string texture;             ///< couleurs : texture BaseColor (cheveux, yeux, peau) ; visages : atlas de peau du visage
+		std::string normal;              ///< visages : normal map de l'atlas du visage (vide = aucune)
 		std::string hex;                 ///< couleurs : teinte d'affichage « #RRGGBB » (pastille de l'UI)
 		uint32_t tintRgba8 = 0xFFFFFFFFu; ///< couleurs : teinte multiplicative du matériau (cf. MaterialFlags::Tint)
 	};
@@ -67,6 +68,8 @@ namespace engine::client
 		std::string skinTexture;                  ///< BaseColor de la peau
 		std::string hairTexture;                  ///< BaseColor des cheveux (et pilosité, sourcils)
 		std::string eyeTexture;                   ///< BaseColor des yeux
+		std::string faceTexture;                  ///< atlas BaseColor du visage choisi (vide = visage sur la peau du corps)
+		std::string faceNormal;                   ///< normal map de l'atlas du visage (vide = aucune)
 		uint32_t skinTint = 0xFFFFFFFFu;          ///< teintes RGBA8 (R = octet de poids faible)
 		uint32_t hairTint = 0xFFFFFFFFu;
 		uint32_t eyeTint = 0xFFFFFFFFu;
@@ -108,6 +111,10 @@ namespace engine::client
 		const std::vector<std::string>& SkinMaterialNames() const { return m_skinMaterials; }
 		const std::string& HairMaterialName() const { return m_hairMaterial; }
 		const std::string& EyeMaterialName() const { return m_eyeMaterial; }
+		/// Peau du visage (atlas du visage, teinte de peau) et yeux peints dans cet
+		/// atlas (teinte des yeux, masquée par l'alpha de l'atlas).
+		const std::string& FaceMaterialName() const { return m_faceMaterial; }
+		const std::string& FaceEyeMaterialName() const { return m_faceEyeMaterial; }
 		const std::string& HornMaterialName() const { return m_hornMaterial; }
 		const std::string& TuskMaterialName() const { return m_tuskMaterial; }
 		const std::string& HornTexture() const { return m_hornTexture; }
@@ -136,6 +143,8 @@ namespace engine::client
 		std::vector<std::string> m_skinMaterials;
 		std::string m_hairMaterial = "MI_Hair";
 		std::string m_eyeMaterial = "MI_Eye";
+		std::string m_faceMaterial = "MI_Face";
+		std::string m_faceEyeMaterial = "MI_FaceEye";
 		std::string m_hornMaterial = "MI_Horn";
 		std::string m_tuskMaterial = "MI_Tusk";
 		std::string m_hornTexture;

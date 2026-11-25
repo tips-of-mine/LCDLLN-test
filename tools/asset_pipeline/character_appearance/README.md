@@ -17,6 +17,10 @@ nains, orcs, démons) et des deux genres, ainsi que le catalogue lu par le clien
 | `render_check.py` | Rendus de contrôle sous Blender (module `bpy`) |
 | `tests/` | Tests unitaires (géométrie, écriture .glb) |
 | `appearance_report.json` | Rapport généré : triangles et boîte englobante par pièce |
+| `trellis_import.py` | Visages et pilosité **sculptés** (SDXL + TRELLIS.2) : projection, atlas, pièces .glb |
+| `sculpt_project.py` | Champ de rayons autour de la tête, projection des visages, surfaces de poils, cuisson |
+| `blender_scripts/fit_high.py` | Blender en arrière-plan : ajuste un maillage TRELLIS au gabarit du corps |
+| `sculpted_parts.json` | Manifeste généré par `trellis_import.py`, repris par `build_character_appearance.py` |
 
 ## Régénérer
 
@@ -41,13 +45,13 @@ réécrit tout : `game/data/models/characters/appearance/`, les corps
   (`bodies.py`), squelette inchangé — les animations UE5 s'appliquent sans
   retargeting. La taille de la race est réglée par `importScale` dans
   `game/data/races/races.json` (nain : 1,30 m).
-- **Visage peint** : la tête projette l'îlot « visage » de la texture de peau du
-  corps ; elle suit donc la teinte de peau choisie.
+- **Visage peint** (races procédurales) : la tête projette l'îlot « visage » de
+  la texture de peau du corps ; elle suit donc la teinte de peau choisie.
 - **Couleurs par teinte** : une seule texture neutre pour les cheveux et une pour
   les yeux ; la couleur est une teinte du matériau (`MaterialFlags::Tint` /
   `TintMasked`). Les teintes de peau sont aussi des teintes de la texture
-  d'origine. Aucune texture de peau supplémentaire : le tableau de 64 textures
-  du shader est préservé.
+  d'origine. Le tableau de textures du shader passe à 128 entrées pour les
+  atlas des pièces sculptées.
 - **Niveaux de détail** : chaque pièce est régénérée à 3 résolutions (pas de
   décimation). Budgets de triangles dans `BUDGETS` (contrôlés en CI).
 - **Licence** : créations originales du projet (CC0), aucune image ni forme
@@ -62,3 +66,44 @@ Blender 5.x en module Python (`pip install bpy`, Python 3.11) :
 LCDLLN_RENDER='[{"race":"demons","gender":"male","choice":{"horns":1,"wings":1}}]' \
 LCDLLN_RENDER_OUT=/tmp/rendu python -c "exec(open('tools/asset_pipeline/character_appearance/render_check.py').read())"
 ```
+
+## Visages et pilosité sculptés (SDXL + TRELLIS.2)
+
+Pour les humains, visages, coiffures, barbes et moustaches ne sont plus
+procéduraux : ils viennent de maillages générés puis ramenés aux contraintes du
+jeu (squelette du corps, 3 LOD, budgets, teintes).
+
+1. **Références** (ComfyUI, SDXL base) : bustes génériques de jeunes adultes
+   (environ 20-25 ans), crâne rasé pour les visages, cheveux noirs pour les
+   coiffures. Aucune image de la BD. Les visages plus âgés générés en essai sont
+   gardés hors du dépôt pour de futurs PNJ.
+2. **Maillage** (ComfyUI, TRELLIS.2 — licence MIT ; Hunyuan3D est exclu : sa
+   licence ne s'applique pas dans l'Union européenne) : un `.glb` coloré par
+   pièce. Seuls la forme et la couleur sont utilisées : la topologie TRELLIS
+   (bords ouverts, arêtes non manifold) ne se décime pas proprement.
+3. **Ajustement** (`blender_scripts/fit_high.py`, Blender en arrière-plan) :
+   sommet du crâne, pointe du nez et largeur du front ramenés au gabarit du
+   genre ; export d'un nuage `<pièce>_high.npz`.
+4. **Import** (`trellis_import.py <dossier> humains`, sans Blender) :
+   - visages : la tête procédurale (anneau du cou raccordé au corps, UV uniques)
+     est portée sur la peau TRELLIS ; le crâne est commun aux trois visages d'un
+     genre (et, chez l'homme, la mâchoire et la lèvre supérieure, pour que barbes
+     et moustaches se posent sans jour) ; cou, nuque et tempes recolorés sur la
+     peau du front ; atlas 2048 (3 visages) + normal map ; iris peints et teintables
+     (matériau `MI_FaceEye`), peau teintée comme le corps (`MI_Face`) ;
+   - pilosité : surface en grille sphérique sur la zone de poils TRELLIS, bord
+     posé à 0,5 mm du cuir chevelu (aucun jour), contour fin dans l'alpha de
+     l'atlas (découpe), albedo neutre teinté par la couleur choisie ;
+   - barbes et moustaches : épaisseur bornée au-dessus de la peau, lèvres
+     dégagées, rien sous la ligne de la mâchoire ;
+   - coiffures attachées (queues, chignon, tresses) : calotte TRELLIS plaquée
+     (10 mm max., oreilles dégagées) + queue / chignon / tresses de `hair.py`
+     fixés sur la calotte, dans des cases d'atlas à texture de mèches ;
+   - pièces dérivées déclarées dans `pieces.json` : même nuage, autre zone
+     (bouc, moustache fine ou tombante) ou coupe (`"cut"` : carré tiré des
+     cheveux longs) ;
+   - écriture des pièces et de `sculpted_parts.json`, puis
+     `build_character_appearance.py` régénère le catalogue.
+
+Les nuages `*_high.npz` (plusieurs centaines de Mo) restent hors du dépôt, sur
+le poste de génération.

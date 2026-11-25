@@ -50,6 +50,21 @@
     }
    },
    "alphaCutoff": 0.5
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Crop_Top_Vine",
+   "normalTexture": {
+    "index": 6
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 7
+    },
+    "metallicRoughnessTexture": {
+     "index": 8
+    }
+   }
   }
  ],
  "meshes": [
@@ -73,6 +88,15 @@
      },
      "indices": 7,
      "material": 1
+    },
+    {
+     "attributes": {
+      "POSITION": 8,
+      "NORMAL": 9,
+      "TEXCOORD_0": 10
+     },
+     "indices": 11,
+     "material": 2
     }
    ]
   }
@@ -101,6 +125,18 @@
   {
    "sampler": 0,
    "source": 5
+  },
+  {
+   "sampler": 0,
+   "source": 6
+  },
+  {
+   "sampler": 0,
+   "source": 7
+  },
+  {
+   "sampler": 0,
+   "source": 8
   }
  ],
  "images": [
@@ -133,6 +169,21 @@
    "mimeType": "image/png",
    "name": "T_Decor_Plant_Vine_ORM.png",
    "uri": "T_Decor_Plant_Vine_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Crop_Top_Vine_Normal.png",
+   "uri": "T_Decor_Crop_Top_Vine_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Crop_Top_Vine_BaseColor.png",
+   "uri": "T_Decor_Crop_Top_Vine_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Crop_Top_Vine_ORM.png",
+   "uri": "T_Decor_Crop_Top_Vine_ORM.png"
   }
  ],
  "accessors": [
@@ -203,6 +254,40 @@
    "componentType": 5123,
    "count": 24,
    "type": "SCALAR"
+  },
+  {
+   "bufferView": 8,
+   "componentType": 5126,
+   "count": 4,
+   "max": [
+    2,
+    0.5,
+    2
+   ],
+   "min": [
+    -2,
+    0.5,
+    -2
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 9,
+   "componentType": 5126,
+   "count": 4,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 10,
+   "componentType": 5126,
+   "count": 4,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 11,
+   "componentType": 5123,
+   "count": 6,
+   "type": "SCALAR"
   }
  ],
  "bufferViews": [
@@ -253,6 +338,30 @@
    "byteLength": 48,
    "byteOffset": 3872,
    "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 48,
+   "byteOffset": 3920,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 48,
+   "byteOffset": 3968,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 32,
+   "byteOffset": 4016,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 12,
+   "byteOffset": 4048,
+   "target": 34963
   }
  ],
  "samplers": [
@@ -263,7 +372,7 @@
  ],
  "buffers": [
   {
-   "byteLength": 3920,
+   "byteLength": 4060,
    "uri": "Crop_Vine_1.bin"
   }
  ]

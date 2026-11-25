@@ -3811,7 +3811,7 @@ namespace engine
 			if (limit > 0.0f && fogEnd > limit)
 			{
 				fogEnd = limit;
-				fogStart = std::min(fogStart, fogEnd * 0.35f); // garde un rayon clair autour du joueur
+				fogStart = std::min(fogStart, fogEnd * 0.5f); // garde un rayon clair autour du joueur (25/11/2026 : 0,35 -> 0,5)
 			}
 		}
 		lp.cameraPos[3] = fogStart;
@@ -3821,6 +3821,15 @@ namespace engine
 		// M45.1 — densité d'extinction de la perspective aérienne (slot lightColor.w).
 		// Override config.json (world.fog.density) sinon valeur per-zone (atmosphere.json).
 		lp.lightColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.density", static_cast<double>(m_zoneAtmosphere.aerialDensity)));
+		if (m_cellWorld && fogEnd > fogStart)
+		{
+			// Retour propriétaire du 25/11/2026 (Lhynn « voilée » à une centaine de mètres) :
+			// la densité 0,012 /m date d'un fondu à 85 m ; avec un fondu total repoussé à
+			// 420 m, l'exponentielle voilait déjà 50 % du décor 60 m après fogStart. Elle est
+			// bornée à 1 / (fogEnd - fogStart) : ~63 % atteints seulement au fondu total, le
+			// smoothstep du shader garantissant toujours l'opacité complète à fogEnd.
+			lp.lightColor[3] = std::min(lp.lightColor[3], 1.0f / (fogEnd - fogStart));
+		}
 		const float probeIntensity = GetGlobalProbeIntensity(m_zoneProbes);
 		lp.ambientColor[0] = m_zoneAtmosphere.ambientColor[0] * probeIntensity;
 		lp.ambientColor[1] = m_zoneAtmosphere.ambientColor[1] * probeIntensity;

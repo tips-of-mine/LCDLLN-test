@@ -163,6 +163,10 @@ namespace engine
 			// l'edit dynamique reste possible si on veut recreer le
 			// viewport apres un resize (pas le cas en MVP).
 			m_authImGui->SetRacePreview(&m_racePreviewViewport);
+			// Personnalisation : l'aperçu assemble corps + pièces ; l'écran de création
+			// lit le catalogue (options par race et genre).
+			m_racePreviewViewport.SetAppearanceAssembler(&m_appearanceAssembler);
+			m_authImGui->SetAppearanceCatalog(&m_appearanceCatalog);
 			// Sous-projet C MVP (Task 12) — Donne au AuthUiPresenter une
 			// reference vers Engine pour la resolution race_str ->
 			// SkinnedMesh* (deleguee a Engine::GetRaceMesh) consommee

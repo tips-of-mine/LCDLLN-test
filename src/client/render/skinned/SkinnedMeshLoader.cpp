@@ -251,6 +251,9 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
             sub.firstIndex = subFirstIndex;
             sub.indexCount = static_cast<uint32_t>(out.indices.size()) - subFirstIndex;
             sub.materialName = (prim->material && prim->material->name) ? prim->material->name : "";
+            // Personnalisation : nom du maillage glTF (ex. « Male_Ranger_Head_Hood ») pour
+            // pouvoir masquer une pièce du corps (capuche) quand une tête est posée.
+            sub.meshName = mesh->name ? mesh->name : "";
             out.submeshes.push_back(std::move(sub));
             meshLoaded = true;
         }

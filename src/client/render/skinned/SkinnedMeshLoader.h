@@ -53,6 +53,7 @@ struct SkinnedSubMesh
     uint32_t firstIndex = 0;   ///< Offset (en indices) du début de la plage dans indices[].
     uint32_t indexCount = 0;   ///< Nombre d'indices de la plage (multiple de 3).
     std::string materialName;  ///< Nom du matériau glTF (ex. "MI_Ranger"). Vide si la primitive n'a pas de matériau.
+    std::string meshName;      ///< Nom du maillage glTF d'origine (ex. "Male_Ranger_Head_Hood"). Vide si absent.
 };
 
 /// Données CPU d'un mesh skinné chargé depuis un .glb. Pas de ressource GPU

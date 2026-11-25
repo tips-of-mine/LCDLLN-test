@@ -349,8 +349,12 @@ namespace engine::server
 		const std::string genderStr = (parsed->gender == "female") ? "female" : "male";
 		// Teinte de peau (skinColorIdx) : entier non signé borné [0, 255] (0 = claire).
 		const uint32_t skinColorIdx = static_cast<uint32_t>(parsed->customization.skinColorIdx);
+		// Personnalisation (migration 0101) : bloc normalisé (bornes génériques,
+		// défaut si absent ou mal formé), stocké en hexadécimal via UNHEX().
+		const std::string appearanceHex =
+			engine::network::AppearanceToHex(engine::network::NormalizeAppearance(parsed->appearance));
 
-		// N1-B : INSERT via prepared statement. 14 paramètres bind (positions 0-13).
+		// N1-B : INSERT via prepared statement. 15 paramètres bind (positions 0-14).
 		// Les 4 colonnes hardcodées (race_id=0, class_id=0, level=1, appearance_json='{}')
 		// restent en littéraux SQL — pas d'entrée utilisateur.
 		// Plus besoin de mysql_real_escape_string : le binding de string_view est safe.
@@ -364,8 +368,9 @@ namespace engine::server
 		}
 		auto* insertStmt = stmtCache->Acquire(mysql,
 			"INSERT INTO characters (account_id, slot, name, server_id, race_id, class_id, level, appearance_json,"
-			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str, gender, skin_color_idx) "
-			"VALUES (?, ?, ?, ?, 0, 0, 1, '{}', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str, gender, skin_color_idx,"
+			" appearance) "
+			"VALUES (?, ?, ?, ?, 0, 0, 1, '{}', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UNHEX(?))");
 		if (!insertStmt
 			|| !insertStmt->Bind(0,  *accountId)
 			|| !insertStmt->Bind(1,  static_cast<int32_t>(slot))
@@ -381,6 +386,7 @@ namespace engine::server
 			|| !insertStmt->Bind(11, std::string_view(factionStr))
 			|| !insertStmt->Bind(12, std::string_view(genderStr))
 			|| !insertStmt->Bind(13, skinColorIdx)
+			|| !insertStmt->Bind(14, std::string_view(appearanceHex))
 			|| !insertStmt->Execute())
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character creation failed", requestId, sessionIdHeader);
@@ -393,10 +399,10 @@ namespace engine::server
 		auto pkt = BuildCharacterCreateResponsePacket(1u, characterId, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
-		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={}, race='{}', class='{}', faction='{}', faction_source={}, spawn=({}, {}, {}))",
+		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={}, race='{}', class='{}', faction='{}', faction_source={}, spawn=({}, {}, {}), appearance={})",
 			*accountId, characterId, serverId, slot, parsed->name, raceIdTruncated, classIdTruncated,
 			factionStr.empty() ? "(unaligned)" : factionStr,
 			factionSource,
-			spawnX, spawnY, spawnZ);
+			spawnX, spawnY, spawnZ, appearanceHex);
 	}
 }

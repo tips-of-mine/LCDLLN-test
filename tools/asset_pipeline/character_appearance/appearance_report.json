@@ -1,0 +1,4204 @@
+{
+ "parts": {
+  "models/characters/appearance/elfes/male/face_1_lod0.glb": {
+   "vertices": 4104,
+   "triangles": 7912,
+   "bbox_min": [
+    -0.078,
+    -0.1339,
+    1.555
+   ],
+   "bbox_max": [
+    0.078,
+    0.0841,
+    1.823
+   ]
+  },
+  "models/characters/appearance/elfes/male/face_1_lod1.glb": {
+   "vertices": 1540,
+   "triangles": 2896,
+   "bbox_min": [
+    -0.0779,
+    -0.1337,
+    1.555
+   ],
+   "bbox_max": [
+    0.0779,
+    0.0837,
+    1.823
+   ]
+  },
+  "models/characters/appearance/elfes/male/face_1_lod2.glb": {
+   "vertices": 552,
+   "triangles": 996,
+   "bbox_min": [
+    -0.0778,
+    -0.1334,
+    1.555
+   ],
+   "bbox_max": [
+    0.0778,
+    0.0823,
+    1.823
+   ]
+  },
+  "models/characters/appearance/elfes/male/face_2_lod0.glb": {
+   "vertices": 4104,
+   "triangles": 7912,
+   "bbox_min": [
+    -0.078,
+    -0.1339,
+    1.555
+   ],
+   "bbox_max": [
+    0.078,
+    0.0881,
+    1.823
+   ]
+  },
+  "models/characters/appearance/elfes/male/face_2_lod1.glb": {
+   "vertices": 1540,
+   "triangles": 2896,
+   "bbox_min": [
+    -0.0779,
+    -0.1337,
+    1.555
+   ],
+   "bbox_max": [
+    0.0779,
+    0.0876,
+    1.823
+   ]
+  },
+  "models/characters/appearance/elfes/male/face_2_lod2.glb": {
+   "vertices": 552,
+   "triangles": 996,
+   "bbox_min": [
+    -0.0778,
+    -0.1334,
+    1.555
+   ],
+   "bbox_max": [
+    0.0778,
+    0.086,
+    1.823
+   ]
+  },
+  "models/characters/appearance/elfes/male/face_3_lod0.glb": {
+   "vertices": 4104,
+   "triangles": 7912,
+   "bbox_min": [
+    -0.078,
+    -0.1339,
+    1.555
+   ],
+   "bbox_max": [
+    0.078,
+    0.0815,
+    1.823
+   ]
+  },
+  "models/characters/appearance/elfes/male/face_3_lod1.glb": {
+   "vertices": 1540,
+   "triangles": 2896,
+   "bbox_min": [
+    -0.0779,
+    -0.1337,
+    1.555
+   ],
+   "bbox_max": [
+    0.0779,
+    0.0811,
+    1.823
+   ]
+  },
+  "models/characters/appearance/elfes/male/face_3_lod2.glb": {
+   "vertices": 552,
+   "triangles": 996,
+   "bbox_min": [
+    -0.0778,
+    -0.1334,
+    1.555
+   ],
+   "bbox_max": [
+    0.0778,
+    0.0799,
+    1.823
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_short_lod0.glb": {
+   "vertices": 2352,
+   "triangles": 4536,
+   "bbox_min": [
+    -0.0845,
+    -0.1423,
+    1.6199
+   ],
+   "bbox_max": [
+    0.0846,
+    0.0549,
+    1.8346
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_short_lod1.glb": {
+   "vertices": 800,
+   "triangles": 1500,
+   "bbox_min": [
+    -0.0846,
+    -0.1419,
+    1.6199
+   ],
+   "bbox_max": [
+    0.0845,
+    0.0553,
+    1.8342
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_short_lod2.glb": {
+   "vertices": 270,
+   "triangles": 480,
+   "bbox_min": [
+    -0.0833,
+    -0.139,
+    1.6199
+   ],
+   "bbox_max": [
+    0.0838,
+    0.0546,
+    1.8325
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_swept_lod0.glb": {
+   "vertices": 2352,
+   "triangles": 4536,
+   "bbox_min": [
+    -0.0889,
+    -0.1456,
+    1.6198
+   ],
+   "bbox_max": [
+    0.0879,
+    0.0552,
+    1.8417
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_swept_lod1.glb": {
+   "vertices": 800,
+   "triangles": 1500,
+   "bbox_min": [
+    -0.0873,
+    -0.1459,
+    1.6198
+   ],
+   "bbox_max": [
+    0.0881,
+    0.0549,
+    1.842
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_swept_lod2.glb": {
+   "vertices": 270,
+   "triangles": 480,
+   "bbox_min": [
+    -0.0852,
+    -0.1433,
+    1.6198
+   ],
+   "bbox_max": [
+    0.0872,
+    0.0535,
+    1.842
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_medium_lod0.glb": {
+   "vertices": 4704,
+   "triangles": 6552,
+   "bbox_min": [
+    -0.0895,
+    -0.145,
+    1.5484
+   ],
+   "bbox_max": [
+    0.0896,
+    0.0582,
+    1.8379
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_medium_lod1.glb": {
+   "vertices": 1600,
+   "triangles": 2200,
+   "bbox_min": [
+    -0.0893,
+    -0.1445,
+    1.5491
+   ],
+   "bbox_max": [
+    0.0895,
+    0.0576,
+    1.8374
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_medium_lod2.glb": {
+   "vertices": 540,
+   "triangles": 720,
+   "bbox_min": [
+    -0.0899,
+    -0.144,
+    1.5484
+   ],
+   "bbox_max": [
+    0.0898,
+    0.0558,
+    1.8381
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_long_lod0.glb": {
+   "vertices": 7392,
+   "triangles": 10416,
+   "bbox_min": [
+    -0.1095,
+    -0.1447,
+    1.3952
+   ],
+   "bbox_max": [
+    0.1094,
+    0.0583,
+    1.8379
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_long_lod1.glb": {
+   "vertices": 2400,
+   "triangles": 3300,
+   "bbox_min": [
+    -0.1095,
+    -0.1451,
+    1.3952
+   ],
+   "bbox_max": [
+    0.1094,
+    0.0581,
+    1.8381
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_long_lod2.glb": {
+   "vertices": 840,
+   "triangles": 1140,
+   "bbox_min": [
+    -0.1094,
+    -0.1431,
+    1.3953
+   ],
+   "bbox_max": [
+    0.1093,
+    0.0564,
+    1.8381
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_ponytail_lod0.glb": {
+   "vertices": 2570,
+   "triangles": 4968,
+   "bbox_min": [
+    -0.0844,
+    -0.1959,
+    1.4357
+   ],
+   "bbox_max": [
+    0.0849,
+    0.0548,
+    1.8323
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_ponytail_lod1.glb": {
+   "vertices": 898,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.084,
+    -0.1957,
+    1.4357
+   ],
+   "bbox_max": [
+    0.0839,
+    0.0548,
+    1.8325
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_ponytail_lod2.glb": {
+   "vertices": 320,
+   "triangles": 576,
+   "bbox_min": [
+    -0.0837,
+    -0.1941,
+    1.4357
+   ],
+   "bbox_max": [
+    0.0835,
+    0.0546,
+    1.8323
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_high_tail_lod0.glb": {
+   "vertices": 2570,
+   "triangles": 4968,
+   "bbox_min": [
+    -0.0844,
+    -0.196,
+    1.4607
+   ],
+   "bbox_max": [
+    0.0849,
+    0.0548,
+    1.8323
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_high_tail_lod1.glb": {
+   "vertices": 898,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.084,
+    -0.1957,
+    1.4607
+   ],
+   "bbox_max": [
+    0.0839,
+    0.0548,
+    1.8325
+   ]
+  },
+  "models/characters/appearance/elfes/male/hair_high_tail_lod2.glb": {
+   "vertices": 320,
+   "triangles": 576,
+   "bbox_min": [
+    -0.0837,
+    -0.1941,
+    1.4607
+   ],
+   "bbox_max": [
+    0.0835,
+    0.0546,
+    1.8323
+   ]
+  },
+  "models/characters/appearance/elfes/male/ear_elf_short_lod0.glb": {
+   "vertices": 324,
+   "triangles": 640,
+   "bbox_min": [
+    -0.0882,
+    -0.07,
+    1.6768
+   ],
+   "bbox_max": [
+    0.0882,
+    -0.0274,
+    1.7415
+   ]
+  },
+  "models/characters/appearance/elfes/male/ear_elf_short_lod1.glb": {
+   "vertices": 144,
+   "triangles": 280,
+   "bbox_min": [
+    -0.0883,
+    -0.07,
+    1.6768
+   ],
+   "bbox_max": [
+    0.0883,
+    -0.0274,
+    1.7415
+   ]
+  },
+  "models/characters/appearance/elfes/male/ear_elf_short_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.088,
+    -0.07,
+    1.6768
+   ],
+   "bbox_max": [
+    0.088,
+    -0.0284,
+    1.7415
+   ]
+  },
+  "models/characters/appearance/elfes/male/ear_elf_long_lod0.glb": {
+   "vertices": 324,
+   "triangles": 640,
+   "bbox_min": [
+    -0.093,
+    -0.1075,
+    1.6754
+   ],
+   "bbox_max": [
+    0.093,
+    -0.03,
+    1.7566
+   ]
+  },
+  "models/characters/appearance/elfes/male/ear_elf_long_lod1.glb": {
+   "vertices": 144,
+   "triangles": 280,
+   "bbox_min": [
+    -0.0931,
+    -0.1075,
+    1.6754
+   ],
+   "bbox_max": [
+    0.0931,
+    -0.03,
+    1.7566
+   ]
+  },
+  "models/characters/appearance/elfes/male/ear_elf_long_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.093,
+    -0.1075,
+    1.6754
+   ],
+   "bbox_max": [
+    0.093,
+    -0.03,
+    1.7566
+   ]
+  },
+  "models/characters/appearance/elfes/male/ear_elf_swept_lod0.glb": {
+   "vertices": 324,
+   "triangles": 640,
+   "bbox_min": [
+    -0.0929,
+    -0.1192,
+    1.6711
+   ],
+   "bbox_max": [
+    0.0929,
+    -0.0331,
+    1.7111
+   ]
+  },
+  "models/characters/appearance/elfes/male/ear_elf_swept_lod1.glb": {
+   "vertices": 144,
+   "triangles": 280,
+   "bbox_min": [
+    -0.0929,
+    -0.1192,
+    1.6711
+   ],
+   "bbox_max": [
+    0.0929,
+    -0.033,
+    1.7111
+   ]
+  },
+  "models/characters/appearance/elfes/male/ear_elf_swept_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.0929,
+    -0.1192,
+    1.6717
+   ],
+   "bbox_max": [
+    0.0929,
+    -0.0331,
+    1.7111
+   ]
+  },
+  "models/characters/appearance/elfes/female/face_1_lod0.glb": {
+   "vertices": 4104,
+   "triangles": 7912,
+   "bbox_min": [
+    -0.0741,
+    -0.1283,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0741,
+    0.0746,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/elfes/female/face_1_lod1.glb": {
+   "vertices": 1540,
+   "triangles": 2896,
+   "bbox_min": [
+    -0.074,
+    -0.1281,
+    1.5095
+   ],
+   "bbox_max": [
+    0.074,
+    0.0743,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/elfes/female/face_1_lod2.glb": {
+   "vertices": 552,
+   "triangles": 996,
+   "bbox_min": [
+    -0.0739,
+    -0.1279,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0739,
+    0.0732,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/elfes/female/face_2_lod0.glb": {
+   "vertices": 4104,
+   "triangles": 7912,
+   "bbox_min": [
+    -0.0741,
+    -0.1283,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0741,
+    0.0777,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/elfes/female/face_2_lod1.glb": {
+   "vertices": 1540,
+   "triangles": 2896,
+   "bbox_min": [
+    -0.074,
+    -0.1281,
+    1.5095
+   ],
+   "bbox_max": [
+    0.074,
+    0.0773,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/elfes/female/face_2_lod2.glb": {
+   "vertices": 552,
+   "triangles": 996,
+   "bbox_min": [
+    -0.0739,
+    -0.1279,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0739,
+    0.076,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/elfes/female/face_3_lod0.glb": {
+   "vertices": 4104,
+   "triangles": 7912,
+   "bbox_min": [
+    -0.0741,
+    -0.1283,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0741,
+    0.0726,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/elfes/female/face_3_lod1.glb": {
+   "vertices": 1540,
+   "triangles": 2896,
+   "bbox_min": [
+    -0.074,
+    -0.1281,
+    1.5095
+   ],
+   "bbox_max": [
+    0.074,
+    0.0723,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/elfes/female/face_3_lod2.glb": {
+   "vertices": 552,
+   "triangles": 996,
+   "bbox_min": [
+    -0.0739,
+    -0.1279,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0739,
+    0.0714,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_long_lod0.glb": {
+   "vertices": 7392,
+   "triangles": 10416,
+   "bbox_min": [
+    -0.1041,
+    -0.1392,
+    1.3577
+   ],
+   "bbox_max": [
+    0.104,
+    0.0548,
+    1.779
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_long_lod1.glb": {
+   "vertices": 2400,
+   "triangles": 3300,
+   "bbox_min": [
+    -0.1041,
+    -0.1395,
+    1.3577
+   ],
+   "bbox_max": [
+    0.1039,
+    0.0545,
+    1.7792
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_long_lod2.glb": {
+   "vertices": 840,
+   "triangles": 1140,
+   "bbox_min": [
+    -0.104,
+    -0.1375,
+    1.3577
+   ],
+   "bbox_max": [
+    0.1039,
+    0.0529,
+    1.7792
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_bob_lod0.glb": {
+   "vertices": 4704,
+   "triangles": 6552,
+   "bbox_min": [
+    -0.0929,
+    -0.1416,
+    1.5157
+   ],
+   "bbox_max": [
+    0.0931,
+    0.0556,
+    1.7789
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_bob_lod1.glb": {
+   "vertices": 1600,
+   "triangles": 2200,
+   "bbox_min": [
+    -0.0929,
+    -0.1395,
+    1.5164
+   ],
+   "bbox_max": [
+    0.093,
+    0.0546,
+    1.7786
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_bob_lod2.glb": {
+   "vertices": 540,
+   "triangles": 720,
+   "bbox_min": [
+    -0.0931,
+    -0.1393,
+    1.5183
+   ],
+   "bbox_max": [
+    0.093,
+    0.0534,
+    1.7785
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_braid_lod0.glb": {
+   "vertices": 2786,
+   "triangles": 5400,
+   "bbox_min": [
+    -0.0805,
+    -0.1564,
+    1.325
+   ],
+   "bbox_max": [
+    0.081,
+    0.0511,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_braid_lod1.glb": {
+   "vertices": 994,
+   "triangles": 1884,
+   "bbox_min": [
+    -0.0801,
+    -0.1562,
+    1.325
+   ],
+   "bbox_max": [
+    0.08,
+    0.0512,
+    1.7736
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_braid_lod2.glb": {
+   "vertices": 368,
+   "triangles": 672,
+   "bbox_min": [
+    -0.0798,
+    -0.1551,
+    1.325
+   ],
+   "bbox_max": [
+    0.0796,
+    0.0508,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_twin_braids_lod0.glb": {
+   "vertices": 3220,
+   "triangles": 6264,
+   "bbox_min": [
+    -0.0805,
+    -0.1564,
+    1.363
+   ],
+   "bbox_max": [
+    0.081,
+    0.0511,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_twin_braids_lod1.glb": {
+   "vertices": 1188,
+   "triangles": 2268,
+   "bbox_min": [
+    -0.0801,
+    -0.1562,
+    1.363
+   ],
+   "bbox_max": [
+    0.08,
+    0.0512,
+    1.7736
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_twin_braids_lod2.glb": {
+   "vertices": 466,
+   "triangles": 864,
+   "bbox_min": [
+    -0.0798,
+    -0.1551,
+    1.363
+   ],
+   "bbox_max": [
+    0.0796,
+    0.0508,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_high_tail_lod0.glb": {
+   "vertices": 2570,
+   "triangles": 4968,
+   "bbox_min": [
+    -0.0805,
+    -0.1873,
+    1.4199
+   ],
+   "bbox_max": [
+    0.081,
+    0.0511,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_high_tail_lod1.glb": {
+   "vertices": 898,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.0801,
+    -0.187,
+    1.4199
+   ],
+   "bbox_max": [
+    0.08,
+    0.0512,
+    1.7736
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_high_tail_lod2.glb": {
+   "vertices": 320,
+   "triangles": 576,
+   "bbox_min": [
+    -0.0798,
+    -0.1855,
+    1.4199
+   ],
+   "bbox_max": [
+    0.0796,
+    0.0508,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_bun_lod0.glb": {
+   "vertices": 2640,
+   "triangles": 5064,
+   "bbox_min": [
+    -0.0805,
+    -0.1659,
+    1.5711
+   ],
+   "bbox_max": [
+    0.081,
+    0.0511,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_bun_lod1.glb": {
+   "vertices": 928,
+   "triangles": 1724,
+   "bbox_min": [
+    -0.0801,
+    -0.1649,
+    1.5711
+   ],
+   "bbox_max": [
+    0.08,
+    0.0512,
+    1.7736
+   ]
+  },
+  "models/characters/appearance/elfes/female/hair_bun_lod2.glb": {
+   "vertices": 342,
+   "triangles": 600,
+   "bbox_min": [
+    -0.0798,
+    -0.1634,
+    1.5711
+   ],
+   "bbox_max": [
+    0.0796,
+    0.0508,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/elfes/female/ear_elf_short_lod0.glb": {
+   "vertices": 324,
+   "triangles": 640,
+   "bbox_min": [
+    -0.0844,
+    -0.0697,
+    1.6244
+   ],
+   "bbox_max": [
+    0.0844,
+    -0.0271,
+    1.6891
+   ]
+  },
+  "models/characters/appearance/elfes/female/ear_elf_short_lod1.glb": {
+   "vertices": 144,
+   "triangles": 280,
+   "bbox_min": [
+    -0.0845,
+    -0.0697,
+    1.6244
+   ],
+   "bbox_max": [
+    0.0845,
+    -0.0271,
+    1.6891
+   ]
+  },
+  "models/characters/appearance/elfes/female/ear_elf_short_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.0843,
+    -0.0697,
+    1.6244
+   ],
+   "bbox_max": [
+    0.0843,
+    -0.0281,
+    1.6891
+   ]
+  },
+  "models/characters/appearance/elfes/female/ear_elf_long_lod0.glb": {
+   "vertices": 324,
+   "triangles": 640,
+   "bbox_min": [
+    -0.0892,
+    -0.1072,
+    1.623
+   ],
+   "bbox_max": [
+    0.0892,
+    -0.0297,
+    1.7042
+   ]
+  },
+  "models/characters/appearance/elfes/female/ear_elf_long_lod1.glb": {
+   "vertices": 144,
+   "triangles": 280,
+   "bbox_min": [
+    -0.0893,
+    -0.1072,
+    1.623
+   ],
+   "bbox_max": [
+    0.0893,
+    -0.0297,
+    1.7042
+   ]
+  },
+  "models/characters/appearance/elfes/female/ear_elf_long_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.0892,
+    -0.1072,
+    1.623
+   ],
+   "bbox_max": [
+    0.0892,
+    -0.0297,
+    1.7042
+   ]
+  },
+  "models/characters/appearance/elfes/female/ear_elf_swept_lod0.glb": {
+   "vertices": 324,
+   "triangles": 640,
+   "bbox_min": [
+    -0.0891,
+    -0.1189,
+    1.6187
+   ],
+   "bbox_max": [
+    0.0891,
+    -0.0328,
+    1.6587
+   ]
+  },
+  "models/characters/appearance/elfes/female/ear_elf_swept_lod1.glb": {
+   "vertices": 144,
+   "triangles": 280,
+   "bbox_min": [
+    -0.0891,
+    -0.1189,
+    1.6187
+   ],
+   "bbox_max": [
+    0.0891,
+    -0.0327,
+    1.6587
+   ]
+  },
+  "models/characters/appearance/elfes/female/ear_elf_swept_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.0891,
+    -0.1189,
+    1.6193
+   ],
+   "bbox_max": [
+    0.0891,
+    -0.0328,
+    1.6587
+   ]
+  },
+  "models/characters/appearance/nains/male/face_1_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0989,
+    -0.1451,
+    1.54
+   ],
+   "bbox_max": [
+    0.0989,
+    0.1069,
+    1.8348
+   ]
+  },
+  "models/characters/appearance/nains/male/face_1_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0989,
+    -0.1449,
+    1.54
+   ],
+   "bbox_max": [
+    0.0989,
+    0.1063,
+    1.8348
+   ]
+  },
+  "models/characters/appearance/nains/male/face_1_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0986,
+    -0.1446,
+    1.54
+   ],
+   "bbox_max": [
+    0.0986,
+    0.1039,
+    1.8348
+   ]
+  },
+  "models/characters/appearance/nains/male/face_2_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0989,
+    -0.1451,
+    1.54
+   ],
+   "bbox_max": [
+    0.0989,
+    0.1135,
+    1.8348
+   ]
+  },
+  "models/characters/appearance/nains/male/face_2_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0989,
+    -0.1449,
+    1.54
+   ],
+   "bbox_max": [
+    0.0989,
+    0.1127,
+    1.8348
+   ]
+  },
+  "models/characters/appearance/nains/male/face_2_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0986,
+    -0.1446,
+    1.54
+   ],
+   "bbox_max": [
+    0.0986,
+    0.11,
+    1.8348
+   ]
+  },
+  "models/characters/appearance/nains/male/face_3_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0989,
+    -0.1451,
+    1.54
+   ],
+   "bbox_max": [
+    0.0989,
+    0.1026,
+    1.8348
+   ]
+  },
+  "models/characters/appearance/nains/male/face_3_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0989,
+    -0.1449,
+    1.54
+   ],
+   "bbox_max": [
+    0.0989,
+    0.102,
+    1.8348
+   ]
+  },
+  "models/characters/appearance/nains/male/face_3_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0986,
+    -0.1446,
+    1.54
+   ],
+   "bbox_max": [
+    0.0986,
+    0.0999,
+    1.8348
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_short_lod0.glb": {
+   "vertices": 2352,
+   "triangles": 4536,
+   "bbox_min": [
+    -0.0923,
+    -0.1534,
+    1.6114
+   ],
+   "bbox_max": [
+    0.0923,
+    0.0624,
+    1.8464
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_short_lod1.glb": {
+   "vertices": 800,
+   "triangles": 1500,
+   "bbox_min": [
+    -0.0924,
+    -0.153,
+    1.6114
+   ],
+   "bbox_max": [
+    0.0922,
+    0.0626,
+    1.846
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_short_lod2.glb": {
+   "vertices": 270,
+   "triangles": 480,
+   "bbox_min": [
+    -0.0911,
+    -0.1502,
+    1.6114
+   ],
+   "bbox_max": [
+    0.0916,
+    0.0622,
+    1.8443
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_medium_lod0.glb": {
+   "vertices": 4704,
+   "triangles": 6552,
+   "bbox_min": [
+    -0.0984,
+    -0.1562,
+    1.5336
+   ],
+   "bbox_max": [
+    0.0985,
+    0.0652,
+    1.8497
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_medium_lod1.glb": {
+   "vertices": 1600,
+   "triangles": 2200,
+   "bbox_min": [
+    -0.0981,
+    -0.1555,
+    1.5342
+   ],
+   "bbox_max": [
+    0.0983,
+    0.0648,
+    1.8492
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_medium_lod2.glb": {
+   "vertices": 540,
+   "triangles": 720,
+   "bbox_min": [
+    -0.0987,
+    -0.1551,
+    1.5335
+   ],
+   "bbox_max": [
+    0.0987,
+    0.0631,
+    1.8499
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_long_lod0.glb": {
+   "vertices": 7392,
+   "triangles": 10416,
+   "bbox_min": [
+    -0.1204,
+    -0.1558,
+    1.3644
+   ],
+   "bbox_max": [
+    0.1202,
+    0.0654,
+    1.8497
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_long_lod1.glb": {
+   "vertices": 2400,
+   "triangles": 3300,
+   "bbox_min": [
+    -0.1204,
+    -0.1562,
+    1.3644
+   ],
+   "bbox_max": [
+    0.1202,
+    0.0652,
+    1.8499
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_long_lod2.glb": {
+   "vertices": 840,
+   "triangles": 1140,
+   "bbox_min": [
+    -0.1203,
+    -0.1543,
+    1.3644
+   ],
+   "bbox_max": [
+    0.1202,
+    0.0635,
+    1.8499
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_braid_lod0.glb": {
+   "vertices": 2786,
+   "triangles": 5400,
+   "bbox_min": [
+    -0.0922,
+    -0.1776,
+    1.3264
+   ],
+   "bbox_max": [
+    0.0927,
+    0.0624,
+    1.8441
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_braid_lod1.glb": {
+   "vertices": 994,
+   "triangles": 1884,
+   "bbox_min": [
+    -0.0918,
+    -0.1774,
+    1.3264
+   ],
+   "bbox_max": [
+    0.0917,
+    0.0622,
+    1.8443
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_braid_lod2.glb": {
+   "vertices": 368,
+   "triangles": 672,
+   "bbox_min": [
+    -0.0914,
+    -0.1762,
+    1.3264
+   ],
+   "bbox_max": [
+    0.0912,
+    0.0622,
+    1.8441
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_topknot_lod0.glb": {
+   "vertices": 2640,
+   "triangles": 5064,
+   "bbox_min": [
+    -0.0902,
+    -0.1504,
+    1.6114
+   ],
+   "bbox_max": [
+    0.0902,
+    0.0622,
+    1.891
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_topknot_lod1.glb": {
+   "vertices": 928,
+   "triangles": 1724,
+   "bbox_min": [
+    -0.0902,
+    -0.1497,
+    1.6114
+   ],
+   "bbox_max": [
+    0.0901,
+    0.062,
+    1.891
+   ]
+  },
+  "models/characters/appearance/nains/male/hair_topknot_lod2.glb": {
+   "vertices": 342,
+   "triangles": 600,
+   "bbox_min": [
+    -0.0898,
+    -0.1495,
+    1.6114
+   ],
+   "bbox_max": [
+    0.0897,
+    0.062,
+    1.891
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_full_beard_lod0.glb": {
+   "vertices": 2112,
+   "triangles": 3948,
+   "bbox_min": [
+    -0.0873,
+    -0.0248,
+    1.5485
+   ],
+   "bbox_max": [
+    0.0874,
+    0.0843,
+    1.7127
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_full_beard_lod1.glb": {
+   "vertices": 672,
+   "triangles": 1188,
+   "bbox_min": [
+    -0.087,
+    -0.0248,
+    1.5484
+   ],
+   "bbox_max": [
+    0.0873,
+    0.0814,
+    1.7127
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_full_beard_lod2.glb": {
+   "vertices": 224,
+   "triangles": 360,
+   "bbox_min": [
+    -0.0868,
+    -0.0248,
+    1.5488
+   ],
+   "bbox_max": [
+    0.0871,
+    0.0764,
+    1.7127
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_long_beard_lod0.glb": {
+   "vertices": 2880,
+   "triangles": 5452,
+   "bbox_min": [
+    -0.0879,
+    -0.0536,
+    1.4321
+   ],
+   "bbox_max": [
+    0.0879,
+    0.0843,
+    1.7127
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_long_beard_lod1.glb": {
+   "vertices": 896,
+   "triangles": 1620,
+   "bbox_min": [
+    -0.0874,
+    -0.0536,
+    1.4321
+   ],
+   "bbox_max": [
+    0.0878,
+    0.0814,
+    1.7127
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_long_beard_lod2.glb": {
+   "vertices": 288,
+   "triangles": 480,
+   "bbox_min": [
+    -0.0875,
+    -0.0536,
+    1.4328
+   ],
+   "bbox_max": [
+    0.0879,
+    0.0768,
+    1.7127
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_braided_beard_lod0.glb": {
+   "vertices": 3122,
+   "triangles": 5932,
+   "bbox_min": [
+    -0.0879,
+    -0.0674,
+    1.3272
+   ],
+   "bbox_max": [
+    0.0879,
+    0.0843,
+    1.7127
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_braided_beard_lod1.glb": {
+   "vertices": 1010,
+   "triangles": 1844,
+   "bbox_min": [
+    -0.0874,
+    -0.0674,
+    1.3272
+   ],
+   "bbox_max": [
+    0.0878,
+    0.0814,
+    1.7127
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_braided_beard_lod2.glb": {
+   "vertices": 338,
+   "triangles": 576,
+   "bbox_min": [
+    -0.0875,
+    -0.0674,
+    1.3272
+   ],
+   "bbox_max": [
+    0.0879,
+    0.0768,
+    1.7127
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_short_beard_lod0.glb": {
+   "vertices": 2112,
+   "triangles": 3948,
+   "bbox_min": [
+    -0.086,
+    -0.0134,
+    1.6015
+   ],
+   "bbox_max": [
+    0.0862,
+    0.0803,
+    1.7105
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_short_beard_lod1.glb": {
+   "vertices": 672,
+   "triangles": 1188,
+   "bbox_min": [
+    -0.0859,
+    -0.0135,
+    1.6015
+   ],
+   "bbox_max": [
+    0.0861,
+    0.0783,
+    1.7105
+   ]
+  },
+  "models/characters/appearance/nains/male/beard_short_beard_lod2.glb": {
+   "vertices": 224,
+   "triangles": 360,
+   "bbox_min": [
+    -0.0859,
+    -0.0135,
+    1.6018
+   ],
+   "bbox_max": [
+    0.0861,
+    0.0746,
+    1.7105
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_thick_lod0.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0343,
+    0.0675,
+    1.6437
+   ],
+   "bbox_max": [
+    0.0343,
+    0.0879,
+    1.6599
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_thick_lod1.glb": {
+   "vertices": 124,
+   "triangles": 240,
+   "bbox_min": [
+    -0.0343,
+    0.0675,
+    1.6439
+   ],
+   "bbox_max": [
+    0.0343,
+    0.0879,
+    1.6592
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_thick_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.0343,
+    0.0675,
+    1.6437
+   ],
+   "bbox_max": [
+    0.0343,
+    0.0879,
+    1.6596
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_handlebar_lod0.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0386,
+    0.0689,
+    1.6496
+   ],
+   "bbox_max": [
+    0.0386,
+    0.086,
+    1.669
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_handlebar_lod1.glb": {
+   "vertices": 124,
+   "triangles": 240,
+   "bbox_min": [
+    -0.0386,
+    0.0689,
+    1.6502
+   ],
+   "bbox_max": [
+    0.0386,
+    0.086,
+    1.6689
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_handlebar_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.0386,
+    0.0689,
+    1.6498
+   ],
+   "bbox_max": [
+    0.0385,
+    0.086,
+    1.669
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_drooping_lod0.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0351,
+    0.0578,
+    1.62
+   ],
+   "bbox_max": [
+    0.0351,
+    0.0869,
+    1.659
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_drooping_lod1.glb": {
+   "vertices": 124,
+   "triangles": 240,
+   "bbox_min": [
+    -0.035,
+    0.0578,
+    1.6199
+   ],
+   "bbox_max": [
+    0.035,
+    0.0869,
+    1.6583
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_drooping_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.0349,
+    0.0578,
+    1.6199
+   ],
+   "bbox_max": [
+    0.0351,
+    0.0868,
+    1.6586
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_thin_lod0.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0295,
+    0.0678,
+    1.6487
+   ],
+   "bbox_max": [
+    0.0295,
+    0.0821,
+    1.6576
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_thin_lod1.glb": {
+   "vertices": 124,
+   "triangles": 240,
+   "bbox_min": [
+    -0.0295,
+    0.0678,
+    1.6488
+   ],
+   "bbox_max": [
+    0.0295,
+    0.0821,
+    1.6572
+   ]
+  },
+  "models/characters/appearance/nains/male/moustache_thin_lod2.glb": {
+   "vertices": 64,
+   "triangles": 120,
+   "bbox_min": [
+    -0.0295,
+    0.0678,
+    1.6487
+   ],
+   "bbox_max": [
+    0.0295,
+    0.082,
+    1.6575
+   ]
+  },
+  "models/characters/appearance/nains/female/face_1_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0947,
+    -0.1389,
+    1.4952
+   ],
+   "bbox_max": [
+    0.0947,
+    0.0936,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/nains/female/face_1_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0948,
+    -0.1387,
+    1.4952
+   ],
+   "bbox_max": [
+    0.0948,
+    0.093,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/nains/female/face_1_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0944,
+    -0.1384,
+    1.4952
+   ],
+   "bbox_max": [
+    0.0944,
+    0.0913,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/nains/female/face_2_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0947,
+    -0.1389,
+    1.4952
+   ],
+   "bbox_max": [
+    0.0947,
+    0.0985,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/nains/female/face_2_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0948,
+    -0.1387,
+    1.4952
+   ],
+   "bbox_max": [
+    0.0948,
+    0.0979,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/nains/female/face_2_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0944,
+    -0.1384,
+    1.4952
+   ],
+   "bbox_max": [
+    0.0944,
+    0.0959,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/nains/female/face_3_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0947,
+    -0.1389,
+    1.4952
+   ],
+   "bbox_max": [
+    0.0947,
+    0.0902,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/nains/female/face_3_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0948,
+    -0.1387,
+    1.4952
+   ],
+   "bbox_max": [
+    0.0948,
+    0.0898,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/nains/female/face_3_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0944,
+    -0.1384,
+    1.4952
+   ],
+   "bbox_max": [
+    0.0944,
+    0.0882,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_twin_braids_lod0.glb": {
+   "vertices": 3220,
+   "triangles": 6264,
+   "bbox_min": [
+    -0.0879,
+    -0.1698,
+    1.3342
+   ],
+   "bbox_max": [
+    0.0884,
+    0.0582,
+    1.7846
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_twin_braids_lod1.glb": {
+   "vertices": 1188,
+   "triangles": 2268,
+   "bbox_min": [
+    -0.0875,
+    -0.1696,
+    1.3342
+   ],
+   "bbox_max": [
+    0.0874,
+    0.0581,
+    1.7849
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_twin_braids_lod2.glb": {
+   "vertices": 466,
+   "triangles": 864,
+   "bbox_min": [
+    -0.0872,
+    -0.1684,
+    1.3342
+   ],
+   "bbox_max": [
+    0.087,
+    0.0581,
+    1.7846
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_braid_lod0.glb": {
+   "vertices": 2786,
+   "triangles": 5400,
+   "bbox_min": [
+    -0.0879,
+    -0.1698,
+    1.2924
+   ],
+   "bbox_max": [
+    0.0884,
+    0.0582,
+    1.7846
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_braid_lod1.glb": {
+   "vertices": 994,
+   "triangles": 1884,
+   "bbox_min": [
+    -0.0875,
+    -0.1696,
+    1.2923
+   ],
+   "bbox_max": [
+    0.0874,
+    0.0581,
+    1.7849
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_braid_lod2.glb": {
+   "vertices": 368,
+   "triangles": 672,
+   "bbox_min": [
+    -0.0872,
+    -0.1684,
+    1.2923
+   ],
+   "bbox_max": [
+    0.087,
+    0.0581,
+    1.7846
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_bun_lod0.glb": {
+   "vertices": 2640,
+   "triangles": 5064,
+   "bbox_min": [
+    -0.0879,
+    -0.1803,
+    1.563
+   ],
+   "bbox_max": [
+    0.0884,
+    0.0582,
+    1.7846
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_bun_lod1.glb": {
+   "vertices": 928,
+   "triangles": 1724,
+   "bbox_min": [
+    -0.0875,
+    -0.1792,
+    1.563
+   ],
+   "bbox_max": [
+    0.0874,
+    0.0581,
+    1.7849
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_bun_lod2.glb": {
+   "vertices": 342,
+   "triangles": 600,
+   "bbox_min": [
+    -0.0872,
+    -0.1776,
+    1.563
+   ],
+   "bbox_max": [
+    0.087,
+    0.0581,
+    1.7846
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_long_lod0.glb": {
+   "vertices": 7392,
+   "triangles": 10416,
+   "bbox_min": [
+    -0.1144,
+    -0.1497,
+    1.3283
+   ],
+   "bbox_max": [
+    0.1143,
+    0.0615,
+    1.7902
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_long_lod1.glb": {
+   "vertices": 2400,
+   "triangles": 3300,
+   "bbox_min": [
+    -0.1144,
+    -0.1501,
+    1.3284
+   ],
+   "bbox_max": [
+    0.1142,
+    0.0613,
+    1.7904
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_long_lod2.glb": {
+   "vertices": 840,
+   "triangles": 1140,
+   "bbox_min": [
+    -0.1143,
+    -0.1482,
+    1.3284
+   ],
+   "bbox_max": [
+    0.1142,
+    0.0595,
+    1.7904
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_high_tail_lod0.glb": {
+   "vertices": 2570,
+   "triangles": 4968,
+   "bbox_min": [
+    -0.0879,
+    -0.2038,
+    1.3967
+   ],
+   "bbox_max": [
+    0.0884,
+    0.0582,
+    1.7846
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_high_tail_lod1.glb": {
+   "vertices": 898,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.0875,
+    -0.2035,
+    1.3967
+   ],
+   "bbox_max": [
+    0.0874,
+    0.0581,
+    1.7849
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_high_tail_lod2.glb": {
+   "vertices": 320,
+   "triangles": 576,
+   "bbox_min": [
+    -0.0872,
+    -0.2018,
+    1.3967
+   ],
+   "bbox_max": [
+    0.087,
+    0.0581,
+    1.7846
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_bob_lod0.glb": {
+   "vertices": 4704,
+   "triangles": 6552,
+   "bbox_min": [
+    -0.1021,
+    -0.1522,
+    1.5023
+   ],
+   "bbox_max": [
+    0.1022,
+    0.0623,
+    1.7901
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_bob_lod1.glb": {
+   "vertices": 1600,
+   "triangles": 2200,
+   "bbox_min": [
+    -0.102,
+    -0.1501,
+    1.5034
+   ],
+   "bbox_max": [
+    0.1022,
+    0.0615,
+    1.7898
+   ]
+  },
+  "models/characters/appearance/nains/female/hair_bob_lod2.glb": {
+   "vertices": 540,
+   "triangles": 720,
+   "bbox_min": [
+    -0.1023,
+    -0.1499,
+    1.5056
+   ],
+   "bbox_max": [
+    0.1022,
+    0.0603,
+    1.7897
+   ]
+  },
+  "models/characters/appearance/orcs/male/face_1_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0866,
+    -0.1339,
+    1.555
+   ],
+   "bbox_max": [
+    0.0866,
+    0.0805,
+    1.823
+   ]
+  },
+  "models/characters/appearance/orcs/male/face_1_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0867,
+    -0.1337,
+    1.555
+   ],
+   "bbox_max": [
+    0.0867,
+    0.0801,
+    1.823
+   ]
+  },
+  "models/characters/appearance/orcs/male/face_1_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0866,
+    -0.1334,
+    1.555
+   ],
+   "bbox_max": [
+    0.0866,
+    0.0789,
+    1.823
+   ]
+  },
+  "models/characters/appearance/orcs/male/face_2_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0866,
+    -0.1339,
+    1.555
+   ],
+   "bbox_max": [
+    0.0866,
+    0.0838,
+    1.823
+   ]
+  },
+  "models/characters/appearance/orcs/male/face_2_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0867,
+    -0.1337,
+    1.555
+   ],
+   "bbox_max": [
+    0.0867,
+    0.0834,
+    1.823
+   ]
+  },
+  "models/characters/appearance/orcs/male/face_2_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0866,
+    -0.1334,
+    1.555
+   ],
+   "bbox_max": [
+    0.0866,
+    0.082,
+    1.823
+   ]
+  },
+  "models/characters/appearance/orcs/male/face_3_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0866,
+    -0.1339,
+    1.555
+   ],
+   "bbox_max": [
+    0.0866,
+    0.0782,
+    1.823
+   ]
+  },
+  "models/characters/appearance/orcs/male/face_3_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0867,
+    -0.1337,
+    1.555
+   ],
+   "bbox_max": [
+    0.0867,
+    0.0779,
+    1.823
+   ]
+  },
+  "models/characters/appearance/orcs/male/face_3_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0866,
+    -0.1334,
+    1.555
+   ],
+   "bbox_max": [
+    0.0866,
+    0.0769,
+    1.823
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_mohawk_lod0.glb": {
+   "vertices": 2352,
+   "triangles": 4536,
+   "bbox_min": [
+    -0.0794,
+    -0.1723,
+    1.6198
+   ],
+   "bbox_max": [
+    0.0796,
+    0.0493,
+    1.8742
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_mohawk_lod1.glb": {
+   "vertices": 800,
+   "triangles": 1500,
+   "bbox_min": [
+    -0.0792,
+    -0.1645,
+    1.6198
+   ],
+   "bbox_max": [
+    0.0793,
+    0.0464,
+    1.8655
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_mohawk_lod2.glb": {
+   "vertices": 270,
+   "triangles": 480,
+   "bbox_min": [
+    -0.0794,
+    -0.164,
+    1.6198
+   ],
+   "bbox_max": [
+    0.0793,
+    0.0435,
+    1.8624
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_shaved_tail_lod0.glb": {
+   "vertices": 2570,
+   "triangles": 4968,
+   "bbox_min": [
+    -0.0794,
+    -0.196,
+    1.4607
+   ],
+   "bbox_max": [
+    0.0795,
+    0.0404,
+    1.8322
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_shaved_tail_lod1.glb": {
+   "vertices": 898,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.0793,
+    -0.1957,
+    1.4607
+   ],
+   "bbox_max": [
+    0.0793,
+    0.0405,
+    1.8314
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_shaved_tail_lod2.glb": {
+   "vertices": 320,
+   "triangles": 576,
+   "bbox_min": [
+    -0.0791,
+    -0.1941,
+    1.4607
+   ],
+   "bbox_max": [
+    0.0792,
+    0.0402,
+    1.8313
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_high_tail_lod0.glb": {
+   "vertices": 2570,
+   "triangles": 4968,
+   "bbox_min": [
+    -0.0844,
+    -0.196,
+    1.4607
+   ],
+   "bbox_max": [
+    0.0849,
+    0.0407,
+    1.8323
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_high_tail_lod1.glb": {
+   "vertices": 898,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.084,
+    -0.1957,
+    1.4607
+   ],
+   "bbox_max": [
+    0.0839,
+    0.0407,
+    1.8325
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_high_tail_lod2.glb": {
+   "vertices": 320,
+   "triangles": 576,
+   "bbox_min": [
+    -0.0837,
+    -0.1941,
+    1.4607
+   ],
+   "bbox_max": [
+    0.0835,
+    0.0407,
+    1.8323
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_long_lod0.glb": {
+   "vertices": 7392,
+   "triangles": 10416,
+   "bbox_min": [
+    -0.1095,
+    -0.1447,
+    1.3952
+   ],
+   "bbox_max": [
+    0.1094,
+    0.0412,
+    1.8414
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_long_lod1.glb": {
+   "vertices": 2400,
+   "triangles": 3300,
+   "bbox_min": [
+    -0.1095,
+    -0.1451,
+    1.3952
+   ],
+   "bbox_max": [
+    0.1094,
+    0.0411,
+    1.8416
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_long_lod2.glb": {
+   "vertices": 840,
+   "triangles": 1140,
+   "bbox_min": [
+    -0.1094,
+    -0.1431,
+    1.3953
+   ],
+   "bbox_max": [
+    0.1093,
+    0.041,
+    1.8415
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_wild_lod0.glb": {
+   "vertices": 4704,
+   "triangles": 6552,
+   "bbox_min": [
+    -0.1194,
+    -0.1553,
+    1.5285
+   ],
+   "bbox_max": [
+    0.1189,
+    0.0471,
+    1.8523
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_wild_lod1.glb": {
+   "vertices": 1600,
+   "triangles": 2200,
+   "bbox_min": [
+    -0.1196,
+    -0.1556,
+    1.5294
+   ],
+   "bbox_max": [
+    0.1188,
+    0.0463,
+    1.8526
+   ]
+  },
+  "models/characters/appearance/orcs/male/hair_wild_lod2.glb": {
+   "vertices": 540,
+   "triangles": 720,
+   "bbox_min": [
+    -0.1189,
+    -0.155,
+    1.5312
+   ],
+   "bbox_max": [
+    0.1187,
+    0.0447,
+    1.852
+   ]
+  },
+  "models/characters/appearance/orcs/male/tusks_small_lod0.glb": {
+   "vertices": 228,
+   "triangles": 448,
+   "bbox_min": [
+    -0.0297,
+    0.0448,
+    1.6391
+   ],
+   "bbox_max": [
+    0.0297,
+    0.0561,
+    1.6616
+   ]
+  },
+  "models/characters/appearance/orcs/male/tusks_small_lod1.glb": {
+   "vertices": 112,
+   "triangles": 216,
+   "bbox_min": [
+    -0.0293,
+    0.0446,
+    1.6394
+   ],
+   "bbox_max": [
+    0.0293,
+    0.0562,
+    1.6616
+   ]
+  },
+  "models/characters/appearance/orcs/male/tusks_small_lod2.glb": {
+   "vertices": 54,
+   "triangles": 100,
+   "bbox_min": [
+    -0.0298,
+    0.0447,
+    1.6394
+   ],
+   "bbox_max": [
+    0.0292,
+    0.056,
+    1.6616
+   ]
+  },
+  "models/characters/appearance/orcs/male/tusks_long_lod0.glb": {
+   "vertices": 228,
+   "triangles": 448,
+   "bbox_min": [
+    -0.0414,
+    0.0434,
+    1.6383
+   ],
+   "bbox_max": [
+    0.0414,
+    0.0601,
+    1.6919
+   ]
+  },
+  "models/characters/appearance/orcs/male/tusks_long_lod1.glb": {
+   "vertices": 112,
+   "triangles": 216,
+   "bbox_min": [
+    -0.0414,
+    0.0432,
+    1.6387
+   ],
+   "bbox_max": [
+    0.0414,
+    0.0603,
+    1.6919
+   ]
+  },
+  "models/characters/appearance/orcs/male/tusks_long_lod2.glb": {
+   "vertices": 54,
+   "triangles": 100,
+   "bbox_min": [
+    -0.0414,
+    0.0433,
+    1.6387
+   ],
+   "bbox_max": [
+    0.0413,
+    0.0599,
+    1.6919
+   ]
+  },
+  "models/characters/appearance/orcs/male/tusks_wide_lod0.glb": {
+   "vertices": 228,
+   "triangles": 448,
+   "bbox_min": [
+    -0.0591,
+    0.0428,
+    1.6365
+   ],
+   "bbox_max": [
+    0.0591,
+    0.0579,
+    1.6762
+   ]
+  },
+  "models/characters/appearance/orcs/male/tusks_wide_lod1.glb": {
+   "vertices": 112,
+   "triangles": 216,
+   "bbox_min": [
+    -0.0591,
+    0.0427,
+    1.6371
+   ],
+   "bbox_max": [
+    0.0591,
+    0.058,
+    1.6762
+   ]
+  },
+  "models/characters/appearance/orcs/male/tusks_wide_lod2.glb": {
+   "vertices": 54,
+   "triangles": 100,
+   "bbox_min": [
+    -0.0591,
+    0.0426,
+    1.6368
+   ],
+   "bbox_max": [
+    0.059,
+    0.0581,
+    1.6761
+   ]
+  },
+  "models/characters/appearance/orcs/female/face_1_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0828,
+    -0.1283,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0828,
+    0.0718,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/orcs/female/face_1_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.083,
+    -0.1281,
+    1.5095
+   ],
+   "bbox_max": [
+    0.083,
+    0.0716,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/orcs/female/face_1_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0828,
+    -0.1279,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0828,
+    0.0707,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/orcs/female/face_2_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0828,
+    -0.1283,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0828,
+    0.0743,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/orcs/female/face_2_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.083,
+    -0.1281,
+    1.5095
+   ],
+   "bbox_max": [
+    0.083,
+    0.074,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/orcs/female/face_2_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0828,
+    -0.1279,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0828,
+    0.073,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/orcs/female/face_3_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0828,
+    -0.1283,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0828,
+    0.0701,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/orcs/female/face_3_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.083,
+    -0.1281,
+    1.5095
+   ],
+   "bbox_max": [
+    0.083,
+    0.0699,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/orcs/female/face_3_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0828,
+    -0.1279,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0828,
+    0.0691,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_high_tail_lod0.glb": {
+   "vertices": 2570,
+   "triangles": 4968,
+   "bbox_min": [
+    -0.0805,
+    -0.1873,
+    1.4199
+   ],
+   "bbox_max": [
+    0.081,
+    0.0376,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_high_tail_lod1.glb": {
+   "vertices": 898,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.0801,
+    -0.187,
+    1.4199
+   ],
+   "bbox_max": [
+    0.08,
+    0.0376,
+    1.7736
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_high_tail_lod2.glb": {
+   "vertices": 320,
+   "triangles": 576,
+   "bbox_min": [
+    -0.0798,
+    -0.1855,
+    1.4199
+   ],
+   "bbox_max": [
+    0.0796,
+    0.0376,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_mohawk_lod0.glb": {
+   "vertices": 2352,
+   "triangles": 4536,
+   "bbox_min": [
+    -0.0755,
+    -0.1668,
+    1.571
+   ],
+   "bbox_max": [
+    0.0757,
+    0.0468,
+    1.8153
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_mohawk_lod1.glb": {
+   "vertices": 800,
+   "triangles": 1500,
+   "bbox_min": [
+    -0.0753,
+    -0.1589,
+    1.571
+   ],
+   "bbox_max": [
+    0.0754,
+    0.0437,
+    1.8066
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_mohawk_lod2.glb": {
+   "vertices": 270,
+   "triangles": 480,
+   "bbox_min": [
+    -0.0755,
+    -0.1585,
+    1.571
+   ],
+   "bbox_max": [
+    0.0754,
+    0.041,
+    1.8035
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_shaved_tail_lod0.glb": {
+   "vertices": 2570,
+   "triangles": 4968,
+   "bbox_min": [
+    -0.0755,
+    -0.1873,
+    1.4199
+   ],
+   "bbox_max": [
+    0.0756,
+    0.0373,
+    1.7733
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_shaved_tail_lod1.glb": {
+   "vertices": 898,
+   "triangles": 1692,
+   "bbox_min": [
+    -0.0754,
+    -0.187,
+    1.4199
+   ],
+   "bbox_max": [
+    0.0754,
+    0.0374,
+    1.7725
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_shaved_tail_lod2.glb": {
+   "vertices": 320,
+   "triangles": 576,
+   "bbox_min": [
+    -0.0753,
+    -0.1855,
+    1.4199
+   ],
+   "bbox_max": [
+    0.0753,
+    0.0371,
+    1.7724
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_long_lod0.glb": {
+   "vertices": 7392,
+   "triangles": 10416,
+   "bbox_min": [
+    -0.1041,
+    -0.1392,
+    1.3577
+   ],
+   "bbox_max": [
+    0.104,
+    0.0381,
+    1.7825
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_long_lod1.glb": {
+   "vertices": 2400,
+   "triangles": 3300,
+   "bbox_min": [
+    -0.1041,
+    -0.1395,
+    1.3577
+   ],
+   "bbox_max": [
+    0.1039,
+    0.038,
+    1.7827
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_long_lod2.glb": {
+   "vertices": 840,
+   "triangles": 1140,
+   "bbox_min": [
+    -0.104,
+    -0.1375,
+    1.3577
+   ],
+   "bbox_max": [
+    0.1039,
+    0.0379,
+    1.7825
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_wild_lod0.glb": {
+   "vertices": 4704,
+   "triangles": 6552,
+   "bbox_min": [
+    -0.1136,
+    -0.1498,
+    1.4842
+   ],
+   "bbox_max": [
+    0.113,
+    0.0445,
+    1.7933
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_wild_lod1.glb": {
+   "vertices": 1600,
+   "triangles": 2200,
+   "bbox_min": [
+    -0.1137,
+    -0.1501,
+    1.485
+   ],
+   "bbox_max": [
+    0.113,
+    0.0436,
+    1.7937
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_wild_lod2.glb": {
+   "vertices": 540,
+   "triangles": 720,
+   "bbox_min": [
+    -0.1131,
+    -0.1496,
+    1.4867
+   ],
+   "bbox_max": [
+    0.1129,
+    0.0418,
+    1.7931
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_twin_braids_lod0.glb": {
+   "vertices": 3220,
+   "triangles": 6264,
+   "bbox_min": [
+    -0.0805,
+    -0.1564,
+    1.363
+   ],
+   "bbox_max": [
+    0.081,
+    0.0376,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_twin_braids_lod1.glb": {
+   "vertices": 1188,
+   "triangles": 2268,
+   "bbox_min": [
+    -0.0801,
+    -0.1562,
+    1.363
+   ],
+   "bbox_max": [
+    0.08,
+    0.0376,
+    1.7736
+   ]
+  },
+  "models/characters/appearance/orcs/female/hair_twin_braids_lod2.glb": {
+   "vertices": 466,
+   "triangles": 864,
+   "bbox_min": [
+    -0.0798,
+    -0.1551,
+    1.363
+   ],
+   "bbox_max": [
+    0.0796,
+    0.0376,
+    1.7734
+   ]
+  },
+  "models/characters/appearance/orcs/female/tusks_small_lod0.glb": {
+   "vertices": 228,
+   "triangles": 448,
+   "bbox_min": [
+    -0.0279,
+    0.0406,
+    1.5894
+   ],
+   "bbox_max": [
+    0.0279,
+    0.0514,
+    1.6108
+   ]
+  },
+  "models/characters/appearance/orcs/female/tusks_small_lod1.glb": {
+   "vertices": 112,
+   "triangles": 216,
+   "bbox_min": [
+    -0.0276,
+    0.0404,
+    1.5897
+   ],
+   "bbox_max": [
+    0.0276,
+    0.0515,
+    1.6108
+   ]
+  },
+  "models/characters/appearance/orcs/female/tusks_small_lod2.glb": {
+   "vertices": 54,
+   "triangles": 100,
+   "bbox_min": [
+    -0.0281,
+    0.0405,
+    1.5896
+   ],
+   "bbox_max": [
+    0.0275,
+    0.0513,
+    1.6108
+   ]
+  },
+  "models/characters/appearance/orcs/female/tusks_long_lod0.glb": {
+   "vertices": 228,
+   "triangles": 448,
+   "bbox_min": [
+    -0.0391,
+    0.0393,
+    1.5886
+   ],
+   "bbox_max": [
+    0.0391,
+    0.0552,
+    1.6396
+   ]
+  },
+  "models/characters/appearance/orcs/female/tusks_long_lod1.glb": {
+   "vertices": 112,
+   "triangles": 216,
+   "bbox_min": [
+    -0.0391,
+    0.0391,
+    1.5891
+   ],
+   "bbox_max": [
+    0.0391,
+    0.0553,
+    1.6396
+   ]
+  },
+  "models/characters/appearance/orcs/female/tusks_long_lod2.glb": {
+   "vertices": 54,
+   "triangles": 100,
+   "bbox_min": [
+    -0.0391,
+    0.0391,
+    1.589
+   ],
+   "bbox_max": [
+    0.039,
+    0.0549,
+    1.6395
+   ]
+  },
+  "models/characters/appearance/orcs/female/tusks_wide_lod0.glb": {
+   "vertices": 228,
+   "triangles": 448,
+   "bbox_min": [
+    -0.0559,
+    0.0387,
+    1.5869
+   ],
+   "bbox_max": [
+    0.0559,
+    0.0531,
+    1.6247
+   ]
+  },
+  "models/characters/appearance/orcs/female/tusks_wide_lod1.glb": {
+   "vertices": 112,
+   "triangles": 216,
+   "bbox_min": [
+    -0.0559,
+    0.0386,
+    1.5875
+   ],
+   "bbox_max": [
+    0.0559,
+    0.0532,
+    1.6246
+   ]
+  },
+  "models/characters/appearance/orcs/female/tusks_wide_lod2.glb": {
+   "vertices": 54,
+   "triangles": 100,
+   "bbox_min": [
+    -0.056,
+    0.0385,
+    1.5872
+   ],
+   "bbox_max": [
+    0.0558,
+    0.0532,
+    1.6246
+   ]
+  },
+  "models/characters/appearance/demons/male/face_1_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.086,
+    -0.1339,
+    1.555
+   ],
+   "bbox_max": [
+    0.086,
+    0.0866,
+    1.823
+   ]
+  },
+  "models/characters/appearance/demons/male/face_1_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0861,
+    -0.1337,
+    1.555
+   ],
+   "bbox_max": [
+    0.0861,
+    0.0861,
+    1.823
+   ]
+  },
+  "models/characters/appearance/demons/male/face_1_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.086,
+    -0.1334,
+    1.555
+   ],
+   "bbox_max": [
+    0.086,
+    0.0846,
+    1.823
+   ]
+  },
+  "models/characters/appearance/demons/male/face_2_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.086,
+    -0.1339,
+    1.555
+   ],
+   "bbox_max": [
+    0.086,
+    0.091,
+    1.823
+   ]
+  },
+  "models/characters/appearance/demons/male/face_2_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0861,
+    -0.1337,
+    1.555
+   ],
+   "bbox_max": [
+    0.0861,
+    0.0905,
+    1.823
+   ]
+  },
+  "models/characters/appearance/demons/male/face_2_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.086,
+    -0.1334,
+    1.555
+   ],
+   "bbox_max": [
+    0.086,
+    0.0887,
+    1.823
+   ]
+  },
+  "models/characters/appearance/demons/male/face_3_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.086,
+    -0.1339,
+    1.555
+   ],
+   "bbox_max": [
+    0.086,
+    0.0837,
+    1.823
+   ]
+  },
+  "models/characters/appearance/demons/male/face_3_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0861,
+    -0.1337,
+    1.555
+   ],
+   "bbox_max": [
+    0.0861,
+    0.0833,
+    1.823
+   ]
+  },
+  "models/characters/appearance/demons/male/face_3_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.086,
+    -0.1334,
+    1.555
+   ],
+   "bbox_max": [
+    0.086,
+    0.0819,
+    1.823
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_ram_lod0.glb": {
+   "vertices": 676,
+   "triangles": 1344,
+   "bbox_min": [
+    -0.1095,
+    -0.0424,
+    1.7313
+   ],
+   "bbox_max": [
+    0.1095,
+    0.0409,
+    1.8037
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_ram_lod1.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.1092,
+    -0.042,
+    1.7312
+   ],
+   "bbox_max": [
+    0.1092,
+    0.0399,
+    1.8032
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_ram_lod2.glb": {
+   "vertices": 100,
+   "triangles": 192,
+   "bbox_min": [
+    -0.1084,
+    -0.0409,
+    1.7344
+   ],
+   "bbox_max": [
+    0.1084,
+    0.0382,
+    1.7999
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_back_lod0.glb": {
+   "vertices": 676,
+   "triangles": 1344,
+   "bbox_min": [
+    -0.0869,
+    -0.209,
+    1.7585
+   ],
+   "bbox_max": [
+    0.0869,
+    0.0379,
+    1.8423
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_back_lod1.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0869,
+    -0.209,
+    1.758
+   ],
+   "bbox_max": [
+    0.0869,
+    0.0368,
+    1.8423
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_back_lod2.glb": {
+   "vertices": 100,
+   "triangles": 192,
+   "bbox_min": [
+    -0.087,
+    -0.209,
+    1.7577
+   ],
+   "bbox_max": [
+    0.087,
+    0.035,
+    1.8421
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_up_lod0.glb": {
+   "vertices": 676,
+   "triangles": 1344,
+   "bbox_min": [
+    -0.0977,
+    0.0042,
+    1.7568
+   ],
+   "bbox_max": [
+    0.0977,
+    0.0398,
+    1.9479
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_up_lod1.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0975,
+    0.0042,
+    1.7561
+   ],
+   "bbox_max": [
+    0.0975,
+    0.0398,
+    1.948
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_up_lod2.glb": {
+   "vertices": 100,
+   "triangles": 192,
+   "bbox_min": [
+    -0.0965,
+    0.0042,
+    1.7565
+   ],
+   "bbox_max": [
+    0.0965,
+    0.0398,
+    1.948
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_short_lod0.glb": {
+   "vertices": 676,
+   "triangles": 1344,
+   "bbox_min": [
+    -0.0595,
+    -0.0094,
+    1.7598
+   ],
+   "bbox_max": [
+    0.0595,
+    0.0358,
+    1.8331
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_short_lod1.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0594,
+    -0.0094,
+    1.7599
+   ],
+   "bbox_max": [
+    0.0594,
+    0.0357,
+    1.833
+   ]
+  },
+  "models/characters/appearance/demons/male/horns_short_lod2.glb": {
+   "vertices": 100,
+   "triangles": 192,
+   "bbox_min": [
+    -0.0596,
+    -0.0094,
+    1.7606
+   ],
+   "bbox_max": [
+    0.0596,
+    0.0355,
+    1.8329
+   ]
+  },
+  "models/characters/appearance/demons/male/tail_short_lod0.glb": {
+   "vertices": 407,
+   "triangles": 798,
+   "bbox_min": [
+    -0.03,
+    -0.5751,
+    0.7634
+   ],
+   "bbox_max": [
+    0.0492,
+    -0.0984,
+    1.0128
+   ]
+  },
+  "models/characters/appearance/demons/male/tail_short_lod1.glb": {
+   "vertices": 183,
+   "triangles": 352,
+   "bbox_min": [
+    -0.03,
+    -0.5793,
+    0.7629
+   ],
+   "bbox_max": [
+    0.0489,
+    -0.0971,
+    1.0139
+   ]
+  },
+  "models/characters/appearance/demons/male/tail_short_lod2.glb": {
+   "vertices": 79,
+   "triangles": 146,
+   "bbox_min": [
+    -0.03,
+    -0.5861,
+    0.7646
+   ],
+   "bbox_max": [
+    0.0478,
+    -0.0962,
+    1.0096
+   ]
+  },
+  "models/characters/appearance/demons/male/tail_medium_lod0.glb": {
+   "vertices": 407,
+   "triangles": 798,
+   "bbox_min": [
+    -0.03,
+    -0.8726,
+    0.6014
+   ],
+   "bbox_max": [
+    0.0562,
+    -0.0977,
+    1.0126
+   ]
+  },
+  "models/characters/appearance/demons/male/tail_medium_lod1.glb": {
+   "vertices": 183,
+   "triangles": 352,
+   "bbox_min": [
+    -0.03,
+    -0.8768,
+    0.6008
+   ],
+   "bbox_max": [
+    0.0559,
+    -0.0962,
+    1.0137
+   ]
+  },
+  "models/characters/appearance/demons/male/tail_medium_lod2.glb": {
+   "vertices": 79,
+   "triangles": 146,
+   "bbox_min": [
+    -0.03,
+    -0.8836,
+    0.6024
+   ],
+   "bbox_max": [
+    0.0548,
+    -0.0953,
+    1.0093
+   ]
+  },
+  "models/characters/appearance/demons/male/tail_long_lod0.glb": {
+   "vertices": 407,
+   "triangles": 798,
+   "bbox_min": [
+    -0.03,
+    -1.1701,
+    0.4393
+   ],
+   "bbox_max": [
+    0.0632,
+    -0.0973,
+    1.0125
+   ]
+  },
+  "models/characters/appearance/demons/male/tail_long_lod1.glb": {
+   "vertices": 183,
+   "triangles": 352,
+   "bbox_min": [
+    -0.03,
+    -1.1743,
+    0.4386
+   ],
+   "bbox_max": [
+    0.0629,
+    -0.0959,
+    1.0136
+   ]
+  },
+  "models/characters/appearance/demons/male/tail_long_lod2.glb": {
+   "vertices": 79,
+   "triangles": 146,
+   "bbox_min": [
+    -0.03,
+    -1.1811,
+    0.4402
+   ],
+   "bbox_max": [
+    0.0618,
+    -0.095,
+    1.0091
+   ]
+  },
+  "models/characters/appearance/demons/male/wings_bat_lod0.glb": {
+   "vertices": 1884,
+   "triangles": 3168,
+   "bbox_min": [
+    -0.3492,
+    -0.3461,
+    1.0429
+   ],
+   "bbox_max": [
+    0.3491,
+    -0.1334,
+    1.6045
+   ]
+  },
+  "models/characters/appearance/demons/male/wings_bat_lod1.glb": {
+   "vertices": 800,
+   "triangles": 1240,
+   "bbox_min": [
+    -0.3486,
+    -0.3446,
+    1.0429
+   ],
+   "bbox_max": [
+    0.3486,
+    -0.1334,
+    1.6044
+   ]
+  },
+  "models/characters/appearance/demons/male/wings_bat_lod2.glb": {
+   "vertices": 500,
+   "triangles": 720,
+   "bbox_min": [
+    -0.3486,
+    -0.3444,
+    1.0429
+   ],
+   "bbox_max": [
+    0.3486,
+    -0.1375,
+    1.6035
+   ]
+  },
+  "models/characters/appearance/demons/male/wings_spiked_lod0.glb": {
+   "vertices": 1988,
+   "triangles": 3368,
+   "bbox_min": [
+    -0.3672,
+    -0.3461,
+    1.0826
+   ],
+   "bbox_max": [
+    0.3671,
+    -0.1322,
+    1.8355
+   ]
+  },
+  "models/characters/appearance/demons/male/wings_spiked_lod1.glb": {
+   "vertices": 860,
+   "triangles": 1352,
+   "bbox_min": [
+    -0.3666,
+    -0.3446,
+    1.0829
+   ],
+   "bbox_max": [
+    0.3666,
+    -0.1325,
+    1.8355
+   ]
+  },
+  "models/characters/appearance/demons/male/wings_spiked_lod2.glb": {
+   "vertices": 544,
+   "triangles": 800,
+   "bbox_min": [
+    -0.3666,
+    -0.3444,
+    1.0942
+   ],
+   "bbox_max": [
+    0.3666,
+    -0.1373,
+    1.8355
+   ]
+  },
+  "models/characters/appearance/demons/male/wings_small_lod0.glb": {
+   "vertices": 1520,
+   "triangles": 2560,
+   "bbox_min": [
+    -0.2597,
+    -0.3444,
+    1.1329
+   ],
+   "bbox_max": [
+    0.26,
+    -0.1358,
+    1.5044
+   ]
+  },
+  "models/characters/appearance/demons/male/wings_small_lod1.glb": {
+   "vertices": 644,
+   "triangles": 1000,
+   "bbox_min": [
+    -0.2588,
+    -0.3444,
+    1.1329
+   ],
+   "bbox_max": [
+    0.2588,
+    -0.1354,
+    1.5044
+   ]
+  },
+  "models/characters/appearance/demons/male/wings_small_lod2.glb": {
+   "vertices": 400,
+   "triangles": 576,
+   "bbox_min": [
+    -0.2583,
+    -0.3444,
+    1.1329
+   ],
+   "bbox_max": [
+    0.2583,
+    -0.1382,
+    1.5041
+   ]
+  },
+  "models/characters/appearance/demons/female/face_1_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0823,
+    -0.1283,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0823,
+    0.0765,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/demons/female/face_1_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0823,
+    -0.1281,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0823,
+    0.0762,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/demons/female/face_1_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0822,
+    -0.1279,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0822,
+    0.075,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/demons/female/face_2_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0823,
+    -0.1283,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0823,
+    0.0799,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/demons/female/face_2_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0823,
+    -0.1281,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0823,
+    0.0795,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/demons/female/face_2_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0822,
+    -0.1279,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0822,
+    0.0781,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/demons/female/face_3_lod0.glb": {
+   "vertices": 4388,
+   "triangles": 8472,
+   "bbox_min": [
+    -0.0823,
+    -0.1283,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0823,
+    0.0743,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/demons/female/face_3_lod1.glb": {
+   "vertices": 1670,
+   "triangles": 3148,
+   "bbox_min": [
+    -0.0823,
+    -0.1281,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0823,
+    0.074,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/demons/female/face_3_lod2.glb": {
+   "vertices": 616,
+   "triangles": 1116,
+   "bbox_min": [
+    -0.0822,
+    -0.1279,
+    1.5095
+   ],
+   "bbox_max": [
+    0.0822,
+    0.0729,
+    1.7641
+   ]
+  },
+  "models/characters/appearance/demons/female/hair_short_lod0.glb": {
+   "vertices": 2352,
+   "triangles": 4536,
+   "bbox_min": [
+    -0.0806,
+    -0.1368,
+    1.5711
+   ],
+   "bbox_max": [
+    0.0808,
+    0.0513,
+    1.7757
+   ]
+  },
+  "models/characters/appearance/demons/female/hair_short_lod1.glb": {
+   "vertices": 800,
+   "triangles": 1500,
+   "bbox_min": [
+    -0.0808,
+    -0.1364,
+    1.5711
+   ],
+   "bbox_max": [
+    0.0806,
+    0.0517,
+    1.7753
+   ]
+  },
+  "models/characters/appearance/demons/female/hair_short_lod2.glb": {
+   "vertices": 270,
+   "triangles": 480,
+   "bbox_min": [
+    -0.0794,
+    -0.1335,
+    1.5711
+   ],
+   "bbox_max": [
+    0.08,
+    0.0508,
+    1.7736
+   ]
+  },
+  "models/characters/appearance/demons/female/hair_swept_lod0.glb": {
+   "vertices": 2352,
+   "triangles": 4536,
+   "bbox_min": [
+    -0.0852,
+    -0.1402,
+    1.5711
+   ],
+   "bbox_max": [
+    0.0841,
+    0.0518,
+    1.7828
+   ]
+  },
+  "models/characters/appearance/demons/female/hair_swept_lod1.glb": {
+   "vertices": 800,
+   "triangles": 1500,
+   "bbox_min": [
+    -0.0836,
+    -0.1404,
+    1.5711
+   ],
+   "bbox_max": [
+    0.0843,
+    0.0514,
+    1.7831
+   ]
+  },
+  "models/characters/appearance/demons/female/hair_swept_lod2.glb": {
+   "vertices": 270,
+   "triangles": 480,
+   "bbox_min": [
+    -0.0813,
+    -0.1378,
+    1.5711
+   ],
+   "bbox_max": [
+    0.0835,
+    0.05,
+    1.7831
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_ram_lod0.glb": {
+   "vertices": 676,
+   "triangles": 1344,
+   "bbox_min": [
+    -0.1041,
+    -0.0414,
+    1.6769
+   ],
+   "bbox_max": [
+    0.1041,
+    0.0378,
+    1.7457
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_ram_lod1.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.1038,
+    -0.0411,
+    1.6768
+   ],
+   "bbox_max": [
+    0.1038,
+    0.0369,
+    1.7452
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_ram_lod2.glb": {
+   "vertices": 100,
+   "triangles": 192,
+   "bbox_min": [
+    -0.103,
+    -0.0399,
+    1.6799
+   ],
+   "bbox_max": [
+    0.103,
+    0.0353,
+    1.7422
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_back_lod0.glb": {
+   "vertices": 676,
+   "triangles": 1344,
+   "bbox_min": [
+    -0.0826,
+    -0.1997,
+    1.7022
+   ],
+   "bbox_max": [
+    0.0826,
+    0.0349,
+    1.7825
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_back_lod1.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0826,
+    -0.1997,
+    1.7018
+   ],
+   "bbox_max": [
+    0.0826,
+    0.0339,
+    1.7825
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_back_lod2.glb": {
+   "vertices": 100,
+   "triangles": 192,
+   "bbox_min": [
+    -0.0827,
+    -0.1997,
+    1.7015
+   ],
+   "bbox_max": [
+    0.0827,
+    0.0323,
+    1.7823
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_up_lod0.glb": {
+   "vertices": 676,
+   "triangles": 1344,
+   "bbox_min": [
+    -0.0928,
+    0.0029,
+    1.7007
+   ],
+   "bbox_max": [
+    0.0928,
+    0.0367,
+    1.8828
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_up_lod1.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0927,
+    0.0029,
+    1.7
+   ],
+   "bbox_max": [
+    0.0927,
+    0.0367,
+    1.8828
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_up_lod2.glb": {
+   "vertices": 100,
+   "triangles": 192,
+   "bbox_min": [
+    -0.0917,
+    0.0029,
+    1.7004
+   ],
+   "bbox_max": [
+    0.0917,
+    0.0367,
+    1.8829
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_short_lod0.glb": {
+   "vertices": 676,
+   "triangles": 1344,
+   "bbox_min": [
+    -0.0566,
+    -0.0101,
+    1.7035
+   ],
+   "bbox_max": [
+    0.0566,
+    0.0329,
+    1.7737
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_short_lod1.glb": {
+   "vertices": 260,
+   "triangles": 512,
+   "bbox_min": [
+    -0.0565,
+    -0.0101,
+    1.7035
+   ],
+   "bbox_max": [
+    0.0565,
+    0.0329,
+    1.7737
+   ]
+  },
+  "models/characters/appearance/demons/female/horns_short_lod2.glb": {
+   "vertices": 100,
+   "triangles": 192,
+   "bbox_min": [
+    -0.0566,
+    -0.0101,
+    1.7042
+   ],
+   "bbox_max": [
+    0.0566,
+    0.0327,
+    1.7736
+   ]
+  },
+  "models/characters/appearance/demons/female/tail_short_lod0.glb": {
+   "vertices": 407,
+   "triangles": 798,
+   "bbox_min": [
+    -0.03,
+    -0.5751,
+    0.7534
+   ],
+   "bbox_max": [
+    0.0492,
+    -0.0984,
+    1.0028
+   ]
+  },
+  "models/characters/appearance/demons/female/tail_short_lod1.glb": {
+   "vertices": 183,
+   "triangles": 352,
+   "bbox_min": [
+    -0.03,
+    -0.5793,
+    0.7529
+   ],
+   "bbox_max": [
+    0.0489,
+    -0.0971,
+    1.0039
+   ]
+  },
+  "models/characters/appearance/demons/female/tail_short_lod2.glb": {
+   "vertices": 79,
+   "triangles": 146,
+   "bbox_min": [
+    -0.03,
+    -0.5861,
+    0.7546
+   ],
+   "bbox_max": [
+    0.0478,
+    -0.0962,
+    0.9996
+   ]
+  },
+  "models/characters/appearance/demons/female/tail_medium_lod0.glb": {
+   "vertices": 407,
+   "triangles": 798,
+   "bbox_min": [
+    -0.03,
+    -0.8726,
+    0.5914
+   ],
+   "bbox_max": [
+    0.0562,
+    -0.0977,
+    1.0026
+   ]
+  },
+  "models/characters/appearance/demons/female/tail_medium_lod1.glb": {
+   "vertices": 183,
+   "triangles": 352,
+   "bbox_min": [
+    -0.03,
+    -0.8768,
+    0.5908
+   ],
+   "bbox_max": [
+    0.0559,
+    -0.0962,
+    1.0037
+   ]
+  },
+  "models/characters/appearance/demons/female/tail_medium_lod2.glb": {
+   "vertices": 79,
+   "triangles": 146,
+   "bbox_min": [
+    -0.03,
+    -0.8836,
+    0.5924
+   ],
+   "bbox_max": [
+    0.0548,
+    -0.0953,
+    0.9993
+   ]
+  },
+  "models/characters/appearance/demons/female/tail_long_lod0.glb": {
+   "vertices": 407,
+   "triangles": 798,
+   "bbox_min": [
+    -0.03,
+    -1.1701,
+    0.4293
+   ],
+   "bbox_max": [
+    0.0632,
+    -0.0973,
+    1.0025
+   ]
+  },
+  "models/characters/appearance/demons/female/tail_long_lod1.glb": {
+   "vertices": 183,
+   "triangles": 352,
+   "bbox_min": [
+    -0.03,
+    -1.1743,
+    0.4286
+   ],
+   "bbox_max": [
+    0.0629,
+    -0.0959,
+    1.0036
+   ]
+  },
+  "models/characters/appearance/demons/female/tail_long_lod2.glb": {
+   "vertices": 79,
+   "triangles": 146,
+   "bbox_min": [
+    -0.03,
+    -1.1811,
+    0.4302
+   ],
+   "bbox_max": [
+    0.0618,
+    -0.095,
+    0.9991
+   ]
+  },
+  "models/characters/appearance/demons/female/wings_bat_lod0.glb": {
+   "vertices": 1884,
+   "triangles": 3168,
+   "bbox_min": [
+    -0.3301,
+    -0.3324,
+    1.021
+   ],
+   "bbox_max": [
+    0.3301,
+    -0.1344,
+    1.5436
+   ]
+  },
+  "models/characters/appearance/demons/female/wings_bat_lod1.glb": {
+   "vertices": 800,
+   "triangles": 1240,
+   "bbox_min": [
+    -0.3295,
+    -0.331,
+    1.021
+   ],
+   "bbox_max": [
+    0.3295,
+    -0.1344,
+    1.5435
+   ]
+  },
+  "models/characters/appearance/demons/female/wings_bat_lod2.glb": {
+   "vertices": 500,
+   "triangles": 720,
+   "bbox_min": [
+    -0.3295,
+    -0.3309,
+    1.021
+   ],
+   "bbox_max": [
+    0.3295,
+    -0.1383,
+    1.5426
+   ]
+  },
+  "models/characters/appearance/demons/female/wings_spiked_lod0.glb": {
+   "vertices": 1988,
+   "triangles": 3368,
+   "bbox_min": [
+    -0.3469,
+    -0.3324,
+    1.0581
+   ],
+   "bbox_max": [
+    0.3468,
+    -0.1333,
+    1.7583
+   ]
+  },
+  "models/characters/appearance/demons/female/wings_spiked_lod1.glb": {
+   "vertices": 860,
+   "triangles": 1352,
+   "bbox_min": [
+    -0.3463,
+    -0.331,
+    1.0583
+   ],
+   "bbox_max": [
+    0.3463,
+    -0.1335,
+    1.7583
+   ]
+  },
+  "models/characters/appearance/demons/female/wings_spiked_lod2.glb": {
+   "vertices": 544,
+   "triangles": 800,
+   "bbox_min": [
+    -0.3463,
+    -0.3309,
+    1.0689
+   ],
+   "bbox_max": [
+    0.3463,
+    -0.138,
+    1.7583
+   ]
+  },
+  "models/characters/appearance/demons/female/wings_small_lod0.glb": {
+   "vertices": 1520,
+   "triangles": 2560,
+   "bbox_min": [
+    -0.2469,
+    -0.3309,
+    1.1048
+   ],
+   "bbox_max": [
+    0.2472,
+    -0.1366,
+    1.4505
+   ]
+  },
+  "models/characters/appearance/demons/female/wings_small_lod1.glb": {
+   "vertices": 644,
+   "triangles": 1000,
+   "bbox_min": [
+    -0.2461,
+    -0.3309,
+    1.1048
+   ],
+   "bbox_max": [
+    0.2461,
+    -0.1362,
+    1.4505
+   ]
+  },
+  "models/characters/appearance/demons/female/wings_small_lod2.glb": {
+   "vertices": 400,
+   "triangles": 576,
+   "bbox_min": [
+    -0.2455,
+    -0.3309,
+    1.1048
+   ],
+   "bbox_max": [
+    0.2455,
+    -0.1389,
+    1.4502
+   ]
+  }
+ }
+}

@@ -15,8 +15,10 @@
 #include "src/client/render/LnTheme.h"
 
 #include "src/client/auth/AuthUi.h"
+#include "src/client/character_creation/AppearanceCatalog.h"
 #include "src/client/character_creation/CharacterCreationUi.h"
 #include "src/client/render/race/RacePreviewViewport.h"
+#include "src/shared/network/CharacterAppearance.h"
 
 #include <string>
 #include <vector>
@@ -31,6 +33,36 @@ namespace engine::render
 	namespace
 	{
 		using LnTheme::ToImVec4;
+		using engine::network::AppearanceSlot;
+
+		/// « #RRGGBB » -> couleur ImGui (gris si invalide).
+		ImVec4 HexToImVec4(const std::string& hex)
+		{
+			const uint32_t c = engine::client::ParseHexColorRgba8(hex, 0xFF808080u);
+			return ImVec4(static_cast<float>(c & 0xFFu) / 255.f, static_cast<float>((c >> 8) & 0xFFu) / 255.f,
+			              static_cast<float>((c >> 16) & 0xFFu) / 255.f, 1.f);
+		}
+
+		/// Emplacements dont l'édition se voit mieux en gros plan sur la tête.
+		bool IsHeadSlot(AppearanceSlot s)
+		{
+			return s == AppearanceSlot::Face || s == AppearanceSlot::Hair || s == AppearanceSlot::HairColor
+				|| s == AppearanceSlot::EyeColor || s == AppearanceSlot::Beard || s == AppearanceSlot::Moustache
+				|| s == AppearanceSlot::Ears || s == AppearanceSlot::Horns || s == AppearanceSlot::Tusks;
+		}
+
+		/// Emplacements de couleur (pastilles) plutôt que de forme (boutons).
+		bool IsColorSlot(AppearanceSlot s)
+		{
+			return s == AppearanceSlot::SkinTone || s == AppearanceSlot::HairColor || s == AppearanceSlot::EyeColor;
+		}
+
+		/// Ordre d'affichage des emplacements dans l'écran de création.
+		constexpr AppearanceSlot kSlotDisplayOrder[] = {
+			AppearanceSlot::Face, AppearanceSlot::SkinTone, AppearanceSlot::Hair, AppearanceSlot::HairColor,
+			AppearanceSlot::EyeColor, AppearanceSlot::Beard, AppearanceSlot::Moustache, AppearanceSlot::Ears,
+			AppearanceSlot::Tusks, AppearanceSlot::Horns, AppearanceSlot::Tail, AppearanceSlot::Wings,
+		};
 	} // namespace
 
 	/// Affiche l'ecran de creation de personnage en 2 colonnes : apercu 3D a
@@ -111,6 +143,16 @@ namespace engine::render
 				             ImVec2(256.0f, 384.0f));
 				if (hasRaces)
 					ImGui::Text("Race : %s", (*races)[m_charRaceIdx].displayName.c_str());
+				// Personnalisation : cadrage de l'aperçu (tête / en pied) et tirage aléatoire.
+				if (m_appearanceCatalog != nullptr && m_appearanceCatalog->IsLoaded())
+				{
+					const float half = (256.0f - ImGui::GetStyle().ItemSpacing.x) * 0.5f;
+					if (LnWidgets::GhostButton(m_charFocusHead ? "En pied" : "Visage", false, half))
+						m_charFocusHead = !m_charFocusHead;
+					ImGui::SameLine();
+					if (LnWidgets::GhostButton("Aléatoire", false, half))
+						m_charRandomSeed = (m_charRandomSeed * 1664525u + 1013904223u) | 1u;
+				}
 			}
 			else
 			{
@@ -119,6 +161,10 @@ namespace engine::render
 
 			// ---------------- Colonne droite : options ----------------
 			ImGui::TableSetColumnIndex(1);
+			// Personnalisation : beaucoup d'options -> colonne défilante de hauteur
+			// bornée (l'écran reste lisible en 1080p comme en 768p).
+			const float optionsH = (vpH * 0.62f < 560.f) ? vpH * 0.62f : 560.f;
+			ImGui::BeginChild("##cc_options_scroll", ImVec2(0.f, optionsH), ImGuiChildFlags_None);
 
 			const std::string& nameLabel =
 				rm.fields.empty() ? std::string("Nom du personnage") : rm.fields[0].label;
@@ -284,30 +330,146 @@ namespace engine::render
 			ImGui::SameLine();
 			ImGui::RadioButton("Féminin", &m_charGender, 1);
 
-			// Teinte de peau : 0 = Claire, 1 = Foncée. Visible sur les parties de
-			// peau exposées (mains avec le Ranger ; corps entier avec un futur mesh).
-			ImGui::Spacing();
-			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
-			ImGui::TextUnformatted("TEINTE DE PEAU");
-			ImGui::PopStyleColor();
-			ImGui::RadioButton("Claire", &m_charSkinTone, 0);
-			ImGui::SameLine();
-			ImGui::RadioButton("Foncée", &m_charSkinTone, 1);
+			// ---- Personnalisation (catalogue) : 5 éléments ou plus par race et genre,
+			// visibles d'emblée (boutons de forme, pastilles de couleur). Sans catalogue,
+			// repli sur l'ancien choix de teinte (Claire / Foncée).
+			const std::string curGenderStr = (m_charGender == 1) ? "female" : "male";
+			const std::string curRaceId = hasRaces ? (*races)[m_charRaceIdx].id : std::string("humains");
+			const engine::client::AppearanceRaceGender* appearanceRg =
+				(m_appearanceCatalog != nullptr) ? m_appearanceCatalog->Find(curRaceId, curGenderStr) : nullptr;
+			if (appearanceRg != nullptr)
+			{
+				// Changement de race ou de genre : indices ramenés dans les nouvelles listes.
+				const std::string key = curRaceId + "|" + curGenderStr;
+				if (key != m_charAppearanceKey)
+				{
+					m_appearanceCatalog->Sanitize(curRaceId, curGenderStr, m_charAppearance);
+					m_charAppearanceKey = key;
+				}
+				// Tirage aléatoire demandé par le bouton de l'aperçu (graine changée).
+				static uint32_t s_lastSeed = 0u;
+				if (m_charRandomSeed != s_lastSeed && s_lastSeed != 0u)
+				{
+					uint32_t r = m_charRandomSeed;
+					for (std::size_t si = 0; si < engine::network::kAppearanceSlotCount; ++si)
+					{
+						const auto& opts = appearanceRg->slots[si];
+						r = r * 1664525u + 1013904223u;
+						if (!opts.empty())
+							m_charAppearance.Set(static_cast<AppearanceSlot>(si),
+								static_cast<uint8_t>((r >> 8) % static_cast<uint32_t>(opts.size())));
+					}
+				}
+				s_lastSeed = m_charRandomSeed;
 
-			// Push de l'apercu si la race OU le genre OU la teinte a change (ou 1er rendu).
+				ImGui::Spacing();
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
+				ImGui::TextUnformatted("APPARENCE");
+				ImGui::PopStyleColor();
+				const float spacing = ImGui::GetStyle().ItemSpacing.x;
+				const float framePadX = ImGui::GetStyle().FramePadding.x * 2.f;
+				for (AppearanceSlot slot : kSlotDisplayOrder)
+				{
+					const auto& opts = appearanceRg->Options(slot);
+					if (opts.size() < 2u)
+						continue; // rien à choisir (ou emplacement absent pour cette race)
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
+					ImGui::TextUnformatted(m_appearanceCatalog->SlotLabel(slot).c_str());
+					ImGui::PopStyleColor();
+					const int cur = m_charAppearance.Get(slot);
+					const float avail = ImGui::GetContentRegionAvail().x;
+					float lineUsed = 0.f;
+					ImGui::PushID(static_cast<int>(slot));
+					for (size_t oi = 0; oi < opts.size(); ++oi)
+					{
+						const bool selected = (static_cast<int>(oi) == cur);
+						const bool color = IsColorSlot(slot);
+						const float w = color ? 24.f : ImGui::CalcTextSize(opts[oi].name.c_str()).x + framePadX;
+						if (oi > 0)
+						{
+							if (lineUsed + spacing + w <= avail)
+							{
+								ImGui::SameLine();
+								lineUsed += spacing;
+							}
+							else
+							{
+								lineUsed = 0.f;
+							}
+						}
+						ImGui::PushID(static_cast<int>(oi));
+						bool clicked = false;
+						if (color)
+						{
+							// Pastille : liseré clair autour de la couleur choisie.
+							const ImVec2 p0 = ImGui::GetCursorScreenPos();
+							clicked = ImGui::ColorButton("##sw", HexToImVec4(opts[oi].hex),
+								ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoDragDrop, ImVec2(24.f, 24.f));
+							if (selected)
+								ImGui::GetWindowDrawList()->AddRect(ImVec2(p0.x - 2.f, p0.y - 2.f),
+									ImVec2(p0.x + 26.f, p0.y + 26.f), ImGui::GetColorU32(ToImVec4(LnTheme::kAccent)), 3.f, 0, 2.f);
+						}
+						else
+						{
+							if (selected)
+								ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kAccent));
+							clicked = ImGui::Button(opts[oi].name.c_str());
+							if (selected)
+								ImGui::PopStyleColor();
+						}
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip("%s", opts[oi].name.c_str());
+						if (clicked)
+						{
+							m_charAppearance.Set(slot, static_cast<uint8_t>(oi));
+							m_charFocusHead = IsHeadSlot(slot);
+						}
+						lineUsed += w;
+						ImGui::PopID();
+					}
+					ImGui::PopID();
+				}
+				// Teinte historique (skinColorIdx, colonne 0068) : première ou deuxième teinte.
+				m_charSkinTone = (m_charAppearance.Get(AppearanceSlot::SkinTone) >= 1u) ? 1 : 0;
+			}
+			else
+			{
+				// Teinte de peau (repli sans catalogue) : 0 = Claire, 1 = Foncée.
+				ImGui::Spacing();
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
+				ImGui::TextUnformatted("TEINTE DE PEAU");
+				ImGui::PopStyleColor();
+				ImGui::RadioButton("Claire", &m_charSkinTone, 0);
+				ImGui::SameLine();
+				ImGui::RadioButton("Foncée", &m_charSkinTone, 1);
+			}
+
+			// Push de l'apercu : corps (SetMesh) seulement si la race, le genre ou la
+			// teinte change (SetMesh relance l'animation) ; apparence et cadrage à
+			// chaque image (simple copie, l'assemblage se fait au rendu).
+			// (Avec le catalogue, la teinte passe par SetAppearance : pas de SetMesh,
+			// donc pas de redémarrage de l'animation à chaque changement de teinte.)
 			if (hasRaces && m_racePreview && m_authPresenter &&
 			    (m_charRaceIdx != m_racePreviewSentRaceIdx || m_charGender != m_racePreviewSentGender
-			     || m_charSkinTone != m_racePreviewSentSkinTone))
+			     || (appearanceRg == nullptr && m_charSkinTone != m_racePreviewSentSkinTone)))
 			{
-				const std::string genderStr = (m_charGender == 1) ? "female" : "male";
 				m_racePreview->SetMesh(
-					m_authPresenter->GetRaceMeshForId((*races)[m_charRaceIdx].id, genderStr));
+					m_authPresenter->GetRaceMeshForId(curRaceId, curGenderStr));
 				// Phase 2 — route la peau genrée + teinte dans l'aperçu 3D (live).
-				m_racePreview->SetGender(genderStr);
+				m_racePreview->SetGender(curGenderStr);
 				m_racePreview->SetSkinTone(m_charSkinTone);
 				m_racePreviewSentRaceIdx  = m_charRaceIdx;
 				m_racePreviewSentGender   = m_charGender;
 				m_racePreviewSentSkinTone = m_charSkinTone;
+			}
+			if (m_racePreview && appearanceRg != nullptr)
+			{
+				engine::network::CharacterAppearance shown = m_charAppearance;
+				// Taille choisie (slider) reflétée dans l'aperçu.
+				shown.SetProportion(engine::network::AppearanceProp::Height,
+					static_cast<uint8_t>(m_charBodyMetrics.heightScale * 100.f + 0.5f));
+				m_racePreview->SetAppearance(curRaceId, curGenderStr, shown);
+				m_racePreview->SetFocusHead(m_charFocusHead);
 			}
 
 			// Apparence physique (CHAR-MODEL.25) : sliders bornes a la race +
@@ -392,6 +554,7 @@ namespace engine::render
 				}
 			}
 
+			ImGui::EndChild(); // ##cc_options_scroll
 			ImGui::EndTable();
 		}
 
@@ -457,7 +620,20 @@ namespace engine::render
 			}
 			const char* genderId = (m_charGender == 1) ? "female" : "male";
 			const uint8_t skinTone = static_cast<uint8_t>((m_charSkinTone == 1) ? 1 : 0);
-				m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId, skinTone, factionId.c_str(), classId.c_str());
+			// Personnalisation : apparence bornée au catalogue de la race soumise +
+			// proportions du panneau « Apparence physique » (pourcentages).
+			engine::network::CharacterAppearance submitted = m_charAppearance;
+			if (m_appearanceCatalog != nullptr)
+				m_appearanceCatalog->Sanitize(raceId, genderId, submitted);
+			auto pct = [](float f) { return static_cast<uint8_t>(f * 100.f + 0.5f); };
+			submitted.SetProportion(engine::network::AppearanceProp::Height, pct(m_charBodyMetrics.heightScale));
+			submitted.SetProportion(engine::network::AppearanceProp::LegLength, pct(m_charBodyMetrics.legLengthRatio));
+			submitted.SetProportion(engine::network::AppearanceProp::TorsoWidth, pct(m_charBodyMetrics.torsoWidthRatio));
+			submitted.SetProportion(engine::network::AppearanceProp::ShoulderWidth, pct(m_charBodyMetrics.shoulderWidthRatio));
+			submitted.SetProportion(engine::network::AppearanceProp::BodyMass,
+				static_cast<uint8_t>(100.f + m_charBodyMetrics.bodyMassIndex * 15.f + 0.5f));
+			m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId, skinTone,
+				factionId.c_str(), classId.c_str(), submitted.Encode());
 		}
 		LnWidgets::EndPanel();
 		ImGui::EndChild();

@@ -672,6 +672,31 @@ namespace engine::render::race
 		m_gender = (gender == "female") ? "female" : "male";
 	}
 
+	void RacePreviewViewport::SetAppearance(const std::string& raceId, const std::string& gender,
+	                                        const engine::network::CharacterAppearance& appearance)
+	{
+		m_raceId = raceId;
+		m_gender = (gender == "female") ? "female" : "male";
+		m_appearance = appearance;
+		m_hasAppearance = true;
+	}
+
+	float RacePreviewViewport::HeadHeightMeters(const engine::math::Mat4& model) const
+	{
+		// Position de l'os de tête dans la pose courante (matrices globales de Tick,
+		// espace du maillage), passée par la matrice modèle ; repli 1,55 m.
+		if (m_currentMesh == nullptr || m_globalBoneMatrices.empty())
+			return 1.55f;
+		const int head = m_currentMesh->skeleton.FindBoneIndex("Head");
+		if (head < 0 || static_cast<size_t>(head) >= m_globalBoneMatrices.size())
+			return 1.55f;
+		const engine::math::Mat4& g = m_globalBoneMatrices[static_cast<size_t>(head)];
+		const float x = g.m[12], y = g.m[13], z = g.m[14];
+		// Ligne Y du produit model × (x, y, z, 1) (stockage colonne majeure).
+		const float worldY = model.m[1] * x + model.m[5] * y + model.m[9] * z + model.m[13];
+		return worldY + 0.08f;
+	}
+
 	void RacePreviewViewport::SetSkinTone(int tone)
 	{
 		m_skinTone = (tone == 1) ? 1 : 0;
@@ -1067,8 +1092,21 @@ namespace engine::render::race
 				vkUnmapMemory(m_device, m_boneBufferMemory);
 			}
 		}
-		// Matrice modèle = importTransform (pieds à l'origine ; la caméra orbite).
-		const engine::math::Mat4 modelMat = m_currentMesh->importTransform;
+		// Personnalisation : corps + pièces assemblés (visage, coiffure, cornes…).
+		// Échec (catalogue absent, race inconnue) -> rendu historique (corps seul).
+		engine::render::skinned::AssembledAvatar assembled;
+		const bool modular = m_hasAppearance && m_assembler != nullptr
+			&& m_assembler->Assemble(*m_currentMesh, m_raceId, m_gender, m_appearance, /*lod*/ 0, assembled);
+		// Matrice modèle = importTransform (pieds à l'origine ; la caméra orbite),
+		// mise à l'échelle par les proportions choisies (taille, largeur).
+		engine::math::Mat4 propScale;
+		if (modular)
+		{
+			propScale.m[0] = assembled.widthScale * assembled.heightScale;
+			propScale.m[5] = assembled.heightScale;
+			propScale.m[10] = assembled.widthScale * assembled.heightScale;
+		}
+		const engine::math::Mat4 modelMat = propScale * m_currentMesh->importTransform;
 		{
 			void* mapped = nullptr;
 			if (vkMapMemory(m_device, m_instanceBufferMemory, 0, 64, 0, &mapped) != VK_SUCCESS)
@@ -1078,11 +1116,15 @@ namespace engine::render::race
 		}
 
 		// 2) Caméra orbit : eye tourne autour de la cible (hauteur torse).
-		const engine::math::Vec3 target(0.0f, kTargetHeightM, 0.0f);
+		// Gros plan sur la tête (édition du visage, de la coiffure, des cornes) :
+		// cible à hauteur de tête (taille de la race comprise), caméra rapprochée.
+		const float targetY = m_focusHead ? HeadHeightMeters(modelMat) : kTargetHeightM;
+		const float radius = m_focusHead ? 1.05f : kOrbitRadiusM;
+		const engine::math::Vec3 target(0.0f, targetY, 0.0f);
 		const engine::math::Vec3 eye(
-			std::sin(m_orbitYawRad) * kOrbitRadiusM,
-			kTargetHeightM,
-			std::cos(m_orbitYawRad) * kOrbitRadiusM);
+			std::sin(m_orbitYawRad) * radius,
+			targetY,
+			std::cos(m_orbitYawRad) * radius);
 		const engine::math::Mat4 view = LookAtLH(eye, target);
 		// Aspect = ratio d'AFFICHAGE (256x384 dans AuthImGuiCharacterCreate), pas
 		// celui de l'image carrée : compense l'étirement d'ImGui::Image pour un
@@ -1142,11 +1184,6 @@ namespace engine::render::race
 				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout,
 					0, 2, sets, 0, nullptr);
 
-				VkBuffer vbufs[2] = { m_currentMesh->vertexBuffer, m_instanceBuffer };
-				VkDeviceSize offs[2] = { 0, 0 };
-				vkCmdBindVertexBuffers(cmd, 0, 2, vbufs, offs);
-				vkCmdBindIndexBuffer(cmd, m_currentMesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
 				struct PushConstants {
 					float prevViewProj[16];
 					float viewProj[16];
@@ -1158,37 +1195,65 @@ namespace engine::render::race
 				std::memcpy(pc.viewProj,     viewProj.m, sizeof(float) * 16);
 				pc.pad0 = pc.pad1 = pc.pad2 = 0;
 
+				const uint32_t skinId = modular ? assembled.skinMaterialId : bodyMaterialId;
 				auto isSkin = [&](uint32_t matIdx) -> bool {
-					return bodyMaterialId != 0u && matIdx == bodyMaterialId;
+					return skinId != 0u && matIdx == skinId;
 				};
 
-				const bool perSubmesh = !m_currentMesh->submeshes.empty()
-					&& submeshMat.size() == m_currentMesh->submeshes.size();
-				if (perSubmesh)
+				// Une pièce = un maillage + un index matériau par sous-maillage
+				// (kSkipSubmesh masque, ex. capuche). Rendu historique : une seule
+				// pièce (le corps) avec le routage peau/habit.
+				std::vector<engine::render::skinned::SkinnedDrawPart> parts;
+				if (modular)
 				{
-					for (size_t s = 0; s < m_currentMesh->submeshes.size(); ++s)
-					{
-						const engine::render::skinned::SkinnedSubMesh& sub = m_currentMesh->submeshes[s];
-						if (sub.indexCount == 0) continue;
-						const uint32_t matIdx = submeshMat[s];
-						const bool skin = isSkin(matIdx);
-						vkCmdSetDepthBias(cmd, skin ? m_skinDepthBiasConstant : 0.0f, 0.0f,
-							skin ? m_skinDepthBiasSlope : 0.0f);
-						pc.materialIndex = matIdx;
-						vkCmdPushConstants(cmd, m_pipelineLayout,
-							VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-							0, sizeof(PushConstants), &pc);
-						vkCmdDrawIndexed(cmd, sub.indexCount, 1, sub.firstIndex, 0, 0);
-					}
+					parts = std::move(assembled.parts);
 				}
 				else
 				{
-					vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
-					pc.materialIndex = m_outfitMaterialId;
-					vkCmdPushConstants(cmd, m_pipelineLayout,
-						VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-						0, sizeof(PushConstants), &pc);
-					vkCmdDrawIndexed(cmd, m_currentMesh->indexCount, 1, 0, 0, 0);
+					engine::render::skinned::SkinnedDrawPart bodyOnly;
+					bodyOnly.mesh = m_currentMesh;
+					bodyOnly.materialIndex = m_outfitMaterialId;
+					bodyOnly.submeshMaterialIndices = submeshMat;
+					parts.push_back(std::move(bodyOnly));
+				}
+				for (const auto& part : parts)
+				{
+					const engine::render::skinned::SkinnedMesh* mesh = part.mesh;
+					if (mesh == nullptr || mesh->vertexBuffer == VK_NULL_HANDLE || mesh->indexBuffer == VK_NULL_HANDLE)
+						continue;
+					VkBuffer vbufs[2] = { mesh->vertexBuffer, m_instanceBuffer };
+					VkDeviceSize offs[2] = { 0, 0 };
+					vkCmdBindVertexBuffers(cmd, 0, 2, vbufs, offs);
+					vkCmdBindIndexBuffer(cmd, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+					const bool perSubmesh = !mesh->submeshes.empty()
+						&& part.submeshMaterialIndices.size() == mesh->submeshes.size();
+					if (perSubmesh)
+					{
+						for (size_t s = 0; s < mesh->submeshes.size(); ++s)
+						{
+							const engine::render::skinned::SkinnedSubMesh& sub = mesh->submeshes[s];
+							const uint32_t matIdx = part.submeshMaterialIndices[s];
+							if (sub.indexCount == 0 || matIdx == engine::render::skinned::SkinnedRenderer::kSkipSubmesh)
+								continue;
+							const bool skin = isSkin(matIdx);
+							vkCmdSetDepthBias(cmd, skin ? m_skinDepthBiasConstant : 0.0f, 0.0f,
+								skin ? m_skinDepthBiasSlope : 0.0f);
+							pc.materialIndex = matIdx;
+							vkCmdPushConstants(cmd, m_pipelineLayout,
+								VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+								0, sizeof(PushConstants), &pc);
+							vkCmdDrawIndexed(cmd, sub.indexCount, 1, sub.firstIndex, 0, 0);
+						}
+					}
+					else
+					{
+						vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+						pc.materialIndex = part.materialIndex;
+						vkCmdPushConstants(cmd, m_pipelineLayout,
+							VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+							0, sizeof(PushConstants), &pc);
+						vkCmdDrawIndexed(cmd, mesh->indexCount, 1, 0, 0, 0);
+					}
 				}
 
 				vkCmdEndRenderPass(cmd);

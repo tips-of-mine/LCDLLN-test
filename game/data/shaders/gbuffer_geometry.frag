@@ -76,6 +76,16 @@ void main()
     if ((mat.flags & 2u) != 0u)
         outAlbedo = vec4(vColor.rgb, 1.0);
 
+    // Personnalisation des personnages : teinte du matériau (MaterialFlags::Tint = 8,
+    // TintMasked = 16). La teinte RGBA8 est rangée dans les bits de padding.x
+    // (MaterialGpuData) ; elle multiplie l'albedo (masquée par 1 - alpha pour les yeux).
+    if ((mat.flags & 24u) != 0u) {
+        vec3 tintColor = unpackUnorm4x8(floatBitsToUint(mat.padding.x)).rgb;
+        float tintAmount = ((mat.flags & 16u) != 0u) ? (1.0 - outAlbedo.a) : 1.0;
+        outAlbedo.rgb = mix(outAlbedo.rgb, outAlbedo.rgb * tintColor, tintAmount);
+        outAlbedo.a = 1.0;
+    }
+
     // Surbrillance d'interaction (chantier C) : si le bit Highlight (1) est posé dans
     // mat.flags, on teinte l'albedo vers un or chaud + on l'éclaircit. Les matériaux
     // normaux (flags=0) ne sont pas affectés.

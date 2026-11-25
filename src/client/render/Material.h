@@ -25,6 +25,14 @@ namespace engine::render
 		/// Decoupe alpha : gbuffer_geometry.frag rejette (discard) les fragments dont
 		/// l'alpha baseColor est sous le seuil. Pour les feuillages d'arbres.
 		AlphaCutout = 1u << 2,
+		/// Personnalisation des personnages : l'albedo est multiplié par la teinte du
+		/// matériau (Material::tintRgba8). Une seule texture neutre sert ainsi toutes
+		/// les couleurs d'une palette (cheveux, teintes de peau) sans consommer de
+		/// place dans le tableau de textures sans liaison du shader (kMaxBindlessTextures).
+		Tint = 1u << 3,
+		/// Comme Tint, mais seulement là où l'alpha de la texture est faible
+		/// (facteur 1 - alpha) : iris teinté, sclère et pupille intactes.
+		TintMasked = 1u << 4,
 	};
 
 	/// Per-material texture handles + tiling parameters.
@@ -43,6 +51,9 @@ namespace engine::render
 		TextureHandle orm;       ///< Linear ORM texture (R=AO, G=Roughness, B=Metallic).
 		float         tiling[2] = { 1.0f, 1.0f }; ///< UV tiling scale (s, t).
 		MaterialFlags flags     = MaterialFlags::None;
+		/// Teinte RGBA8 (R dans l'octet de poids faible, convention unpackUnorm4x8),
+		/// utilisée avec MaterialFlags::Tint / TintMasked. Blanc = aucun effet.
+		uint32_t      tintRgba8 = 0xFFFFFFFFu;
 	};
 
 	/// GPU-side material payload used by the bindless geometry shader path.
@@ -53,6 +64,9 @@ namespace engine::render
 		uint32_t ormIndex = 2;
 		uint32_t flags = 0;
 		float tiling[2] = { 1.0f, 1.0f };
+		/// padding[0] porte les bits de Material::tintRgba8 (lus par le shader via
+		/// floatBitsToUint + unpackUnorm4x8) ; padding[1] reste libre. Taille et
+		/// alignement inchangés (std430, 32 octets).
 		float padding[2] = { 0.0f, 0.0f };
 	};
 

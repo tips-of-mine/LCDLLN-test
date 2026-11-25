@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace engine::server
 {
@@ -148,6 +149,13 @@ namespace engine::server
 		uint32_t playerClientId = 0;
 		std::string characterName;
 		std::string gender;
+		/// Personnalisation — race du personnage (« humains », « elfes », « nains »,
+		/// « orcs », « demons ») et bloc CharacterAppearance encodé (cf.
+		/// src/shared/network/CharacterAppearance.h). Vides pour les mobs / loot bags.
+		/// Wire-bump v21→v22 : deux chaînes préfixées u8 ajoutées à l'identité (envoyées
+		/// à l'apparition de l'entité ou à leur changement seulement).
+		std::string raceId;
+		std::vector<uint8_t> appearance;
 		/// TD.8 — état d'animation courant du joueur (Idle pour les mobs/lootbags).
 		/// Wire-bump v7→v8 : 1 octet ajouté après le genre dans chaque entité du Snapshot.
 		AvatarAnimState animationState = AvatarAnimState::Idle;

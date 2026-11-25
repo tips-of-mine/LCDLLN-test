@@ -1,5 +1,7 @@
 #pragma once
 
+#include "src/client/render/skinned/AvatarAppearanceAssembler.h"
+#include "src/shared/network/CharacterAppearance.h"
 #include "src/shared/math/Math.h"
 
 #include <cstdint>
@@ -113,6 +115,19 @@ namespace engine::render::race
 		/// le matériau peau clair/foncé au prochain RenderOffscreen. Repli sur la
 		/// teinte claire si le matériau foncé n'existe pas (id 0).
 		void SetSkinTone(int tone);
+
+		/// Personnalisation — assembleur des pièces (corps + visage, coiffure,
+		/// cornes…). nullptr = rendu historique (corps seul). Non possédé.
+		void SetAppearanceAssembler(engine::render::skinned::AvatarAppearanceAssembler* assembler) { m_assembler = assembler; }
+
+		/// Personnalisation — race, genre et apparence affichés au prochain
+		/// RenderOffscreen (le corps reste celui de SetMesh).
+		void SetAppearance(const std::string& raceId, const std::string& gender,
+		                   const engine::network::CharacterAppearance& appearance);
+
+		/// Cadrage : true = gros plan sur la tête (visage, coiffure, pilosité),
+		/// false = personnage entier.
+		void SetFocusHead(bool head) { m_focusHead = head; }
 
 		/// Active/désactive la rotation orbit automatique (défaut true). Off => la
 		/// caméra reste à l'angle courant (piloté par SetOrbitYaw, ex. drag souris
@@ -228,6 +243,16 @@ namespace engine::render::race
 		uint32_t                 m_bodyMaterialIdMaleDark   = 0u;
 		uint32_t                 m_bodyMaterialIdFemaleDark = 0u;
 		std::vector<std::string> m_bodyMaterialNames;
+		/// Hauteur (m, repère de l'aperçu) de la tête dans la pose courante, pour le
+		/// gros plan. \param model matrice modèle appliquée au corps.
+		float HeadHeightMeters(const engine::math::Mat4& model) const;
+
+		// --- Personnalisation ---
+		engine::render::skinned::AvatarAppearanceAssembler* m_assembler = nullptr;
+		std::string              m_raceId;
+		engine::network::CharacterAppearance m_appearance{};
+		bool                     m_hasAppearance        = false;
+		bool                     m_focusHead            = false;
 		std::string              m_gender               = "male";
 		int                      m_skinTone             = 0; ///< 0 = claire, 1 = foncée.
 		float                    m_skinDepthBiasConstant = 0.0f;

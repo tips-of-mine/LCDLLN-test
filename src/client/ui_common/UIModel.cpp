@@ -797,6 +797,9 @@ namespace engine::client
 			remote.displayName = entity.characterName;
 			// TD.6 : genre du perso pour le rendu de l'avatar distant (vide → fallback "male").
 			remote.gender = entity.gender;
+			// Personnalisation (wire v22) : race + apparence pour assembler l'avatar distant.
+			remote.raceId = entity.raceId;
+			remote.appearance = entity.appearance;
 			// TD.8 : état d'animation pour jouer le bon clip sur l'avatar distant.
 			remote.animationState = static_cast<uint8_t>(entity.animationState);
 			// Combat SP1 : archétype de créature (0 = joueur/loot bag, ≠ 0 = mob).

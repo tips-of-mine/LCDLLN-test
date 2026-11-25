@@ -174,6 +174,13 @@ namespace engine
 				m_avatarSkinTone = (enterCmd.skinColorIdx == 1u) ? 1 : 0;
 				LOG_INFO(Core, "[EnterWorld] teinte peau '{}' = {}",
 					enterCmd.characterName, m_avatarSkinTone == 1 ? "foncee" : "claire");
+				// Personnalisation (DB serveur via CHARACTER_LIST, migration 0101) : bloc
+				// décodé puis borné au catalogue de la race ; absent -> apparence par défaut.
+				m_localAppearance = engine::network::CharacterAppearance::DecodeOrDefault(enterCmd.appearance);
+				m_appearanceCatalog.Sanitize(enterCmd.raceId.empty() ? std::string("humains") : enterCmd.raceId,
+					m_avatarGender, m_localAppearance);
+				LOG_INFO(Core, "[EnterWorld] apparence '{}' = {} octets (race '{}')",
+					enterCmd.characterName, enterCmd.appearance.size(), enterCmd.raceId);
 				// Sous-projet C MVP — Resout le mesh de la race du perso depuis le
 				// payload EnterWorld (race_str persistee en DB depuis migration 0033).
 				// Fallback humains si la race n'est pas chargee dans m_raceMeshes.

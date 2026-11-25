@@ -8,6 +8,7 @@
 #include <string_view>
 #include <vector>
 
+#include "src/shared/network/CharacterAppearance.h"
 #include "src/shared/network/WorldClockPayloads.h"
 
 namespace engine::network
@@ -39,6 +40,10 @@ namespace engine::network
 		// "elfe"). Appendue après gender (wire-breaking, client/master en lock-step).
 		// Vide si client ancien (forward-compat) => défaut côté serveur.
 		std::string           factionId;
+		// Personnalisation complète (cf. CharacterAppearance.h) : u8 longueur +
+		// octets, appendue après factionId (wire-breaking, lock-step client/master).
+		// Vide si client ancien => apparence par défaut côté serveur.
+		std::vector<uint8_t>  appearance;
 	};
 
 	struct CharacterCreateResponsePayload
@@ -53,7 +58,8 @@ namespace engine::network
 	                                                        std::string_view classId = {},
 	                                                        const CharacterCustomization& customization = {},
 	                                                        std::string_view gender = {},
-	                                                        std::string_view factionId = {});
+	                                                        std::string_view factionId = {},
+	                                                        const std::vector<uint8_t>& appearance = {});
 
 	std::optional<CharacterCreateResponsePayload> ParseCharacterCreateResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildCharacterCreateResponsePacket(uint8_t success, uint64_t characterId, uint32_t requestId, uint64_t sessionIdHeader);
@@ -104,6 +110,10 @@ namespace engine::network
 		// après skin_color_idx (wire-breaking, client/master en lock-step). Vide
 		// si character créé pré-PR2 (forward-compat).
 		std::string faction_str;
+		// Personnalisation (bloc CharacterAppearance encodé, u8 longueur + octets).
+		// Appendue après faction_str (wire-breaking, lock-step client/master). Vide
+		// pour un personnage créé avant la migration 0101 => apparence par défaut.
+		std::vector<uint8_t> appearance;
 	};
 
 	struct CharacterListResponsePayload

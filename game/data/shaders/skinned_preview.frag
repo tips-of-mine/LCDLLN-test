@@ -39,6 +39,19 @@ void main() {
     MaterialGpuData mat = uMaterialBuffer.materials[pc.materialIndex];
     vec2 uv = vUv * mat.tiling;
     vec4 base = texture(uTextures[mat.baseColorIndex], uv); // sRGB -> linéaire au sample
+    // Découpe alpha (MaterialFlags::AlphaCutout = 4) : contour des coiffures sculptées.
+    if ((mat.flags & 4u) != 0u && base.a < 0.5)
+        discard;
+
+    // Personnalisation des personnages : teinte du matériau (MaterialFlags::Tint = 8,
+    // TintMasked = 16). La teinte RGBA8 est rangée dans les bits de padding.x
+    // (MaterialGpuData) ; elle multiplie l'albedo (masquée par 1 - alpha pour les yeux).
+    if ((mat.flags & 24u) != 0u) {
+        vec3 tintColor = unpackUnorm4x8(floatBitsToUint(mat.padding.x)).rgb;
+        float tintAmount = ((mat.flags & 16u) != 0u) ? (1.0 - base.a) : 1.0;
+        base.rgb = mix(base.rgb, base.rgb * tintColor, tintAmount);
+        base.a = 1.0;
+    }
 
     vec3 N = normalize(vNormal);
     // Lumière clé fixe (cadrage aperçu) + ambiant doux pour révéler le volume.
@@ -48,5 +61,6 @@ void main() {
     vec3 lit = base.rgb * (ambient + diff * 0.85);
 
     // Cible couleur en UNORM (pas sRGB) : on ré-encode gamma pour un affichage correct.
-    outColor = vec4(pow(lit, vec3(1.0 / 2.2)), base.a);
+    // Alpha forcé à 1 : l'alpha des atlas sert de masque (yeux, découpe), pas d'opacité.
+    outColor = vec4(pow(lit, vec3(1.0 / 2.2)), 1.0);
 }

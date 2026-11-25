@@ -89,7 +89,11 @@ namespace engine::server
 	/// DiscoveryEvent (106 : cimetière visité, lieu découvert, exploit débloqué), fiables.
 	/// Un client v20 ne recevrait jamais sa progression ni ses lieux secrets.
 	/// Lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 21;
+	/// Personnalisation des personnages — bump 21 → 22 : l'identité d'une entité du
+	/// snapshot (SnapshotDelta, champ kFieldIdentity) porte en plus la race et le bloc
+	/// d'apparence (CharacterAppearance) ; un décodeur v21 lirait de travers toutes les
+	/// entrées suivantes. Lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 22;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t

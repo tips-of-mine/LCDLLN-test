@@ -118,6 +118,9 @@
 #include "src/client/render/skinned/SkinnedRenderer.h"
 #include "src/client/render/skinned/SkinnedMesh.h"
 #include "src/client/render/skinned/ModularAvatar.h"
+#include "src/client/render/skinned/AvatarAppearanceAssembler.h"
+#include "src/client/character_creation/AppearanceCatalog.h"
+#include "src/shared/network/CharacterAppearance.h"
 #include "src/client/render/skinned/SkinnedMeshLoader.h"
 #include "src/client/render/skinned/AvatarMaterialRouting.h"
 #include "src/client/render/skinned/AnimationSampler.h"
@@ -1030,6 +1033,15 @@ namespace engine
 		/// catalogue vide = rendu mob en fallback). Consommé par la plaque de nom
 		/// et RecordRemoteAvatars pour les entités archetypeId != 0.
 		engine::client::CreatureCatalog                           m_creatureCatalog;
+		/// Personnalisation des personnages : catalogue des options (visages,
+		/// coiffures, couleurs, traits raciaux) et assembleur des pièces skinnées.
+		/// Partagés par l'aperçu de création, l'avatar local et les avatars distants.
+		engine::client::AppearanceCatalog                         m_appearanceCatalog;
+		engine::render::skinned::AvatarAppearanceAssembler        m_appearanceAssembler;
+		/// Apparence du personnage joué (reçue via CHARACTER_LIST à l'EnterWorld).
+		engine::network::CharacterAppearance                      m_localAppearance{};
+		/// Assemblage courant (réutilisé d'une image à l'autre, sans allocation).
+		engine::render::skinned::AssembledAvatar                  m_assembledScratch;
 		std::chrono::steady_clock::time_point                     m_playerAnimStartTime;
 		/// True une fois SkinnedRenderer::Init OK + SkinnedMeshLoader::Load OK.
 		/// Sert de gate per-frame : si false, on dessine le cube placeholder.

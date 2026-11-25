@@ -37,6 +37,12 @@ namespace
 		e.playerClientId = name[0] != '\0' ? static_cast<uint32_t>(id) : 0u;
 		e.characterName = name;
 		e.gender = name[0] != '\0' ? "female" : "";
+		if (name[0] != '\0')
+		{
+			// v22 — personnalisation répliquée avec l'identité.
+			e.raceId = "demons";
+			e.appearance = { 1, 3, 2, 0, 5 };
+		}
 		e.archetypeId = name[0] != '\0' ? 0u : 7u;
 		return e;
 	}
@@ -107,6 +113,8 @@ int main()
 		Check(rx.LatestCommittedSeq() == 1u, "numéro à acquitter");
 		const SnapshotEntity* aria = Find(out, 10);
 		Check(aria && aria->characterName == "Aria" && aria->gender == "female", "identité reçue");
+		Check(aria && aria->raceId == "demons" && aria->appearance == std::vector<uint8_t>({ 1, 3, 2, 0, 5 }),
+			"race et apparence reçues (v22)");
 		tx.OnAck(rx.LatestCommittedSeq());
 
 		// Une seule entité bouge de 0,5 m : le delta est minuscule.

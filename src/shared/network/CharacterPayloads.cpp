@@ -7,6 +7,28 @@
 
 namespace engine::network
 {
+	namespace
+	{
+		/// Lit un bloc d'apparence : u8 longueur (<= kAppearanceMaxBytes) + octets.
+		/// \return false si la longueur dépasse la borne ou si le tampon est tronqué.
+		bool ReadAppearanceBlock(ByteReader& r, std::vector<uint8_t>& out)
+		{
+			uint8_t len = 0;
+			if (!r.ReadBytes(&len, 1u) || len > kAppearanceMaxBytes)
+				return false;
+			out.assign(len, 0u);
+			return len == 0u || r.ReadBytes(out.data(), len);
+		}
+
+		/// Écrit un bloc d'apparence (tronqué à kAppearanceMaxBytes, ce qui ne
+		/// se produit pas avec un bloc produit par CharacterAppearance::Encode).
+		bool WriteAppearanceBlock(ByteWriter& w, const std::vector<uint8_t>& bytes)
+		{
+			const uint8_t len = static_cast<uint8_t>(bytes.size() > kAppearanceMaxBytes ? kAppearanceMaxBytes : bytes.size());
+			return w.WriteBytes(&len, 1u) && (len == 0u || w.WriteBytes(bytes.data(), len));
+		}
+	}
+
 	// -------------------------------------------------------------------------
 	// ParseCharacterCreateRequestPayload
 	// M39.1: reads name (string) + raceId (string) + classId (string)
@@ -77,6 +99,13 @@ namespace engine::network
 				return std::nullopt;
 		}
 
+		// Personnalisation : u8 longueur + octets, optionnelle (client ancien).
+		if (r.Remaining() > 0)
+		{
+			if (!ReadAppearanceBlock(r, out.appearance))
+				return std::nullopt;
+		}
+
 		return out;
 	}
 
@@ -89,7 +118,8 @@ namespace engine::network
 	                                                        std::string_view classId,
 	                                                        const CharacterCustomization& customization,
 	                                                        std::string_view gender,
-	                                                        std::string_view factionId)
+	                                                        std::string_view factionId,
+	                                                        const std::vector<uint8_t>& appearance)
 	{
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
@@ -120,6 +150,10 @@ namespace engine::network
 
 		// Système de personnages PR2 — factionId (string), appendu après gender.
 		if (!w.WriteString(factionId))
+			return {};
+
+		// Personnalisation (u8 longueur + octets), appendue après factionId.
+		if (!WriteAppearanceBlock(w, appearance))
 			return {};
 
 		buf.resize(w.Offset());
@@ -250,6 +284,9 @@ namespace engine::network
 			// non-ambigu dans la boucle d'entrées.
 			if (!r.ReadString(e.faction_str))
 				return std::nullopt;
+			// Personnalisation (u8 longueur + octets), appendue après faction_str.
+			if (!ReadAppearanceBlock(r, e.appearance))
+				return std::nullopt;
 			out.entries.push_back(std::move(e));
 		}
 		// Bloc horloge piggyback (optionnel, en fin de payload). Tolérant à
@@ -323,6 +360,9 @@ namespace engine::network
 				// Système de personnages PR2 — faction_str (string), appendu après
 				// skin_color_idx.
 				if (!w.WriteString(e.faction_str))
+					return {};
+				// Personnalisation (u8 longueur + octets), appendue après faction_str.
+				if (!WriteAppearanceBlock(w, e.appearance))
 					return {};
 			}
 			// Bloc horloge piggyback : 1 octet flag + (si présent) 46 octets WorldClock.

@@ -7,6 +7,7 @@
  */
 
 #include "src/shared/network/CharacterPayloads.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 
 #include <cstdio>
 #include <string>
@@ -73,6 +74,87 @@ namespace
 			Check(parsed->customization.skinColorIdx == 2, "skinColorIdx intact", fail);
 			Check(parsed->gender == "female", "gender intact", fail);
 			Check(parsed->factionId.empty(), "factionId vide quand omis", fail);
+			Check(parsed->appearance.empty(), "apparence vide quand omise", fail);
+		}
+	}
+
+	// Personnalisation : bloc d'apparence appendu au payload de création.
+	void TestAppearanceRoundTrip(int* fail)
+	{
+		CharacterAppearance a;
+		a.Set(AppearanceSlot::Hair, 4);
+		a.Set(AppearanceSlot::HairColor, 2);
+		a.Set(AppearanceSlot::Beard, 3);
+		a.Set(AppearanceSlot::Horns, 1);
+		a.Set(AppearanceSlot::Wings, 2);
+		a.SetProportion(AppearanceProp::Height, 108);
+		const std::vector<uint8_t> bytes = a.Encode();
+		Check(bytes.size() <= kAppearanceMaxBytes, "bloc d'apparence <= 32 octets", fail);
+
+		auto buf = BuildCharacterCreateRequestPayload("Hero", "demons", "demoniste", CharacterCustomization{},
+			"male", "legion", bytes);
+		auto parsed = ParseCharacterCreateRequestPayload(buf.data(), buf.size());
+		Check(parsed.has_value(), "parse (avec apparence) OK", fail);
+		if (parsed)
+		{
+			Check(parsed->factionId == "legion", "factionId intact avant l'apparence", fail);
+			Check(parsed->appearance == bytes, "octets d'apparence round-trip", fail);
+			auto back = CharacterAppearance::Decode(parsed->appearance.data(), parsed->appearance.size());
+			Check(back.has_value() && *back == a, "apparence décodée identique", fail);
+		}
+	}
+
+	// Décodage tolérant : bornes, bloc tronqué, emplacements inconnus ignorés.
+	void TestAppearanceDecodeRules(int* fail)
+	{
+		Check(!CharacterAppearance::Decode(nullptr, 0).has_value(), "bloc vide rejeté", fail);
+		const uint8_t truncated[] = { 1, 12, 1, 2 };
+		Check(!CharacterAppearance::Decode(truncated, sizeof(truncated)).has_value(), "bloc tronqué rejeté", fail);
+		// Version future avec 14 emplacements et 6 proportions : les excédents sont ignorés.
+		std::vector<uint8_t> future = { 2, 14 };
+		for (int i = 0; i < 14; ++i) future.push_back(static_cast<uint8_t>(i == 2 ? 200 : 1));
+		future.push_back(6);
+		for (int i = 0; i < 6; ++i) future.push_back(i == 0 ? 50 : 110);
+		auto a = CharacterAppearance::Decode(future.data(), future.size());
+		Check(a.has_value(), "bloc d'une version future accepté", fail);
+		if (a)
+		{
+			Check(a->Get(AppearanceSlot::Hair) == kAppearanceMaxOptionIndex, "indice borné", fail);
+			Check(a->Proportion(AppearanceProp::Height) == kAppearancePropMin, "proportion bornée", fail);
+			Check(a->Proportion(AppearanceProp::BodyMass) == 110, "proportion conservée", fail);
+		}
+		Check(CharacterAppearance::DecodeOrDefault({}) == CharacterAppearance{}, "défaut si absent", fail);
+	}
+
+	// Liste des personnages : l'apparence est relue entrée par entrée.
+	void TestListEntryAppearance(int* fail)
+	{
+		CharacterListEntry e;
+		e.character_id = 42;
+		e.name = "Hero";
+		e.race_str = "orcs";
+		e.gender = "female";
+		e.faction_str = "dzorak";
+		CharacterAppearance a;
+		a.Set(AppearanceSlot::Tusks, 2);
+		e.appearance = a.Encode();
+		CharacterListEntry e2 = e;
+		e2.character_id = 43;
+		e2.appearance.clear();
+		auto pkt = BuildCharacterListResponsePacket(1, { e, e2 }, 7, 9);
+		Check(!pkt.empty(), "build liste non vide", fail);
+		// Le payload commence après l'en-tête fixe du protocole v1.
+		Check(pkt.size() > kProtocolV1HeaderSize, "paquet plus long que l'en-tête", fail);
+		if (pkt.size() <= kProtocolV1HeaderSize)
+			return;
+		auto parsed = ParseCharacterListResponsePayload(pkt.data() + kProtocolV1HeaderSize,
+			pkt.size() - kProtocolV1HeaderSize);
+		Check(parsed.has_value() && parsed->entries.size() == 2u, "liste relue", fail);
+		if (parsed && parsed->entries.size() == 2u)
+		{
+			Check(parsed->entries[0].character_id == 42u, "id entrée 1", fail);
+			Check(parsed->entries[0].appearance == e.appearance, "apparence entrée 1", fail);
+			Check(parsed->entries[1].appearance.empty(), "apparence entrée 2 vide", fail);
 		}
 	}
 }
@@ -82,5 +164,8 @@ int main()
 	int fail = 0;
 	TestRoundTripWithFaction(&fail);
 	TestBackwardCompatNoFaction(&fail);
+	TestAppearanceRoundTrip(&fail);
+	TestAppearanceDecodeRules(&fail);
+	TestListEntryAppearance(&fail);
 	return fail;
 }

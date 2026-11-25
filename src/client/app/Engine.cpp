@@ -1784,6 +1784,8 @@ namespace engine
 		m_audioEngine.SetListener(out.camera.position, listenerVelocity);
 		UpdateAudioListener(out.camera); // SND.2 — orientation de l'oreille
 		UpdateAmbienceAudio(static_cast<float>(dt), m_authUi.IsInWorldShard() && !m_editorEnabled); // SND.4
+		if (m_authUi.IsInWorldShard() && !m_editorEnabled)
+			UpdateSurfAudio(); // EAU.6 — ressac calé sur les vagues de bord
 		UpdateCombatAudio(m_authUi.IsInWorldShard() && !m_editorEnabled); // SND.5
 		UpdateInteractionAudio(m_authUi.IsInWorldShard() && !m_editorEnabled); // SND.6
 		m_audioEngine.Tick(static_cast<float>(dt));
@@ -2210,7 +2212,13 @@ namespace engine
 	            {
 	                // Reset cheap : libère les command buffers passés sans détruire le pool.
 	                vkResetCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, 0);
-	                if (m_waterMeshGpu.Rebuild(m_waterTransferPool, m_vkDeviceContext.GetGraphicsQueue(), *scene))
+	                // EAU.6 — la grille de mer (vagues) n'accompagne que la scène client,
+	                // et seulement si elle a été construite sur la scène ACTUELLE (après
+	                // un RebuildCellWater ou un rebase, elle attend sa reconstruction :
+	                // une frame de mer plate plutôt qu'une grille au mauvais endroit).
+	                const engine::world::water::SeaGridCpu* seaGrid =
+	                    (scene == m_clientWaterScene.get() && !m_seaGridDirty) ? &m_seaGrid : nullptr;
+	                if (m_waterMeshGpu.Rebuild(m_waterTransferPool, m_vkDeviceContext.GetGraphicsQueue(), *scene, seaGrid))
 	                {
 	                    if (!(m_worldEditorExe && ClearEditorWaterDirty()))
 	                        m_waterClientSceneDirty = false;

@@ -2,6 +2,7 @@
 
 #include "src/client/render/FrameGraph.h"
 #include "src/client/render/WaterMeshGpu.h"
+#include "src/client/world/water/SeaSwell.h"
 #include "src/shared/world/water/WaterSurfaces.h"
 
 #include <vulkan/vulkan_core.h>
@@ -18,7 +19,8 @@ namespace engine::render
 	/// Layout aligné std140 (les vec3 prennent 16 B avec padding).
 	/// Offsets vérifiés par tests offsetof — toute modification doit aussi
 	/// mettre à jour le layout GLSL `push_constant` correspondant dans
-	/// src/client/render/shaders/water.vert + water.frag.
+	/// game/data/shaders/water.vert + water.frag (compilés par la CI ; EAU.6 :
+	/// l'ancienne copie src/client/render/shaders/ a été supprimée).
 	struct WaterPassPushConstants
 	{
 		float viewProj[16];        // offset   0, size 64
@@ -27,7 +29,7 @@ namespace engine::render
 		float bottomColor[3];      // offset  80, size 12
 		float turbidity;           // offset  92, size  4
 		float flowDirection[2];    // offset  96, size  8
-		float flowSpeed;           // offset 104, size  4 — EAU.2 : < 0 = mer (|valeur| = force de la houle)
+		float flowSpeed;           // offset 104, size  4 — EAU.2/EAU.6 : < 0 = mer (|valeur| = amplitude de la houle, m)
 		float refractionAmount;    // offset 108, size  4
 		float fresnelPower;        // offset 112, size  4
 		float reflectionStrength;  // offset 116, size  4
@@ -83,6 +85,10 @@ namespace engine::render
 				m_skyboxSampler  = sampler;
 			}
 		}
+
+		/// EAU.6 — réglages de la houle (vent, amplitude) appliqués à la mer.
+		/// Doivent être ceux que la nage utilise (TerrainCollider::SetSeaSwell).
+		void SetSeaSwell(const engine::world::water::SeaSwellParams& params) { m_seaSwell = params; }
 
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
 			VkExtent2D extent,
@@ -142,5 +148,7 @@ namespace engine::render
 		std::vector<VkDescriptorSet> m_descriptorSets;  ///< 1 par frame en vol.
 		std::unordered_map<FramebufferKey, VkFramebuffer, FramebufferKeyHash> m_framebufferCache;
 		uint32_t m_maxFrames = 2;
+		/// EAU.6 — houle de la mer (cf. SetSeaSwell).
+		engine::world::water::SeaSwellParams m_seaSwell{};
 	};
 }

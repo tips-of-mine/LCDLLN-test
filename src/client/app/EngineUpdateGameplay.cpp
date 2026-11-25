@@ -546,6 +546,9 @@ namespace engine
 	// Sous-étape d'Engine::Update() — voir la documentation dans Engine.h.
 	void Engine::UpdateGameplay(engine::RenderState& out, double dt, float mouseSensitivity, bool invertY, engine::render::MovementLayout movementLayout, bool authGateActive)
 	{
+		// EAU.6 — la nage (et toute requête d'eau de la frame) suit la houle
+		// affichée : même horloge que le rendu de l'eau.
+		m_terrainCollider.SetWaterTime(WaterTimeSeconds());
 		if (!authGateActive && !m_chatUi.IsChatFocusActive() && !m_inGameOptionsPanelVisible
 				// Menu Pause ouvert => gèle tout l'input gameplay (déplacement,
 				// caméra, attaque, sorts, interaction), comme le panneau Options :

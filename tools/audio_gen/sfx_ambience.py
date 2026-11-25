@@ -1,7 +1,7 @@
 """SND.4 — Boucles d'ambiance synthétisées (lieux, heure, météo).
 
 13 boucles stéréo de 45 s (sans couture : ce qui dépasse la fin est replié sur
-le début) + 3 coups de tonnerre :
+le début) + 3 coups de tonnerre + 3 vagues qui déferlent :
 
   amb_forest_day    feuillage au vent, chants d'oiseaux, pic-vert lointain
   amb_forest_night  souffle léger, grillons épars, chouette
@@ -17,6 +17,8 @@ le début) + 3 coups de tonnerre :
   amb_rain_light    pluie fine
   amb_rain_heavy    pluie battante
   amb_thunder_1..3  tonnerre lointain (sons ponctuels)
+  amb_surf_1..3     vague qui déferle sur la plage (sons ponctuels, EAU.6 :
+                    joués à chaque arrivée d'une vague au rivage)
 
 Les niveaux sont volontairement bas (−24 à −20 LUFS) : une ambiance s'entend
 sous le jeu, elle ne le couvre pas. Rien d'électronique : bruits filtrés et
@@ -187,6 +189,37 @@ def waves(r, dur) -> np.ndarray:
     return out
 
 
+def surf_break(r) -> np.ndarray:
+    """EAU.6 — une vague qui déferle : l'eau qui se creuse et monte (grondement
+    grave qui enfle), le rouleau qui casse (souffle large), puis l'écume qui
+    pétille et se retire sur le sable. ≈ 5 s (+ réverbération), stéréo (le rouleau court le long
+    de la plage d'un côté à l'autre)."""
+    dur = 5.0
+    tt = _t(dur)
+    rise = np.clip(tt / 1.3, 0, 1) ** 2.5 * (tt < 1.45)
+    crash_t = 1.3 + r.uniform(-0.1, 0.1)
+    crash = np.exp(-np.maximum(tt - crash_t, 0) / 0.55) * (tt >= crash_t)
+    fizz = np.exp(-np.maximum(tt - crash_t - 0.3, 0) / 1.3) * (tt >= crash_t + 0.1)
+    out = np.zeros((len(tt), 2), dtype=np.float32)
+    sweep = r.uniform(-0.6, 0.6)
+    for ch in range(2):
+        n = r.standard_normal(len(tt))
+        body = dsp.lowpass(n, 450) * (rise * 0.8 + crash * 1.0)
+        roar = dsp.bandpass(n, 500, 3500) * crash * 0.55
+        foam = dsp.bandpass(r.standard_normal(len(tt)), 2500, 9000) * fizz * 0.22
+        # Crépitement de l'écume : petites bulles éparses.
+        bubbles = np.zeros(len(tt))
+        for b0 in scatter_events(r, 40.0, crash_t + 0.2, dur - 0.1):
+            i = dsp.samples(b0)
+            g = dsp.samples(0.004)
+            j = min(len(bubbles), i + g)
+            bubbles[i:j] += r.standard_normal(j - i) * 0.12
+        bubbles = dsp.highpass(bubbles, 3000) * fizz
+        side = 1.0 + (sweep if ch == 0 else -sweep) * 0.35
+        out[:, ch] = ((body + roar + foam + bubbles) * side).astype(np.float32)
+    return out
+
+
 def murmur(r, dur, voices=14) -> np.ndarray:
     """Rumeur de foule lointaine : voix figurées par du bruit filtré modulé en syllabes."""
     out = np.zeros((dsp.samples(dur), 2), dtype=np.float32)
@@ -307,6 +340,12 @@ def make(sid: str) -> np.ndarray:
     elif sid == "amb_rain_heavy":
         out += rain(r, total, 900.0, -16) + textures.wind(total, 112, lo=150, hi=1200, gust_hz=0.1) * 0.25
         target = -20.0
+    elif sid.startswith("amb_surf_"):
+        k = int(sid[-1])
+        rs = dsp.rng(300 + k)
+        y = dsp.reverb(dsp.distance(surf_break(rs), 0.3), hall, wet=0.3, dry=1.0)
+        y = dsp.normalize_lufs(y, -22.0)
+        return dsp.limiter(y, -3.0)
     elif sid.startswith("amb_thunder_"):
         k = int(sid[-1])
         th = textures.thunder(200 + k, 7.0)
@@ -327,7 +366,8 @@ def make(sid: str) -> np.ndarray:
 
 SOUNDS = ["amb_forest_day", "amb_forest_night", "amb_plains_day", "amb_plains_night", "amb_swamp", "amb_mountain",
           "amb_snow", "amb_desert", "amb_coast", "amb_river", "amb_town", "amb_rain_light", "amb_rain_heavy",
-          "amb_thunder_1", "amb_thunder_2", "amb_thunder_3"]
+          "amb_thunder_1", "amb_thunder_2", "amb_thunder_3",
+          "amb_surf_1", "amb_surf_2", "amb_surf_3"]
 
 
 def main() -> int:

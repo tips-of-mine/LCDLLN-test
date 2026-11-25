@@ -2297,6 +2297,11 @@ namespace engine
 				LOG_WARN(Render, "[Boot] WaterPass: création skybox muette échouée");
 			}
 
+			// EAU.6 — houle de la mer : mêmes réglages pour le rendu et la nage.
+			m_seaSwell.amplitudeM = std::clamp(
+				static_cast<float>(m_cfg.GetDouble("render.water.sea_swell_m", 0.35)), 0.0f, 1.5f);
+			m_waterPass.SetSeaSwell(m_seaSwell);
+			m_terrainCollider.SetSeaSwell(m_seaSwell);
 			if (!waterVert.empty() && !waterFrag.empty()
 				&& m_waterNormalMapView != VK_NULL_HANDLE
 				&& m_waterNormalMapSampler != VK_NULL_HANDLE
@@ -3735,7 +3740,8 @@ namespace engine
 		base.cameraPos[2] = rs.camera.position.z;
 		// TODO(M100.x): vraie source de temps wall-clock. Note : perte de précision
 		// float après ~78h (uint32_t > 2^24 = 16.7 M frames @ 60Hz).
-		base.timeSeconds   = static_cast<float>(m_currentFrame) / 60.0f;
+		// EAU.6 : même horloge que la nage et le son du ressac (WaterTimeSeconds).
+		base.timeSeconds   = WaterTimeSeconds();
 		base.screenSize[0] = static_cast<float>(m_vkSwapchain.GetExtent().width);
 		base.screenSize[1] = static_cast<float>(m_vkSwapchain.GetExtent().height);
 

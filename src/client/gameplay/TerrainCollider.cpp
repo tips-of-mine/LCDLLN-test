@@ -141,10 +141,19 @@ bool TerrainCollider::QueryWater(const engine::math::Vec3& worldCenter, WaterQue
                     inside = !inside;
             }
         }
-        if (inside && (!found || lake.waterLevelY > bestSurfaceY))
+        if (!inside)
+            continue;
+        float surfaceY = lake.waterLevelY;
+        if (lake.isOcean)
+        {
+            // EAU.6 — la mer suit la houle et la vague de bord, comme a l'ecran.
+            const float depthM = lake.waterLevelY - GroundHeightAt(px, pz);
+            surfaceY += engine::world::water::SeaSurfaceOffset(px, pz, depthM, m_waterTimeS, m_seaSwell);
+        }
+        if (!found || surfaceY > bestSurfaceY)
         {
             found = true;
-            bestSurfaceY = lake.waterLevelY;
+            bestSurfaceY = surfaceY;
         }
     }
 

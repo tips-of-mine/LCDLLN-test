@@ -548,6 +548,8 @@ add_library(engine_core
   src/client/world/collision/ProxyWireframe.cpp
   src/shared/world/water/WaterSurfaces.cpp
   src/client/world/water/WaterMeshBuilder.cpp
+  src/client/world/water/SeaSwell.cpp   # EAU.6 : houle de la mer et jet de rive (rendu + nage)
+  src/client/world/water/SeaGrid.cpp    # EAU.6 : maillage fin de la mer autour du joueur
   src/client/world/terrain/LayerPalette.cpp
   src/shared/world/terrain/SplatMap.cpp
   src/shared/world/terrain/TerrainChunk.cpp

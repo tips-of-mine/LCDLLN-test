@@ -1,6 +1,7 @@
 // src/client/render/WaterMeshGpu.cpp
 #include "src/client/render/WaterMeshGpu.h"
 #include "src/client/world/water/WaterMeshBuilder.h"
+#include "src/client/world/water/SeaSwell.h"
 #include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
@@ -13,7 +14,7 @@ namespace engine::render
 {
 	namespace
 	{
-		static constexpr size_t kFloatsPerVertex = 7;  // pos3 + uv2 + flowDir2
+		static constexpr size_t kFloatsPerVertex = 9;  // pos3 + uv2 + flowDir2 + sea2 (EAU.6)
 
 		static_assert(sizeof(engine::render::WaterVertex) == kFloatsPerVertex * sizeof(float),
 			"WaterVertex layout must match kFloatsPerVertex");
@@ -42,6 +43,9 @@ namespace engine::render
 				outVerts.push_back((v.position.z - minZ) / dz);
 				outVerts.push_back(0.0f);
 				outVerts.push_back(0.0f);
+				// EAU.6 : jamais soulevé (lac, ou mer plate hors grille).
+				outVerts.push_back(engine::world::water::kSeaDeepWaterM);
+				outVerts.push_back(0.0f);
 			}
 		}
 
@@ -69,6 +73,29 @@ namespace engine::render
 				outVerts.push_back(vCoord);
 				outVerts.push_back(flows[segIdx].x);
 				outVerts.push_back(flows[segIdx].z);
+				// EAU.6 : rivière jamais soulevée.
+				outVerts.push_back(engine::world::water::kSeaDeepWaterM);
+				outVerts.push_back(0.0f);
+			}
+		}
+
+		/// EAU.6 — sommets de la grille de mer. UV : position / 10 km (une cellule),
+		/// comme une nappe de mer entière (la normal map n'est qu'une texture de repli).
+		void EmitSeaGridVertices(const engine::world::water::SeaGridCpu& grid,
+			std::vector<float>& outVerts)
+		{
+			constexpr float kUvScale = 1.0f / 10000.0f;
+			for (const auto& v : grid.vertices)
+			{
+				outVerts.push_back(v.position.x);
+				outVerts.push_back(v.position.y);
+				outVerts.push_back(v.position.z);
+				outVerts.push_back(v.position.x * kUvScale);
+				outVerts.push_back(v.position.z * kUvScale);
+				outVerts.push_back(0.0f);
+				outVerts.push_back(0.0f);
+				outVerts.push_back(v.depthM);
+				outVerts.push_back(v.edgeFade);
 			}
 		}
 
@@ -179,25 +206,28 @@ namespace engine::render
 	void BuildDrawInfos(const engine::world::water::WaterScene& scene,
 		std::vector<float>& outVertices,
 		std::vector<uint32_t>& outIndices,
-		std::vector<WaterInstanceDrawInfo>& outDrawInfos)
+		std::vector<WaterInstanceDrawInfo>& outDrawInfos,
+		const engine::world::water::SeaGridCpu* seaGrid)
 	{
 		outVertices.clear();
 		outIndices.clear();
 		outDrawInfos.clear();
 
+		const bool useGrid = seaGrid != nullptr && seaGrid->Valid()
+			&& seaGrid->oceanLakeIndex < static_cast<uint32_t>(scene.lakes.size());
+
 		uint32_t globalParamIdx = 0;
 
-		for (const auto& lake : scene.lakes)
-		{
+		// Un lac (ou un morceau de nappe de mer) -> un drawInfo.
+		auto emitLake = [&](const engine::world::water::LakeInstance& lake, uint32_t paramsIndex) {
 			engine::world::water::WaterMeshCpu cpuMesh;
 			std::string err;
 			if (!engine::world::water::BuildLakeMesh(lake, cpuMesh, err))
 			{
 				LOG_WARN(Render, "[WaterMeshGpu] BuildLakeMesh failed for '{}': {}", lake.name, err);
-				++globalParamIdx;
-				continue;
+				return;
 			}
-			if (cpuMesh.indices.empty()) { ++globalParamIdx; continue; }
+			if (cpuMesh.indices.empty()) return;
 
 			const int32_t  baseVertex  = static_cast<int32_t>(outVertices.size() / kFloatsPerVertex);
 			const uint32_t firstIndex  = static_cast<uint32_t>(outIndices.size());
@@ -208,8 +238,30 @@ namespace engine::render
 			info.firstIndex  = firstIndex;
 			info.indexCount  = static_cast<uint32_t>(cpuMesh.indices.size());
 			info.vertexOffset = baseVertex;
-			info.paramsIndex = globalParamIdx;
+			info.paramsIndex = paramsIndex;
 			outDrawInfos.push_back(info);
+		};
+
+		std::vector<engine::world::water::SeaRect> pieces;
+		for (const auto& lake : scene.lakes)
+		{
+			engine::world::water::SeaRect rect;
+			if (useGrid && engine::world::water::OceanRect(lake, rect))
+			{
+				// EAU.6 : nappe de mer privée du carré de la grille (la grille la
+				// remplace autour du joueur). Mêmes paramètres pour chaque morceau.
+				pieces.clear();
+				engine::world::water::SubtractSeaRect(rect, seaGrid->area, pieces);
+				for (const auto& p : pieces)
+				{
+					engine::world::water::LakeInstance piece = lake;
+					const float y = lake.waterLevelY;
+					piece.polygon = { { p.x0, y, p.z0 }, { p.x1, y, p.z0 }, { p.x1, y, p.z1 }, { p.x0, y, p.z1 } };
+					emitLake(piece, globalParamIdx);
+				}
+			}
+			else
+				emitLake(lake, globalParamIdx);
 			++globalParamIdx;
 		}
 
@@ -237,6 +289,21 @@ namespace engine::render
 			info.paramsIndex = globalParamIdx;
 			outDrawInfos.push_back(info);
 			++globalParamIdx;
+		}
+
+		// EAU.6 — grille de mer en dernier, avec les paramètres de la mer.
+		if (useGrid)
+		{
+			const int32_t  baseVertex = static_cast<int32_t>(outVertices.size() / kFloatsPerVertex);
+			const uint32_t firstIndex = static_cast<uint32_t>(outIndices.size());
+			EmitSeaGridVertices(*seaGrid, outVertices);
+			outIndices.insert(outIndices.end(), seaGrid->indices.begin(), seaGrid->indices.end());
+			WaterInstanceDrawInfo info{};
+			info.firstIndex   = firstIndex;
+			info.indexCount   = static_cast<uint32_t>(seaGrid->indices.size());
+			info.vertexOffset = baseVertex;
+			info.paramsIndex  = seaGrid->oceanLakeIndex;
+			outDrawInfos.push_back(info);
 		}
 	}
 
@@ -340,7 +407,8 @@ namespace engine::render
 	}
 
 	bool WaterMeshGpu::Rebuild(VkCommandPool transferPool, VkQueue transferQueue,
-	                           const engine::world::water::WaterScene& scene)
+	                           const engine::world::water::WaterScene& scene,
+	                           const engine::world::water::SeaGridCpu* seaGrid)
 	{
 		if (m_device == VK_NULL_HANDLE || m_physicalDevice == VK_NULL_HANDLE)
 		{
@@ -351,7 +419,7 @@ namespace engine::render
 		std::vector<float>               verts;
 		std::vector<uint32_t>            idx;
 		std::vector<WaterInstanceDrawInfo> infos;
-		BuildDrawInfos(scene, verts, idx, infos);
+		BuildDrawInfos(scene, verts, idx, infos, seaGrid);
 
 		if (verts.empty() || idx.empty())
 		{
@@ -363,8 +431,15 @@ namespace engine::render
 		const VkDeviceSize iboBytes    = idx.size() * sizeof(uint32_t);
 		const VkDeviceSize stagingSize = vboBytes + iboBytes;
 
-		if (!EnsureCapacity(vboBytes, iboBytes))
-			return false;
+		// EAU.6 — réallocation : les frames encore en vol lisent l'ancien buffer ;
+		// on vide la queue avant de le détruire (rare : la capacité ne fait que
+		// croître, avec 50 % de marge pour absorber les variations de la grille).
+		if (NeedsRealloc(vboBytes, iboBytes))
+		{
+			vkQueueWaitIdle(transferQueue);
+			if (!EnsureCapacity(vboBytes + vboBytes / 2, iboBytes + iboBytes / 2))
+				return false;
+		}
 
 		// Staging buffer HOST_VISIBLE + HOST_COHERENT.
 		VkBuffer       staging    = VK_NULL_HANDLE;
@@ -410,6 +485,12 @@ namespace engine::render
 			LOG_ERROR(Render, "[WaterMeshGpu] vkBeginCommandBuffer failed");
 			return false;
 		}
+
+		// EAU.6 — les draws des frames précédentes (même queue, soumis avant)
+		// doivent avoir fini de lire VBO/IBO avant qu'on les réécrive.
+		vkCmdPipelineBarrier(cmd,
+		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+		    0, 0, nullptr, 0, nullptr, 0, nullptr);
 
 		VkBufferCopy copyVbo{0, 0, vboBytes};
 		vkCmdCopyBuffer(cmd, staging, m_vbo, 1, &copyVbo);

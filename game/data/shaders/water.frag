@@ -22,6 +22,7 @@ layout(push_constant) uniform PushConstants {
 layout(location = 0) in vec2 vUv;
 layout(location = 1) in vec3 vWorldPos;
 layout(location = 2) in vec2 vFlowDir;
+layout(location = 3) in vec2 vSea;      // EAU.6 : x = profondeur d'eau (m), y = fondu des vagues (0 hors grille de mer)
 
 layout(location = 0) out vec4 fragColor;
 
@@ -171,6 +172,19 @@ vec2 swellSlope(vec2 p, vec2 dir, float t, out float crest)
     return slope;
 }
 
+// ── EAU.6 — mer près du joueur (grille soulevée par water.vert) ─────────────
+// Mêmes constantes que water.vert / SeaSwell.h (parité).
+const float kSeaSwellReferenceAmplitudeM = 0.35;  // amplitude qui donne l'éclairage EAU.2 d'origine
+const float kSeaSurfPeriodS       = 9.0;
+const float kSeaSurfPhasePerMeter = 0.9;
+const float kSeaSurfZoneDepthM    = 2.5;
+
+float seaSwellDepthScale(float depthM) { return smoothstep(0.2, 5.0, depthM); }
+float seaSurfPhase(float depthM, float t)
+{
+    return 6.2831853 * (t / kSeaSurfPeriodS) + kSeaSurfPhasePerMeter * depthM;
+}
+
 void main()
 {
     vec2 screenUv = gl_FragCoord.xy / pc.screenSize;
@@ -247,13 +261,20 @@ void main()
     vec2 slope = vec2(nRip.x, nRip.z) + nTex.xz * 0.5;
 
     float crest = 0.0;
+    // EAU.6 : |flowSpeed| est l'amplitude de la houle en mètres ; à l'amplitude
+    // de référence l'éclairage de la houle est celui d'EAU.2 (inchangé).
+    float swellAmp = clamp(-pc.flowSpeed / kSeaSwellReferenceAmplitudeM, 0.0, 3.0);
+    // EAU.6 : sur la grille de mer, la houle s'éteint en eau peu profonde
+    // (comme la surface soulevée par water.vert) ; inchangé au large.
+    bool  onSeaGrid = isSea && vSea.y > 0.0;
+    float shoalK    = onSeaGrid ? mix(1.0, seaSwellDepthScale(vSea.x), vSea.y) : 1.0;
     if (isSea)
     {
-        // Houle : direction du vent, force = |flowSpeed|.
+        // Houle : direction du vent, force = amplitude relative.
         vec2 windDir = length(pc.flowDirection) > 0.001 ? normalize(pc.flowDirection) : vec2(1.0, 0.0);
-        float swellAmp = clamp(-pc.flowSpeed, 0.0, 3.0);
         vec2 sw = swellSlope(vWorldPos.xz, windDir, t, crest);
-        slope -= sw * swellAmp * mix(0.35, 1.0, distFade);
+        slope -= sw * swellAmp * shoalK * mix(0.35, 1.0, distFade);
+        crest *= shoalK;
     }
     vec3 surfaceN = normalize(vec3(slope.x, 1.0, slope.y));
 
@@ -316,6 +337,14 @@ void main()
     color = mix(color, refl, reflAmt);
     float fres = clamp(pow(1.0 - NdotV, 3.0), 0.0, 1.0);
     color += vec3(0.05, 0.08, 0.10) * fres * skyLight;    // lisere clair rasant
+    // EAU.6 — de nuit, la houle ne se lisait plus (ciel noir = reflets noirs) :
+    // les crêtes gardent un faible éclat (clair de lune). Nul de jour : la
+    // couleur de la mer en journée est inchangée.
+    if (isSea)
+    {
+        float nightBoost = max(0.30 - skyLight, 0.0);
+        color += vec3(0.10, 0.14, 0.16) * nightBoost * (fres * 0.6 + crest * 0.8) * distFade;
+    }
 
     // ── Écume (EAU.1, affinée EAU.2) ─────────────────────────────────────────
     // Rives : bande blanche près du bord, découpée par du bruit et
@@ -326,18 +355,39 @@ void main()
     // ressac de la mer), quelle que soit la pente de la rive, ET en profondeur
     // (0,7 m). Les lignes de ressac sont parallèles au rivage (fonction de la
     // distance, plus de l'épaisseur).
+    // EAU.6 : lacs CALMES (décision du propriétaire) — plus de lignes de
+    // ressac qui défilent ni d'écume qui dérive : seul reste le liseré fixe
+    // au ras du bord. Les rides légères dues au vent (rippleNormal) restent.
+    bool  isLake    = !isRiver && !isSea;
     float shoreBand = isSea ? 4.5 : 1.8;
     float shore   = (1.0 - smoothstep(0.0, shoreBand, shoreDist)) * (1.0 - smoothstep(0.0, 0.7, depthV));
-    float lap     = 0.5 + 0.5 * sin(shoreDist * 3.5 - t * 1.6 + valueNoise(vWorldPos.xz * 0.6) * 6.0);
+    float lap     = isLake ? 0.5
+                           : 0.5 + 0.5 * sin(shoreDist * 3.5 - t * 1.6 + valueNoise(vWorldPos.xz * 0.6) * 6.0);
     lap = mix(0.5, lap, distFade);
-    float breakup = valueNoise((vWorldPos.xz - flowEff * (isRiver ? pc.flowSpeed * 2.5 * t : 0.0)) * 1.7 + vec2(t * 0.05, -t * 0.04));
+    float tDrift  = isLake ? 0.0 : t;
+    float breakup = valueNoise((vWorldPos.xz - flowEff * (isRiver ? pc.flowSpeed * 2.5 * t : 0.0)) * 1.7 + vec2(tDrift * 0.05, -tDrift * 0.04));
     float foam    = shore * smoothstep(0.45, 0.9, lap * 0.6 + breakup * 0.7);
     foam = max(foam, smoothstep(0.85, 1.0, shore) * 0.7); // liseré au ras du bord (~10 cm)
     if (isSea)
     {
         // Moutons : écume sur les crêtes de la houle, en taches irrégulières.
         float caps = smoothstep(0.78, 0.95, crest) * smoothstep(0.55, 0.85, valueNoise(vWorldPos.xz * 0.25 + t * 0.1));
-        foam = max(foam, caps * 0.75 * clamp(-pc.flowSpeed, 0.0, 1.5) * distFade);
+        foam = max(foam, caps * 0.75 * clamp(swellAmp, 0.0, 1.5) * distFade);
+    }
+    if (onSeaGrid)
+    {
+        // EAU.6 — vagues de bord, calées sur la montée de l'eau (water.vert) :
+        // une bande d'écume naît vers 2,5 m de fond, court vers la plage
+        // (~3 s), s'y étale pendant le jet de rive puis laisse une écume
+        // résiduelle qui se retire avec l'eau.
+        float d     = vSea.x;
+        float psi   = seaSurfPhase(d, t);
+        float zone  = (1.0 - smoothstep(1.2, kSeaSurfZoneDepthM, d)) * smoothstep(-0.6, -0.1, d);
+        float ruffle = smoothstep(0.25, 0.75, valueNoise(vWorldPos.xz * 0.9 + vec2(t * 0.35, -t * 0.2)));
+        float breaker  = smoothstep(0.80, 0.98, sin(psi + 0.35));                 // front de la vague
+        float residual = smoothstep(0.10, 0.90, sin(psi - 1.0)) * (1.0 - smoothstep(0.3, 1.2, d)) * 0.45;
+        float surf  = max(breaker * mix(0.55, 1.0, ruffle), residual * ruffle) * zone * vSea.y * distFade;
+        foam = max(foam, surf);
     }
     else if (isRiver)
     {
@@ -345,7 +395,7 @@ void main()
         float streak = smoothstep(0.72, 0.92, valueNoise((ripP - vec2(0.0, pc.flowSpeed * 2.5 * t * 0.6)) * vec2(0.5, 0.12)));
         foam = max(foam, streak * 0.35 * distFade);
     }
-    vec3 foamCol  = vec3(0.85, 0.90, 0.92) * max(skyLight, 0.08);  // EAU.3 : écume sombre la nuit
+    vec3 foamCol  = vec3(0.85, 0.90, 0.92) * max(skyLight, 0.16);  // EAU.3 : écume sombre la nuit (EAU.6 : plancher 0,16, lisible au clair de lune)
     color = mix(color, foamCol, clamp(foam, 0.0, 1.0) * 0.85);
 
     // alpha : bord adouci (fondu vers le fond déjà présent dans PostWater).

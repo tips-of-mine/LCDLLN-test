@@ -159,6 +159,9 @@ namespace tools::world_gen
 		double radiusM = 7.0;         ///< portée (m)
 		double intensity = 1.6;
 		double r = 1.0, g = 0.55, b = 0.18; ///< couleur (flamme orangée)
+		/// v1.0.140 — vrai : allumée la nuit seulement (client, `auto_night_light`) ; faux :
+		/// jour et nuit (fond du gouffre, salles de l'Oracle, lueurs du rocher).
+		bool autoNight = false;
 	};
 
 	/// Zone d'ambiance locale (v1.0.107 : « sombre » au fond du gouffre), écrite dans

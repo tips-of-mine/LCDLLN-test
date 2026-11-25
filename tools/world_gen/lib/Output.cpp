@@ -1290,7 +1290,7 @@ namespace tools::world_gen
 					e.objectValue["radius"] = JNum(d.radiusM);
 					e.objectValue["intensity"] = JNum(d.intensity);
 					e.objectValue["color_r"] = JNum(d.r); e.objectValue["color_g"] = JNum(d.g); e.objectValue["color_b"] = JNum(d.b);
-					e.objectValue["auto_night_light"] = JBool(false); // allumees jour et nuit (fond sans soleil)
+					e.objectValue["auto_night_light"] = JBool(d.autoNight); // faux : allumees jour et nuit (fond sans soleil)
 					pl.objectValue[std::to_string(k)] = e;
 				}
 			}

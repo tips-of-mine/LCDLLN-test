@@ -843,6 +843,7 @@ namespace tools::world_gen
 							if (pick == 0 && fireLights < 90 && rng.Chance(0.5))
 							{
 								Light(w, c.id + "_feu_" + std::to_string(fireLights), q, w.HeightAt(q) + 1.1, 11.0, 1.5, 1.0, 0.55, 0.2, "torch");
+								w.pointLights.back().autoNight = true; // feux visibles la nuit seulement
 								++fireLights;
 							}
 						}

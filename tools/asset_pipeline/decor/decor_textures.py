@@ -1111,6 +1111,31 @@ TEXTURES.update({
     "Stone_Lozenge": stone_lozenge,
 })
 
+
+def stone_serpentine(name="Stone_Serpentine", seed=141, size=1024):
+    """Pierre serpentine polie, vert sourd veiné (colonnes torsadées du palais du Magister,
+    réinterprétation de T2 pl.23) : fond vert de mousse désaturé, veines claires sinueuses,
+    nuages sombres ; couleur naturelle, pas de vert saturé ni de monochrome."""
+    h = w = size
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32) / size
+    n = fbm(h, w, seed, 5, 8)
+    m = fbm(h, w, seed + 1, 4, 4)
+    # Veines : sinus déformé par le bruit (tuilable : fréquences entières).
+    veins = np.abs(np.sin((xx * 3.0 + yy * 2.0 + n * 1.6) * math.pi * 2.0))
+    vein = np.clip(1.0 - veins / 0.06, 0.0, 1.0) * 0.8 + np.clip(1.0 - np.abs(np.sin((yy * 5.0 + m * 2.2) * math.pi * 2.0)) / 0.03, 0.0, 1.0) * 0.35
+    base = colorize(m, [(0.0, (64, 82, 62)), (0.5, (92, 112, 86)), (1.0, (120, 136, 108))])
+    col = base * (0.88 + 0.2 * n)[..., None]
+    col = col * (1.0 - vein[..., None] * 0.55) + np.array([196, 204, 176], np.float32) * (vein[..., None] * 0.55)
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    hgt = 0.5 + 0.08 * n - 0.06 * vein
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt, 1.2))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt, 0.38, 0.0, 0.3))
+
+
+TEXTURES.update({
+    "Stone_Serpentine": stone_serpentine,
+})
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

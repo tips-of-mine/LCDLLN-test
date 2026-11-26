@@ -1236,6 +1236,12 @@
       "nom": "Navire marchand à quai (cogue)",
       "tome": 7,
       "placement_prevu": "Lhynn : port (navires amarrés aux jetées)"
+    },
+    {
+      "num": 219,
+      "nom": "Colonne torsadée colossale",
+      "tome": 2,
+      "placement_prevu": "Magistrya : salle du trône du palais du Magister (deux rangées)"
     }
   ]
 }

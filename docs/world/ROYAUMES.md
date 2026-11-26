@@ -259,6 +259,18 @@ voisines raccord au mètre près :
    pied de la plateforme, rues en arc sur chaque replat, volées `Stairs_Monumental_1` posées sur la rampe ; faubourgs hors les murs (quatre rues en anneau, sauf côté revers) et champs repoussés au-delà ; port (`BuildHarbour` : esplanade, quai, jetées, navires `Ship_Cog_1`, grues, entrepôts) si la ville a le service `port` ; un POI de
    genre `palais` sur le sommet est bâti par `Landmarks.cpp`. Ex. : Lhynn et son palais
    impérial (LORE_BD §16.66).
+   Depuis la v1.0.141, `pic` dresse une **ville-tour** (mise en page `ville_tour` de sa ville
+   `city`, exigée ; position manuelle admise : le pic suit la ville) : pic rocheux hors du
+   relief macro, sculpté dans sa cellule par `BuildTowerCity` (Settlements.cpp) après l'eau :
+   socle au ras du lac (`kTowerSocleAboveWaterM`) jusqu'à `base_radius_m` + `socle_m`, rampe
+   en spirale du pied (direction `entry_deg`) à la plateforme du sommet (`top_radius_m`,
+   `height_m`), replats de `ledge_m` (chaussée de `road_m` côté vide) séparés par des parois
+   de `band_m` (marche au milieu de la paroi : les replats restent plats malgré la maille de
+   4,9 m), paliers et volées (pente 0,6) en alternance ; lac centré de `lake_radius_m` qui
+   remplace celui de la case (île = socle) ; un ponton du socle à la rive ; routes arrêtées
+   sur la rive (`CityRoadAnchor`) ; façades, toits, tourelles, arches, maisons, geôles ; un
+   POI de genre `palais` au centre est bâti par `Landmarks.cpp` (palais du Magister). Ex. :
+   Magistrya (LORE_BD §16.67).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
    départ ou ancrée sur un relief ; **position manuelle** `position`

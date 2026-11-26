@@ -110,6 +110,9 @@ namespace tools::world_gen
 		double radiusM = 20.0;
 		double waterY = 0.0;
 		std::vector<Vec2> polygon;    ///< CCW dans XZ
+		/// v1.0.141 — île centrale (rayon, m ; 0 = aucune) : le pic d'une ville-tour. Le lit
+		/// n'y est pas creusé (CarveLake) et ce n'est pas de l'eau (World::IsWater).
+		double islandRadiusM = 0.0;
 	};
 
 	/// Un bâtiment posé : référence vers un modèle de la bibliothèque.
@@ -369,6 +372,47 @@ namespace tools::world_gen
 	/// v1.0.140 — vrai si \p p est sur la plateforme du sommet d'une acropole du master
 	/// (rayon topRadiusM + \p marginM). Terrain.cpp
 	bool OnAcropoleSummit(const WorldMaster& m, Vec2 p, double marginM);
+	/// v1.0.141 — ville-tour : hauteur (m) du socle au-dessus de la surface du lac (le
+	/// tablier du ponton y est posé : les pieux du Boardwalk_Deck_1, 1,6 m, touchent l'eau).
+	inline constexpr double kTowerSocleAboveWaterM = 1.6;
+	/// v1.0.141 — ville-tour : distance (m) entre la rive du lac et l'ancre des routes (au-delà
+	/// de la zone interdite aux routes autour d'un lac sur la grille de 250 m, rayon + 60 m) ;
+	/// un chemin pavé relie l'ancre à la tête du ponton.
+	inline constexpr double kTowerRoadReachM = 260.0;
+	/// v1.0.141 — ville-tour : point de la rampe à l'abscisse \p s ∈ [0, 1] (0 au pied, 1 au
+	/// sommet) : position sur l'axe du replat (m, global). Fonction pure. Terrain.cpp
+	Vec2 TowerRampPoint(const TowerShape& t, double s);
+	/// v1.0.141 — ville-tour : longueur (m) parcourue sur l'axe de la rampe du pied jusqu'à
+	/// l'abscisse \p s (rayon linéaire en s). Fonction pure. Terrain.cpp
+	double TowerLengthAt(const TowerShape& t, double s);
+	/// v1.0.141 — ville-tour : abscisse s ∈ [0, 1] de la rampe pour la longueur parcourue \p l
+	/// (m ; inverse de TowerLengthAt, bornée). Fonction pure. Terrain.cpp
+	double TowerSAtLength(const TowerShape& t, double l);
+	/// v1.0.141 — ville-tour : altitude de la rampe (m, au-dessus du socle) à l'abscisse \p s :
+	/// paliers de pente faible et volées d'escalier de pente 0,6 en alternance (période
+	/// TowerStairPeriodM(), volée de TowerStairRunM() m en fin de période), 0 au pied et heightM
+	/// au sommet. Fonction pure. Terrain.cpp
+	double TowerRampHeight(const TowerShape& t, double s);
+	/// v1.0.141 — ville-tour : longueur (m) d'une période palier + volée, ajustée pour que la
+	/// rampe en compte un nombre entier (≈ 100 m). Fonction pure. Terrain.cpp
+	double TowerStairPeriodM(const TowerShape& t);
+	/// v1.0.141 — ville-tour : longueur horizontale (m) de la volée d'escalier d'une période
+	/// (pente 0,6 ; au plus 80 % de la montée d'une période). Fonction pure. Terrain.cpp
+	double TowerStairRunM(const TowerShape& t);
+	/// v1.0.141 — ville-tour : altitude du sol (m, au-dessus du socle) en \p p (global) :
+	/// plateforme du sommet (heightM), replats de la spirale (altitude de la rampe, plats en
+	/// travers), parois entre deux spires (pente linéaire sur bandM), socle (0) jusqu'à
+	/// SocleR(), puis -1e9 au-delà (hors du pic : le lac). \p onLedge (optionnel) reçoit
+	/// l'abscisse s du replat sous \p p (-1 hors d'un replat) ; \p across reçoit la position
+	/// en travers du replat (m, -ledgeM/2 côté pic à +ledgeM/2 côté vide). Fonction pure. Terrain.cpp
+	double TowerOffset(const TowerShape& t, Vec2 p, double* onLedge = nullptr, double* across = nullptr);
+	/// v1.0.141 — vrai si \p p est sur la plateforme du sommet d'un pic du master (rayon
+	/// topRadiusM + \p marginM). Terrain.cpp
+	bool OnTowerSummit(const WorldMaster& m, Vec2 p, double marginM);
+	/// v1.0.141 — point où les routes du monde aboutissent pour la ville \p c : son centre,
+	/// sauf pour une ville-tour (au milieu d'un lac) : sur la rive, dans la direction du
+	/// ponton, kTowerRoadReachM au-delà du rayon du lac. Fonction pure. Terrain.cpp
+	Vec2 CityRoadAnchor(const CityDef& c);
 
 	struct GlobalWorld
 	{
@@ -680,6 +724,18 @@ namespace tools::world_gen
 	/// Rayon (m) du chemin de ronde du Camp de l'Oracle : les routes s'y arrêtent, sur le
 	/// terrain (BuildOracleCamp) comme sur la carte (BuildMapFeatures). v1.0.136.
 	inline constexpr double kOracleRoadStopM = 215.0;
+	/// v1.0.141 — Magistrya, ville-tour (mise en page `layout: "ville_tour"`, relief `pic`) :
+	/// remplace l'agglomération générique. Sculpte le pic dans la heightmap (socle au ras du
+	/// lac, rampe en spirale, parois, plateforme du sommet), pose les façades qui couvrent les
+	/// parois (murs à fenêtres, toits), le parapet, les tourelles, les arches au-dessus de la
+	/// chaussée et les volées d'escalier, les maisons le long de la rampe, le long ponton de bois
+	/// (gibets et poteau indicateur à la rive), le chemin pavé jusqu'à l'ancre des routes, les
+	/// geôles voûtées du socle (service prison), l'auberge, le marché, le cimetière (sur la
+	/// rive), le graphe des PNJ jusqu'au sommet et les enseignes de service. Le palais du sommet
+	/// est bâti par BuildLandmarks (POI de genre « palais »). \param c ville (son rayon devient
+	/// SocleR()). Effet de bord : w.height, w.paint, w.urban, w.roads, w.roadDist, w.scatter,
+	/// w.buildings, w.pointLights, occupation. Settlements.cpp
+	void BuildTowerCity(World& w, CityDef& c, SettlementLayout& L, size_t firstBuilding);
 	/// Arbres, sous-bois, rochers, herbes. Vegetation.cpp
 	/// Aux Enfers (v1.0.83) : seulement arbres morts et rochers (ni herbe, ni fleur,
 	/// ni broussaille). Effet de bord : remplit w.scatter.

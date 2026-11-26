@@ -350,8 +350,151 @@ namespace tools::world_gen
 		return false;
 	}
 
+	// ---------------------------------------------------------------------------------
+	// v1.0.141 — VILLE-TOUR (relief `pic`, Magistrya). Fonctions pures de la forme : rampe en
+	// spirale (position, altitude), sol du pic. La heightmap est sculptée par BuildTowerCity.
+	// ---------------------------------------------------------------------------------
+	namespace
+	{
+		constexpr double kTowerPi = 3.14159265358979323846;
+		/// Pente des volées d'escalier de la rampe (marche 0,18 × 0,30 m).
+		constexpr double kTowerStairSlope = 0.6;
+		/// Longueur visée d'une période palier + volée (m).
+		constexpr double kTowerPeriodM = 100.0;
+
+	}
+
+	double TowerLengthAt(const TowerShape& t, double s)
+	{
+		return 2.0 * kTowerPi * t.Turns() * (t.OuterR() * s - (t.OuterR() - t.InnerR()) * s * s * 0.5);
+	}
+
+	double TowerSAtLength(const TowerShape& t, double l)
+	{
+		const double k = 2.0 * kTowerPi * t.Turns();
+		const double a = (t.OuterR() - t.InnerR()) * 0.5 * k, b = t.OuterR() * k;
+		if (a < 1e-9) return Clamp(l / b, 0.0, 1.0);
+		// a·s² − b·s + l = 0, racine dans [0, 1].
+		const double disc = std::max(0.0, b * b - 4.0 * a * l);
+		return Clamp((b - std::sqrt(disc)) / (2.0 * a), 0.0, 1.0);
+	}
+
+	double TowerStairPeriodM(const TowerShape& t)
+	{
+		const double L = TowerLengthAt(t, 1.0);
+		return L / std::max(1.0, std::round(L / kTowerPeriodM));
+	}
+
+	double TowerStairRunM(const TowerShape& t)
+	{
+		const double L = TowerLengthAt(t, 1.0), P = TowerStairPeriodM(t);
+		const double risePerPeriod = t.heightM * P / std::max(1.0, L);
+		// Volée : au plus 80 % de la montée d'une période, par pas de 2,55 m (une volée
+		// Stairs_Monumental_1 à l'échelle 0,85 : 1,53 m de haut), au moins une volée.
+		const double flights = std::max(1.0, std::floor(0.8 * risePerPeriod / (kTowerStairSlope * 2.55)));
+		return std::min(flights * 2.55, 0.5 * P);
+	}
+
+	Vec2 TowerRampPoint(const TowerShape& t, double s)
+	{
+		const double a = t.entryRad + 2.0 * kTowerPi * t.Turns() * s;
+		const double r = t.OuterR() - (t.OuterR() - t.InnerR()) * s;
+		return t.center + Vec2{ std::cos(a), std::sin(a) } * r;
+	}
+
+	double TowerRampHeight(const TowerShape& t, double s)
+	{
+		if (!t.enabled) return 0.0;
+		const double L = TowerLengthAt(t, 1.0), P = TowerStairPeriodM(t), run = TowerStairRunM(t);
+		const double l = Clamp(TowerLengthAt(t, Clamp(s, 0.0, 1.0)), 0.0, L);
+		const double risePerPeriod = t.heightM * P / std::max(1.0, L);
+		const double stairRise = kTowerStairSlope * run;
+		const double flatSlope = (risePerPeriod - stairRise) / std::max(1.0, P - run);
+		const double k = std::min(std::floor(l / P), std::round(L / P) - 1.0);
+		const double x = l - k * P; // position dans la période : palier puis volée
+		const double inPeriod = x < P - run ? flatSlope * x : flatSlope * (P - run) + kTowerStairSlope * (x - (P - run));
+		return std::min(t.heightM, k * risePerPeriod + inPeriod);
+	}
+
+	double TowerOffset(const TowerShape& t, Vec2 p, double* onLedge, double* across)
+	{
+		if (onLedge) *onLedge = -1.0;
+		if (across) *across = 0.0;
+		if (!t.enabled) return 0.0;
+		const double dx = p.x - t.center.x, dz = p.z - t.center.z;
+		const double r = std::hypot(dx, dz);
+		if (r > t.SocleR()) return -1e9;
+		if (r <= t.topRadiusM) return t.heightM;
+		const double turns = t.Turns(), half = t.ledgeM * 0.5;
+		// Paroi entre deux niveaux : MARCHE nette (1 m) au milieu de la paroi, plat de part et
+		// d'autre. L'échantillonnage de la heightmap (≈ 4,9 m) étale la marche sur une maille de
+		// chaque côté : avec une paroi d'au moins 10 m, la pente reste DANS la paroi et les
+		// replats restent plats jusqu'à leur bord (maisons, parapet, façade au pied).
+		auto wall = [](double hIn, double hOut, double x, double width) {
+			return Lerp(hIn, hOut, SmoothStep(width * 0.5 - 0.5, width * 0.5 + 0.5, x));
+		};
+		// Angle déroulé depuis le pied de la rampe, dans [0, 2π).
+		double a0 = std::atan2(dz, dx) - t.entryRad;
+		a0 -= 2.0 * kTowerPi * std::floor(a0 / (2.0 * kTowerPi));
+		// Palier d'arrivée : la rampe se prolonge à plat (heightM) sur 20 m au-delà du sommet,
+		// le long de la plateforme (on y entre de côté).
+		const double landingS = 20.0 / (2.0 * kTowerPi * turns * t.InnerR());
+		// Passages de la rampe à cet angle : k = 0 (le plus bas, le plus à l'extérieur), 1, …
+		double prevS = -1.0;
+		for (int k = 0; ; ++k)
+		{
+			const double s = (a0 + 2.0 * kTowerPi * k) / (2.0 * kTowerPi * turns);
+			if (s > 1.0)
+			{
+				if (s <= 1.0 + landingS && std::fabs(r - t.InnerR()) <= half)
+				{
+					if (onLedge) *onLedge = 1.0;
+					if (across) *across = r - t.InnerR();
+					return t.heightM;
+				}
+				// Plus de passage vers l'intérieur : paroi jusqu'à la plateforme du sommet.
+				if (prevS < 0.0) return t.heightM; // (rampe d'un tour au moins : non atteint)
+				const double rIn = t.OuterR() - (t.OuterR() - t.InnerR()) * prevS - half;
+				return wall(t.heightM, TowerRampHeight(t, prevS), r - t.topRadiusM, rIn - t.topRadiusM);
+			}
+			const double rk = t.OuterR() - (t.OuterR() - t.InnerR()) * s;
+			if (r >= rk - half)
+			{
+				const double hk = TowerRampHeight(t, s);
+				if (r <= rk + half)
+				{
+					if (onLedge) *onLedge = s;
+					if (across) *across = r - rk;
+					return hk;
+				}
+				// Au-delà de la spire la plus basse : paroi (bandM) jusqu'au socle (0).
+				if (k == 0) return wall(hk, 0.0, r - (rk + half), t.bandM);
+				// Entre la spire k (plus haute, à l'intérieur) et la spire k − 1 (plus basse).
+				const double rOut = t.OuterR() - (t.OuterR() - t.InnerR()) * prevS - half;
+				return wall(hk, TowerRampHeight(t, prevS), r - (rk + half), rOut - (rk + half));
+			}
+			prevS = s;
+		}
+	}
+
+	bool OnTowerSummit(const WorldMaster& m, Vec2 p, double marginM)
+	{
+		for (const ReliefDef& r : m.reliefs)
+			if (r.type == "pic" && std::hypot(p.x - r.tower.center.x, p.z - r.tower.center.z) <= r.tower.topRadiusM + marginM)
+				return true;
+		return false;
+	}
+
+	Vec2 CityRoadAnchor(const CityDef& c)
+	{
+		if (!c.tower.enabled) return c.center;
+		return c.tower.center + Vec2{ std::cos(c.tower.entryRad), std::sin(c.tower.entryRad) } * (c.tower.lakeRadiusM * 1.08 + kTowerRoadReachM);
+	}
+
 	double ReliefContribution(const ReliefDef& r, double x, double z)
 	{
+		// Pic (v1.0.141) : sculpté dans la cellule (BuildTowerCity), aucune élévation macro.
+		if (r.type == "pic") return 0.0;
 		// Acropole (v1.0.140) : gradins et escalier, avant le masque des terres émergées.
 		if (r.type == "acropole") return AcropoleOffset(r.acropole, { x, z });
 		const double dx = x - r.center.x, dz = z - r.center.z;
@@ -614,6 +757,8 @@ namespace tools::world_gen
 			// Acropole (v1.0.140) : même masque que les massifs (la côte ne bouge pas) ;
 			// ignorée pendant le calcul du plateau de sa ville (g_acropoleOff).
 			if (r.type == "acropole") { if (!g_acropoleOff) massif += ReliefContribution(r, x, z); continue; }
+			// Pic (v1.0.141) : hors du relief macro (sculpté dans sa cellule, BuildTowerCity).
+			if (r.type == "pic") continue;
 			(r.type == "massif" ? massif : h) += ReliefContribution(r, x, z);
 		}
 		// Massifs (v1.0.77) : seulement sur les terres émergées (0,5 à 3 m au-dessus de
@@ -951,6 +1096,8 @@ namespace tools::world_gen
 		for (const Lake& l : lakes)
 		{
 			const double dx = p.x - l.center.x, dz = p.z - l.center.z;
+			// v1.0.141 : île centrale (pic d'une ville-tour) hors de l'eau.
+			if (l.islandRadiusM > 0.0 && dx * dx + dz * dz < l.islandRadiusM * l.islandRadiusM) continue;
 			// EAU.5 : contour réel (polygone bruité ±8 %), plus le cercle moyen.
 			const double r = LakeRadiusAt(l, std::atan2(dz, dx)) + 2.0;
 			if (dx * dx + dz * dz < r * r) return true;
@@ -1069,6 +1216,8 @@ namespace tools::world_gen
 		for (CityDef& c : g.cities)
 		{
 			c.radiusM = CityRadius(c.kind, c.procedural);
+			// v1.0.141 : une ville-tour occupe son pic jusqu'au bord du socle.
+			if (c.tower.enabled) c.radiusM = c.tower.SocleR();
 			const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ c.n, c.e });
 			// Position posée à la main (v1.0.95, « tu places, le jeu suit ») : la ville est
 			// posée exactement là, sans recherche de site ; son plateau (même calcul que
@@ -1181,6 +1330,10 @@ namespace tools::world_gen
 			{
 				if (!IsLakeCode(m.gridRows[static_cast<size_t>(r)][static_cast<size_t>(col)])) continue;
 				const int n = s.northN - r, e = s.westE + col;
+				// v1.0.141 : la case d'une ville-tour a SON lac, centré sur le pic (ci-dessous).
+				bool towerCell = false;
+				for (const CityDef& c : g.cities) towerCell = towerCell || (c.tower.enabled && c.n == n && c.e == e);
+				if (towerCell) continue;
 				const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ n, e });
 				const uint64_t hs = Hash(m.seed, static_cast<uint64_t>(n + 1000), static_cast<uint64_t>(e + 1000), 555);
 				Lake lake;
@@ -1200,6 +1353,18 @@ namespace tools::world_gen
 				}
 				g.lakes.push_back(std::move(lake));
 			}
+		// v1.0.141 — lac d'une ville-tour (Magistrya, « au centre d'un grand lac ») : centré sur le
+		// pic, rayon du relief, île centrale = socle du pic (pas d'eau, lit non creusé).
+		for (const CityDef& c : g.cities)
+		{
+			if (!c.tower.enabled) continue;
+			Lake lake;
+			lake.name = "lac_" + c.id;
+			lake.center = c.tower.center;
+			lake.radiusM = c.tower.lakeRadiusM;
+			lake.islandRadiusM = c.tower.SocleR() + 4.0;
+			g.lakes.push_back(std::move(lake));
+		}
 		// Lacs manuels (ex. étang du hameau de départ), ancrés sur une ville.
 		for (const ExtraLakeDef& el : m.extraLakes)
 		{
@@ -1228,6 +1393,11 @@ namespace tools::world_gen
 			lake.waterY = LakeWaterLevel(m, lake,
 				MeanMacroHeight(m, lake.center, lake.radiusM + 30.0, std::max(4.0, lake.radiusM / 12.0)));
 		}
+		// v1.0.141 : le plateau d'une ville-tour est son socle, au ras de son lac.
+		for (CityDef& c : g.cities)
+			if (c.tower.enabled)
+				for (const Lake& l : g.lakes)
+					if (l.name == "lac_" + c.id) c.plateauY = l.waterY + kTowerSocleAboveWaterM;
 	}
 
 	namespace
@@ -1910,6 +2080,8 @@ namespace tools::world_gen
 			const double dx = height.WorldX(i) - lake.center.x, dz = height.WorldZ(j) - lake.center.z;
 			const double rr = std::max(1.0, LakeRadiusAt(lake, std::atan2(dz, dx)));
 			double& h = height.At(i, j);
+			// v1.0.141 : île centrale (pic d'une ville-tour, sculpté ensuite) : lit non creusé.
+			if (d < lake.islandRadiusM) return;
 			if (d <= rr)
 			{
 				// Fond : parabole sous la surface (0,6 m au bord, ≤ 9,6 m au centre).
@@ -1973,6 +2145,8 @@ namespace tools::world_gen
 				ForDisc(w.height, c.center, c.radiusM + 6.0, [&](int i, int j, double) { sum += w.height.At(i, j); cnt += 1.0; });
 				c.plateauY = std::max(cnt > 0 ? sum / cnt : sea + 8.0, sea + 5.0);
 			}
+			// v1.0.141 — ville-tour : pic, socle et lac sculptés par BuildTowerCity (après l'eau).
+			if (c.tower.enabled) continue;
 			if (c.acropole.enabled)
 			{
 				// v1.0.140 — ville en gradins : plateau de la ville basse + gradins et escalier
@@ -1993,6 +2167,8 @@ namespace tools::world_gen
 		{
 			// v1.0.140 : un lieu posé sur le sommet d'une acropole (palais) garde la plateforme.
 			if (OnAcropoleSummit(w.master, p.center, 0.0)) continue;
+			// v1.0.141 : idem sur le sommet d'une ville-tour (palais du Magister).
+			if (OnTowerSummit(w.master, p.center, 0.0)) continue;
 			// v1.0.132 : un château (enceinte, douves) demande un plateau plus large.
 			const double R = p.kind == "chateau" ? 40.0 * p.scale + 8.0 : 40.0;
 			double sum = 0.0, cnt = 0.0;

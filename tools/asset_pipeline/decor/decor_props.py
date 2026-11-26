@@ -4451,6 +4451,35 @@ def p_ship_cog(spec, lod):
     return m.out()
 
 
+def p_column_twisted_giant(spec, lod):
+    """Colonne torsadée colossale (n° 219, salle du trône du palais du Magister, T2-P023-C1,
+    C2) : socle mouluré carré, fût de quatre brins enroulés (une torsade et demie) autour
+    d'un noyau, renflé au milieu comme sur la planche, chapiteau massif ; pierre serpentine
+    verte veinée, socle et chapiteau de pierre taillée. Générique (aucun emblème) ; H 16 m."""
+    m = M()
+    c = m.p("Stone_Carved")
+    g = m.p("Stone_Serpentine")
+    box(c, (-1.8, -1.8, 0.0), (1.8, 1.8, 0.7))
+    box(c, (-1.55, -1.55, 0.7), (1.55, 1.55, 1.3))
+    z0, z1 = 1.3, 14.0
+    lathe(g, [(0.9, z0), (0.9, z1)], S(lod, 10))
+    seg = {0: 30, 1: 16, 2: 8}[lod]
+    sides = {0: 6, 1: 5, 2: 3}[lod]
+    for k in range(4):
+        pts, radii = [], []
+        for j in range(seg + 1):
+            t = j / seg
+            bulge = math.sin(math.pi * t)
+            a = k * math.pi / 2 + t * 3.0 * math.pi
+            rr = 0.8 + 0.42 * bulge
+            pts.append(Vector((rr * math.cos(a), rr * math.sin(a), z0 + (z1 - z0) * t)))
+            radii.append(0.5 + 0.22 * bulge)
+        API["tube"](g, pts, radii, sides, 0.5, False)
+    box(c, (-1.45, -1.45, z1), (1.45, 1.45, z1 + 0.8))
+    box(c, (-1.8, -1.8, z1 + 0.8), (1.8, 1.8, z1 + 1.8))
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

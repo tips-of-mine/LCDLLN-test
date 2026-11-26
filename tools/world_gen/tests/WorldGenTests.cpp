@@ -2698,7 +2698,8 @@ namespace
 		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
 			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes", "poi_temple_methraton", "poi_seuil_lhynn",
 			"poi_borne_monts_de_moork", // v1.0.128 : au bord de la route Moork - Ghrunke Dash (000242)
-			"poi_palais_imperial_lhynn" }; // v1.0.140 : sommet de Lhynn en gradins (LORE_BD §16.66)
+			"poi_palais_imperial_lhynn", // v1.0.140 : sommet de Lhynn en gradins (LORE_BD §16.66)
+			"poi_palais_magister_magistrya" }; // v1.0.141 : sommet de la ville-tour de Magistrya (LORE_BD §16.67)
 		size_t posees = 0;
 		for (const PoiDef& p : g0.master.pois)
 		{
@@ -2706,7 +2707,7 @@ namespace
 			none = none && balises.count(p.id);
 			++posees;
 		}
-		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140)");
+		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140), palais du Magister (v1.0.141)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
@@ -4300,6 +4301,113 @@ namespace
 			"acropole v1.0.140 : facade et fleche au catalogue de collision");
 	}
 
+	/// v1.0.141 — Magistrya, ville-tour (BD-T2 p.19-27, LORE_BD §16.67) : forme du pic (rampe en
+	/// spirale praticable, 250 m), lac centré et île hors de l'eau, socle et sommet sculptés, ponton
+	/// jusqu'à la rive, routes arrêtées sur la rive, maisons le long de la rampe, façades, geôles
+	/// (prison), palais du Magister (salle du trône, colonnes torsadées, laboratoire).
+	void TestVilleTourMagistryaV1141()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "ville-tour v1.0.141 : master royaumes charge");
+		if (!ok) return;
+		const CityDef* mc = nullptr;
+		int towers = 0;
+		for (const CityDef& c : g.master.cities)
+		{
+			if (c.id == "sauken_glude_of_magistrya") mc = &c;
+			towers += c.tower.enabled ? 1 : 0;
+		}
+		Check(mc && mc->tower.enabled && mc->layout == "ville_tour" && towers == 1, "ville-tour v1.0.141 : Magistrya seule ville-tour");
+		if (!mc || !mc->tower.enabled) return;
+		const TowerShape& t = mc->tower;
+		// Forme : 250 m, 2,75 tours, pente moyenne <= 0,2 ; paliers et volées praticables (<= 0,6).
+		Check(std::fabs(TowerRampHeight(t, 0.0)) < 1e-9 && std::fabs(TowerRampHeight(t, 1.0) - 250.0) < 1e-6
+				&& t.Turns() > 2.6 && t.Turns() < 2.9 && t.heightM / t.RampLengthM() < 0.2,
+			"ville-tour v1.0.141 : rampe de 0 a 250 m en 2,75 tours, pente moyenne < 0,2");
+		bool walkable = true, monotone = true;
+		const double L = TowerLengthAt(t, 1.0);
+		for (double l = 0.0; l + 0.5 <= L; l += 0.5)
+		{
+			const double h0 = TowerRampHeight(t, TowerSAtLength(t, l)), h1 = TowerRampHeight(t, TowerSAtLength(t, l + 0.5));
+			walkable = walkable && (h1 - h0) <= 0.5 * 0.6 + 1e-3;
+			monotone = monotone && h1 >= h0 - 1e-9;
+		}
+		Check(walkable && monotone, "ville-tour v1.0.141 : rampe montante, pente <= 0,6 (paliers et volees)");
+		double sOn = -1.0, across = 0.0;
+		const Vec2 foot = TowerRampPoint(t, 0.002);
+		Check(TowerOffset(t, foot, &sOn, &across) < 0.5 && sOn > 0.0 && sOn < 0.01
+				&& std::fabs(TowerOffset(t, t.center) - 250.0) < 1e-9 && TowerOffset(t, t.center + Vec2{ t.SocleR() + 1.0, 0.0 }) < -1e8,
+			"ville-tour v1.0.141 : pied de rampe au socle, sommet a 250 m, rien au-dela du socle");
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		const Lake* lake = nullptr;
+		for (const Lake& l : g.lakes) if (l.name == "lac_sauken_glude_of_magistrya") lake = &l;
+		int caseLakes = 0;
+		for (const Lake& l : g.lakes)
+			caseLakes += (std::fabs(l.center.x - t.center.x) < 5000.0 && std::fabs(l.center.z - t.center.z) < 5000.0) ? 1 : 0;
+		Check(lake && std::hypot(lake->center.x - t.center.x, lake->center.z - t.center.z) < 1e-6 && lake->islandRadiusM > t.SocleR() && caseLakes == 1,
+			"ville-tour v1.0.141 : lac centre sur le pic (seul lac de la case), ile du socle");
+		if (!lake) return;
+		auto w = std::make_unique<World>();
+		InitCell(*w, g, { mc->n, mc->e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildLandmarks(*w);
+		const CityDef* c = nullptr;
+		for (const CityDef& x : w->cities) if (x.id == "sauken_glude_of_magistrya") c = &x;
+		Check(c != nullptr, "ville-tour v1.0.141 : Magistrya dans la cellule");
+		if (c == nullptr) return;
+		Check(std::fabs(c->plateauY - (lake->waterY + kTowerSocleAboveWaterM)) < 1e-6 && std::fabs(c->radiusM - t.SocleR()) < 1e-6,
+			"ville-tour v1.0.141 : socle au ras du lac, rayon de la ville = socle");
+		Check(std::fabs(w->HeightAt(t.center) - (c->plateauY + 250.0)) < 1.5 && std::fabs(w->HeightAt(t.center + Vec2{ std::cos(t.entryRad), std::sin(t.entryRad) } * (t.SocleR() - 6.0)) - c->plateauY) < 1.0,
+			"ville-tour v1.0.141 : sommet a +250 m, socle au pied du ponton");
+		Check(!w->IsWater(t.center + Vec2{ t.SocleR() - 3.0, 0.0 }) && w->IsWater(t.center + Vec2{ t.SocleR() + 60.0, 0.0 }),
+			"ville-tour v1.0.141 : le socle n'est pas de l'eau, le lac l'entoure");
+		// Rampe sculptée praticable : on suit l'axe de la chaussée de 2 m en 2 m.
+		double maxGrade = 0.0;
+		for (double l = 2.0; l + 4.0 <= L; l += 2.0)
+		{
+			const Vec2 a = TowerRampPoint(t, TowerSAtLength(t, l)), b = TowerRampPoint(t, TowerSAtLength(t, l + 2.0));
+			maxGrade = std::max(maxGrade, std::fabs(w->HeightAt(b) - w->HeightAt(a)) / std::max(0.5, std::hypot(b.x - a.x, b.z - a.z)));
+		}
+		Check(maxGrade <= 0.7, "ville-tour v1.0.141 : chaussee sculptee praticable (pente <= 0,7)");
+		auto count = [&](const char* mesh) {
+			int n = 0;
+			for (const ScatterDef& s : w->scatter) n += s.mesh.find(std::string("/") + mesh + ".gltf") != std::string::npos ? 1 : 0;
+			return n;
+		};
+		int houses = 0, inns = 0;
+		for (const BuildingPlacementDef& b : w->buildings)
+			if (b.cityId == c->id) { ++houses; inns += b.isInn ? 1 : 0; }
+		Check(houses >= 100 && inns == 1, "ville-tour v1.0.141 : maisons le long de la rampe (au moins 100) et auberge au socle");
+		Check(count("Wall_UnevenBrick_Straight") >= 2000 && count("Turret_Corner_1") >= 10 && count("Roof_Slate_4x4") >= 150,
+			"ville-tour v1.0.141 : parois couvertes de facades (murs, tourelles, toits)");
+		Check(count("Stairs_Monumental_1") >= 100 && count("Arch_Stone_1") >= 6 && count("Bridge_Stone_Parapet_1") >= 700,
+			"ville-tour v1.0.141 : volees d'escalier, arches et parapet le long de la rampe");
+		Check(count("Boardwalk_Deck_1") >= 600 && count("Gallows_1") == 2 && count("Signpost_1") >= 1,
+			"ville-tour v1.0.141 : long ponton de bois, gibets et poteau indicateur");
+		Check(count("Dungeon_Vault_1") == 5 && count("Dungeon_Grate_1") == 15 && count("Dungeon_Pillar_1") == 8 && count("Sign_Service_prison") == 1,
+			"ville-tour v1.0.141 : geoles voutees au socle (prison)");
+		Check(count("Column_Twisted_Giant_1") == 8 && count("Throne_Wood_1") == 1 && count("Table_Stone_1") == 1 && count("Portal_Gothic_1") == 1,
+			"ville-tour v1.0.141 : palais du Magister (colonnes torsadees, trone, laboratoire, portail)");
+		bool roadsOut = true;
+		for (const Road& r : w->roads)
+			for (const Vec2& p : r.points)
+				roadsOut = roadsOut && (r.path || std::hypot(p.x - t.center.x, p.z - t.center.z) > lake->radiusM * 0.9);
+		Check(roadsOut, "ville-tour v1.0.141 : routes du monde arretees sur la rive (aucune dans le lac)");
+		const SettlementLayout* lay = nullptr;
+		for (const SettlementLayout& x : w->layouts) if (x.cityId == c->id) lay = &x;
+		double topNode = 0.0;
+		if (lay) for (const StreetNode& n : lay->nodes) topNode = std::max(topNode, w->HeightAt(n.p) - c->plateauY);
+		Check(lay && lay->hasGraveyard && topNode > 240.0, "ville-tour v1.0.141 : graphe des PNJ jusqu'au sommet, cimetiere sur la rive");
+		std::ifstream cat(std::string(LCDLLN_CONTENT_DIR) + "/collision/building_pieces.json");
+		const std::string txt((std::istreambuf_iterator<char>(cat)), std::istreambuf_iterator<char>());
+		Check(txt.find("\"column_twisted_giant_1\"") != std::string::npos, "ville-tour v1.0.141 : colonne torsadee au catalogue de collision");
+	}
+
 	/// v1.0.133 (remarque du 21/11/2026 : « je me suis collé à la muraille de Lhynn ») : sur terrain en
 	/// pente, chaque colonne du rempart part du point le plus bas du sol sous elle (pas de jour dessous) et
 	/// dépasse d'au moins 2,5 m le point le plus haut (on ne l'enjambe pas depuis l'amont). Forteresse
@@ -4780,6 +4888,7 @@ int main()
 	TestRemplissageV1135();
 	TestOracleV1136();
 	TestAcropoleLhynnV1140();
+	TestVilleTourMagistryaV1141();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

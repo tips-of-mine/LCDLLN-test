@@ -82,6 +82,43 @@ namespace tools::world_gen
 		double FootRadiusM() const { return topRadiusM + terraces * bankM + (terraces - 1) * terraceM; }
 	};
 
+	/// v1.0.141 — VILLE-TOUR (relief `pic` du master, Magistrya, BD-T2 p.19-20 : « la ville
+	/// s'enroulait comme un serpent de pierre autour du pic rocheux ») : pic rocheux au centre
+	/// d'un lac, ceint d'une RAMPE EN SPIRALE qui monte du socle (quai au ras de l'eau) à la
+	/// plateforme du sommet (palais). Repère : axe du pic = centre de la ville ; abscisse
+	/// curviligne s ∈ [0, 1] de la rampe, 0 au pied (direction entryRad, rayon OuterR) et 1 au
+	/// sommet (rayon InnerR, bord de la plateforme) ; angle entryRad + 2π·turns·s ; rayon
+	/// linéaire en s ; altitude (au-dessus du socle) croissante avec la longueur parcourue :
+	/// paliers presque plats (maisons) et volées d'escalier (pente 0,6) en alternance, pente
+	/// moyenne heightM / RampLengthM(). Entre deux spires : paroi (bandM de large) masquée par
+	/// des façades. Copié dans la ville (CityDef::tower) et dans son relief au chargement.
+	struct TowerShape
+	{
+		bool   enabled = false;
+		Vec2   center;               ///< axe du pic (m, global) = centre de la ville
+		double heightM = 0.0;        ///< altitude du sommet (plateforme du palais) au-dessus du socle (m)
+		double topRadiusM = 0.0;     ///< rayon de la plateforme du sommet (m)
+		double baseRadiusM = 0.0;    ///< rayon extérieur de la spire la plus basse (m)
+		double ledgeM = 0.0;         ///< largeur d'un replat de la spirale : maisons côté pic, chaussée côté vide (m)
+		double roadM = 0.0;          ///< largeur de la chaussée, au bord extérieur du replat (m)
+		double bandM = 0.0;          ///< largeur horizontale de la paroi entre deux spires (m)
+		double socleM = 0.0;         ///< largeur du quai du socle au-delà de la spire basse (m)
+		double lakeRadiusM = 0.0;    ///< rayon moyen du lac centré sur le pic (m)
+		double entryRad = 0.0;       ///< direction (atan2(z, x), radians) du ponton et du pied de la rampe
+		/// Rayon de l'axe du replat au sommet (s = 1) : son bord intérieur touche la plateforme.
+		double InnerR() const { return topRadiusM + ledgeM * 0.5; }
+		/// Rayon de l'axe du replat au pied (s = 0).
+		double OuterR() const { return baseRadiusM - ledgeM * 0.5; }
+		/// Rayon du bord du socle (quai, au-dessus de l'eau).
+		double SocleR() const { return baseRadiusM + socleM; }
+		/// Pas radial d'un tour (m) : un replat et une paroi.
+		double PitchM() const { return ledgeM + bandM; }
+		/// Nombre de tours de la rampe (pas constant PitchM()).
+		double Turns() const { return PitchM() > 0.0 ? (OuterR() - InnerR()) / PitchM() : 0.0; }
+		/// Longueur horizontale de la rampe (m), mesurée sur l'axe des replats.
+		double RampLengthM() const { return 2.0 * 3.14159265358979323846 * Turns() * 0.5 * (OuterR() + InnerR()); }
+	};
+
 	struct CityDef
 	{
 		std::string id;
@@ -129,12 +166,18 @@ namespace tools::world_gen
 		bool   secret = false;
 		/// Mise en page dédiée (v1.0.136, clé `layout` du master, défaut vide = agglomération
 		/// générique de BuildSettlements) : « oracle » = Camp de l'Oracle bâti selon le plan
-		/// (rocher, escaliers, océan de tentes, menhirs ; Oracle.cpp, LORE_BD §16.62).
+		/// (rocher, escaliers, océan de tentes, menhirs ; Oracle.cpp, LORE_BD §16.62) ;
+		/// v1.0.141 : « ville_tour » = ville-tour en spirale sur un pic au milieu d'un lac
+		/// (Magistrya ; exige un relief `pic` ancré sur la ville, Settlements.cpp, LORE_BD §16.67).
 		std::string layout;
 		/// v1.0.140 — ville en gradins (relief `acropole` du master) : vide si la ville n'en
 		/// a pas. Le plateau de la ville (plateauY) reste celui de la ville basse ; le sol
 		/// d'un point de la ville vaut plateauY + AcropoleOffset(acropole, point).
 		AcropoleShape acropole;
+		/// v1.0.141 — ville-tour (relief `pic` du master) : vide si la ville n'en a pas. Le
+		/// plateau (plateauY) est le SOCLE (quai au ras du lac) ; le sol d'un point du pic vaut
+		/// plateauY + TowerOffset(tower, point).
+		TowerShape tower;
 	};
 
 	/// Point d'intérêt (section `pois`).
@@ -236,7 +279,7 @@ namespace tools::world_gen
 	struct ReliefDef
 	{
 		std::string id;
-		std::string type;          ///< colline|crevasse|massif|gouffre|falaise|acropole (v1.0.140)
+		std::string type;          ///< colline|crevasse|massif|gouffre|falaise|acropole (v1.0.140)|pic (v1.0.141)
 		std::string cityId;        ///< ville ancrée (posée au centre de sa case) ; vide pour un massif
 		std::string cell;          ///< massif : case d'ancrage (identifiant N019_W013)
 		double offsetXM = 0.0;     ///< massif : décalage du centre vers l'est (m)
@@ -272,6 +315,7 @@ namespace tools::world_gen
 		std::vector<double> galleryAlong; ///< gouffre : abscisse curviligne (m) de chaque point de la galerie
 		double galleryExitM = 0.0; ///< gouffre : abscisse (m) où la galerie sort du fond et de ses parois (le sol y quitte floorY)
 		AcropoleShape acropole;    ///< acropole (v1.0.140) : forme résolue (sommet, gradins, escalier)
+		TowerShape tower;          ///< pic (v1.0.141) : forme résolue (spirale, socle, lac)
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).

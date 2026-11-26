@@ -9776,6 +9776,26 @@
       "billboard": true,
       "replaces": null,
       "ref": "T7-P004-C1 (port de guerre de Lhynn, navires à quai) ; T10-P037-C1 (flotte) ; demande du propriétaire (25/11/2026 : « on ne voit pas le port »)"
+    },
+    {
+      "id": "Column_Twisted_Giant_1",
+      "num": 219,
+      "family": "monument",
+      "builder": "column_twisted_giant",
+      "seed": 21901,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        3.6,
+        3.8
+      ],
+      "height_m": [
+        15.7,
+        15.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P023-C1, C2 (salle du trône du Magister, personnages à la base : colonnes ≈ 8 fois leur hauteur) ; arbitrage Q5 b du propriétaire (26/11/2026) ; générique, sans emblème"
     }
   ]
 }

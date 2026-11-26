@@ -867,6 +867,582 @@ namespace tools::world_gen
 		}
 	}
 
+	// ---------------------------------------------------------------------------------
+	// v1.0.141 — MAGISTRYA, VILLE-TOUR (mise en page « ville_tour », relief `pic` ;
+	// BD-T2 p.19-27, LORE_BD §16.67). Pic rocheux au milieu d'un lac, rampe en spirale du
+	// socle au sommet (TowerShape, Terrain.cpp) ; les parois entre deux spires sont couvertes
+	// de façades (murs à fenêtres, toits d'ardoise, tourelles) comme « un écheveau de
+	// dentelle » ; maisons le long de la rampe (les plus belles vers les hauteurs), volées
+	// d'escalier, arches au-dessus de la chaussée ; long ponton de bois depuis la rive (gibets
+	// et poteau indicateur, p.19) ; geôles voûtées au socle (p.22). Le palais du Magister, au
+	// sommet, est bâti par BuildLandmarks (POI de genre « palais »).
+	// ---------------------------------------------------------------------------------
+	namespace
+	{
+		/// Pose un décor de meshes/props/ dont la base est à l'altitude ABSOLUE \p yAbs (m) ;
+		/// \p tilt : rotation autour de l'axe X local (degrés). Effet de bord : w.scatter.
+		void TowerProp(World& w, const std::string& mesh, Vec2 p, double yaw, double scale, uint8_t flags, uint8_t cull,
+			double yAbs, double collisionR = 0.0, double tilt = 0.0)
+		{
+			ScatterDef s;
+			s.mesh = "meshes/props/" + mesh + ".gltf";
+			s.position = p; s.yawDeg = yaw; s.scale = scale; s.flags = flags; s.cullClass = cull;
+			s.collisionRadius = collisionR; s.yOffset = yAbs - w.HeightAt(p); s.tiltDeg = tilt;
+			w.scatter.push_back(std::move(s));
+		}
+
+		/// Applique \p fn(i, j, d) à chaque échantillon de la heightmap à moins de \p r (m) de
+		/// \p c (d : distance au centre). Copie locale de l'aide de Terrain.cpp.
+		template <typename F>
+		void TowerForDisc(Grid<double>& g, Vec2 c, double r, F&& fn)
+		{
+			const int i0 = std::max(0, g.IndexX(c.x - r) - 1), i1 = std::min(g.width - 1, g.IndexX(c.x + r) + 1);
+			const int j0 = std::max(0, g.IndexZ(c.z - r) - 1), j1 = std::min(g.height - 1, g.IndexZ(c.z + r) + 1);
+			for (int j = j0; j <= j1; ++j)
+				for (int i = i0; i <= i1; ++i)
+				{
+					const double d = std::hypot(g.WorldX(i) - c.x, g.WorldZ(j) - c.z);
+					if (d <= r) fn(i, j, d);
+				}
+		}
+
+		/// Lumière de flamme (torche, brasero) à l'altitude absolue \p y. Effet de bord : w.pointLights.
+		void TowerLight(World& w, const std::string& id, Vec2 p, double y, double radius, double intensity)
+		{
+			PointLightDef L;
+			L.id = id; L.position = p; L.y = y; L.radiusM = radius; L.intensity = intensity;
+			w.pointLights.push_back(std::move(L));
+		}
+
+		/// Inscrit une chaussée locale dans w.roadDist (distance au bord), sans toucher au
+		/// relief (même règle que FlattenRoads). Effet de bord : w.roadDist.
+		void TowerStampRoad(World& w, const Road& r)
+		{
+			const double half = r.widthM * 0.5, reach = half + 9.0;
+			for (size_t k = 0; k + 1 < r.points.size(); ++k)
+			{
+				const Vec2 a = r.points[k], b = r.points[k + 1];
+				const int i0 = std::max(0, w.roadDist.IndexX(std::min(a.x, b.x) - reach)), i1 = std::min(w.roadDist.width - 1, w.roadDist.IndexX(std::max(a.x, b.x) + reach));
+				const int j0 = std::max(0, w.roadDist.IndexZ(std::min(a.z, b.z) - reach)), j1 = std::min(w.roadDist.height - 1, w.roadDist.IndexZ(std::max(a.z, b.z) + reach));
+				for (int j = j0; j <= j1; ++j)
+					for (int i = i0; i <= i1; ++i)
+					{
+						const float d = static_cast<float>(DistPointSegment({ w.roadDist.WorldX(i), w.roadDist.WorldZ(j) }, a, b) - half);
+						w.roadDist.At(i, j) = std::min(w.roadDist.At(i, j), d);
+					}
+			}
+		}
+
+		/// Repère local de la rampe à l'abscisse \p s : axe du replat \p axis, normale vers le
+		/// vide \p out (unitaire), tangente de montée \p up (unitaire, horizontale).
+		void TowerFrame(const TowerShape& t, double s, Vec2& axis, Vec2& out, Vec2& up)
+		{
+			axis = TowerRampPoint(t, s);
+			const Vec2 d = axis - t.center;
+			const double l = std::max(1e-6, std::hypot(d.x, d.z));
+			out = d * (1.0 / l);
+			const double ds = 1e-4;
+			Vec2 a = TowerRampPoint(t, std::min(1.0, s + ds)) - TowerRampPoint(t, std::max(0.0, s - ds));
+			const double la = std::max(1e-9, std::hypot(a.x, a.z));
+			up = a * (1.0 / la);
+		}
+
+		/// Nœud le plus proche de \p p parmi \p ids (-1 si vide).
+		int TowerNearestOf(const SettlementLayout& L, const std::vector<int>& ids, Vec2 p)
+		{
+			int best = -1; double bd = 1e18;
+			for (int id : ids)
+			{
+				const Vec2 q = L.nodes[static_cast<size_t>(id)].p;
+				const double d = std::hypot(q.x - p.x, q.z - p.z);
+				if (d < bd) { bd = d; best = id; }
+			}
+			return best;
+		}
+
+		/// Distance (m) au bord de la chaussée la plus proche en \p p (1e9 hors grille).
+		double TowerRoadGap(const World& w, Vec2 p)
+		{
+			const int i = w.roadDist.IndexX(p.x), j = w.roadDist.IndexZ(p.z);
+			return w.roadDist.InBounds(i, j) ? w.roadDist.At(i, j) : 1e9;
+		}
+
+		/// Palette des maisons de la ville-tour : maisons hautes de pierre à toit d'ardoise,
+		/// échoppes ; vers les hauteurs (\p high), grandes maisons et manoirs (« ses plus belles
+		/// demeures se déployaient vers les hauteurs », p.20).
+		std::vector<TemplateRef> TowerPalette(bool high)
+		{
+			std::vector<TemplateRef> pal = { House("maison_haute_ardoise_6x8", 3), House("maison_ardoise_6x6", 2.5),
+				House("maison_haute_6x8", 1.5), House("echoppe_4x8", 1.2), House("maison_6x6", 1) };
+			if (high) { pal.push_back(House("grande_maison_ardoise_8x10", 2.5)); pal.push_back(House("manoir_8x12", 1.5)); }
+			else pal.push_back(House("grande_maison_ardoise_8x10", 0.6));
+			return pal;
+		}
+	}
+
+	void BuildTowerCity(World& w, CityDef& c, SettlementLayout& L, size_t firstBuilding)
+	{
+		const TowerShape& t = c.tower;
+		Rng rng(Hash(w.master.seed, HashString(c.id.c_str()), 1141));
+		const Vec2 o = t.center;
+		const double socleY = c.plateauY;
+		const double half = t.ledgeM * 0.5;
+		const double H = t.heightM;
+		const double R = t.SocleR();
+		const double turns = t.Turns();
+		const double rampL = TowerLengthAt(t, 1.0);
+		const Vec2 entry = Dir(t.entryRad);
+		const Vec2 entrySide{ -entry.z, entry.x };
+		const Lake* lake = nullptr;
+		for (const Lake& l : w.lakes)
+			if (l.name == "lac_" + c.id) lake = &l;
+		const double waterY = lake ? lake->waterY : socleY - kTowerSocleAboveWaterM;
+		const double bedY = waterY - 4.0;
+		c.radiusM = R;
+
+		// --- 1. Pic, socle et pied du socle sculptés dans la heightmap ; emprise urbaine (rues :
+		//     chaussées et socle ; maisons : 1) ; parois en roche ocre (peinture 3).
+		if (w.paint.data.empty())
+			w.paint.Init(w.height.width, w.height.height, w.height.originX, w.height.originZ, w.height.step, uint8_t(0));
+		TowerForDisc(w.height, o, R + 4.0, [&](int i, int j, double d) {
+			const Vec2 q{ w.height.WorldX(i), w.height.WorldZ(j) };
+			double& h = w.height.At(i, j);
+			if (d > R)
+			{
+				// Quai du socle : chute jusqu'au lit du lac (le lit au-delà est creusé par CarveLake).
+				h = Lerp(socleY, bedY, SmoothStep(R, R + 4.0, d));
+				w.paint.At(i, j) = 3;
+				return;
+			}
+			double s = -1.0, across = 0.0;
+			const double off = TowerOffset(t, q, &s, &across);
+			h = socleY + off;
+			if (d <= t.topRadiusM) { w.urban.At(i, j) = 2; return; }       // plateforme du palais
+			if (s >= 0.0) { w.urban.At(i, j) = across >= half - t.roadM - 0.5 ? 2 : 1; return; } // replat
+			if (off <= 0.05) { w.urban.At(i, j) = 2; return; }              // socle (quai)
+			w.paint.At(i, j) = 3;                                            // paroi rocheuse
+			w.urban.At(i, j) = 1;
+		});
+
+		// --- 2. Réserve de la chaussée (tout le long de la rampe) et de la plateforme.
+		for (double l = 0.0; l <= rampL; l += 2.0)
+		{
+			Vec2 axis, out, up;
+			TowerFrame(t, TowerSAtLength(t, l), axis, out, up);
+			w.Occupy(axis + out * (half - t.roadM * 0.5), t.roadM * 0.5 + 0.3);
+		}
+		w.Occupy(o, t.topRadiusM + 2.0);
+
+		// --- 3. Façades des parois : au pied de chaque paroi, des murs de pierre (échelle 3 :
+		//     6 × 9,4 m) jusqu'au replat du dessus, fenêtres en plein cintre au hasard ; toits
+		//     d'ardoise et tourelles sur la crête (entre la façade et le parapet du dessus).
+		//     Paroi intérieure d'un replat (vers le pic) : de son altitude à celle du replat
+		//     suivant (un tour plus haut) ou de la plateforme ; paroi extérieure du premier tour
+		//     (face au lac) : du socle au replat.
+		constexpr double kWallS = 3.0, kWallW = 2.0 * kWallS, kWallHt = 3.12 * kWallS;
+		int facadePanels = 0;
+		auto facade = [&](Vec2 foot, Vec2 tan, double y0, double y1, bool crest, Vec2 inward) {
+			if (y1 - y0 < 1.0) return;
+			const int rows = static_cast<int>(std::ceil((y1 - y0) / kWallHt));
+			const double yaw = YawAlong(tan); // +Z local vers le pic (face décorée vers le vide)
+			// Rangées alignées sur la crête (y1) : la rangée du bas s'enfonce sous le replat ou le
+			// socle (cachée), aucune ne dépasse au-dessus du replat du dessus.
+			const double yBase = y1 - rows * kWallHt;
+			for (int row = 0; row < rows; ++row)
+			{
+				const double u = rng.Next();
+				const char* mesh = (row == 0 || u < 0.55) ? "Wall_UnevenBrick_Straight"
+					: (u < 0.85 ? "Wall_UnevenBrick_Window_Thin_Round" : "Wall_UnevenBrick_Window_Wide_Round");
+				TowerProp(w, mesh, foot, yaw, kWallS, static_cast<uint8_t>(kSolid | kPiece), 0, yBase + row * kWallHt);
+				++facadePanels;
+			}
+			// Toit d'ardoise sur l'interstice entre la crête du mur et la marche de la paroi (une
+			// maille de heightmap, au quart de la paroi depuis le mur).
+			if (crest && rng.Chance(0.6))
+				TowerProp(w, "Roof_Slate_4x4", foot + inward * (t.bandM * 0.25), yaw, 1.0, 0, 0, y1 - 0.4);
+		};
+		{
+			// Le long de chaque replat, un panneau tous les 6 m (mesurés sur la ligne de pied).
+			double l = 0.0;
+			int turret = 0;
+			while (l < rampL)
+			{
+				const double s = TowerSAtLength(t, l);
+				Vec2 axis, out, up;
+				TowerFrame(t, s, axis, out, up);
+				const double r = std::hypot(axis.x - o.x, axis.z - o.z);
+				const double hHere = TowerRampHeight(t, s);
+				const double sUp = s + 1.0 / turns;
+				// Mur : bord X local le long de la tangente, sens trigonométrique (le +Z local regarde le pic).
+				const Vec2 tan{ -out.z, out.x };
+				// Paroi intérieure (au pied, côté pic).
+				const double footR = r - half - 0.1;
+				const Vec2 footIn = o + out * footR;
+				const double yLow = socleY + std::min(hHere, TowerRampHeight(t, TowerSAtLength(t, l + kWallW))) - 0.3;
+				// Crête : le plus bas du replat du dessus sur la largeur du panneau (une volée peut y
+				// commencer) — le mur ne dépasse jamais du replat qu'il soutient.
+				const double sUp2 = TowerSAtLength(t, TowerLengthAt(t, std::min(1.0, sUp)) + kWallW * r / std::max(10.0, footR));
+				const double yTop = socleY + (sUp <= 1.0 ? std::min(TowerRampHeight(t, sUp), TowerRampHeight(t, sUp2)) : H) + 0.4;
+				facade(footIn, tan, yLow, yTop, true, out * -1.0);
+				// Tourelle sur la crête, tous les ~70 m (« des tours dans les angles », p.20).
+				if (sUp <= 1.0 && l > 40.0 && (++turret % 12) == 0)
+				{
+					const Vec2 tp = o + out * (footR - t.bandM * 0.75); // replat haut de la paroi, devant le parapet
+					TowerProp(w, "Turret_Corner_1", tp, YawAlong(tan), 1.2, kSolid, 0, socleY + TowerRampHeight(t, sUp) - 0.5, 2.0);
+				}
+				// Pas de 6 m le long du pied de la paroi (rayon footR) : dl sur l'axe = 6·r/footR.
+				l += kWallW * r / std::max(10.0, footR);
+			}
+			// Paroi extérieure du premier tour (face au lac), du socle au replat ; arcs-boutants
+			// contre elle là où elle est haute (tous les ~48 m).
+			const double lFirst = TowerLengthAt(t, 1.0 / turns);
+			int k = 0;
+			for (double lo = 0.0; lo < lFirst; ++k)
+			{
+				const double s = TowerSAtLength(t, lo);
+				Vec2 axis, out, up;
+				TowerFrame(t, s, axis, out, up);
+				const double r = std::hypot(axis.x - o.x, axis.z - o.z);
+				const double hHere = TowerRampHeight(t, s);
+				const Vec2 tan{ -out.z, out.x };
+				const double footR = r + half + t.bandM + 0.1;
+				const Vec2 footOut = o + out * footR;
+				const double hTop = std::min(hHere, TowerRampHeight(t, TowerSAtLength(t, lo + kWallW * r / footR)));
+				facade(footOut, tan, socleY - 0.3, socleY + hTop + 0.4, true, out * -1.0);
+				if (hHere > 24.0 && k % 8 == 0)
+					TowerProp(w, "Flyingbuttress_1", footOut + out * 6.2, YawAlong(out * -1.0), 2.0, 0, 0, socleY - 0.2);
+				lo += kWallW * r / footR;
+			}
+		}
+
+		// --- 4. Chaussée : parapet au bord du vide (ouvert au pied de la rampe, sur le socle),
+		//     volées d'escalier (Stairs_Monumental_1 à l'échelle 0,85 : 2,55 × 1,53 m), arches
+		//     au-dessus de la chaussée sur les paliers, torches.
+		const double P = TowerStairPeriodM(t), run = TowerStairRunM(t);
+		int flights = 0, arches = 0, lights = 0;
+		for (double l = 25.0; l <= rampL; l += 2.0)
+		{
+			Vec2 axis, out, up;
+			TowerFrame(t, TowerSAtLength(t, l), axis, out, up);
+			const Vec2 tan{ -out.z, out.x };
+			const Vec2 p = axis + out * (half - 0.3);
+			TowerProp(w, "Bridge_Stone_Parapet_1", p, YawAlong(tan), 1.0, static_cast<uint8_t>(kSolid | kPiece), 1,
+				socleY + TowerRampHeight(t, TowerSAtLength(t, l)) - 0.05);
+		}
+		const int periods = static_cast<int>(std::lround(rampL / P));
+		for (int k = 0; k < periods; ++k)
+		{
+			const double l0 = k * P + (P - run); // bas de la volée
+			const int nf = static_cast<int>(std::lround(run / 2.55));
+			for (int f = 0; f < nf; ++f)
+			{
+				const double lm = l0 + 2.55 * (f + 0.5);
+				Vec2 axis, out, up;
+				TowerFrame(t, TowerSAtLength(t, lm), axis, out, up);
+				const Vec2 p = axis + out * (half - t.roadM * 0.5);
+				const double baseY = socleY + TowerRampHeight(t, TowerSAtLength(t, l0)) + 1.53 * f;
+				TowerProp(w, "Stairs_Monumental_1", p, YawFacing(up), 0.85, 0, 0, baseY);
+				++flights;
+			}
+			// Arche au-dessus de la chaussée au milieu du palier, une période sur deux.
+			if (k % 2 == 1)
+			{
+				const double la = k * P + (P - run) * 0.5;
+				Vec2 axis, out, up;
+				TowerFrame(t, TowerSAtLength(t, la), axis, out, up);
+				const double sc = (t.roadM + 1.2) / 4.9;
+				const Vec2 p = axis + out * (half - t.roadM * 0.5);
+				TowerProp(w, "Arch_Stone_1", p, YawAlong(out), sc, 0, 0, socleY + TowerRampHeight(t, TowerSAtLength(t, la)) - 0.1);
+				++arches;
+			}
+			// Torche au parapet, une période sur deux (lumière : flamme à 1,9 m).
+			if (k % 2 == 0)
+			{
+				const double lt = k * P + 10.0;
+				Vec2 axis, out, up;
+				TowerFrame(t, TowerSAtLength(t, lt), axis, out, up);
+				const Vec2 p = axis + out * (half - 0.9);
+				const double y = socleY + TowerRampHeight(t, TowerSAtLength(t, lt));
+				TowerProp(w, "Torch_Pole_1", p, 0.0, 1.0, kSolid, 1, y, 0.2);
+				TowerLight(w, c.id + "_rampe_" + std::to_string(lights++), p, y + 3.1, 10.0, 1.6);
+			}
+		}
+
+		// --- 5. Ponton de bois (un seul, BD p.19) : du bord du socle à la rive, dans la direction
+		//     d'entrée ; tablier de 6 m au niveau du socle (pieux jusqu'à l'eau), garde-corps,
+		//     poteaux à torche ; levée de terre sur la rive ; gibets et poteau indicateur à la
+		//     tête du ponton ; chemin pavé jusqu'à l'ancre des routes.
+		double shoreR = (lake ? LakeRadiusAt(*lake, t.entryRad) : t.lakeRadiusM) + 2.0;
+		while (shoreR < t.lakeRadiusM * 1.3 && w.HeightAt(o + entry * shoreR) < waterY + 0.25) shoreR += 2.0;
+		const double deckEnd = shoreR + 6.0;
+		// Levée de terre (7 m de large, 30 m) du niveau du tablier au terrain naturel.
+		TowerForDisc(w.height, o + entry * (deckEnd + 15.0), 26.0, [&](int i, int j, double) {
+			const Vec2 q{ w.height.WorldX(i) - o.x, w.height.WorldZ(j) - o.z };
+			const double along = q.x * entry.x + q.z * entry.z, side = std::fabs(q.x * entrySide.x + q.z * entrySide.z);
+			if (along < shoreR - 4.0 || along > deckEnd + 30.0 || side > 6.0) return;
+			const double k = SmoothStep(deckEnd, deckEnd + 30.0, along) * 0.7 + SmoothStep(3.5, 6.0, side) * 0.3;
+			double& h = w.height.At(i, j);
+			h = std::max(h, Lerp(socleY, h, Clamp(k, 0.0, 1.0)));
+			w.urban.At(i, j) = 2;
+		});
+		int deckTiles = 0;
+		for (double r = R - 1.0; r <= deckEnd; r += 2.0)
+		{
+			for (int col = -1; col <= 1; ++col)
+			{
+				const Vec2 p = o + entry * r + entrySide * (col * 2.0);
+				TowerProp(w, "Boardwalk_Deck_1", p, YawAlong(entry), 1.0, static_cast<uint8_t>(kSolid | kPiece), 0, socleY);
+				++deckTiles;
+			}
+			for (int sd = -1; sd <= 1; sd += 2)
+				TowerProp(w, "Prop_WoodenFence_Single", o + entry * r + entrySide * (sd * 3.1), YawAlong(entry), 1.0, 0, 1, socleY);
+			w.Occupy(o + entry * r, 3.6);
+		}
+		for (double r = R + 30.0; r < shoreR - 10.0; r += 40.0)
+		{
+			const int sd = (static_cast<int>(r / 40.0) % 2) ? 1 : -1;
+			const Vec2 p = o + entry * r + entrySide * (sd * 3.4);
+			TowerProp(w, "Torch_Pole_1", p, 0.0, 1.0, 0, 1, socleY);
+			if (static_cast<int>(r / 40.0) % 2 == 0) TowerLight(w, c.id + "_ponton_" + std::to_string(lights++), p, socleY + 3.1, 10.0, 1.5);
+		}
+		{
+			const Vec2 head = o + entry * (deckEnd + 8.0);
+			for (int sd = -1; sd <= 1; sd += 2)
+			{
+				const Vec2 gp = head + entrySide * (sd * 9.0) + entry * 6.0;
+				AddProp(w, "Gallows_1", gp, YawAlong(entry), 1.0, kSolid, 0, 1.6);
+				w.Occupy(gp, 2.4);
+			}
+			const Vec2 sp = head + entrySide * 4.6 - entry * 2.0;
+			AddProp(w, "Signpost_1", sp, YawFacing(entry), 1.0, kSolid, 1, 0.3);
+			w.Occupy(sp, 1.0);
+		}
+		// Chemin pavé de la tête du ponton à l'ancre des routes (rive).
+		{
+			Road path;
+			path.fromId = c.id; path.widthM = 5.0; path.path = true;
+			const Vec2 anchor = CityRoadAnchor(c);
+			const Vec2 a = o + entry * (deckEnd + 2.0);
+			const double len = std::hypot(anchor.x - a.x, anchor.z - a.z);
+			for (double d = 0.0; d <= len; d += 4.0)
+			{
+				const Vec2 q = a + (anchor - a) * (d / std::max(1.0, len));
+				path.points.push_back(q);
+				path.profileY.push_back(w.HeightAt(q));
+			}
+			if (path.points.size() >= 2)
+			{
+				TowerStampRoad(w, path);
+				PaveAlong(w, path.points, 2, "RockPath_Irregular_Wide", 0.0, o);
+				for (const Vec2& q : path.points) w.Occupy(q, 3.0);
+				w.roads.push_back(std::move(path));
+			}
+		}
+
+		// --- 6. Place du socle (nœud 0 du graphe), juste avant le pied de la rampe (sens inverse) :
+		//     auberge, étals du marché ; geôles plus loin sur le socle.
+		auto socleWidthAt = [&](double a, double& rIn) {
+			// Bord intérieur du socle (pied de la paroi extérieure du premier tour) à l'angle a.
+			double a0 = a - t.entryRad;
+			a0 -= 2.0 * 3.14159265358979323846 * std::floor(a0 / (2.0 * 3.14159265358979323846));
+			const double s0 = a0 / (2.0 * 3.14159265358979323846 * turns);
+			rIn = t.OuterR() - (t.OuterR() - t.InnerR()) * s0 + half + t.bandM + 0.6;
+			return R - rIn;
+		};
+		const double plazaA = t.entryRad - 0.30;
+		double plazaIn = 0.0;
+		socleWidthAt(plazaA, plazaIn);
+		const Vec2 plaza = o + Dir(plazaA) * (0.5 * (plazaIn + R));
+		AddNode(L, plaza);
+		for (int k = 0; k < 8; ++k)
+		{
+			const int id = AddNode(L, plaza + Dir(k * kPi / 4.0 + 0.2) * 5.0);
+			L.plazaRing.push_back(id);
+			Link(L, 0, id);
+		}
+		for (size_t k = 0; k < L.plazaRing.size(); ++k) Link(L, L.plazaRing[k], L.plazaRing[(k + 1) % L.plazaRing.size()]);
+		w.Occupy(plaza, 6.0);
+		// Auberge (lore : « au pied », fréquentée par les nains) : sur le socle, porte vers la place.
+		{
+			L.innDoor = plaza;
+			const TemplateRef inn = InnFor(c);
+			for (int attempt = 0; attempt < 16; ++attempt)
+			{
+				const double a = plazaA - 0.10 - 0.025 * attempt;
+				double rIn = 0.0;
+				const double wdt = socleWidthAt(a, rIn);
+				if (wdt < 2.0 * inn.halfD + 4.0) continue;
+				const Vec2 out = Dir(a);
+				const Vec2 ctr = o + out * (rIn + inn.halfD + 1.0);
+				const int b = TryPlaceBuilding(w, c, inn, ctr, out, "Auberge");
+				if (b >= 0)
+				{
+					w.buildings[static_cast<size_t>(b)].isInn = true;
+					L.innDoor = w.buildings[static_cast<size_t>(b)].doorPoint;
+					L.buildingIndices.push_back(b);
+					break;
+				}
+			}
+		}
+		// Étals du marché sur la place (herbes et réactifs des marais, lore v1.0.58).
+		{
+			static const char* kGoods[] = { "Shelf_Small_Bottles", "Basket_1", "Crate_Wooden", "Barrel" };
+			for (int k = 0; k < 4; ++k)
+			{
+				const double a = plazaA + 0.06 + 0.035 * k;
+				double rIn = 0.0;
+				socleWidthAt(a, rIn);
+				const Vec2 out = Dir(a), p = o + out * (R - 6.0);
+				if (w.IsOccupied(p, 1.4)) continue;
+				AddProp(w, k % 2 ? "Awning_Striped_1" : "Stall_Empty", p, YawFacing(out), 1.0, kSolid, 0, 1.0);
+				AddProp(w, kGoods[k], p - out * 1.4 + Vec2{ -out.z, out.x } * 0.8, rng.Range(0.0, 360.0), 1.0, 0, 2);
+				w.OccupyRect(p, 1.6, 1.0, YawFacing(out));
+				L.stallFronts.push_back(p - out * 1.6);
+			}
+		}
+
+		// --- 7. Geôles (BD p.22 : voûtes, gros piliers, banquettes, anneaux, soupiraux et rais de
+		//     lumière) : salle adossée à la face au lac du premier tour, sur le socle (24 × 12 m) ;
+		//     au fond, cinq cellules voûtées (Dungeon_Vault_1, 4,8 × 4 m, ouverture vers la salle)
+		//     fermées de grilles ; salle à piliers massifs sous un plafond de dalles (4,4 m) ;
+		//     façade sur le quai avec porte, soupiraux et enseigne de la prison.
+		Vec2 prisonDoor = plaza;
+		{
+			const double a = plazaA - 0.75;
+			double rIn = 0.0;
+			const double wdt = socleWidthAt(a, rIn);
+			const Vec2 out = Dir(a), tan{ -out.z, out.x };
+			const double depth = 12.0, width = 24.0, ceilY = 4.4;
+			if (wdt >= depth + 5.0)
+			{
+				const Vec2 back = o + out * rIn; // pied de la façade du premier tour
+				auto at = [&](double u, double v) { return back + out * u + tan * v; };
+				// Cellules : axe de la voûte (Z local) vers la salle, murets latéraux (X local).
+				for (int i = 0; i < 5; ++i)
+				{
+					const double v = -9.6 + 4.8 * i;
+					TowerProp(w, "Dungeon_Vault_1", at(2.0, v), YawAlong(tan), 1.0, 0, 0, socleY);
+					for (int g = -1; g <= 1; ++g)
+						TowerProp(w, "Dungeon_Grate_1", at(4.05, v + 1.2 * g), YawAlong(tan), 1.0, kSolid, 1, socleY, 0.6);
+					TowerProp(w, "Bench", at(0.9, v), YawFacing(out * -1.0), 1.0, kSolid, 1, socleY, 0.5);
+					TowerProp(w, "Chain_Hook_1", at(0.5, v + 1.3), 0.0, 1.0, 0, 2, socleY + 0.6);
+				}
+				// Salle : deux rangées de piliers massifs, plafond de dalles.
+				for (int i = 0; i < 4; ++i)
+					for (int j = 0; j < 2; ++j)
+						TowerProp(w, "Dungeon_Pillar_1", at(6.5 + 3.5 * j, -7.2 + 4.8 * i), 0.0, 1.0, kSolid, 0, socleY, 0.6);
+				for (double u = 5.0; u < depth; u += 2.0)
+					for (double v = -width * 0.5 + 1.0; v < width * 0.5; v += 2.0)
+						TowerProp(w, "Floor_Brick", at(u, v), YawAlong(tan), 1.0, static_cast<uint8_t>(kSolid | kPiece), 0, socleY + ceilY);
+				// Murs (échelle 1,5 : 3 × 4,7 m) : façade sur le quai (porte au milieu, soupiraux), flancs.
+				const double ws = 1.5;
+				for (int k = 0; k < 8; ++k)
+				{
+					const double v = -width * 0.5 + 1.5 + 3.0 * k;
+					const bool door = k == 4;
+					TowerProp(w, door ? "Wall_UnevenBrick_Door_Round" : "Wall_UnevenBrick_Straight", at(depth + 0.2, v), YawAlong(tan * -1.0), ws,
+						static_cast<uint8_t>(kSolid | kPiece), 0, socleY);
+					if (!door && k % 2 == 1) TowerProp(w, "Dungeon_Window_1", at(depth + 0.35, v), YawAlong(tan * -1.0), 1.0, 0, 1, socleY + 3.4);
+				}
+				for (int sd = -1; sd <= 1; sd += 2)
+					for (int k = 0; k < 4; ++k)
+						TowerProp(w, "Wall_UnevenBrick_Straight", at(1.5 + 3.0 * k, sd * (width * 0.5 + 0.2)), YawAlong(out * static_cast<double>(sd)), ws,
+							static_cast<uint8_t>(kSolid | kPiece), 0, socleY);
+				const double doorV = -width * 0.5 + 1.5 + 12.0;
+				prisonDoor = at(depth + 2.4, doorV);
+				TowerProp(w, "Door_2_Round", at(depth + 0.3, doorV - 0.8), YawAlong(tan * -1.0) + 70.0, ws, 0, 1, socleY);
+				for (int k = 0; k < 3; ++k)
+				{
+					const Vec2 tp = at(8.0, -8.0 + 8.0 * k);
+					TowerProp(w, "Torch_Metal", tp, YawFacing(out), 1.0, 0, 1, socleY + 2.0);
+					TowerLight(w, c.id + "_geoles_" + std::to_string(k), tp, socleY + 2.4, 9.0, 1.4);
+				}
+				AddProp(w, "Sign_Service_prison", at(depth + 1.1, doorV + 2.6), YawAlong(out), 1.0, kSolid, 1, 0.5);
+				w.OccupyRect(at(depth * 0.5 + 0.5, 0.0), width * 0.5 + 0.6, depth * 0.5 + 1.0, YawFacing(out));
+			}
+			else w.Warn("ville-tour " + c.id + " : socle trop etroit pour les geoles");
+		}
+
+		// --- 8. Maisons le long de la rampe : rangée côté pic (dos à la paroi, porte vers la
+		//     chaussée), sur les paliers (GroundOk écarte les volées). Les plus belles vers le haut.
+		int houses = 0;
+		{
+			double l = 30.0;
+			while (l < rampL - 25.0)
+			{
+				const double s = TowerSAtLength(t, l);
+				const std::vector<TemplateRef> pal = TowerPalette(s > 0.5);
+				const TemplateRef& tm = PickWeighted(pal, rng.Next());
+				const double hx = tm.halfW + 0.6, hz = tm.halfD + 0.6;
+				const double footR = std::sqrt(hx * hx + hz * hz);
+				const double u = -half + footR + 0.4;
+				if (u + tm.halfD > half - t.roadM - 0.6) { l += 2.0; continue; }
+				Vec2 axis, out, up;
+				TowerFrame(t, s, axis, out, up);
+				const int b = TryPlaceBuilding(w, c, tm, axis + out * u, out, "Maison");
+				if (b >= 0) { L.buildingIndices.push_back(b); ++houses; l += 2.0 * tm.halfW + 1.2 + rng.Range(0.0, 1.0); }
+				else l += 2.0;
+			}
+		}
+
+		// --- 9. Cimetière (point de résurrection) : sur la rive, à côté du chemin pavé.
+		if (!w.master.graveyardExcluded.count(c.id))
+		{
+			L.hasGraveyard = true;
+			const Vec2 anchor = CityRoadAnchor(c);
+			Vec2 gy = anchor - entry * 90.0 + entrySide * 28.0;
+			for (int attempt = 0; attempt < 16; ++attempt)
+			{
+				if (!w.IsWater(gy) && !w.IsOccupied(gy, 4.0) && w.InPlayableBounds(gy, 60.0) && TowerRoadGap(w, gy) > 8.0) break;
+				gy = anchor - entry * (90.0 - 8.0 * attempt) + entrySide * ((attempt % 2 ? -1.0 : 1.0) * (28.0 + 4.0 * attempt));
+			}
+			L.graveyard = gy;
+			AddProp(w, "CandleStick_Stand", gy, 0.0, 1.0, 0, 1);
+			PlaceOldGraves(w, gy, o - gy, GraveCountFor(c), rng);
+			w.Occupy(gy, 2.5);
+		}
+		else L.graveyard = plaza;
+
+		// --- 10. Graphe des PNJ : place → pied de la rampe → chaussée jusqu'au sommet (nœuds tous
+		//     les 9 m) → parvis du palais ; place → ponton → rive ; place → geôles et auberge.
+		{
+			int prev = TowerNearestOf(L, L.plazaRing, o + entry * (t.OuterR() + half));
+			for (double l = 0.0; l <= rampL; l += 9.0)
+			{
+				Vec2 axis, out, up;
+				TowerFrame(t, TowerSAtLength(t, l), axis, out, up);
+				const int id = AddNode(L, axis + out * (half - t.roadM * 0.5));
+				Link(L, prev, id);
+				prev = id;
+			}
+			const Vec2 topEdge = TowerRampPoint(t, 1.0);
+			const int parvis = AddNode(L, o + (topEdge - o) * ((t.topRadiusM - 6.0) / std::max(1.0, std::hypot(topEdge.x - o.x, topEdge.z - o.z))));
+			Link(L, prev, parvis);
+			prev = TowerNearestOf(L, L.plazaRing, o + entry * R);
+			for (double r = R - 2.0; r <= deckEnd + 20.0; r += 9.0)
+			{
+				const int id = AddNode(L, o + entry * r);
+				Link(L, prev, id);
+				prev = id;
+			}
+			const int pd = AddNode(L, prisonDoor);
+			Link(L, TowerNearestOf(L, L.plazaRing, prisonDoor), pd);
+			const int id = AddNode(L, L.innDoor);
+			Link(L, TowerNearestOf(L, L.plazaRing, L.innDoor), id);
+		}
+
+		// --- 11. Enseignes de service (la prison a la sienne, à la porte des geôles).
+		{
+			CityDef signs = c;
+			signs.services.erase(std::remove(signs.services.begin(), signs.services.end(), "prison"), signs.services.end());
+			PlaceServiceSigns(w, signs, firstBuilding);
+		}
+		L.startSpot = plaza - entry * 2.0;
+		L.startYawDeg = YawFacing(entry * -1.0);
+		if (houses < 120) w.Warn("ville-tour " + c.id + " : seulement " + std::to_string(houses) + " maisons");
+		(void)facadePanels; (void)flights; (void)arches; (void)deckTiles;
+	}
+
 	void BuildSettlements(World& w)
 	{
 		w.urban.Init(w.height.width, w.height.height, w.height.originX, w.height.originZ, w.height.step, w.urban.data.empty() ? uint8_t(0) : uint8_t(0));
@@ -879,6 +1455,13 @@ namespace tools::world_gen
 			if (c.layout == "oracle")
 			{
 				BuildOracleCamp(w, c, L);
+				w.layouts.push_back(std::move(L));
+				continue;
+			}
+			// v1.0.141 : Magistrya, ville-tour en spirale sur son pic au milieu du lac.
+			if (c.layout == "ville_tour" && c.tower.enabled)
+			{
+				BuildTowerCity(w, c, L, firstBuilding);
 				w.layouts.push_back(std::move(L));
 				continue;
 			}

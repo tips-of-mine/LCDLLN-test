@@ -2297,6 +2297,11 @@ namespace engine
 				LOG_WARN(Render, "[Boot] WaterPass: création skybox muette échouée");
 			}
 
+			// EAU.6 — houle de la mer : mêmes réglages pour le rendu et la nage.
+			m_seaSwell.amplitudeM = std::clamp(
+				static_cast<float>(m_cfg.GetDouble("render.water.sea_swell_m", 0.35)), 0.0f, 1.5f);
+			m_waterPass.SetSeaSwell(m_seaSwell);
+			m_terrainCollider.SetSeaSwell(m_seaSwell);
 			if (!waterVert.empty() && !waterFrag.empty()
 				&& m_waterNormalMapView != VK_NULL_HANDLE
 				&& m_waterNormalMapSampler != VK_NULL_HANDLE
@@ -3735,7 +3740,8 @@ namespace engine
 		base.cameraPos[2] = rs.camera.position.z;
 		// TODO(M100.x): vraie source de temps wall-clock. Note : perte de précision
 		// float après ~78h (uint32_t > 2^24 = 16.7 M frames @ 60Hz).
-		base.timeSeconds   = static_cast<float>(m_currentFrame) / 60.0f;
+		// EAU.6 : même horloge que la nage et le son du ressac (WaterTimeSeconds).
+		base.timeSeconds   = WaterTimeSeconds();
 		base.screenSize[0] = static_cast<float>(m_vkSwapchain.GetExtent().width);
 		base.screenSize[1] = static_cast<float>(m_vkSwapchain.GetExtent().height);
 
@@ -3811,7 +3817,7 @@ namespace engine
 			if (limit > 0.0f && fogEnd > limit)
 			{
 				fogEnd = limit;
-				fogStart = std::min(fogStart, fogEnd * 0.35f); // garde un rayon clair autour du joueur
+				fogStart = std::min(fogStart, fogEnd * 0.5f); // garde un rayon clair autour du joueur (25/11/2026 : 0,35 -> 0,5)
 			}
 		}
 		lp.cameraPos[3] = fogStart;
@@ -3821,6 +3827,15 @@ namespace engine
 		// M45.1 — densité d'extinction de la perspective aérienne (slot lightColor.w).
 		// Override config.json (world.fog.density) sinon valeur per-zone (atmosphere.json).
 		lp.lightColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.density", static_cast<double>(m_zoneAtmosphere.aerialDensity)));
+		if (m_cellWorld && fogEnd > fogStart)
+		{
+			// Retour propriétaire du 25/11/2026 (Lhynn « voilée » à une centaine de mètres) :
+			// la densité 0,012 /m date d'un fondu à 85 m ; avec un fondu total repoussé à
+			// 420 m, l'exponentielle voilait déjà 50 % du décor 60 m après fogStart. Elle est
+			// bornée à 1 / (fogEnd - fogStart) : ~63 % atteints seulement au fondu total, le
+			// smoothstep du shader garantissant toujours l'opacité complète à fogEnd.
+			lp.lightColor[3] = std::min(lp.lightColor[3], 1.0f / (fogEnd - fogStart));
+		}
 		const float probeIntensity = GetGlobalProbeIntensity(m_zoneProbes);
 		lp.ambientColor[0] = m_zoneAtmosphere.ambientColor[0] * probeIntensity;
 		lp.ambientColor[1] = m_zoneAtmosphere.ambientColor[1] * probeIntensity;

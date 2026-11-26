@@ -1612,6 +1612,11 @@ namespace engine::render::terrain
                 ubo.texOffsetX[l] = static_cast<float>(ox);
                 ubo.texOffsetZ[l] = static_cast<float>(oz);
             }
+            // EAU.6 — sable sec / mouillé des côtes maritimes (0 = rendu inchangé).
+            ubo.coastParams[0] = m_coastSeaLevelY;
+            ubo.coastParams[1] = m_coastHasSea ? 1.0f : 0.0f;
+            ubo.coastParams[2] = m_coastRunUpM;
+            ubo.coastParams[3] = 0.0f;
 
             void* mapped = nullptr;
             if (vkMapMemory(device, m_uboMemory, 0, sizeof(FrameUbo), 0, &mapped) == VK_SUCCESS)

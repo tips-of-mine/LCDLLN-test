@@ -6,12 +6,13 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include <algorithm>
 #include <vector>
 
 namespace engine::render
 {
-	static_assert(sizeof(engine::render::WaterVertex) == 28,
-		"WaterPass pipeline assumes WaterVertex is 28 bytes (pos3 + uv2 + flowDir2)");
+	static_assert(sizeof(engine::render::WaterVertex) == 36,
+		"WaterPass pipeline assumes WaterVertex is 36 bytes (pos3 + uv2 + flowDir2 + sea2)");
 
 	// -------------------------------------------------------------------------
 	// Internal helpers
@@ -289,25 +290,28 @@ namespace engine::render
 			stages[1].module = fragMod;
 			stages[1].pName  = "main";
 
-			// Vertex binding : WaterVertex = pos3 (offset 0) + uv2 (offset 12) + flowDir2 (offset 20) = 28 B
+			// Vertex binding : WaterVertex = pos3 (offset 0) + uv2 (offset 12) + flowDir2 (offset 20)
+			// + sea2 (offset 28, EAU.6 : profondeur d'eau, fondu des vagues) = 36 B
 			VkVertexInputBindingDescription vboBinding{};
 			vboBinding.binding   = 0;
-			vboBinding.stride    = 28;  // sizeof(WaterVertex)
+			vboBinding.stride    = sizeof(WaterVertex);
 			vboBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-			VkVertexInputAttributeDescription attribs[3]{};
+			VkVertexInputAttributeDescription attribs[4]{};
 			attribs[0].location = 0; attribs[0].binding = 0;
 			attribs[0].format   = VK_FORMAT_R32G32B32_SFLOAT; attribs[0].offset = 0;   // position
 			attribs[1].location = 1; attribs[1].binding = 0;
 			attribs[1].format   = VK_FORMAT_R32G32_SFLOAT;    attribs[1].offset = 12;  // uv
 			attribs[2].location = 2; attribs[2].binding = 0;
 			attribs[2].format   = VK_FORMAT_R32G32_SFLOAT;    attribs[2].offset = 20;  // flowDir
+			attribs[3].location = 3; attribs[3].binding = 0;
+			attribs[3].format   = VK_FORMAT_R32G32_SFLOAT;    attribs[3].offset = 28;  // sea (EAU.6)
 
 			VkPipelineVertexInputStateCreateInfo vi{};
 			vi.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 			vi.vertexBindingDescriptionCount   = 1;
 			vi.pVertexBindingDescriptions      = &vboBinding;
-			vi.vertexAttributeDescriptionCount = 3;
+			vi.vertexAttributeDescriptionCount = 4;
 			vi.pVertexAttributeDescriptions    = attribs;
 
 			VkPipelineInputAssemblyStateCreateInfo ia{};
@@ -600,9 +604,6 @@ namespace engine::render
 		constexpr float kRiverDefaultBottomColor[3] = { 0.05f, 0.15f, 0.20f };
 		constexpr float kRiverDefaultTurbidity      = 0.4f;
 		constexpr float kRiverDefaultFlowSpeed      = 0.5f;
-		// EAU.2 — mer : direction du vent dominant (XZ) et force de la houle (0..3).
-		constexpr float kSeaWindDirection[2]        = { 0.8f, 0.6f };
-		constexpr float kSeaSwellStrength           = 1.0f;
 
 		for (const auto& drawInfo : drawInfos)
 		{
@@ -621,12 +622,13 @@ namespace engine::render
 				pc.flowSpeed          = 0.0f;   // Lac : pas de flow directionnel
 				if (lake.isOcean)
 				{
-					// EAU.2 — mer : houle et moutons dans water.frag. Convention :
-					// flowSpeed NÉGATIF = mer, |flowSpeed| = force de la houle ;
+					// EAU.2 / EAU.6 — mer : houle dans water.vert (surface soulevée)
+					// et water.frag (éclairage, moutons, vagues de bord). Convention :
+					// flowSpeed NÉGATIF = mer, |flowSpeed| = amplitude de la houle (m) ;
 					// flowDirection = direction du vent (XZ, normalisée par le shader).
-					pc.flowDirection[0] = kSeaWindDirection[0];
-					pc.flowDirection[1] = kSeaWindDirection[1];
-					pc.flowSpeed        = -kSeaSwellStrength;
+					pc.flowDirection[0] = m_seaSwell.windDirX;
+					pc.flowDirection[1] = m_seaSwell.windDirZ;
+					pc.flowSpeed        = -std::max(m_seaSwell.amplitudeM, 0.001f);
 				}
 				pc.refractionAmount   = 0.02f;
 				pc.fresnelPower       = 5.0f;

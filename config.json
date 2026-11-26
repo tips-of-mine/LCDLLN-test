@@ -102,6 +102,10 @@
             "grass_mask_visual_strength": 0.35,
             "hole_mask": ""
         },
+        "water": {
+            "_comment": "EAU.6 : houle de la mer (lacs et rivieres jamais concernes). sea_swell_m = elevation maximale de la houle au-dessus du niveau moyen (m, 0 a 1.5) ; la nage suit la meme surface. 0.35 = mer calme (eclairage de la houle identique a EAU.2).",
+            "sea_swell_m": 0.35
+        },
         "hiz": {
             "_comment": "Occlusion culling Hi-Z (GPU-driven cull). Defaut false : la passe HiZ_Build n'est PAS enregistree dans le frame graph (HiZPyramidPass reecrivait son descriptor set unique en vol => erreur de validation Vulkan chaque frame) et le GpuDrivenCullingPass recoit un view Hi-Z nul => fallback conservateur. Sa sortie etait inerte (seul le cube placeholder etait cull). Repasser a true uniquement si le GPU-cull est reellement branche sur plusieurs draw-items.",
             "enabled": false

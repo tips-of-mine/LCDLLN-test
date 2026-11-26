@@ -97,6 +97,8 @@
 #include "src/client/render/WeatherSystem.h"
 #include "src/client/render/DynamicLightSystem.h"
 #include "src/shared/world/water/WaterSurfaces.h"
+#include "src/client/world/water/SeaGrid.h"
+#include "src/client/world/water/SeaSwell.h"
 #include "src/shared/math/Frustum.h"
 #include "src/shared/math/Math.h"
 #include "src/shared/world/WorldModel.h"
@@ -819,6 +821,32 @@ namespace engine
 		/// Drapeau dirty côté client : mis à true à chaque réception/rechargement
 		/// d'une WaterScene. Reset à false par le rebuild GPU (cf. Engine::Render).
 		bool m_waterClientSceneDirty = false;
+
+		/// EAU.6 — houle de la mer (clé `render.water.sea_swell_m`), la MÊME pour le
+		/// rendu (WaterPass) et la nage (TerrainCollider) : le joueur flotte sur la
+		/// vague qu'il voit.
+		engine::world::water::SeaSwellParams m_seaSwell{};
+		/// EAU.6 — grille de mer autour du joueur (repère de rendu), envoyée au GPU
+		/// avec la scène d'eau client. Vide hors de la mer.
+		engine::world::water::SeaGridCpu m_seaGrid;
+		/// EAU.6 — grille à reconstruire (scène d'eau ou repère de rendu changés).
+		bool m_seaGridDirty = true;
+		/// EAU.6 — frames avant un nouvel essai quand le sol n'était pas chargé.
+		uint32_t m_seaGridRetryFrames = 0;
+		/// EAU.6 — numéro de la dernière vague arrivée au rivage (son du ressac).
+		long long m_surfBreakIndex = 0;
+
+		/// EAU.6 — horloge des vagues (s) : la même pour le rendu de l'eau, la nage
+		/// et le son du ressac (frames / 60, comme l'horloge historique de l'eau).
+		float WaterTimeSeconds() const { return static_cast<float>(m_currentFrame) / 60.0f; }
+		/// EAU.6 — reconstruit la grille de mer autour de \p playerRenderPos si le
+		/// joueur s'est déplacé d'un pas de recalage (64 m), si la scène d'eau a
+		/// changé, ou pour affiner un bord échantillonné avant le chargement du sol.
+		/// Marque le mesh d'eau à renvoyer au GPU. Main thread.
+		void UpdateSeaGrid(const engine::math::Vec3& playerRenderPos);
+		/// EAU.6 — son du ressac : une vague qui déferle à chaque arrivée au rivage,
+		/// calée sur la montée de l'eau, si la côte est proche. Main thread.
+		void UpdateSurfAudio();
 
 		/// M38.1: day/night cycle (time-of-day, sun direction, sky gradient colours).
 		engine::render::DayNightCycle m_dayNight;

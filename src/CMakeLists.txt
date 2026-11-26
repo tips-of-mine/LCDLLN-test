@@ -708,6 +708,17 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/client/world/cells/CellWorldFrame.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # EAU.6 : houle de la mer et jet de rive (formule partagée rendu / nage,
+  # parité des constantes avec water.vert et water.frag).
+  lcdlln_add_simple_test(sea_swell_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/tests/SeaSwellTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/SeaSwell.cpp)
+  # EAU.6 : grille de mer autour du joueur (découpe des nappes, profondeur, fondu).
+  lcdlln_add_simple_test(sea_grid_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/tests/SeaGridTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/SeaGrid.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/SeaSwell.cpp)
+
   # SND.2 — lecture réelle des sons (miniaudio sans périphérique), variantes,
   # cadence et surface des pas. SoundDevice/Footsteps/AudioEngine sont dans engine_core.
   lcdlln_add_simple_test(sound_tests

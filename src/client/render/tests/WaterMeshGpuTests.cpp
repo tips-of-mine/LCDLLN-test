@@ -68,8 +68,11 @@ namespace
 		// Riviere 2 noeuds : 1 segment = 2 triangles = 6 indices, 4 vertices
 		REQUIRE(infos[1].indexCount == 6);
 		REQUIRE(infos[1].vertexOffset == 3);
-		// Verts : (3 lake + 4 river) * 7 floats / vertex = 49 floats
-		REQUIRE(verts.size() == 49u);
+		// Verts : (3 lake + 4 river) * 9 floats / vertex = 63 floats (EAU.6 : + sea2)
+		REQUIRE(verts.size() == 63u);
+		// EAU.6 : lacs et rivieres jamais souleves (fondu des vagues = 0).
+		for (size_t v = 0; v < verts.size() / 9; ++v)
+			REQUIRE(verts[v * 9 + 8] == 0.0f);
 		// Idx : 3 lake + 6 river = 9 indices
 		REQUIRE(idx.size() == 9u);
 	}
@@ -134,6 +137,53 @@ namespace
 		REQUIRE(infos.size() == 1);
 		REQUIRE(infos[0].paramsIndex == 1);
 	}
+
+	/// EAU.6 — la grille de mer remplace la nappe autour du joueur : la nappe
+	/// est decoupee (pas de double dessin), la grille vient en dernier avec les
+	/// parametres de la mer ; un lac voisin reste intact.
+	void Test_BuildDrawInfos_SeaGrid_SplitsOceanAndAppendsGrid()
+	{
+		WaterScene scene;
+		LakeInstance lake;
+		lake.name = "lac";
+		lake.polygon = { Vec3{-900,5,-900}, Vec3{-890,5,-900}, Vec3{-890,5,-890} };
+		lake.waterLevelY = 5.0f;
+		LakeInstance ocean;
+		ocean.name = "ocean";
+		ocean.isOcean = true;
+		ocean.waterLevelY = 0.0f;
+		ocean.polygon = { Vec3{-1000,0,-1000}, Vec3{1000,0,-1000}, Vec3{1000,0,1000}, Vec3{-1000,0,1000} };
+		scene.lakes = { lake, ocean };
+
+		engine::world::water::SeaGridSettings gs;
+		gs.halfSizeM = 64.0f;
+		gs.stepM = 8.0f;
+		engine::world::water::SeaGridCpu grid;
+		const auto deep = [](float, float, bool& known) { known = true; return -20.0f; };
+		REQUIRE(engine::world::water::BuildSeaGrid(scene.lakes, 0.0f, 0.0f, gs, deep, grid));
+		REQUIRE(grid.oceanLakeIndex == 1u);
+
+		std::vector<float> verts;
+		std::vector<uint32_t> idx;
+		std::vector<WaterInstanceDrawInfo> infos;
+		BuildDrawInfos(scene, verts, idx, infos, &grid);
+
+		// lac (1) + nappe en 4 morceaux autour du trou (4) + grille (1).
+		REQUIRE(infos.size() == 6u);
+		REQUIRE(infos[0].paramsIndex == 0u);
+		for (size_t i = 1; i <= 4; ++i)
+			REQUIRE(infos[i].paramsIndex == 1u);
+		REQUIRE(infos.back().paramsIndex == 1u);
+		REQUIRE(infos.back().indexCount == static_cast<uint32_t>(grid.indices.size()));
+		// Sommets de la grille : profondeur et fondu transmis (dernier bloc).
+		const size_t gridFirst = static_cast<size_t>(infos.back().vertexOffset) * 9;
+		REQUIRE(verts.size() == gridFirst + grid.vertices.size() * 9);
+		REQUIRE(verts[gridFirst + 7] == grid.vertices[0].depthM);
+
+		// Sans grille : rendu d'avant (lac + nappe entiere).
+		BuildDrawInfos(scene, verts, idx, infos);
+		REQUIRE(infos.size() == 2u);
+	}
 }
 
 int main()
@@ -142,6 +192,7 @@ int main()
 	Test_BuildDrawInfos_OneLake_OneRiver_ProducesTwoInfos();
 	Test_BuildDrawInfos_ParamsIndexOrdering_LakesFirst();
 	Test_BuildDrawInfos_FailedLake_ParamsIndexGap();
+	Test_BuildDrawInfos_SeaGrid_SplitsOceanAndAppendsGrid();
 
 	if (g_failed == 0)
 	{

@@ -638,8 +638,12 @@ namespace tools::world_gen
 			{
 				if (wd.valleyM <= 0.0) continue;
 				const double r0 = wd.lengthM * 0.5;
+				// Boîte englobante d'abord (relevé de revue) : la quasi-totalité des échantillons du
+				// continent est loin de tout élargissement, aucun calcul de distance pour eux.
+				const double reach = r0 + wd.valleyM;
+				if (std::fabs(x - wd.center.x) >= reach || std::fabs(z - wd.center.z) >= reach) continue;
 				const double d = std::hypot(x - wd.center.x, z - wd.center.z);
-				if (d >= r0 + wd.valleyM) continue;
+				if (d >= reach) continue;
 				// Une acropole voisine n'est jamais entamée : l'abaissement s'efface dès que sa butte
 				// s'élève (0 à 15 m au-dessus de son pied) ; son pied tombe alors en falaise sur la plaine.
 				double keep = 0.0;

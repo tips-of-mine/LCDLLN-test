@@ -59,6 +59,13 @@ namespace engine::render
 	{
 		const engine::client::WorldPlaces* places = nullptr;
 		uint64_t mapTexture = 0;    ///< ImTextureID de world_map.png (0 = fond uni)
+		/// Habillage parchemin (25/11/2026, textures Blender de game/data/ui/map/) :
+		/// ImTextureID chargés par SkillIconCache ; 0 = absente (repli vectoriel).
+		uint64_t rollTexture = 0;      ///< ui/map/map_roll.png (rouleau en 3 tranches)
+		float rollTexW = 0.0f;         ///< taille native de map_roll.png (texels)
+		float rollTexH = 0.0f;
+		uint64_t parchmentTexture = 0; ///< ui/map/map_parchment.png (répétable ; teinté = inexploré)
+		uint64_t edgeTexture = 0;      ///< ui/map/map_edge.png (bord usé en 9 tranches)
 		float playerX = 0.0f;       ///< position joueur (m)
 		float playerZ = 0.0f;
 		float playerYaw = 0.0f;     ///< cap (rad) : avant = (sin yaw, cos yaw) en XZ

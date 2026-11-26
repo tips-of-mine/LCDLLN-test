@@ -68,6 +68,25 @@ int main()
 	CheckNear(WorldMapUnrollHeight(0.5f, 60.0f, 600.0f), 330.0f, "hauteur : mi-course");
 	CheckNear(WorldMapUnrollHeight(0.0f, 800.0f, 600.0f), 600.0f, "hauteur : minH borne a fullH");
 
+	// Fondu du bord de zone découverte : opaque loin, transparent dedans, monotone.
+	CheckNear(WorldMapFogAlpha(0.0f), 1.0f, "voile : rien de decouvert = opaque");
+	CheckNear(WorldMapFogAlpha(1.0f), 0.0f, "voile : tout decouvert = transparent");
+	Check(WorldMapFogAlpha(0.5f) > 0.2f && WorldMapFogAlpha(0.5f) < 0.8f, "voile : ancien seuil 0.5 dans le fondu");
+	{
+		float prev = 2.0f;
+		bool decreasing = true;
+		for (int i = 0; i <= 100; ++i)
+		{
+			const float a = WorldMapFogAlpha(static_cast<float>(i) / 100.0f);
+			decreasing = decreasing && a <= prev;
+			prev = a;
+		}
+		Check(decreasing, "voile : decroissant avec la couverture");
+	}
+	Check(WorldMapFogLevel(0.0f) == 0, "niveau : 0");
+	Check(WorldMapFogLevel(1.0f) == kWorldMapFogLevels - 1, "niveau : max");
+	Check(WorldMapFogLevel(2.0f) == kWorldMapFogLevels - 1 && WorldMapFogLevel(-1.0f) == 0, "niveau : borne");
+
 	if (s_failCount == 0)
 		std::cout << "[OK] world_map_presentation_tests" << std::endl;
 	return s_failCount == 0 ? 0 : 1;

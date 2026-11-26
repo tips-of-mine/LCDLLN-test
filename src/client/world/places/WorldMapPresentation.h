@@ -8,7 +8,8 @@
 //    montré que par l'info-bulle de survol (WorldMapImGuiRenderer) ; le
 //    nom d'une région n'apparaît (en filigrane, à son centre) que lorsque le
 //    curseur est dans la région, et seulement en vue éloignée comme avant ;
-//  - la fenêtre s'ouvre comme un parchemin qu'on déroule (hauteur animée).
+//  - la fenêtre s'ouvre comme un parchemin qu'on déroule (hauteur animée) ;
+//  - 25/11/2026 : bord de la zone découverte en fondu (voile progressif).
 //
 // Fonctions pures (testées par world_map_presentation_tests), sans dépendance ImGui.
 
@@ -30,6 +31,31 @@ namespace engine::client
 	inline bool WorldMapRegionNameVisible(float zoom, bool cursorInRegion, bool centerDiscovered)
 	{
 		return cursorInRegion && centerDiscovered && zoom <= kWorldMapRegionLabelMaxZoom;
+	}
+
+	/// Bord flou de la zone découverte (25/11/2026) : couverture lissée basse
+	/// (0) à haute (1) sur laquelle le voile passe de opaque à transparent.
+	/// L'ancien contour net était le seuil 0,5 ; la bande l'encadre largement.
+	inline constexpr float kWorldMapFogFadeLow = 0.02f;
+	inline constexpr float kWorldMapFogFadeHigh = 0.95f;
+	/// Nombre de niveaux d'opacité du fondu (regroupe les sous-cases voisines de
+	/// même niveau en une seule série : peu de quads de plus qu'avant).
+	inline constexpr int kWorldMapFogLevels = 16;
+
+	/// Opacité du voile (0 = transparent, 1 = opaque) en un point du bord, à
+	/// partir de sa couverture lissée \p coverage dans [0, 1] (moyenne gaussienne
+	/// des cases découvertes, cf. dsc::IsPointRevealedSmooth). Interpolation
+	/// « smoothstep » entre kWorldMapFogFadeLow et kWorldMapFogFadeHigh.
+	inline float WorldMapFogAlpha(float coverage)
+	{
+		const float t = std::clamp((coverage - kWorldMapFogFadeLow) / (kWorldMapFogFadeHigh - kWorldMapFogFadeLow), 0.0f, 1.0f);
+		return 1.0f - t * t * (3.0f - 2.0f * t);
+	}
+
+	/// Niveau quantifié 0..kWorldMapFogLevels-1 de l'opacité \p alpha (0 = pas de voile).
+	inline int WorldMapFogLevel(float alpha)
+	{
+		return std::clamp(static_cast<int>(alpha * static_cast<float>(kWorldMapFogLevels - 1) + 0.5f), 0, kWorldMapFogLevels - 1);
 	}
 
 	/// Avancement du déroulé dans [0, 1] après \p elapsedS secondes, pour une durée

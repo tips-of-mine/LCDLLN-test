@@ -115,7 +115,7 @@ std::optional<StaticMeshCpuData> StaticMeshLoader::LoadCpuOnlyForTests(const std
                 // alphaMode MASK/BLEND -> decoupe alpha (feuillages). En differe on traite
                 // les deux comme un cutout (discard sous le seuil dans le fragment shader).
                 sub.alphaCutout = (prim->material->alpha_mode != cgltf_alpha_mode_opaque);
-                // Lore v1.0.140 — émission (emissiveFactor gris de l'atelier décors) : une
+                // Lore v1.0.141 — émission (emissiveFactor gris de l'atelier décors) : une
                 // intensité scalaire suffit (l'albedo porte la teinte, cf. lighting.frag).
                 const float* ef = prim->material->emissive_factor;
                 float em = std::max(ef[0], std::max(ef[1], ef[2]));

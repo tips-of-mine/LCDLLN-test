@@ -111,7 +111,7 @@ void main()
 
     // ---- ORM --------------------------------------------------------------
     outORM = vec4(texture(uTextures[mat.ormIndex], tiledUv).rgb, 1.0);
-    // Lore v1.0.140 — matériau émissif (bit Emissive = 8u, intensité dans padding.x) :
+    // Lore v1.0.141 — matériau émissif (bit Emissive = 8u, intensité dans padding.x) :
     // GBufferC.a = 1 − émission, comme la lave du terrain (lighting.frag l'ajoute).
     if ((mat.flags & 8u) != 0u)
         outORM.a = 1.0 - clamp(mat.padding.x, 0.0, 1.0);

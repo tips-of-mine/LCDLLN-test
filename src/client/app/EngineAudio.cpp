@@ -289,6 +289,24 @@ namespace engine
 			}
 		}
 	}
+	void Engine::UpdateSurfAudio()
+	{
+		// Une vague arrive au rivage à chaque changement d'index (SeaSwell.h) : le
+		// son part au moment où l'eau monte sur la plage (water.vert, seaSurge).
+		const long long idx = engine::world::water::SeaSurfBreakIndex(WaterTimeSeconds());
+		if (idx == m_surfBreakIndex)
+			return;
+		m_surfBreakIndex = idx;
+		if (!m_audioEngine.IsDeviceReady() || !m_seaGrid.Valid())
+			return;
+		// Volume : celui de l'ambiance de côte (mer à moins de ~30 m), qui fait déjà
+		// le fondu quand on s'éloigne du rivage.
+		const float coast = m_ambienceLevels[static_cast<size_t>(engine::audio::AmbienceLayer::Coast)];
+		if (coast <= 0.05f)
+			return;
+		m_audioEngine.Play2D("amb_surf", coast);
+	}
+
 	engine::audio::CombatAudioSnapshot Engine::BuildCombatAudioSnapshot() const
 	{
 		engine::audio::CombatAudioSnapshot snap;

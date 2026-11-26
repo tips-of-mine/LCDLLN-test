@@ -18,7 +18,7 @@
 //      armures, temple, cimetière, cinq écuries (enclos).
 // Les routes du lore qui arrivaient au centre s'arrêtent au chemin de ronde du pied du rocher.
 //
-// v1.0.140 (demande du propriétaire du 25/11/2026, planches T1-P003..005, T2-P044..046,
+// v1.0.141 (demande du propriétaire du 25/11/2026, planches T1-P003..005, T2-P044..046,
 // T3-P005..007) :
 //   - rocher en CRISTAL BLEU : couche de cristal du terrain (zone.json crystal_layer, rendu
 //     client) et dalles de cristal maillées sur les parois et la couronne ;
@@ -59,16 +59,16 @@ namespace tools::world_gen
 		constexpr double kCrownH = 28.0;     ///< couronne à facettes (sommet ≈ 90 m)
 		constexpr double kDoorH = 22.0;      ///< palier des portes au-dessus de la plaine
 		constexpr double kLandOut = 4.0;     ///< bord extérieur du palier (s, m, depuis le pied)
-		constexpr double kLandIn = -10.0;    ///< fond de l'entaille du palier (s, m ; v1.0.140 : -16 -> -10, paroi
+		constexpr double kLandIn = -10.0;    ///< fond de l'entaille du palier (s, m ; v1.0.141 : -16 -> -10, paroi
 		                                     ///< d'au moins 10 m entre le palier E et la salle des Échos)
 		constexpr double kLandHalfW = 11.0;  ///< demi-largeur du palier
 		constexpr double kStairRun = 44.0;   ///< longueur de l'escalier (pente 1/2 : 2 m par pièce de 4 m)
-		constexpr double kStairHalfW = 3.0;  ///< demi-largeur de l'escalier (v1.0.140 : 6 m de large, 2 pièces de 3 m, T2-P046)
+		constexpr double kStairHalfW = 3.0;  ///< demi-largeur de l'escalier (v1.0.141 : 6 m de large, 2 pièces de 3 m, T2-P046)
 		constexpr double kDoorS = -9.4;      ///< plan de la grande porte (s, m ; dos contre le fond de l'entaille)
 		constexpr double kPodiumS = -3.0;    ///< centre du socle de brique (s, m ; 12 m de profondeur)
 		constexpr double kPassInS = -6.5;    ///< déclencheur du passage d'entrée, devant la porte (s, m)
 		constexpr double kPassOutS = 0.5;    ///< arrivée du passage de sortie, sur le palier (s, m)
-		// --- v1.0.140 : salles intérieures (repère du rocher, m ; sol = palier des portes)
+		// --- v1.0.141 : salles intérieures (repère du rocher, m ; sol = palier des portes)
 		constexpr double kHallR = 50.0;      ///< salle de l'Oracle : cratère du relief (rayon)
 		constexpr double kHallWallR = 44.5;  ///< parois sculptées (Oracle_Hall_Wall, face au centre)
 		constexpr int kHallPanels = 16;      ///< panneaux de paroi (et colonnes aux joints)
@@ -114,7 +114,7 @@ namespace tools::world_gen
 		/// 2 (escalier ou palier blanc). Fonction pure.
 		double RockRelief(const OracleShape& S, Vec2 q, uint8_t& paint)
 		{
-			// v1.0.140 — salles creusées au niveau des paliers (cratères couverts par les
+			// v1.0.141 — salles creusées au niveau des paliers (cratères couverts par les
 			// voûtes maillées) : dallage (peinture 3), parois verticales du relief autour.
 			if (Len(q) < kHallR || Len(q - FacetN(kEchoFacet) * kEchoD) < kEchoR) { paint = 3; return kDoorH; }
 			double d8 = -1e18, d8r = -1e18;
@@ -405,7 +405,7 @@ namespace tools::world_gen
 		for (int k = 0; k < 8; ++k)
 			w.OccupyRect(o + FacetN(k) * (S.r[k] + 24.0), kLandHalfW + 1.0, 28.0, YawFacing(FacetN(k)));
 
-		// --- 7. Huit escaliers blancs et leurs grandes portes (v1.0.140 : escaliers de 6 m,
+		// --- 7. Huit escaliers blancs et leurs grandes portes (v1.0.141 : escaliers de 6 m,
 		//     socle de brique rouge sombre, grande porte peinte au fond de l'entaille ; T2-P046).
 		for (int k = 0; k < 8; ++k)
 		{
@@ -443,7 +443,7 @@ namespace tools::world_gen
 			BlueLight(w, c.id + "_flanc_" + std::to_string(k), o + Dir(a) * (kApothem / std::cos(kPi / 8.0) + 22.0), S.plainY + 38.0, 130.0, 2.4);
 		}
 		BlueLight(w, c.id + "_couronne", o, S.plainY + kWallH + kCrownH + 25.0, 200.0, 3.0);
-		// Couronne (v1.0.140) : dalles de cristal géantes sur les arêtes (T2-P044, T3-P005) ;
+		// Couronne (v1.0.141) : dalles de cristal géantes sur les arêtes (T2-P044, T3-P005) ;
 		// parois : dalles au pied, de part et d'autre des escaliers ; éboulis entre les escaliers.
 		static const char* kSlabs[3] = { "Oracle_Crystal_Slab_1", "Oracle_Crystal_Slab_2", "Oracle_Crystal_Slab_3" };
 		for (int k = 0; k < 8; ++k)
@@ -560,7 +560,7 @@ namespace tools::world_gen
 		{
 			const double a = aMain + 0.085;
 			const Vec2 u = Dir(a), p = o + u * 236.0;
-			// v1.0.140 : pavillon agrandi (faîte à ≈ 4 m : retour du 25/11/2026, tentes trop basses).
+			// v1.0.141 : pavillon agrandi (faîte à ≈ 4 m : retour du 25/11/2026, tentes trop basses).
 			L.innDoor = RidgeTent(w, p, u, 3.4, 3, 50.0, true);
 			w.OccupyRect(p, 5.0, 11.0, YawFacing(u));
 			const Vec2 side{ -u.z, u.x };
@@ -713,7 +713,7 @@ namespace tools::world_gen
 			if (made < 5) w.Warn("camp de l'Oracle : " + std::to_string(made) + " ecurie(s) posee(s) sur 5");
 		}
 
-		// --- 11. v1.0.140 — Eau (demande du propriétaire du 25/11/2026) : bassins des pèlerins
+		// --- 11. v1.0.141 — Eau (demande du propriétaire du 25/11/2026) : bassins des pèlerins
 		//     dans la plaine, hors de l'emprise du camp (roseaux et nénuphars posés par les rives),
 		//     abreuvoirs de pierre le long de l'allée entre les anneaux de tentes. Posés avant
 		//     l'océan de tentes, qui les contourne.
@@ -794,7 +794,7 @@ namespace tools::world_gen
 		//     des panneaux de toit ; tentes longues de familles avec leur feu.
 		int tents = 0, pennants = 0, fireLights = 0;
 		{
-			// v1.0.140 : toiles de couleur (_4 rouge sombre, _5 bleu-gris, T2-P045) ; tentes
+			// v1.0.141 : toiles de couleur (_4 rouge sombre, _5 bleu-gris, T2-P045) ; tentes
 			// agrandies ×1,5 (×1,4 la longue) : emprises recalculées en conséquence.
 			static const char* kTents[6] = { "Tent_Pilgrim_1", "Tent_Pilgrim_2", "Tent_Pilgrim_3", "Tent_Pilgrim_Long_1",
 				"Tent_Pilgrim_4", "Tent_Pilgrim_5" };
@@ -823,7 +823,7 @@ namespace tools::world_gen
 					const Vec2 side{ -u.z, u.x };
 					if (rng.Chance(0.16)) // fanion au mât arrière
 						Prop(w, rng.Chance(0.5) ? "Banner_1" : "Banner_2", t + u * (hz - 0.4), YawFacing(side), 1.0, 0, 1, 0.0, 3.9);
-					else if (rng.Chance(0.07)) // v1.0.140 : mât à long fanion jaune (T2-P045)
+					else if (rng.Chance(0.07)) // v1.0.141 : mât à long fanion jaune (T2-P045)
 					{
 						Prop(w, "Pennant_Pole_1", t + u * (hz + 0.8), rng.Range(0.0, 360.0), 1.0, 0, 0);
 						++pennants;
@@ -837,7 +837,7 @@ namespace tools::world_gen
 							const int pick = kind == 3 ? 0 : static_cast<int>(1 + rng.Below(7));
 							Prop(w, kCamp[pick], q, rng.Range(0.0, 360.0), 1.0, kSolid, 1, 0.45);
 							w.Occupy(q, 0.6);
-							// v1.0.140 : feux éclairés la nuit (T3-P005 : l'océan de tentes piqueté de
+							// v1.0.141 : feux éclairés la nuit (T3-P005 : l'océan de tentes piqueté de
 							// feux) ; un feu de famille sur deux, au plus 90 (le client garde les 64
 							// lumières les plus proches de la caméra).
 							if (pick == 0 && fireLights < 90 && rng.Chance(0.5))
@@ -866,7 +866,7 @@ namespace tools::world_gen
 					p = o + Dir(a) * r;
 				}
 				if (RoadGap(w, p) < 10.0 || w.IsOccupied(p, 4.0) || !w.InPlayableBounds(p, 60.0)) continue;
-				// v1.0.140 : menhirs bleus de 3 à 5 m (T2-P044 : à peine deux hauteurs d'homme).
+				// v1.0.141 : menhirs bleus de 3 à 5 m (T2-P044 : à peine deux hauteurs d'homme).
 				Prop(w, (k % 3) ? "Oracle_Menhir_2" : "Oracle_Menhir_1", p, rng.Range(0.0, 360.0), rng.Range(0.95, 1.05), kSolid, 0, 0.9, -0.2);
 				w.Occupy(p, 2.0);
 				if (k % 2 == 0) BlueLight(w, c.id + "_menhir_" + std::to_string(k), p + Dir(a) * -2.0, w.HeightAt(p) + 2.5, 12.0, 1.4);
@@ -875,7 +875,7 @@ namespace tools::world_gen
 			if (stones < 18) w.Warn("camp de l'Oracle : seulement " + std::to_string(stones) + " menhirs");
 		}
 
-		// --- 10. v1.0.140 — Salles intérieures, passages conditionnels, PNJ de quête, raid.
+		// --- 10. v1.0.141 — Salles intérieures, passages conditionnels, PNJ de quête, raid.
 		{
 			const double floorY = S.plainY + kDoorH;
 			const Vec2 nSO = FacetN(kMainFacet), nE = FacetN(kEchoFacet);

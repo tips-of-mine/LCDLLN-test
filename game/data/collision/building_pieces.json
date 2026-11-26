@@ -270,7 +270,22 @@
       "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
     },
 
-    "_comment_oracle": "v1.0.140 : paroi sculptee de la salle de l'Oracle (Oracle_Hall_Wall, arc de 18 m, face concave vers -Z local) : une boite de 19 x 40 m, 2 m d'epaisseur, sur l'arc (les salles sont fermees par le relief derriere).",
+    "_comment_palace": "v1.0.140 : palais imperial (Lhynn). Facade : deux murs pleins de part et d'autre de la porte centrale (X [-4,4] libre : passage traversant vers la salle du trone), statues colossales sur socle devant les contreforts (face +Z). Fleche : fut carre et contreforts d'angle. Bornes mesurees sur les .gltf (validate_decor.py).",
+    "palace_imperial_facade_1": {
+      "box_count": 6,
+      "box_0": { "cx": -14.3, "cy": 12.0, "cz": -2.7, "hx": 10.3, "hy": 12.0, "hz": 2.9 },
+      "box_1": { "cx":  14.3, "cy": 12.0, "cz": -2.7, "hx": 10.3, "hy": 12.0, "hz": 2.9 },
+      "box_2": { "cx": -19.5, "cy":  7.5, "cz":  3.4, "hx":  2.2, "hy":  7.5, "hz": 2.2 },
+      "box_3": { "cx":  -8.5, "cy":  7.5, "cz":  3.4, "hx":  2.2, "hy":  7.5, "hz": 2.2 },
+      "box_4": { "cx":   8.5, "cy":  7.5, "cz":  3.4, "hx":  2.2, "hy":  7.5, "hz": 2.2 },
+      "box_5": { "cx":  19.5, "cy":  7.5, "cz":  3.4, "hx":  2.2, "hy":  7.5, "hz": 2.2 }
+    },
+    "palace_imperial_spire_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 14.5, "cz": 0.0, "hx": 4.2, "hy": 14.5, "hz": 4.2 }
+    },
+
+    "_comment_oracle": "v1.0.141 : paroi sculptee de la salle de l'Oracle (Oracle_Hall_Wall, arc de 18 m, face concave vers -Z local) : une boite de 19 x 40 m, 2 m d'epaisseur, sur l'arc (les salles sont fermees par le relief derriere).",
     "oracle_hall_wall": {
       "box_count": 1,
       "box_0": { "cx": 0.0, "cy": 20.0, "cz": 0.0, "hx": 9.4, "hy": 20.0, "hz": 1.0 }

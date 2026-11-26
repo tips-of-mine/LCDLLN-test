@@ -1,5 +1,5 @@
 {
-    "_comment": "Lore v1.0.140 — Camp de l'Oracle : veilleur de la grande porte (PNJ de quete pose par tools/world_gen, Oracle.cpp). Propose « L'Appel de l'Oracle ». Les boutons Accepter/Rendre sont injectes a l'execution (UIModel.giverList), pas dans ce JSON.",
+    "_comment": "Lore v1.0.141 — Camp de l'Oracle : veilleur de la grande porte (PNJ de quete pose par tools/world_gen, Oracle.cpp). Propose « L'Appel de l'Oracle ». Les boutons Accepter/Rendre sont injectes a l'execution (UIModel.giverList), pas dans ce JSON.",
     "start": "intro",
     "nodes": {
         "count": 3,

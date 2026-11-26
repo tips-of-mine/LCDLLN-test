@@ -20,6 +20,11 @@
       3000,
       1000,
       300
+    ],
+    "monument": [
+      12000,
+      4000,
+      1200
     ]
   },
   "assets": [
@@ -9693,8 +9698,88 @@
       "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026) ; agrandie ×1,4 (retour du propriétaire du 25/11/2026)"
     },
     {
-      "id": "Oracle_Crystal_Slab_1",
+      "id": "Palace_Imperial_Facade_1",
       "num": 215,
+      "family": "monument",
+      "builder": "palace_facade",
+      "seed": 21501,
+      "budget": "monument",
+      "exact": true,
+      "width_m": [
+        50.2,
+        50.6
+      ],
+      "height_m": [
+        38.0,
+        38.4
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T3-P023-C1 (vue de la ville) ; T3-P024-C5 (portes du palais, escorte) ; T3-P026 ; T4-P006, P007 ; T10-P037-C1 ; demande du propriétaire (25/11/2026) ; signature réinterprétée (statues à sujet neutre, sans héraldique)"
+    },
+    {
+      "id": "Palace_Imperial_Spire_1",
+      "num": 216,
+      "family": "monument",
+      "builder": "palace_spire",
+      "seed": 21601,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        8.3,
+        8.5
+      ],
+      "height_m": [
+        47.8,
+        48.2
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T3-P026 (flèches du palais) ; T10-P037-C1 ; demande du propriétaire (25/11/2026)"
+    },
+    {
+      "id": "Stairs_Monumental_1",
+      "num": 217,
+      "family": "monument",
+      "builder": "stairs_monumental",
+      "seed": 21701,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        9.0,
+        9.0
+      ],
+      "height_m": [
+        3.55,
+        3.65
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T10-P037-C1 (ville en gradins) ; escalier monumental direct (arbitrage Q3 b du propriétaire, 25/11/2026)"
+    },
+    {
+      "id": "Ship_Cog_1",
+      "num": 218,
+      "family": "objets",
+      "builder": "ship_cog",
+      "seed": 21801,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        12.9,
+        13.1
+      ],
+      "height_m": [
+        20.1,
+        20.3
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T7-P004-C1 (port de guerre de Lhynn, navires à quai) ; T10-P037-C1 (flotte) ; demande du propriétaire (25/11/2026 : « on ne voit pas le port »)"
+    },
+    {
+      "id": "Oracle_Crystal_Slab_1",
+      "num": 219,
       "family": "mineral",
       "builder": "oracle_crystal_slab",
       "seed": 21501,
@@ -9713,7 +9798,7 @@
     },
     {
       "id": "Oracle_Crystal_Slab_2",
-      "num": 215,
+      "num": 219,
       "family": "mineral",
       "builder": "oracle_crystal_slab",
       "seed": 21502,
@@ -9732,7 +9817,7 @@
     },
     {
       "id": "Oracle_Crystal_Slab_3",
-      "num": 215,
+      "num": 219,
       "family": "mineral",
       "builder": "oracle_crystal_slab",
       "seed": 21503,
@@ -9751,7 +9836,7 @@
     },
     {
       "id": "Oracle_Crystal_Cluster_1",
-      "num": 216,
+      "num": 220,
       "family": "magique",
       "builder": "oracle_crystal_cluster",
       "seed": 21601,
@@ -9770,7 +9855,7 @@
     },
     {
       "id": "Oracle_Crystal_Cluster_2",
-      "num": 216,
+      "num": 220,
       "family": "magique",
       "builder": "oracle_crystal_cluster",
       "seed": 21602,
@@ -9789,7 +9874,7 @@
     },
     {
       "id": "Oracle_Door_Grand",
-      "num": 217,
+      "num": 221,
       "family": "religieux",
       "builder": "oracle_door_grand",
       "seed": 21701,
@@ -9809,7 +9894,7 @@
     },
     {
       "id": "Oracle_Door_Podium",
-      "num": 218,
+      "num": 222,
       "family": "religieux",
       "builder": "oracle_door_podium",
       "seed": 21801,
@@ -9829,7 +9914,7 @@
     },
     {
       "id": "Oracle_Hall_Column",
-      "num": 219,
+      "num": 223,
       "family": "religieux",
       "builder": "oracle_hall_column",
       "seed": 21901,
@@ -9849,7 +9934,7 @@
     },
     {
       "id": "Oracle_Hall_Wall",
-      "num": 220,
+      "num": 224,
       "family": "religieux",
       "builder": "oracle_hall_wall",
       "seed": 22001,
@@ -9869,7 +9954,7 @@
     },
     {
       "id": "Oracle_Hall_Dais",
-      "num": 221,
+      "num": 225,
       "family": "religieux",
       "builder": "oracle_hall_dais",
       "seed": 22101,
@@ -9889,7 +9974,7 @@
     },
     {
       "id": "Oracle_Vault",
-      "num": 222,
+      "num": 226,
       "family": "religieux",
       "builder": "oracle_vault",
       "seed": 22201,
@@ -9909,7 +9994,7 @@
     },
     {
       "id": "Oracle_Light_Pillar",
-      "num": 223,
+      "num": 227,
       "family": "magique",
       "builder": "oracle_light_pillar",
       "seed": 22301,
@@ -9928,7 +10013,7 @@
     },
     {
       "id": "Oracle_Chain_Hanging",
-      "num": 224,
+      "num": 228,
       "family": "objets",
       "builder": "oracle_chain",
       "seed": 22401,
@@ -9948,7 +10033,7 @@
     },
     {
       "id": "Oracle_Menhir_1",
-      "num": 225,
+      "num": 229,
       "family": "religieux",
       "builder": "oracle_menhir",
       "seed": 22501,
@@ -9967,7 +10052,7 @@
     },
     {
       "id": "Oracle_Menhir_2",
-      "num": 225,
+      "num": 229,
       "family": "religieux",
       "builder": "oracle_menhir",
       "seed": 22502,
@@ -10026,7 +10111,7 @@
     },
     {
       "id": "Pennant_Pole_1",
-      "num": 226,
+      "num": 230,
       "family": "objets",
       "builder": "pennant_pole",
       "seed": 22601,

@@ -479,7 +479,7 @@ namespace tools::world_gen
 			{
 				const uint8_t pv = w.paint.At(pi, pj);
 				if (trace) trace->paint = pv;
-				// v1.0.140 : 3 = dallage des salles intérieures (roche, sans neige : jamais
+				// v1.0.141 : 3 = dallage des salles intérieures (roche, sans neige : jamais
 				// rendu en cristal par la couche crystal_layer).
 				if (pv == 3) return SplatTexel{ 0.0, 0.15, 0.85, 0.0, 0.0 };
 				return pv == 2 ? SplatTexel{ 0.0, 0.0, 0.05, 0.95, 0.0 } : SplatTexel{ 0.0, 0.0, 0.45, 0.55, 0.0 };
@@ -1199,7 +1199,7 @@ namespace tools::world_gen
 			rt.objectValue["grass_mask_visual_strength"] = JNum(0.35);
 			// v1.0.123 — Enfers : le canal A du splat est la lave (rendu lumineux, client).
 			if (IsInfernalMap(w.master)) rt.objectValue["lava_layer"] = JBool(true);
-			// v1.0.140 — rocher de l'Oracle : canal A rendu en cristal bleu là où la roche
+			// v1.0.141 — rocher de l'Oracle : canal A rendu en cristal bleu là où la roche
 			// domine aussi (peinture 1), neige ailleurs (client, terrain.frag).
 			if (w.crystalLayer) rt.objectValue["crystal_layer"] = JBool(true);
 			JsonValue& tr = Child(root, "terrain");
@@ -1633,8 +1633,9 @@ namespace tools::world_gen
 			for (const PoiDef& p : g.pois)
 			{
 				if (p.secret) continue;
-				// v1.0.132 : les châteaux (Palais des Maîtres des Dragons, Garundel…) ont aussi leur étiquette.
-				if (p.kind != "volcan" && p.kind != "cite" && p.kind != "chateau" && !(infernal && p.kind == "temple")) continue;
+				// v1.0.132 : les châteaux (Palais des Maîtres des Dragons, Garundel…) ont aussi leur étiquette ;
+				// v1.0.140 : le palais impérial de Lhynn aussi.
+				if (p.kind != "volcan" && p.kind != "cite" && p.kind != "chateau" && p.kind != "palais" && !(infernal && p.kind == "temple")) continue;
 				const double u = (p.center.x - originX) / side, v = (p.center.z - originZ) / side;
 				if (!inside(u, v)) continue;
 				poiLines.push_back("    { \"name\": " + Q(p.name) + ", \"kind\": " + Q(p.kind) + ", \"u\": " + Num(u) + ", \"v\": " + Num(v) + " }");
@@ -2217,7 +2218,7 @@ namespace tools::world_gen
 			g.report.portals = portals.size();
 		}
 
-		// ---- passages.json (v1.0.140) : passages conditionnels d'une MÊME carte (portes du
+		// ---- passages.json (v1.0.141) : passages conditionnels d'une MÊME carte (portes du
 		//      rocher de l'Oracle), lus par le shard seul (src/shardd/world/DoorPassages.h).
 		//      Fichier toujours écrit (liste vide sans passage) : pas de reste d'une
 		//      génération précédente.

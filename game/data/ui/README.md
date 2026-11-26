@@ -10,6 +10,7 @@ Il regroupe toutes les images utilisées par les différents écrans de l’inte
 - `register/` : images de l’écran de création de compte.
 - `server_list/` : images de l’écran de sélection des serveurs.
 - `dialogs/` : images pour les fenêtres de dialogue.
+- `map/` : habillage parchemin de la carte du monde (rouleau, parchemin, bord usé).
 
 ---
 
@@ -23,3 +24,4 @@ It groups all images used by the different UI screens.
 - `register/` : account creation screen images.
 - `server_list/` : server selection screen images.
 - `dialogs/` : dialog and popup images.
+- `map/` : parchment skin of the world map (roll, parchment, worn edge).

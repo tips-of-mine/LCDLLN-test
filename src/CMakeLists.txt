@@ -146,7 +146,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # Seconde carte (Les Enfers) : portails entre cartes.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
-    # Lore v1.0.140 : passages conditionnels d'une même carte (portes de l'Oracle).
+    # Lore v1.0.141 : passages conditionnels d'une même carte (portes de l'Oracle).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/DoorPassages.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp
@@ -686,7 +686,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
-  # Lore v1.0.140 — passages conditionnels d'une même carte (portes du rocher de l'Oracle :
+  # Lore v1.0.141 — passages conditionnels d'une même carte (portes du rocher de l'Oracle :
   # quêtes exigées, groupe minimal, réarmement, refus signalé une fois).
   lcdlln_add_simple_test(door_passages_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/DoorPassagesTests.cpp
@@ -716,6 +716,17 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/client/world/cells/CellSeaFallback.cpp
     ${CMAKE_SOURCE_DIR}/src/client/world/cells/CellWorldFrame.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
+
+  # EAU.6 : houle de la mer et jet de rive (formule partagée rendu / nage,
+  # parité des constantes avec water.vert et water.frag).
+  lcdlln_add_simple_test(sea_swell_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/tests/SeaSwellTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/SeaSwell.cpp)
+  # EAU.6 : grille de mer autour du joueur (découpe des nappes, profondeur, fondu).
+  lcdlln_add_simple_test(sea_grid_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/tests/SeaGridTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/SeaGrid.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/water/SeaSwell.cpp)
 
   # SND.2 — lecture réelle des sons (miniaudio sans périphérique), variantes,
   # cadence et surface des pas. SoundDevice/Footsteps/AudioEngine sont dans engine_core.
@@ -1696,7 +1707,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # Seconde carte (Les Enfers) : portails entre cartes.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
-    # Lore v1.0.140 : passages conditionnels d'une même carte (portes de l'Oracle).
+    # Lore v1.0.141 : passages conditionnels d'une même carte (portes de l'Oracle).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/DoorPassages.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp

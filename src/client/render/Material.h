@@ -25,7 +25,7 @@ namespace engine::render
 		/// Decoupe alpha : gbuffer_geometry.frag rejette (discard) les fragments dont
 		/// l'alpha baseColor est sous le seuil. Pour les feuillages d'arbres.
 		AlphaCutout = 1u << 2,
-		/// Lore v1.0.140 — émissif : gbuffer_geometry.frag écrit GBufferC.a = 1 − émission
+		/// Lore v1.0.141 — émissif : gbuffer_geometry.frag écrit GBufferC.a = 1 − émission
 		/// (MaterialGpuData.padding[0], [0, 1]) ; lighting.frag ajoute albedo × émission × 6.
 		Emissive = 1u << 3,
 	};
@@ -46,7 +46,7 @@ namespace engine::render
 		TextureHandle orm;       ///< Linear ORM texture (R=AO, G=Roughness, B=Metallic).
 		float         tiling[2] = { 1.0f, 1.0f }; ///< UV tiling scale (s, t).
 		MaterialFlags flags     = MaterialFlags::None;
-		float         emissive  = 0.0f; ///< v1.0.140 — intensité d'émission [0, 1] (avec le bit Emissive)
+		float         emissive  = 0.0f; ///< v1.0.141 — intensité d'émission [0, 1] (avec le bit Emissive)
 	};
 
 	/// GPU-side material payload used by the bindless geometry shader path.
@@ -57,7 +57,7 @@ namespace engine::render
 		uint32_t ormIndex = 2;
 		uint32_t flags = 0;
 		float tiling[2] = { 1.0f, 1.0f };
-		float padding[2] = { 0.0f, 0.0f }; ///< [0] = émission (bit Emissive, v1.0.140), [1] libre
+		float padding[2] = { 0.0f, 0.0f }; ///< [0] = émission (bit Emissive, v1.0.141), [1] libre
 	};
 
 	/// Manages a global bindless texture array and a material buffer storing texture indices.

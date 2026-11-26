@@ -451,7 +451,7 @@ namespace engine::server
 		}
 		LOG_INFO(Net, "[ServerApp] Portails entre cartes : {} charge(s), {} utilisable(s){}{}",
 			m_portalNetwork.Count(), usablePortals, portalWarning.empty() ? "" : " — ", portalWarning);
-		// Lore v1.0.140 — passages conditionnels (portes de l'Oracle) : absents = aucun
+		// Lore v1.0.141 — passages conditionnels (portes de l'Oracle) : absents = aucun
 		// passage (non bloquant) ; invalides = refus du démarrage, comme les portails.
 		std::string passageError;
 		std::string passageWarning;

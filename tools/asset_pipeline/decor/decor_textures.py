@@ -1079,6 +1079,39 @@ TEXTURES.update({
 })
 
 
+def stone_lozenge(name="Stone_Lozenge", seed=111, size=1024):
+    """Soubassement de pierre peinte à chevrons (palais impérial, réinterprétation de
+    T3 pl.24) : dents de scie alternées rouge sombre et bleu, filets crème, pierre
+    visible aux joints et usure de la peinture ; motif géométrique, sans emblème."""
+    h = w = size
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32) / size
+    u = (xx * 8) % 1.0
+    v = yy
+    tri = np.abs(u - 0.5) * 2 < (1.0 - (v - 0.12) / 0.76)   # dents de bas en haut
+    band = (v > 0.12) & (v < 0.88)
+    n = fbm(h, w, seed, 5, 32)
+    wear = fbm(h, w, seed + 1, 4, 16)
+    stone = np.zeros((h, w, 3), np.float32) + np.array([176, 166, 148], np.float32)
+    col = stone.copy()
+    col[band & tri] = [132, 38, 36]
+    col[band & ~tri] = [46, 62, 118]
+    col[(np.abs(v - 0.12) < 0.025) | (np.abs(v - 0.88) < 0.025)] = [214, 202, 172]
+    worn = wear > 0.66
+    col[worn] = col[worn] * 0.45 + stone[worn] * 0.55
+    joints = (np.abs((yy * 4) % 1.0 - 0.5) > 0.485) | (np.abs((xx * 3 + 0.5 * (np.floor(yy * 4) % 2)) % 1.0 - 0.5) > 0.49)
+    col[joints] *= 0.62
+    col *= (0.86 + 0.22 * n)[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    hgt = n * 0.6 - joints.astype(np.float32) * 0.5
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt, 2.5))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt, 0.82, 0.0, 0.5))
+
+
+TEXTURES.update({
+    "Stone_Lozenge": stone_lozenge,
+})
+
+
 
 # ------------------------------------------------- Camp de l'Oracle (25/11/2026)
 # Lecture : T2-P044 (tumulus bleu), T2-P046 (grande porte), T1-P003..005 et

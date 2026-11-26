@@ -1506,7 +1506,7 @@ namespace engine::server
 		MaybeApplyZoneTransition(*client);
 		// Seconde carte (Les Enfers) — portails entre cartes (juste après les transitions).
 		MaybeApplyPortal(*client);
-		// Lore v1.0.140 — portes du rocher de l'Oracle (passages conditionnels, même carte).
+		// Lore v1.0.141 — portes du rocher de l'Oracle (passages conditionnels, même carte).
 		MaybeApplyDoorPassage(*client);
 		LOG_DEBUG(Net, "[ServerApp] Input accepted (client_id={}, seq={}, pos=({:.2f}, {:.2f}))",
 			client->clientId,

@@ -246,6 +246,19 @@ voisines raccord au mètre près :
    au-dessus ; extinction sur `fade_m` hors des cases. Paroi blanche : couche « neige » du
    splat (la seule couche claire du client) et liseré blanc sur la carte du monde
    (LORE_BD §16.47).
+   Depuis la v1.0.140, `acropole` dresse une **ville en gradins** sous sa ville `city`
+   (position manuelle admise : la butte suit la ville ; sans position, la ville est ancrée
+   au centre de sa case) : sommet décalé de `offset_x_m` / `offset_z_m`, plateforme de
+   `top_radius_m` à `height_m` au-dessus du plateau de la ville basse, puis `terraces`
+   gradins (talus linéaires de `bank_m`, pente ≤ 40°, praticables ; replats de
+   `terrace_m`), revers raidi par `back_factor` (falaise côté opposé à la ville) ; rampe
+   de l'escalier monumental (pente 0,6, demi-largeur `stair_half_width_m`) du bord de la
+   plateforme jusqu'à `stair_bottom_m` (grand-place). Même masque des terres émergées que
+   les massifs ; plateau de la ville relevé SANS la butte ; `FlattenSettlements` pose les
+   gradins dans la ville ; les routes ne creusent pas la butte ; rues et anneau coupés au
+   pied de la plateforme, rues en arc sur chaque replat, volées `Stairs_Monumental_1` posées sur la rampe ; faubourgs hors les murs (quatre rues en anneau, sauf côté revers) et champs repoussés au-delà ; port (`BuildHarbour` : esplanade, quai, jetées, navires `Ship_Cog_1`, grues, entrepôts) si la ville a le service `port` ; un POI de
+   genre `palais` sur le sommet est bâti par `Landmarks.cpp`. Ex. : Lhynn et son palais
+   impérial (LORE_BD §16.66).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
    départ ou ancrée sur un relief ; **position manuelle** `position`

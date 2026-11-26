@@ -39,6 +39,10 @@ Règles de mélange (module pur `src/client/audio/Ambience.{h,cpp}`) :
   sur 1 h 30 (heure du cycle jour/nuit du jeu).
 - **Orage** : pluie battante (≥ 60 %) et coups de tonnerre aléatoires toutes les
   12 à 40 s (`amb_thunder`, 3 variantes).
+- **Ressac (EAU.6)** : près de la mer, une vague qui déferle (`amb_surf`,
+  3 variantes, sons ponctuels) part à chaque arrivée d'une vague au rivage,
+  calée sur la montée de l'eau à l'écran (`SeaSurfBreakIndex`, toutes les 9 s).
+  Volume = celui de `amb_coast` ; rien loin de la mer (`Engine::UpdateSurfAudio`).
 - Chaque volume est borné à [0, 1] puis multiplié par le volume du son dans le
   catalogue et par le bus **Ambience** (0,8).
 

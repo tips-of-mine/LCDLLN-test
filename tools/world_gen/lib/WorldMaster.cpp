@@ -478,13 +478,56 @@ namespace tools::world_gen
 				// Le relief est dessiné au centre de la case de sa ville : une ville perchée
 				// ou au fond d'une crevasse ne peut pas être déplacée à la main (v1.0.95).
 				// Gouffre (v1.0.107) : il SUIT la ville (position manuelle admise).
-				if (city->hasPosition && d.type != "gouffre")
+				if (city->hasPosition && d.type != "gouffre" && d.type != "acropole")
 				{
 					err = "master: ville '" + d.cityId + "' ancree sur le relief '" + d.id + "' : position manuelle interdite"; return false;
 				}
 				d.n = city->n; d.e = city->e;
 				const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ d.n, d.e });
 				d.center = { ctr.x, ctr.z };
+				// Acropole (v1.0.140, ville en gradins : Lhynn) : butte en terrasses autour d'un
+				// sommet décalé de offset_x_m / offset_z_m depuis la ville (position manuelle
+				// admise : le relief SUIT la ville), escalier monumental du sommet à la
+				// grand-place. Forme recopiée dans la ville (CityDef::acropole).
+				if (d.type == "acropole")
+				{
+					AcropoleShape& a = d.acropole;
+					d.offsetXM = GetNum(v, "offset_x_m", 0.0);
+					d.offsetZM = GetNum(v, "offset_z_m", 0.0);
+					const Vec2 cityC{ ctr.x + (city->hasPosition ? city->positionXM : 0.0), ctr.z + (city->hasPosition ? city->positionZM : 0.0) };
+					const double off = std::hypot(d.offsetXM, d.offsetZM);
+					a.enabled = true;
+					a.summit = { cityC.x + d.offsetXM, cityC.z + d.offsetZM };
+					a.heightM = d.heightM;
+					a.topRadiusM = d.topRadiusM;
+					a.terraceM = GetNum(v, "terrace_m", 0.0);
+					a.bankM = GetNum(v, "bank_m", 0.0);
+					a.terraces = static_cast<int>(GetNum(v, "terraces", 0.0));
+					a.stairHalfWidthM = GetNum(v, "stair_half_width_m", 0.0);
+					a.stairBottomM = GetNum(v, "stair_bottom_m", 0.0);
+					a.backFactor = GetNum(v, "back_factor", 1.0);
+					if (off > 1e-6) a.stairDir = { -d.offsetXM / off, -d.offsetZM / off };
+					d.center = a.summit;
+					// Talus praticables (pente ≤ 40° : bank ≥ 1,19 × hauteur d'un gradin), sommet dans
+					// la ville, escalier qui part du bord de la plateforme et atteint le niveau de la
+					// grand-place avant son pied ; toute la butte dans la case.
+					const double stepH = a.terraces > 0 ? a.heightM / a.terraces : 0.0;
+					const bool shapeOk = a.heightM >= 20.0 && a.heightM <= 200.0 && a.terraces >= 2 && a.terraces <= 8
+						&& a.topRadiusM >= 20.0 && a.topRadiusM <= 120.0 && a.terraceM >= 15.0 && a.terraceM <= 80.0
+						&& a.bankM >= 1.19 * stepH && a.bankM <= 80.0 && a.backFactor >= 1.0 && a.backFactor <= 3.0 && a.stairHalfWidthM >= 3.0 && a.stairHalfWidthM <= 10.0
+						&& off >= a.topRadiusM + 10.0 && off <= 400.0
+						&& a.stairBottomM >= a.topRadiusM + 5.0 && a.stairBottomM <= off
+						&& a.heightM - 0.6 * (a.stairBottomM - a.topRadiusM) <= AcropoleTerrace(a, a.stairBottomM) + 1e-6
+						&& std::fabs(a.summit.x - ctr.x) + a.FootRadiusM() <= 4700.0 && std::fabs(a.summit.z - ctr.z) + a.FootRadiusM() <= 4700.0;
+					if (!shapeOk)
+					{
+						err = "master: relief '" + d.id + "' : acropole invalide (hauteur, gradins, talus <= 40 deg, revers 1 a 3, sommet, escalier jusqu'a la grand-place, butte dans la case)"; return false;
+					}
+					d.footRadiusM = a.FootRadiusM();
+					city->acropole = a;
+					out.reliefs.push_back(std::move(d));
+					continue;
+				}
 				if (d.type == "gouffre")
 				{
 					// Fosse creusée sous la ville ; la galerie est relue en positions globales.

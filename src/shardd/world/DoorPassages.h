@@ -1,6 +1,6 @@
 #pragma once
 
-// Camp de l'Oracle (lore v1.0.140) — passages conditionnels d'une même carte.
+// Camp de l'Oracle (lore v1.0.141) — passages conditionnels d'une même carte.
 //
 // Une porte « passage » relie deux points d'une MÊME carte : le joueur qui entre dans
 // son rayon est replacé au point d'arrivée (ex. palier de la grande porte du rocher de

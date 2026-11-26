@@ -1,4 +1,4 @@
-// Camp de l'Oracle (lore v1.0.140) — passages conditionnels d'une même carte.
+// Camp de l'Oracle (lore v1.0.141) — passages conditionnels d'une même carte.
 // Voir DoorPassages.h.
 
 #include "src/shardd/world/DoorPassages.h"

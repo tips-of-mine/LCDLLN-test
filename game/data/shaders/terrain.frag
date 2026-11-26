@@ -14,7 +14,7 @@
 //   ubo.terrainOrigin.w) et émission écrite dans GBufferC.a = 1 − émission (1 = rien,
 //   valeur de toutes les autres géométries) ; lighting.frag l'ajoute après l'éclairage
 //   (la lave n'est pas assombrie la nuit).
-// v1.0.140: rocher de l'Oracle — quand ubo.terrainOrigin.z > 1.5, le canal A est rendu en
+// v1.0.141: rocher de l'Oracle — quand ubo.terrainOrigin.z > 1.5, le canal A est rendu en
 //   CRISTAL bleu (crystalColor, facettes procédurales) là où la roche (canal B) est aussi
 //   présente ; la neige pure et la pierre blanche des escaliers restent inchangées.
 //
@@ -40,6 +40,7 @@ layout(set = 0, binding = 2) uniform TerrainFrameUbo {
     vec4  layerTiling; // x=grass, y=dirt, z=rock, w=snow (metres per tile)
     vec4  texOffsetX;  // décalage X du pavage par couche (m) : pavage en coordonnées globales
     vec4  texOffsetZ;  // décalage Z du pavage par couche (m)
+    vec4  coastParams; // EAU.6 : x=niveau de la mer (m), y=1 si cellule maritime, z=montée max des vagues (m), w=0
 } ubo;
 layout(set = 0, binding = 3) uniform sampler2D      uSplatMap;    // RGBA8: R=grass,G=dirt,B=rock,A=snow
 layout(set = 0, binding = 4) uniform sampler2DArray uAlbedoArray; // 4 layers RGBA8
@@ -122,7 +123,7 @@ float lavaFbm(vec2 p)
     return s;
 }
 
-// v1.0.140 — cristal du rocher de l'Oracle (T2-P044, T3-P005) : grandes facettes de
+// v1.0.141 — cristal du rocher de l'Oracle (T2-P044, T3-P005) : grandes facettes de
 // tons bleu-gris, ardoise et violet (cellules de bruit en 3D, pas de bleu saturé ni de
 // monochrome), arêtes claires. Couleur linéaire, ~ texture T_Decor_Crystal_Blue.
 vec3 crystalColor(vec3 p)
@@ -155,6 +156,36 @@ vec3 lavaColor(vec2 xz, float t, out float molten)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// EAU.6 — jonction mer / sable des côtes maritimes
+//
+// Le générateur verse le sable des côtes dans la couche « terre » (canal G) et
+// force cette couche au bord de l'eau : la plage se lisait comme de la terre
+// brune, avec une coupure nette au contact de l'eau. Ici, seulement dans une
+// cellule qui a la mer (coastParams.y = 1 ; jamais au bord d'un lac) :
+//   - sable sec : la couche terre des plages basses (≤ 1,5 à 3 m au-dessus de
+//     l'eau) et peu pentues prend une teinte de sable clair (la texture garde
+//     son grain) ;
+//   - sable mouillé : sous la limite atteinte par les vagues (+ bande de
+//     séchage irrégulière), le sol est plus sombre et plus lisse (reflets).
+// Renvoie \p dryK (part de sable sec) et \p wetK (part de sol mouillé).
+// ─────────────────────────────────────────────────────────────────────────────
+void coastSand(vec3 worldPos, vec3 macroN, float dirtW, out float dryK, out float wetK)
+{
+    dryK = 0.0;
+    wetK = 0.0;
+    if (ubo.coastParams.y < 0.5)
+        return;
+    float h    = worldPos.y - ubo.coastParams.x;          // hauteur au-dessus de la mer (m)
+    float n    = lavaNoise(worldPos.xz * 0.35);            // 0..1, bords irréguliers
+    float gentle = smoothstep(0.80, 0.95, macroN.y);       // plages : pentes faibles
+    // Bande étroite au-dessus de l'eau (≈ 1,5 à 3 m) : la plage au contact de la
+    // mer, sans teinter les chemins des villes portuaires plus haut.
+    dryK = (1.0 - smoothstep(1.5, 3.0, h + (n - 0.5) * 0.8)) * dirtW * gentle;
+    float wetTop = ubo.coastParams.z + 0.15 + (n - 0.5) * 0.12;
+    wetK = 1.0 - smoothstep(wetTop - 0.10, wetTop + 0.10, h);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 void main()
 {
     // ── M34.3: Hole mask discard ──────────────────────────────────────────────
@@ -181,7 +212,7 @@ void main()
     float tilingSnow  = ubo.layerTiling.w;
     // v1.0.123 — canal A = lave (Enfers) : couleur procédurale au lieu de la neige.
     bool  lavaMode = ubo.terrainOrigin.z > 0.5 && ubo.terrainOrigin.z < 1.5;
-    // v1.0.140 — canal A = cristal bleu là où la roche est aussi présente (peinture du
+    // v1.0.141 — canal A = cristal bleu là où la roche est aussi présente (peinture du
     // rocher de l'Oracle : roche 0,45 + A 0,55) ; la pierre blanche des escaliers (A 0,95,
     // roche 0,05) et la neige pure restent blanches.
     bool  crystalMode = ubo.terrainOrigin.z > 1.5;
@@ -201,6 +232,16 @@ void main()
     float grassAmt = texture(uGrassMask, vUV).r * ubo.terrainParams.w;
     vec3 grassHue = vec3(0.88, 1.04, 0.82);
     albedo = mix(albedo, albedo * grassHue, clamp(grassAmt, 0.0, 1.0));
+    // EAU.6 — sable sec / sable mouillé des côtes maritimes.
+    float coastDry = 0.0, coastWet = 0.0;
+    if (!lavaMode)
+        coastSand(vWorldPos, macroN, w.g, coastDry, coastWet);
+    {
+        float lum = dot(albedo, vec3(0.299, 0.587, 0.114));
+        vec3 sandCol = vec3(0.76, 0.69, 0.53) * (0.55 + 0.9 * lum);   // garde le grain de la texture
+        albedo = mix(albedo, sandCol, coastDry * 0.65);
+        albedo *= mix(1.0, 0.62, coastWet);                             // sol mouillé : plus sombre
+    }
     // Fallback World Editor : orange vif quand aucune couche splat n'a de texture utilisateur.
     // Les sorties normal / ORM / velocity restent inchangees -> shading lambert
     // sur l'orange => relief lisible (orange clair cote soleil, sombre face opposee).
@@ -235,6 +276,8 @@ void main()
     // lente pulsation de la lueur.
     float pulse    = 0.85 + 0.15 * sin(ubo.terrainOrigin.w * 1.7 + molten * 6.2831);
     float emissive = lavaMode ? clamp(w.a * molten * pulse, 0.0, 1.0) : 0.0;
+    // EAU.6 — sol mouillé plus lisse (reflets du ciel sur le sable humide).
+    orm.g = mix(orm.g, min(orm.g, 0.35), coastWet);
     outORM = vec4(orm.rgb, 1.0 - emissive);
 
     // ── Velocity for TAA reprojection ─────────────────────────────────────────

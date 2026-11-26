@@ -4518,6 +4518,326 @@ def p_pennant_pole(spec, lod):
     return m.out()
 
 
+# ======================================================= palais impérial (Lhynn)
+# Demande du propriétaire du 25/11/2026 (lore v1.0.140) : palais impérial de Lhynn au
+# sommet de la ville en gradins. Monument « signature » : RÉINTERPRÉTATION (pas de
+# reproduction fidèle) — façade gothique à porte centrale très haute, portails latéraux,
+# statues colossales encapuchonnées à sujet neutre (sans visage ni attribut identifiable),
+# soubassement peint à chevrons, flèches à toit d'ardoise. Aucune héraldique de faction.
+def _gothic_arch(part, x0, x1, z_spring, y0, y1, lod, top=None):
+    """Arc brisé (ogive) de x0 à x1 naissant à z_spring, profondeur Y [y0, y1] ;
+    extrados prolongé jusqu'au rectangle [x0-0.8, x1+0.8] x z <= top (écoinçons)."""
+    n = {0: 8, 1: 5, 2: 3}[lod]
+    w = (x1 - x0) / 2
+    R = 2 * w * 0.86   # ogive tiers-point
+    zt = top if top is not None else z_spring + R * math.sin(math.acos((R - w) / R)) + 0.8
+    for side in (-1, 1):
+        cx = (x0 + x1) / 2 - side * (R - w)
+        a_end = math.acos((R - w) / R)
+        for k in range(n):
+            a0, a1 = a_end * k / n, a_end * (k + 1) / n
+            pts = []
+            for a in (a0, a1):
+                xi = cx + side * R * math.cos(a)
+                zi = z_spring + R * math.sin(a)
+                xo, zo = _ray_rect(cx, z_spring, side * math.cos(a), math.sin(a), x0 - 0.8, x1 + 0.8, zt)
+                pts.append((xi, zi, xo, zo))
+            (xi0, zi0, xo0, zo0), (xi1, zi1, xo1, zo1) = pts
+            if side < 0:   # garde l'ordre des sommets cohérent (normales sortantes)
+                xi0, zi0, xo0, zo0, xi1, zi1, xo1, zo1 = xi1, zi1, xo1, zo1, xi0, zi0, xo0, zo0
+            for qq in ([(xi0, y0, zi0), (xi1, y0, zi1), (xo1, y0, zo1), (xo0, y0, zo0)],
+                       [(xo0, y1, zo0), (xo1, y1, zo1), (xi1, y1, zi1), (xi0, y1, zi0)],
+                       [(xi1, y0, zi1), (xi0, y0, zi0), (xi0, y1, zi0), (xi1, y1, zi1)]):
+                i = len(part.v)
+                part.v += [Vector(v) for v in qq]
+                part.f.append((i, i + 1, i + 2, i + 3))
+                part.uv.append([(0, 0), (1, 0), (1, 1), (0, 1)])
+                part.cn.append(None)
+    return zt
+
+
+def _pinnacle(part, x, y, z, r, h, lod):
+    """Pinacle : dé carré puis aiguille pyramidale (4 pans)."""
+    box(part, (x - r, y - r, z), (x + r, y + r, z + h * 0.3))
+    lathe_at(part, x, y, [(r * 1.15, z + h * 0.3), (0.02, z + h)], 4)
+
+
+def _colossus(m, x, y, H, lod):
+    """Statue colossale encapuchonnée (sujet neutre) : socle à chevrons, robe en
+    révolution, capuche sans visage, mains jointes sur le pommeau d'une épée pointe en
+    bas. \p H : hauteur totale (socle compris), pied du socle en z = 0."""
+    s = m.p("Stone_Carved")
+    ped = H * 0.16
+    box(m.p("Stone_Lozenge"), (x - 2.0, y - 2.0, 0.0), (x + 2.0, y + 2.0, ped), uv=0.28)
+    box(s, (x - 2.2, y - 2.2, ped), (x + 2.2, y + 2.2, ped + 0.4))
+    z0 = ped + 0.4
+    hb = H - z0   # hauteur de la figure
+    sides = S(lod, 14)
+    prof = [(1.75, 0.0), (1.55, 0.18), (1.2, 0.45), (1.15, 0.6), (1.4, 0.76), (1.3, 0.82), (0.75, 0.86)]
+    if lod == 2:
+        prof = [(1.7, 0.0), (1.2, 0.5), (1.35, 0.78), (0.7, 0.86)]
+    lathe_at(s, x, y, [(r, z0 + hb * t) for r, t in prof], sides)
+    # Capuche (sans visage) : cône arrondi légèrement avancé.
+    hood = [(0.78, 0.84), (0.86, 0.9), (0.74, 0.96), (0.35, 0.995), (0.02, 1.0)]
+    if lod == 2:
+        hood = [(0.8, 0.84), (0.6, 0.96), (0.02, 1.0)]
+    lathe_at(s, x, y - 0.12, [(r, z0 + hb * t) for r, t in hood], sides)
+    if lod < 2:
+        # Avant-bras vers les mains jointes, devant la poitrine (côté -Y = face).
+        hz = z0 + hb * 0.58
+        for sx in (-1, 1):
+            cyl(s, (x + sx * 1.1, y - 0.6, z0 + hb * 0.66), (x + sx * 0.25, y - 1.45, hz), 0.34, 0.28, S(lod, 6))
+        cyl(s, (x, y - 1.5, hz - 0.25), (x, y - 1.5, hz + 0.35), 0.42, 0.42, S(lod, 8))
+    # Épée pointe en bas, posée devant la robe.
+    blade_top = z0 + hb * 0.55
+    box(m.p("Iron"), (x - 0.22, y - 1.62, z0 + 0.2), (x + 0.22, y - 1.48, blade_top))
+    box(s, (x - 1.1, y - 1.7, blade_top), (x + 1.1, y - 1.4, blade_top + 0.3))
+
+
+def p_palace_facade(spec, lod):
+    """Façade du palais impérial (Lhynn, réinterprétation) : 48 m de large, mur de
+    24 m, porte centrale ogivale de 8 x 15,5 m traversante (passable), deux portails
+    latéraux à vantaux clos, quatre statues colossales de 15 m devant les contreforts,
+    tours d'angle à flèches, rosace et pignon au-dessus de la porte, soubassement peint à
+    chevrons, bannières rouges unies. Face (côté parvis) vers -Y ; origine au pied, au
+    centre de la porte."""
+    m = M()
+    s = m.p("Stone_Carved")
+    wall = m.p("Stone_Wall")
+    loz = m.p("Stone_Lozenge")
+    W, HW, T = 24.0, 24.0, 2.0          # demi-largeur, hauteur du mur, demi-épaisseur
+    GW, GS = 4.0, 11.0                   # demi-largeur et naissance de l'ogive de la porte
+    # Soubassement peint et murs pleins de part et d'autre de la porte.
+    for sx in (-1, 1):
+        a, b = sorted((sx * (GW + 1.2), sx * W))
+        box(loz, (a, -T - 0.4, 0.0), (b, T, 3.2), uv=0.28)
+        box(wall, (a, -T, 3.2), (b, T, HW), uv=0.3)
+    # Jambages de la porte (traversent toute l'épaisseur) et ogive.
+    for sx in (-1, 1):
+        a, b = sorted((sx * GW, sx * (GW + 1.2)))
+        box(loz, (a, -T - 0.6, 0.0), (b, T, 3.2), uv=0.28)
+        box(s, (a, -T - 0.6, 3.2), (b, T, GS))
+    top = _gothic_arch(s, -GW, GW, GS, -T - 0.6, T, lod, top=17.5)
+    # Massif au-dessus de la porte : rosace et pignon jusqu'à 31 m.
+    box(wall, (-GW - 1.2, -T, 17.5), (GW + 1.2, T, HW + 1.0), uv=0.3)
+    if lod < 2:
+        g = m.p("Glass_Rose")
+        n = S(lod, 24)
+        R, zc, yv = 2.6, 21.0, -T - 0.02
+        i = len(g.v)
+        g.v.append(Vector((0, yv, zc)))
+        for k in range(n):
+            a = 2 * math.pi * k / n
+            g.v.append(Vector((R * math.cos(a), yv, zc + R * math.sin(a))))
+        for k in range(n):
+            a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1) / n
+            g.f.append((i, i + 1 + k, i + 1 + (k + 1) % n))
+            g.uv.append([(0.5, 0.5), (0.5 + 0.48 * math.cos(a0), 0.5 + 0.48 * math.sin(a0)),
+                         (0.5 + 0.48 * math.cos(a1), 0.5 + 0.48 * math.sin(a1))])
+            g.cn.append(None)
+        cyl(s, (0, -T - 0.3, zc), (0, -T + 0.05, zc), R + 0.35, R + 0.35, n, cap=False)
+    # Pignon triangulaire (au-dessus du mur) sur la travée centrale.
+    gz0, gz1, gw = HW + 1.0, 31.0, GW + 1.2
+    for y in (-T, T):
+        i = len(wall.v)
+        wall.v += [Vector((-gw, y, gz0)), Vector((gw, y, gz0)), Vector((0, y, gz1))]
+        wall.f.append((i, i + 1, i + 2) if y < 0 else (i, i + 2, i + 1))
+        wall.uv.append([(0, 0), (1, 0), (0.5, 1)])
+        wall.cn.append(None)
+    for sx in (-1, 1):
+        i = len(wall.v)
+        wall.v += [Vector((sx * gw, -T, gz0)), Vector((0, -T, gz1)), Vector((0, T, gz1)), Vector((sx * gw, T, gz0))]
+        wall.f.append((i, i + 1, i + 2, i + 3) if sx > 0 else (i, i + 3, i + 2, i + 1))
+        wall.uv.append([(0, 0), (1, 0), (1, 1), (0, 1)])
+        wall.cn.append(None)
+    _pinnacle(s, 0, 0, gz1 - 0.6, 0.5, 4.0, lod)
+    # Passage de la porte : voûte et vantaux ouverts, plaqués contre les jambages.
+    d = m.p("Wood_Dark")
+    for sx in (-1, 1):
+        a, b = sorted((sx * (GW - 0.25), sx * (GW - 0.05)))
+        box(d, (a, -T + 0.3, 0.0), (b, T - 0.2, GS - 0.5))
+    # Portails latéraux (vantaux clos) à x = ±14.
+    for sx in (-1, 1):
+        cx = sx * 14.0
+        for jx in (-1, 1):
+            a, b = sorted((cx + jx * 2.0, cx + jx * 2.9))
+            box(s, (a, -T - 0.8, 3.2), (b, -T + 0.2, 8.5))
+        _gothic_arch(s, cx - 2.0, cx + 2.0, 8.5, -T - 0.8, -T + 0.2, lod, top=12.2)
+        box(d, (cx - 2.0, -T - 0.12, 3.2), (cx + 2.0, -T + 0.05, 8.5))
+        if lod == 0:
+            for z in (4.4, 6.0, 7.6):
+                box(m.p("Iron"), (cx - 1.9, -T - 0.16, z), (cx + 1.9, -T - 0.12, z + 0.1))
+        # Bannière rouge unie (sans emblème) sous la corniche.
+        if lod < 2:
+            c = m.p("Cloth_Red")
+            for yy, flip in ((-T - 0.25, False), (-T - 0.22, True)):
+                i = len(c.v)
+                c.v += [Vector((cx - 2.2, yy, 22.6)), Vector((cx + 2.2, yy, 22.6)), Vector((cx + 2.2, yy, 15.2)), Vector((cx - 2.2, yy, 15.2))]
+                c.f.append((i, i + 3, i + 2, i + 1) if not flip else (i, i + 1, i + 2, i + 3))
+                c.uv.append([(0, 1), (0, 0), (1, 0), (1, 1)] if not flip else [(0, 1), (1, 1), (1, 0), (0, 0)])
+                c.cn.append(None)
+    # Contreforts (à x = ±8,5 et ±19,5) coiffés de pinacles ; statues devant.
+    for x in (-19.5, -8.5, 8.5, 19.5):
+        box(s, (x - 1.1, -T - 1.2, 3.2), (x + 1.1, -T, HW))
+        if lod < 2:
+            _pinnacle(s, x, -T - 0.6, HW, 0.9, 6.0, lod)
+        _colossus(m, x, -T - 4.4, 15.0, lod)
+    # Tours d'angle et leurs flèches.
+    for sx in (-1, 1):
+        a, b = sorted((sx * (W - 2.6), sx * (W + 0.6)))
+        box(wall, (a, -T - 0.6, 0.0), (b, T + 0.6, HW + 5.0), uv=0.3)
+        cxa = (a + b) / 2
+        lathe_at(m.p("Shingle_Slate"), cxa, 0, [(2.2, HW + 5.0), (0.05, HW + 13.0)], S(lod, 8))
+        if lod < 2:
+            cyl(m.p("Brass"), (cxa, 0, HW + 13.0), (cxa, 0, HW + 14.2), 0.08, 0.03, 4)
+    # Parapet crénelé (LOD0) sur les deux murs.
+    if lod == 0:
+        for sx in (-1, 1):
+            x = GW + 1.6
+            while x < W - 3.0:
+                box(s, (sx * x - 0.45, -T - 0.1, HW), (sx * x + 0.45, -T + 0.5, HW + 1.2))
+                x += 1.8
+    return m.out()
+
+
+def p_palace_spire(spec, lod):
+    """Tour à flèche du palais impérial (réinterprétation) : fût carré de 7 m jusqu'à
+    28 m, contreforts d'angle à pinacles, deux étages de lancettes, galerie crénelée,
+    flèche octogonale d'ardoise et épi de laiton ; H ≈ 48 m, origine au pied, au centre."""
+    m = M()
+    s = m.p("Stone_Carved")
+    wall = m.p("Stone_Wall")
+    box(m.p("Stone_Lozenge"), (-3.6, -3.6, 0.0), (3.6, 3.6, 2.6), uv=0.28)
+    box(wall, (-3.5, -3.5, 2.6), (3.5, 3.5, 28.0), uv=0.3)
+    for cx in (-3.5, 3.5):
+        for cy in (-3.5, 3.5):
+            box(s, (cx - 0.7, cy - 0.7, 0.0), (cx + 0.7, cy + 0.7, 29.0))
+            if lod < 2:
+                _pinnacle(s, cx, cy, 29.0, 0.6, 4.0, lod)
+    if lod < 2:
+        gl = m.p("Glass_Clear")
+        for z0, z1 in ((9.0, 14.5), (18.0, 24.0)):
+            for k in range(4):
+                a = k * math.pi / 2
+                ux, uy = math.cos(a), math.sin(a)
+                # verre en retrait sur chaque face (plan à 3,52 m du centre)
+                c = Vector((ux * 3.52, uy * 3.52, 0))
+                t = Vector((-uy, ux, 0))
+                i = len(gl.v)
+                gl.v += [c - t * 0.9 + Vector((0, 0, z0)), c + t * 0.9 + Vector((0, 0, z0)),
+                         c + t * 0.9 + Vector((0, 0, z1)), c - t * 0.9 + Vector((0, 0, z1))]
+                gl.f.append((i, i + 1, i + 2, i + 3))
+                gl.uv.append([(0, 0), (1, 0), (1, 1), (0, 1)])
+                gl.cn.append(None)
+    # Galerie : corniche et merlons.
+    box(s, (-4.0, -4.0, 28.0), (4.0, 4.0, 28.6))
+    if lod == 0:
+        for k in range(-3, 4):
+            for y0 in (-4.0, 3.5):
+                box(s, (k * 1.05 - 0.35, y0, 28.6), (k * 1.05 + 0.35, y0 + 0.5, 29.6))
+                box(s, (y0, k * 1.05 - 0.35, 28.6), (y0 + 0.5, k * 1.05 + 0.35, 29.6))
+    lathe(m.p("Shingle_Slate"), [(3.1, 28.6), (2.4, 33.0), (0.05, 46.5)], S(lod, 8))
+    cyl(m.p("Brass"), (0, 0, 46.3), (0, 0, 48.0), 0.12, 0.03, S(lod, 6))
+    return m.out()
+
+
+def p_stairs_monumental(spec, lod):
+    """Volée d'escalier monumental (palais impérial, réinterprétation) : 8 m de
+    passage, 10 marches de 0,18 x 0,30 m (pente 0,6 : une volée = 3 m de long et 1,8 m
+    de haut), parapets pleins de 0,5 m à dés et vasques ; départ en y = 0, montée vers
+    +Y. Posée bout à bout sur la rampe du générateur (Settlements.cpp)."""
+    m = M()
+    s = m.p("Stone_Wall")
+    c = m.p("Stone_Carved")
+    for k in range(10):
+        box(s, (-4.0, k * 0.3, -0.35), (4.0, (k + 1) * 0.3 + 0.02, (k + 1) * 0.18))
+        if lod == 0:   # nez de marche mouluré
+            box(c, (-4.0, k * 0.3 - 0.03, (k + 1) * 0.18 - 0.05), (4.0, k * 0.3 + 0.02, (k + 1) * 0.18))
+    for x in (-4.5, 4.0):
+        steps = 10 if lod == 0 else (5 if lod == 1 else 2)
+        for k in range(steps):
+            y0, y1 = 3.0 * k / steps, 3.0 * (k + 1) / steps
+            box(c, (x, y0, -0.35), (x + 0.5, y1, 1.8 * (k + 1) / steps + 1.0))
+        if lod < 2:
+            box(c, (x - 0.1, 2.4, 1.8), (x + 0.6, 3.0, 3.1))
+            lathe_at(m.p("Stone_Carved"), x + 0.25, 2.7, [(0.22, 3.1), (0.38, 3.35), (0.3, 3.6)], S(lod, 8))
+    return m.out()
+
+
+def p_ship_cog(spec, lod):
+    """Navire marchand à quai (cogue ; port de Lhynn, T7 pl.4 ; objet générique) : coque
+    bordée de 24 m sur 7 m, tonture relevée aux extrémités, quille à z = 0 (flottaison vers
+    1,6 m), pont, châteaux avant et arrière, mât de 20 m, vergue et voile ferlée, haubans.
+    Étrave vers +Y ; origine sous la quille, au milieu."""
+    m = M()
+    hull = m.p("Wood_Dark")
+    strake = m.p("Wood_Painted")
+    L, B, H = 24.0, 7.0, 4.2
+    ns = {0: 14, 1: 9, 2: 6}[lod]
+    npt = {0: 9, 1: 7, 2: 5}[lod]
+
+    def section(t):
+        hw = max(0.25, B / 2 * (1.0 - abs(t) ** 2.4) ** 0.5)
+        bottom = 1.4 * abs(t) ** 3
+        gun = H + 1.3 * t * t
+        pts = []
+        for k in range(npt):
+            u = -1.0 + 2.0 * k / (npt - 1)
+            pts.append(Vector((hw * u, t * L / 2, bottom + (gun - bottom) * abs(u) ** 1.7)))
+        return pts, gun, hw
+
+    secs = [section(-1.0 + 2.0 * j / (ns - 1)) for j in range(ns)]
+    for j in range(ns - 1):
+        a, b = secs[j][0], secs[j + 1][0]
+        for k in range(npt - 1):
+            part = strake if k in (0, npt - 2) else hull
+            i = len(part.v)
+            part.v += [a[k], a[k + 1], b[k + 1], b[k]]
+            part.f.append((i, i + 1, i + 2, i + 3))
+            part.uv.append([(0, 0), (0.25, 0), (0.25, 1), (0, 1)])
+            part.cn.append(None)
+    # Étrave et étambot : éventails fermant les extrémités.
+    for j in (0, ns - 1):
+        pts = secs[j][0]
+        c = sum(pts, Vector()) / len(pts)
+        for k in range(npt - 1):
+            i = len(hull.v)
+            hull.v += [c, pts[k], pts[k + 1]]
+            hull.f.append((i, i + 1, i + 2) if j else (i, i + 2, i + 1))
+            hull.uv.append([(0.5, 0.5), (0, 0), (1, 0)])
+            hull.cn.append(None)
+    # Pont (bordé), châteaux.
+    deck = m.p("Wood_Plank")
+    for j in range(ns - 1):
+        g0, w0 = secs[j][1], secs[j][2]
+        g1, w1 = secs[j + 1][1], secs[j + 1][2]
+        y0, y1 = (-1.0 + 2.0 * j / (ns - 1)) * L / 2, (-1.0 + 2.0 * (j + 1) / (ns - 1)) * L / 2
+        z0, z1 = g0 - 0.45, g1 - 0.45
+        i = len(deck.v)
+        deck.v += [Vector((-w0 * 0.93, y0, z0)), Vector((w0 * 0.93, y0, z0)), Vector((w1 * 0.93, y1, z1)), Vector((-w1 * 0.93, y1, z1))]
+        deck.f.append((i, i + 1, i + 2, i + 3))
+        deck.uv.append([(0, 0), (1, 0), (1, 1), (0, 1)])
+        deck.cn.append(None)
+    box(deck, (-2.6, -11.6, H + 0.9), (2.6, -6.5, H + 3.0))      # château arrière
+    box(strake, (-2.7, -11.7, H + 3.0), (2.7, -6.4, H + 3.4))
+    if lod < 2:
+        box(deck, (-1.9, 7.2, H + 1.0), (1.9, 10.8, H + 2.6))     # château avant
+    # Mât, hune, vergue, voile ferlée, haubans.
+    wood = m.p("Wood_Weathered")
+    cyl(wood, (0, 0.5, H - 0.4), (0, 0.5, H + 16.0), 0.32, 0.2, S(lod, 8))
+    if lod < 2:
+        cyl(wood, (0, 0.5, H + 12.8), (0, 0.5, H + 13.6), 0.9, 0.9, S(lod, 8))
+    cyl(wood, (-6.5, 0.5, H + 12.0), (6.5, 0.5, H + 12.0), 0.16, 0.16, S(lod, 6), False)
+    cyl(m.p("Canvas"), (-6.0, 0.62, H + 11.75), (6.0, 0.62, H + 11.75), 0.42, 0.42, S(lod, 8))
+    if lod < 2:
+        rope = m.p("Rope")
+        top = Vector((0, 0.5, H + 15.6))
+        for end in ((0, 11.8, H + 1.5), (0, -11.5, H + 3.2), (3.2, 0.5, H + 0.2), (-3.2, 0.5, H + 0.2)):
+            API["tube"](rope, [top, Vector(end)], [0.04, 0.04], 4, 0.5)
+        cyl(wood, (0, 11.0, H + 1.0), (0, 14.0, H + 3.4), 0.18, 0.1, S(lod, 6))   # beaupré
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

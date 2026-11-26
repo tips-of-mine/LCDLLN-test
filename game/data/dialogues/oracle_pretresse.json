@@ -1,5 +1,5 @@
 {
-    "_comment": "Lore v1.0.140 — Camp de l'Oracle : pretresse du dais, dans la salle de l'Oracle (PNJ de quete pose par tools/world_gen, Oracle.cpp). Recoit « L'Appel de l'Oracle », propose « L'Epreuve des Echos » (raid de la porte E). Les boutons Accepter/Rendre sont injectes a l'execution.",
+    "_comment": "Lore v1.0.141 — Camp de l'Oracle : pretresse du dais, dans la salle de l'Oracle (PNJ de quete pose par tools/world_gen, Oracle.cpp). Recoit « L'Appel de l'Oracle », propose « L'Epreuve des Echos » (raid de la porte E). Les boutons Accepter/Rendre sont injectes a l'execution.",
     "start": "intro",
     "nodes": {
         "count": 3,

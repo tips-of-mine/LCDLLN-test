@@ -159,7 +159,7 @@ namespace tools::world_gen
 		double radiusM = 7.0;         ///< portée (m)
 		double intensity = 1.6;
 		double r = 1.0, g = 0.55, b = 0.18; ///< couleur (flamme orangée)
-		/// v1.0.140 — vrai : allumée la nuit seulement (client, `auto_night_light`) ; faux :
+		/// v1.0.141 — vrai : allumée la nuit seulement (client, `auto_night_light`) ; faux :
 		/// jour et nuit (fond du gouffre, salles de l'Oracle, lueurs du rocher).
 		bool autoNight = false;
 	};
@@ -178,7 +178,7 @@ namespace tools::world_gen
 		double darkness = 0.0;        ///< 0 = lumière du jour, 1 = nuit noire
 	};
 
-	/// Lore v1.0.140 — passage conditionnel d'une même carte (portes du rocher de
+	/// Lore v1.0.141 — passage conditionnel d'une même carte (portes du rocher de
 	/// l'Oracle), écrit dans world/<w>/passages.json et lu par le shard seul
 	/// (src/shardd/world/DoorPassages.h) : un joueur vivant dans le rayon est replacé au
 	/// point d'arrivée si ses quêtes et son groupe remplissent les conditions.
@@ -378,6 +378,19 @@ namespace tools::world_gen
 	bool InAnyGouffre(const WorldMaster& m, Vec2 p, double marginM);
 	/// Relief local ancré sur la ville \p cityId (nullptr si aucun). Terrain.cpp
 	const ReliefDef* ReliefOfCity(const WorldMaster& m, const std::string& cityId);
+	/// v1.0.140 — acropole : altitude (m, au-dessus du plateau de la ville) des gradins à la
+	/// distance \p d (m) du sommet, SANS l'escalier : heightM sur la plateforme, puis un palier
+	/// plus bas par gradin (talus linéaires de bankM, replats de terraceM), 0 au-delà du pied.
+	/// Fonction pure. Terrain.cpp
+	double AcropoleTerrace(const AcropoleShape& a, double d);
+	/// v1.0.140 — acropole : altitude (m, au-dessus du plateau de la ville) en \p p (global) :
+	/// gradins (AcropoleTerrace) et, dans l'axe sommet → ville, rampe de l'escalier monumental
+	/// (pente 0,6 depuis le bord de la plateforme jusqu'au niveau de la grand-place, raccord de
+	/// 4 m sur les côtés). 0 si la forme est désactivée. Fonction pure. Terrain.cpp
+	double AcropoleOffset(const AcropoleShape& a, Vec2 p);
+	/// v1.0.140 — vrai si \p p est sur la plateforme du sommet d'une acropole du master
+	/// (rayon topRadiusM + \p marginM). Terrain.cpp
+	bool OnAcropoleSummit(const WorldMaster& m, Vec2 p, double marginM);
 
 	struct GlobalWorld
 	{
@@ -469,8 +482,8 @@ namespace tools::world_gen
 		Grid<float>  riverDist;     ///< distance au lit de rivière le plus proche (m)
 		Grid<uint8_t> urban;        ///< 1 = emprise urbaine, 2 = place/rue
 		/// v1.0.136 — peinture du splat (vide sauf besoin) : 1 = roche de l'Oracle (roche +
-		/// neige pâle ; cristal bleu au rendu depuis v1.0.140), 2 = pierre blanche (escaliers,
-		/// paliers), 3 = dallage des salles intérieures (v1.0.140) ; prioritaire sur le reste
+		/// neige pâle ; cristal bleu au rendu depuis v1.0.141), 2 = pierre blanche (escaliers,
+		/// paliers), 3 = dallage des salles intérieures (v1.0.141) ; prioritaire sur le reste
 		/// du splat (Output.cpp, ComputeSplat). Grille vide = aucune peinture.
 		Grid<uint8_t> paint;
 		/// FORET.1 — densité forestière (0..255) de la cellule, kForestMaskResolution²
@@ -507,8 +520,8 @@ namespace tools::world_gen
 		std::vector<InteractableDef> interactables; ///< résolus (positions absolues)
 		std::vector<PointLightDef> pointLights;     ///< lumières ponctuelles (v1.0.107, données)
 		std::vector<AmbianceZoneDef> ambianceZones; ///< zones d'ambiance locales (v1.0.107, données)
-		std::vector<PassageDef> passages;           ///< passages conditionnels (v1.0.140, shard)
-		/// v1.0.140 — le canal A (neige) du splat de la cellule est rendu en cristal bleu
+		std::vector<PassageDef> passages;           ///< passages conditionnels (v1.0.141, shard)
+		/// v1.0.141 — le canal A (neige) du splat de la cellule est rendu en cristal bleu
 		/// là où la roche domine aussi (rocher de l'Oracle) : zone.json
 		/// `render.terrain.crystal_layer` (terrain.frag, client).
 		bool crystalLayer = false;
@@ -691,7 +704,7 @@ namespace tools::world_gen
 	/// plaine, 650 m) ; \param L mise en page à remplir (graphe PNJ, étals, auberge, cimetière,
 	/// entrées des tentes). Effet de bord : w.height, w.paint, w.urban, w.roads, w.roadDist,
 	/// w.scatter, w.pointLights, occupation. Oracle.cpp
-	/// v1.0.140 : salles intérieures (salle de l'Oracle, salle des Échos) creusées dans le
+	/// v1.0.141 : salles intérieures (salle de l'Oracle, salle des Échos) creusées dans le
 	/// rocher, coque de cristal, grandes portes, passages conditionnels (w.passages), PNJ de
 	/// quête (w.interactables), raid (w.spawners), zones d'ambiance, couche de cristal.
 	void BuildOracleCamp(World& w, CityDef& c, SettlementLayout& L);

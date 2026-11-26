@@ -2697,7 +2697,8 @@ namespace
 				|| c.id == "town_brinehaven" || c.id == "hamlet_0172" || c.id == "hamlet_0189" || c.id == "town_riverfold" || c.id == "ville_equiton");
 		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
 			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes", "poi_temple_methraton", "poi_seuil_lhynn",
-			"poi_borne_monts_de_moork" }; // v1.0.128 : au bord de la route Moork - Ghrunke Dash (000242)
+			"poi_borne_monts_de_moork", // v1.0.128 : au bord de la route Moork - Ghrunke Dash (000242)
+			"poi_palais_imperial_lhynn" }; // v1.0.140 : sommet de Lhynn en gradins (LORE_BD §16.66)
 		size_t posees = 0;
 		for (const PoiDef& p : g0.master.pois)
 		{
@@ -2705,7 +2706,7 @@ namespace
 			none = none && balises.count(p.id);
 			++posees;
 		}
-		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128)");
+		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
@@ -2771,7 +2772,10 @@ namespace
 			Check(alt && alt->hasPosition && near(alt->center, -130000.0 + 1234.5, -50000.0 - 2100.0, 1.0),
 				"placement v1.0.95 : Altenberg posee a sa position manuelle (1 m)");
 			const CityDef* lh = g.FindCity("ville_lhynn");
-			Check(lh && !lh->hasPosition && near(lh->center, -109750.0, -11000.0, 1e-4), "placement v1.0.95 : position null = site automatique");
+			// v1.0.140 : Lhynn est une ville en gradins (relief `acropole_lhynn`) : sans position
+			// manuelle, elle est ancrée au centre de sa case comme toute ville sur un relief (le
+			// sommet de la butte se calcule depuis ce centre) ; avant : site automatique de la case.
+			Check(lh && !lh->hasPosition && near(lh->center, -110000.0, -10000.0, 1e-4), "placement v1.0.95 : position null = ville ancree sur son relief (acropole, v1.0.140)");
 			const PoiDef* temple = nullptr;
 			for (const PoiDef& p : g.pois) if (p.id == "poi_temple_methraton") temple = &p;
 			Check(temple && near(temple->center, -110000.0 - 3000.0, -10000.0 + 2500.0, 1.0),
@@ -4202,6 +4206,100 @@ namespace
 		}
 	}
 
+	/// v1.0.140 (demande du 25/11/2026 : « le palais de l'empereur est sur une montagne ») :
+	/// Lhynn en gradins (relief `acropole_lhynn`). Profil pur (plateforme à +80 m, talus
+	/// linéaires, gradins de 20 m, pied à 296 m, rampe de pente 0,6 dans l'axe de l'escalier) ;
+	/// cellule N001_W011 générée : sommet (plateforme de 56 m) et grand-place aux altitudes prévues, plateau de la
+	/// ville basse inchangé (mer + 5 m), palais bâti (façade, 4 flèches, trône) avec collision
+	/// du catalogue, 11 volées d'escalier, aucune maison sur la plateforme ; seule Lhynn a une
+	/// acropole. Retours du propriétaire : ville dense et faubourgs, port, champs nombreux.
+	void TestAcropoleLhynnV1140()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "acropole v1.0.140 : master royaumes charge");
+		if (!ok) return;
+		const CityDef* lm = nullptr;
+		int acropoles = 0;
+		for (const CityDef& c : g.master.cities)
+		{
+			if (c.id == "ville_lhynn") lm = &c;
+			acropoles += c.acropole.enabled ? 1 : 0;
+		}
+		Check(lm && lm->acropole.enabled && acropoles == 1, "acropole v1.0.140 : Lhynn seule ville en gradins");
+		if (!lm || !lm->acropole.enabled) return;
+		const AcropoleShape& a = lm->acropole;
+		const auto ctr = engine::world::cells::CellCenter({ lm->n, lm->e });
+		const Vec2 cityC{ ctr.x + lm->positionXM, ctr.z + lm->positionZM };
+		Check(std::fabs(a.summit.x - (cityC.x - 104.0)) < 1e-6 && std::fabs(a.summit.z - cityC.z) < 1e-6
+				&& std::fabs(a.stairDir.x - 1.0) < 1e-9 && std::fabs(a.FootRadiusM() - 296.0) < 1e-9,
+			"acropole v1.0.140 : sommet 104 m a l'ouest de la ville, escalier vers l'est, pied a 296 m");
+		Check(std::fabs(AcropoleTerrace(a, 0.0) - 80.0) < 1e-9 && std::fabs(AcropoleTerrace(a, 68.0) - 70.0) < 1e-9
+				&& std::fabs(AcropoleTerrace(a, 104.0) - 60.0) < 1e-9 && std::fabs(AcropoleTerrace(a, 178.0) - 40.0) < 1e-9
+				&& AcropoleTerrace(a, 310.0) == 0.0,
+			"acropole v1.0.140 : profil des gradins (80, talus, 60, 40, pied)");
+		bool walkable = true;
+		for (double d = 0.0; d < 300.0; d += 0.5)
+			walkable = walkable && std::fabs(AcropoleTerrace(a, d + 0.5) - AcropoleTerrace(a, d)) <= 0.5 * 0.84 + 1e-9;
+		Check(walkable, "acropole v1.0.140 : talus a 40 deg au plus (praticables)");
+		const Vec2 s64 = a.summit + a.stairDir * 72.0;
+		Check(std::fabs(AcropoleOffset(a, s64) - (80.0 - 0.6 * 16.0)) < 1e-6 && std::fabs(AcropoleOffset(a, a.summit + a.stairDir * 92.0) - 60.0) < 1e-6,
+			"acropole v1.0.140 : rampe de l'escalier (pente 0,6 jusqu'au niveau de la grand-place)");
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g); BuildMacroSeaRoutes(g); // pleine mer (port)
+		auto w = std::make_unique<World>();
+		InitCell(*w, g, { lm->n, lm->e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildLandmarks(*w);
+		const CityDef* c = nullptr;
+		for (const CityDef& x : w->cities) if (x.id == "ville_lhynn") c = &x;
+		Check(c != nullptr, "acropole v1.0.140 : Lhynn dans la cellule");
+		if (c == nullptr) return;
+		const double sea = g.master.scale.seaLevelM;
+		Check(std::fabs(c->plateauY - (sea + 5.0)) < 1e-6, "acropole v1.0.140 : plateau de la ville basse inchange (mer + 5 m)");
+		Check(std::fabs(w->HeightAt(a.summit) - (c->plateauY + 80.0)) < 1.5 && std::fabs(w->HeightAt(c->center) - (c->plateauY + 60.0)) < 1.5,
+			"acropole v1.0.140 : palais a +80 m, grand-place a +60 m");
+		double maxGrade = 0.0;
+		for (double d = a.topRadiusM + 1.0; d < a.topRadiusM + 32.0; d += 2.0)
+			maxGrade = std::max(maxGrade, std::fabs(w->HeightAt(a.summit + a.stairDir * (d + 2.0)) - w->HeightAt(a.summit + a.stairDir * d)) / 2.0);
+		Check(maxGrade <= 0.7, "acropole v1.0.140 : rampe de l'escalier praticable (pente <= 0,7)");
+		auto count = [&](const char* mesh, uint8_t flags) {
+			int n = 0;
+			for (const ScatterDef& s : w->scatter) n += (s.mesh.find(mesh) != std::string::npos && s.flags == flags) ? 1 : 0;
+			return n;
+		};
+		Check(count("Palace_Imperial_Facade_1", 7u) == 1 && count("Palace_Imperial_Spire_1", 7u) == 4 && count("Throne_Wood_1", 1u) == 1
+				&& count("Stairs_Monumental_1", 0u) == 11,
+			"acropole v1.0.140 : palais bati (facade, 4 fleches, trone) et 11 volees d'escalier");
+		bool clear = true;
+		for (const BuildingPlacementDef& b : w->buildings)
+			clear = clear && std::hypot(b.position.x - a.summit.x, b.position.z - a.summit.z) > a.topRadiusM;
+		Check(clear, "acropole v1.0.140 : aucune maison sur la plateforme du palais");
+		// Retours du propriétaire (« c'est la capitale ») : rues en arc sur les replats et faubourgs
+		// à la place des champs, ville dense (121 bâtiments avant ces retours).
+		int houses = 0;
+		for (const BuildingPlacementDef& b : w->buildings)
+			houses += b.cityId == "ville_lhynn" ? 1 : 0;
+		Check(houses >= 450, "acropole v1.0.140 : capitale dense, faubourgs compris (au moins 450 batiments)");
+		// Retours du propriétaire (« on ne voit pas le port ! », « rajoute plus de champs ») :
+		// port avec navires à quai et grues ; champs de la capitale repoussés hors des faubourgs.
+		Check(count("Ship_Cog_1", 0u) >= 4 && count("Crane_Wood_1", 1u) == 2 && count("Boardwalk_Deck_1", 3u) >= 100,
+			"acropole v1.0.140 : port de Lhynn (navires amarres, grues, jetees)");
+		int depots = 0;
+		for (const BuildingPlacementDef& b : w->buildings) depots += b.displayName.rfind("Entrepot", 0) == 0 ? 1 : 0;
+		Check(depots >= 4, "acropole v1.0.140 : entrepots du port poses (esplanade reservee jusqu'a 20 m seulement)");
+		int crops = 0;
+		for (const ScatterDef& sd : w->scatter) crops += sd.mesh.find("Crop_") != std::string::npos ? 1 : 0;
+		Check(crops >= 1500, "acropole v1.0.140 : champs nombreux autour de la capitale");
+		std::ifstream cat(std::string(LCDLLN_CONTENT_DIR) + "/collision/building_pieces.json");
+		const std::string txt((std::istreambuf_iterator<char>(cat)), std::istreambuf_iterator<char>());
+		Check(txt.find("\"palace_imperial_facade_1\"") != std::string::npos && txt.find("\"palace_imperial_spire_1\"") != std::string::npos,
+			"acropole v1.0.140 : facade et fleche au catalogue de collision");
+	}
+
 	/// v1.0.133 (remarque du 21/11/2026 : « je me suis collé à la muraille de Lhynn ») : sur terrain en
 	/// pente, chaque colonne du rempart part du point le plus bas du sol sous elle (pas de jour dessous) et
 	/// dépasse d'au moins 2,5 m le point le plus haut (on ne l'enjambe pas depuis l'amont). Forteresse
@@ -4473,7 +4571,7 @@ namespace
 			const double d = dist(s.position);
 			if (s.mesh.find("Tent_Pilgrim_") != std::string::npos && (s.flags & 1u) && d > 220.0 && d < 432.0) ++tents;
 			if (s.mesh.find("Stairs_Exterior_Straight") != std::string::npos && d < 210.0) ++stairs;
-			// v1.0.140 : grandes portes peintes (8 dehors + 2 portes intérieures des salles).
+			// v1.0.141 : grandes portes peintes (8 dehors + 2 portes intérieures des salles).
 			if (s.mesh.find("Oracle_Door_Grand") != std::string::npos && d < 170.0) ++doors;
 			if (s.mesh.find("Oracle_Menhir_") != std::string::npos && d > 420.0 && d < 560.0) ++stones;
 			if (s.mesh.find("Stall_") != std::string::npos && d > 340.0 && d < 760.0)
@@ -4490,8 +4588,8 @@ namespace
 		Check(houses == 0, "oracle v1.0.136 : aucune maison europeenne dans le camp");
 		// Retour propriétaire du 23/11/2026 : « pas assez de tentes autour » -> quinze rangs.
 		Check(tents >= 1200, "oracle : ocean de tentes de pelerins (1200 tentes au moins)");
-		// v1.0.140 : escaliers de 6 m (15 rangs de 2 pièces de 3 m), 8 portes + 2 portes intérieures.
-		Check(stairs == 8 * 30 && doors == 10, "oracle v1.0.140 : 8 escaliers de 6 m, 8 grandes portes et 2 portes interieures");
+		// v1.0.141 : escaliers de 6 m (15 rangs de 2 pièces de 3 m), 8 portes + 2 portes intérieures.
+		Check(stairs == 8 * 30 && doors == 10, "oracle v1.0.141 : 8 escaliers de 6 m, 8 grandes portes et 2 portes interieures");
 		Check(stones >= 18 && blueStones >= 9, "oracle v1.0.136 : menhirs bleus sur le grand cercle");
 		Check(stallsSw >= 8, "oracle v1.0.136 : echoppes des faux devins le long du chemin du sud-ouest");
 		// Rocher : sommet ≥ 50 m au-dessus de la plaine, paroi raide, plaine plate.
@@ -4502,7 +4600,7 @@ namespace
 			const double a = (k + 0.5) * 3.141592653589793 / 4.0;
 			steep = std::max(steep, w->SlopeDegAt(o + Vec2{ std::cos(a), std::sin(a) } * 150.0));
 		}
-		// v1.0.140 : le centre est la salle de l'Oracle (creusée) ; le rocher est mesuré à 110 m
+		// v1.0.141 : le centre est la salle de l'Oracle (creusée) ; le rocher est mesuré à 110 m
 		// du centre, à l'ouest-nord-ouest (hors des salles).
 		const Vec2 onRock = o + Vec2{ std::cos(4.5 * 3.141592653589793 / 4.0), std::sin(4.5 * 3.141592653589793 / 4.0) } * 110.0;
 		Check(w->HeightAt(onRock) - plain >= 50.0 && steep > 45.0 && std::fabs(plain - c->plateauY) < 0.5,
@@ -4529,7 +4627,7 @@ namespace
 			if (s.id == "amb_" + c->id + "_aubergiste") ++inn;
 			if (s.id.find("amb_" + c->id + "_marchand_") == 0) ++merchants;
 			if (s.id.find("amb_" + c->id + "_villageois_") == 0) ++villagers;
-			// v1.0.140 : le raid de la salle des Échos (170, 171) n'est pas de la faune du camp.
+			// v1.0.141 : le raid de la salle des Échos (170, 171) n'est pas de la faune du camp.
 			if (s.routineKind.empty() && dist(s.position) < 700.0 && s.archetypeId != 170u && s.archetypeId != 171u) ++fauna;
 		}
 		for (const RespawnDef& r : w->respawns) graveyards += (r.type == "graveyard" && r.graveyardId == c->id) ? 1 : 0;
@@ -4538,13 +4636,13 @@ namespace
 		Check(graveyards == 1 && L->hasGraveyard && dist(L->graveyard) > 360.0, "oracle v1.0.136 : un seul cimetiere, hors des tentes");
 		Check(fauna == 0, "oracle v1.0.136 : ni faune ni monstre dans le camp (lieu neutre)");
 
-		// ---- v1.0.140 (demande du propriétaire du 25/11/2026) : salles, portes, raid, camp.
+		// ---- v1.0.141 (demande du propriétaire du 25/11/2026) : salles, portes, raid, camp.
 		const double floorY = plain + 22.0;
 		const Vec2 nE{ 1.0, 0.0 };
 		const Vec2 ec = o + nE * 94.0;
 		Check(std::fabs(w->HeightAt(o) - floorY) < 0.6 && std::fabs(w->HeightAt(o + Vec2{ 20.0, -15.0 }) - floorY) < 0.6,
-			"oracle v1.0.140 : salle de l'Oracle creusee au niveau des paliers");
-		Check(std::fabs(w->HeightAt(ec) - floorY) < 0.6, "oracle v1.0.140 : salle des Echos creusee au niveau des paliers");
+			"oracle v1.0.141 : salle de l'Oracle creusee au niveau des paliers");
+		Check(std::fabs(w->HeightAt(ec) - floorY) < 0.6, "oracle v1.0.141 : salle des Echos creusee au niveau des paliers");
 		// Parois pleines : entre les deux salles, entre la salle des Échos et le palier est, autour.
 		double between = 1e9, eastWall = 0.0, ring = 1e9;
 		for (double r = 53.0; r <= 63.0; r += 2.0) between = std::min(between, w->HeightAt(o + nE * r) - floorY);
@@ -4555,8 +4653,8 @@ namespace
 			if (std::cos(a) > 0.7) continue; // côté de la salle des Échos
 			ring = std::min(ring, w->HeightAt(o + Vec2{ std::cos(a), std::sin(a) } * 56.0) - floorY);
 		}
-		std::fprintf(stderr, "  oracle v1.0.140 : paroi entre salles %.1f m, paroi est %.1f m, pourtour %.1f m\n", between, eastWall, ring);
-		Check(between > 30.0 && eastWall > 30.0 && ring > 25.0, "oracle v1.0.140 : salles fermees par le rocher (acces par les passages seulement)");
+		std::fprintf(stderr, "  oracle v1.0.141 : paroi entre salles %.1f m, paroi est %.1f m, pourtour %.1f m\n", between, eastWall, ring);
+		Check(between > 30.0 && eastWall > 30.0 && ring > 25.0, "oracle v1.0.141 : salles fermees par le rocher (acces par les passages seulement)");
 		int walls = 0, vaults = 0, dais = 0, pillar = 0, colored4 = 0, colored5 = 0, pennants = 0, troughs = 0, slabs = 0;
 		for (const ScatterDef& s : w->scatter)
 		{
@@ -4571,14 +4669,14 @@ namespace
 			troughs += s.mesh.find("Trough_Stone_1") != std::string::npos ? 1 : 0;
 			slabs += s.mesh.find("Oracle_Crystal_Slab_") != std::string::npos ? 1 : 0;
 		}
-		std::fprintf(stderr, "  oracle v1.0.140 : parois %d, voutes %d, tentes rouges %d, bleues %d, fanions %d, abreuvoirs %d, dalles %d\n",
+		std::fprintf(stderr, "  oracle v1.0.141 : parois %d, voutes %d, tentes rouges %d, bleues %d, fanions %d, abreuvoirs %d, dalles %d\n",
 			walls, vaults, colored4, colored5, pennants, troughs, slabs);
-		Check(walls == 32 && vaults == 2 && dais == 1 && pillar == 1, "oracle v1.0.140 : salles habillees (parois, voutes, dais, colonne de brume)");
-		Check(slabs >= 40 && w->crystalLayer, "oracle v1.0.140 : rocher de cristal (dalles et couche de cristal du terrain)");
-		Check(colored4 >= 100 && colored5 >= 100 && pennants >= 20, "oracle v1.0.140 : tentes de couleur et mats a fanion");
+		Check(walls == 32 && vaults == 2 && dais == 1 && pillar == 1, "oracle v1.0.141 : salles habillees (parois, voutes, dais, colonne de brume)");
+		Check(slabs >= 40 && w->crystalLayer, "oracle v1.0.141 : rocher de cristal (dalles et couche de cristal du terrain)");
+		Check(colored4 >= 100 && colored5 >= 100 && pennants >= 20, "oracle v1.0.141 : tentes de couleur et mats a fanion");
 		int ponds = 0;
 		for (const Lake& l : w->lakes) ponds += l.name.find(c->id + "_bassin_") == 0 ? 1 : 0;
-		Check(ponds >= 3 && troughs >= 10, "oracle v1.0.140 : bassins des pelerins et abreuvoirs");
+		Check(ponds >= 3 && troughs >= 10, "oracle v1.0.141 : bassins des pelerins et abreuvoirs");
 		// Passages conditionnels (shard).
 		const PassageDef* soIn = nullptr; const PassageDef* eIn = nullptr; int outs = 0;
 		for (const PassageDef& p : w->passages)
@@ -4588,13 +4686,13 @@ namespace
 			if (p.id.find("_sortie") != std::string::npos && p.requiredQuests.empty() && p.minGroup == 0
 				&& std::fabs(w->HeightAt(p.destination) - floorY) < 0.6) ++outs;
 		}
-		Check(w->passages.size() == 4 && outs == 2, "oracle v1.0.140 : 2 entrees et 2 sorties sans condition (arrivee sur le palier)");
+		Check(w->passages.size() == 4 && outs == 2, "oracle v1.0.141 : 2 entrees et 2 sorties sans condition (arrivee sur le palier)");
 		Check(soIn && soIn->requiredQuests == std::vector<std::string>{ "oracle_appel" } && soIn->minGroup == 0
 			&& dist(soIn->destination) < 44.0 && std::fabs(w->HeightAt(soIn->destination) - floorY) < 0.6,
-			"oracle v1.0.140 : porte SO -> salle de l'Oracle, quete L'Appel de l'Oracle");
+			"oracle v1.0.141 : porte SO -> salle de l'Oracle, quete L'Appel de l'Oracle");
 		Check(eIn && eIn->requiredQuests.size() == 2 && eIn->minGroup == 3
 			&& std::hypot(eIn->destination.x - ec.x, eIn->destination.z - ec.z) < 24.0,
-			"oracle v1.0.140 : porte E -> salle des Echos, quete et groupe de 3");
+			"oracle v1.0.141 : porte E -> salle des Echos, quete et groupe de 3");
 		// PNJ de quête, raid, ambiances.
 		int npcs = 0, boss = 0, echoes = 0;
 		for (const InteractableDef& d : w->interactables)
@@ -4608,9 +4706,9 @@ namespace
 		}
 		int dark = 0;
 		for (const AmbianceZoneDef& z : w->ambianceZones) dark += (z.id.find(c->id + "_salle_") == 0 && z.darkness > 0.5) ? 1 : 0;
-		Check(npcs == 2, "oracle v1.0.140 : veilleur dehors, pretresse dans la salle");
-		Check(boss == 1 && echoes == 4, "oracle v1.0.140 : raid de la salle des Echos (gardien et 4 echos)");
-		Check(dark == 2, "oracle v1.0.140 : salles sombres (zones d'ambiance)");
+		Check(npcs == 2, "oracle v1.0.141 : veilleur dehors, pretresse dans la salle");
+		Check(boss == 1 && echoes == 4, "oracle v1.0.141 : raid de la salle des Echos (gardien et 4 echos)");
+		Check(dark == 2, "oracle v1.0.141 : salles sombres (zones d'ambiance)");
 	}
 
 	/// v1.0.134 — routes soudées, plus de doublon (LORE_BD §16.60). Sur le réseau macro des
@@ -4761,6 +4859,7 @@ int main()
 	TestRoutesSansDoublonV1134();
 	TestRemplissageV1135();
 	TestOracleV1136();
+	TestAcropoleLhynnV1140();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

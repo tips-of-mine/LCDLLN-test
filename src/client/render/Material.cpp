@@ -448,7 +448,7 @@ namespace engine::render
 		gpuData.flags = static_cast<uint32_t>(mat.flags);
 		gpuData.tiling[0] = mat.tiling[0];
 		gpuData.tiling[1] = mat.tiling[1];
-		gpuData.padding[0] = mat.emissive; // v1.0.140 — lu seulement avec le bit Emissive
+		gpuData.padding[0] = mat.emissive; // v1.0.141 — lu seulement avec le bit Emissive
 
 		const uint32_t materialIndex = static_cast<uint32_t>(m_materials.size());
 		m_materials.push_back(gpuData);

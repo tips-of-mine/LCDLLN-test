@@ -1,5 +1,5 @@
 // door_passages_tests — passages conditionnels d'une même carte (Camp de l'Oracle,
-// lore v1.0.140), module pur. Pattern repo : int main() + vérifications + code retour.
+// lore v1.0.141), module pur. Pattern repo : int main() + vérifications + code retour.
 
 #include "src/shardd/world/DoorPassages.h"
 

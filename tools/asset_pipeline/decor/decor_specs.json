@@ -20,6 +20,11 @@
       3000,
       1000,
       300
+    ],
+    "monument": [
+      12000,
+      4000,
+      1200
     ]
   },
   "assets": [
@@ -9691,6 +9696,86 @@
       "billboard": false,
       "replaces": null,
       "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026)"
+    },
+    {
+      "id": "Palace_Imperial_Facade_1",
+      "num": 215,
+      "family": "monument",
+      "builder": "palace_facade",
+      "seed": 21501,
+      "budget": "monument",
+      "exact": true,
+      "width_m": [
+        50.2,
+        50.6
+      ],
+      "height_m": [
+        38.0,
+        38.4
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T3-P023-C1 (vue de la ville) ; T3-P024-C5 (portes du palais, escorte) ; T3-P026 ; T4-P006, P007 ; T10-P037-C1 ; demande du propriétaire (25/11/2026) ; signature réinterprétée (statues à sujet neutre, sans héraldique)"
+    },
+    {
+      "id": "Palace_Imperial_Spire_1",
+      "num": 216,
+      "family": "monument",
+      "builder": "palace_spire",
+      "seed": 21601,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        8.3,
+        8.5
+      ],
+      "height_m": [
+        47.8,
+        48.2
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T3-P026 (flèches du palais) ; T10-P037-C1 ; demande du propriétaire (25/11/2026)"
+    },
+    {
+      "id": "Stairs_Monumental_1",
+      "num": 217,
+      "family": "monument",
+      "builder": "stairs_monumental",
+      "seed": 21701,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        9.0,
+        9.0
+      ],
+      "height_m": [
+        3.55,
+        3.65
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T10-P037-C1 (ville en gradins) ; escalier monumental direct (arbitrage Q3 b du propriétaire, 25/11/2026)"
+    },
+    {
+      "id": "Ship_Cog_1",
+      "num": 218,
+      "family": "objets",
+      "builder": "ship_cog",
+      "seed": 21801,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        12.9,
+        13.1
+      ],
+      "height_m": [
+        20.1,
+        20.3
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T7-P004-C1 (port de guerre de Lhynn, navires à quai) ; T10-P037-C1 (flotte) ; demande du propriétaire (25/11/2026 : « on ne voit pas le port »)"
     }
   ]
 }

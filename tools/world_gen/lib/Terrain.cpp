@@ -296,8 +296,64 @@ namespace tools::world_gen
 		return false;
 	}
 
+	namespace
+	{
+		/// v1.0.140 — vrai pendant le calcul du plateau d'une ville en gradins : MacroHeight y
+		/// rend le relief SANS les acropoles (le plateau est celui de la ville basse).
+		thread_local bool g_acropoleOff = false;
+	}
+
+	double AcropoleTerrace(const AcropoleShape& a, double d)
+	{
+		if (!a.enabled || a.terraces <= 0) return 0.0;
+		if (d <= a.topRadiusM) return a.heightM;
+		const double stepH = a.heightM / a.terraces;
+		const double period = a.bankM + a.terraceM;
+		const double x = d - a.topRadiusM;
+		const int k = static_cast<int>(std::floor(x / period));
+		if (k >= a.terraces) return 0.0;
+		const double r = x - k * period;
+		const double hi = a.heightM - k * stepH, lo = hi - stepH;
+		// Talus linéaire (pente constante ≤ 40°, praticable), puis replat.
+		return r < a.bankM ? Lerp(hi, lo, r / a.bankM) : lo;
+	}
+
+	double AcropoleOffset(const AcropoleShape& a, Vec2 p)
+	{
+		if (!a.enabled) return 0.0;
+		const double dx = p.x - a.summit.x, dz = p.z - a.summit.z;
+		const double d = std::hypot(dx, dz);
+		// Revers (côté opposé à la ville) : distances étirées de backFactor au-delà de la
+		// plateforme (fondu sur 53° autour de la perpendiculaire) — la butte reste sur la terre
+		// ferme et tombe en falaise côté mer ; côté ville, gradins praticables inchangés.
+		const double cosT = d > 1e-6 ? (dx * a.stairDir.x + dz * a.stairDir.z) / d : 1.0;
+		const double back = SmoothStep(0.0, 0.6, -cosT);
+		const double dEff = d <= a.topRadiusM ? d : a.topRadiusM + (d - a.topRadiusM) * (1.0 + (a.backFactor - 1.0) * back);
+		const double terr = dEff < a.FootRadiusM() + 1.0 ? AcropoleTerrace(a, dEff) : 0.0;
+		// Escalier monumental : rampe de pente 0,6 (marche 0,18 × 0,30 m) dans l'axe sommet →
+		// grand-place, du bord de la plateforme jusqu'au niveau de la place, puis à plat.
+		const double along = dx * a.stairDir.x + dz * a.stairDir.z;
+		const double across = std::fabs(-dx * a.stairDir.z + dz * a.stairDir.x);
+		if (along < a.topRadiusM - 2.0 || along > a.stairBottomM + 4.0 || across > a.stairHalfWidthM + 4.0) return terr;
+		const double plazaY = AcropoleTerrace(a, a.stairBottomM);
+		const double ramp = Clamp(a.heightM - 0.6 * (along - a.topRadiusM), plazaY, a.heightM);
+		const double wAcross = 1.0 - SmoothStep(a.stairHalfWidthM, a.stairHalfWidthM + 4.0, across);
+		const double wAlong = 1.0 - SmoothStep(a.stairBottomM, a.stairBottomM + 4.0, along);
+		return Lerp(terr, ramp, wAcross * wAlong);
+	}
+
+	bool OnAcropoleSummit(const WorldMaster& m, Vec2 p, double marginM)
+	{
+		for (const ReliefDef& r : m.reliefs)
+			if (r.type == "acropole" && std::hypot(p.x - r.acropole.summit.x, p.z - r.acropole.summit.z) <= r.acropole.topRadiusM + marginM)
+				return true;
+		return false;
+	}
+
 	double ReliefContribution(const ReliefDef& r, double x, double z)
 	{
+		// Acropole (v1.0.140) : gradins et escalier, avant le masque des terres émergées.
+		if (r.type == "acropole") return AcropoleOffset(r.acropole, { x, z });
 		const double dx = x - r.center.x, dz = z - r.center.z;
 		// Gouffre (v1.0.107) : il creuse jusqu'à une altitude absolue (GouffreHeight,
 		// appliqué par ReliefOffset), il n'ajoute aucune élévation.
@@ -555,6 +611,9 @@ namespace tools::world_gen
 			// Falaise (v1.0.120) : côte nette tirée du masque lissé ; îlots du marais noyés côté
 			// mer, plage et mares comblées côté terre, puis paroi et plateau (FalaiseOffset).
 			if (r.type == "falaise") { h += FalaiseOffset(m, r, x, z, baseH); continue; }
+			// Acropole (v1.0.140) : même masque que les massifs (la côte ne bouge pas) ;
+			// ignorée pendant le calcul du plateau de sa ville (g_acropoleOff).
+			if (r.type == "acropole") { if (!g_acropoleOff) massif += ReliefContribution(r, x, z); continue; }
 			(r.type == "massif" ? massif : h) += ReliefContribution(r, x, z);
 		}
 		// Massifs (v1.0.77) : seulement sur les terres émergées (0,5 à 3 m au-dessus de
@@ -1017,9 +1076,13 @@ namespace tools::world_gen
 			if (c.hasPosition)
 			{
 				c.center = { ctr.x + c.positionXM, ctr.z + c.positionZM };
+				// v1.0.140 : une ville en gradins (acropole) garde le plateau de sa ville basse,
+				// relevé sur le relief SANS la butte (sinon la moyenne la soulèverait).
+				g_acropoleOff = c.acropole.enabled;
 				if (MacroHeight(m, c.center.x, c.center.z) < sea + 6.0)
 					g.Warn("position manuelle de " + c.id + " dans l'eau : plateau releve au-dessus de la mer");
 				c.plateauY = std::max(MeanMacroHeight(m, c.center, c.radiusM + 6.0, 12.0), sea + 5.0);
+				g_acropoleOff = false;
 				continue;
 			}
 			Vec2 best{ ctr.x, ctr.z };
@@ -1053,7 +1116,9 @@ namespace tools::world_gen
 			if (bestScore > 1e17 && !anchored) g.Warn("aucun site sec pour " + c.id + " : centre de case retenu");
 			if (anchored && MacroHeight(m, ctr.x, ctr.z) < sea + 6.0) g.Warn("relief de " + c.id + " : centre de case dans l'eau");
 			c.center = best;
+			g_acropoleOff = c.acropole.enabled; // v1.0.140 : plateau de la ville basse
 			c.plateauY = std::max(MeanMacroHeight(m, c.center, c.radiusM + 6.0, 12.0), sea + 5.0);
+			g_acropoleOff = false;
 		}
 		g.pois = m.pois;
 		for (PoiDef& p : g.pois)
@@ -1908,10 +1973,26 @@ namespace tools::world_gen
 				ForDisc(w.height, c.center, c.radiusM + 6.0, [&](int i, int j, double) { sum += w.height.At(i, j); cnt += 1.0; });
 				c.plateauY = std::max(cnt > 0 ? sum / cnt : sea + 8.0, sea + 5.0);
 			}
+			if (c.acropole.enabled)
+			{
+				// v1.0.140 — ville en gradins : plateau de la ville basse + gradins et escalier
+				// (AcropoleOffset), raccordés au relief (qui porte déjà la butte, MacroHeight).
+				const double R = c.radiusM + 6.0, blend = std::max(46.0, c.radiusM * 0.6);
+				ForDisc(w.height, c.center, R + blend, [&](int i, int j, double d) {
+					const Vec2 q{ w.height.WorldX(i), w.height.WorldZ(j) };
+					const double t = SmoothStep(R, R + blend, d);
+					const double ripple = Fbm(q.x, q.z, 30.0, 2, w.master.seed + 77) * 0.25;
+					w.height.At(i, j) = Lerp(c.plateauY + AcropoleOffset(c.acropole, q) + ripple, w.height.At(i, j), t);
+					if (d <= R) w.urban.At(i, j) = 1;
+				});
+				continue;
+			}
 			flatten(c.center, c.radiusM + 6.0, std::max(46.0, c.radiusM * 0.6), c.plateauY, true);
 		}
 		for (const PoiDef& p : w.pois)
 		{
+			// v1.0.140 : un lieu posé sur le sommet d'une acropole (palais) garde la plateforme.
+			if (OnAcropoleSummit(w.master, p.center, 0.0)) continue;
 			// v1.0.132 : un château (enceinte, douves) demande un plateau plus large.
 			const double R = p.kind == "chateau" ? 40.0 * p.scale + 8.0 : 40.0;
 			double sum = 0.0, cnt = 0.0;

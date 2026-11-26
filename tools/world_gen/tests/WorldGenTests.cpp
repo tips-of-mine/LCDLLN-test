@@ -2697,7 +2697,8 @@ namespace
 				|| c.id == "town_brinehaven" || c.id == "hamlet_0172" || c.id == "hamlet_0189" || c.id == "town_riverfold" || c.id == "ville_equiton");
 		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
 			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes", "poi_temple_methraton", "poi_seuil_lhynn",
-			"poi_borne_monts_de_moork" }; // v1.0.128 : au bord de la route Moork - Ghrunke Dash (000242)
+			"poi_borne_monts_de_moork", // v1.0.128 : au bord de la route Moork - Ghrunke Dash (000242)
+			"poi_palais_imperial_lhynn" }; // v1.0.140 : sommet de Lhynn en gradins (LORE_BD §16.66)
 		size_t posees = 0;
 		for (const PoiDef& p : g0.master.pois)
 		{
@@ -2705,7 +2706,7 @@ namespace
 			none = none && balises.count(p.id);
 			++posees;
 		}
-		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128)");
+		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
@@ -2771,7 +2772,10 @@ namespace
 			Check(alt && alt->hasPosition && near(alt->center, -130000.0 + 1234.5, -50000.0 - 2100.0, 1.0),
 				"placement v1.0.95 : Altenberg posee a sa position manuelle (1 m)");
 			const CityDef* lh = g.FindCity("ville_lhynn");
-			Check(lh && !lh->hasPosition && near(lh->center, -109750.0, -11000.0, 1e-4), "placement v1.0.95 : position null = site automatique");
+			// v1.0.140 : Lhynn est une ville en gradins (relief `acropole_lhynn`) : sans position
+			// manuelle, elle est ancrée au centre de sa case comme toute ville sur un relief (le
+			// sommet de la butte se calcule depuis ce centre) ; avant : site automatique de la case.
+			Check(lh && !lh->hasPosition && near(lh->center, -110000.0, -10000.0, 1e-4), "placement v1.0.95 : position null = ville ancree sur son relief (acropole, v1.0.140)");
 			const PoiDef* temple = nullptr;
 			for (const PoiDef& p : g.pois) if (p.id == "poi_temple_methraton") temple = &p;
 			Check(temple && near(temple->center, -110000.0 - 3000.0, -10000.0 + 2500.0, 1.0),
@@ -4202,6 +4206,100 @@ namespace
 		}
 	}
 
+	/// v1.0.140 (demande du 25/11/2026 : « le palais de l'empereur est sur une montagne ») :
+	/// Lhynn en gradins (relief `acropole_lhynn`). Profil pur (plateforme à +80 m, talus
+	/// linéaires, gradins de 20 m, pied à 296 m, rampe de pente 0,6 dans l'axe de l'escalier) ;
+	/// cellule N001_W011 générée : sommet (plateforme de 56 m) et grand-place aux altitudes prévues, plateau de la
+	/// ville basse inchangé (mer + 5 m), palais bâti (façade, 4 flèches, trône) avec collision
+	/// du catalogue, 11 volées d'escalier, aucune maison sur la plateforme ; seule Lhynn a une
+	/// acropole. Retours du propriétaire : ville dense et faubourgs, port, champs nombreux.
+	void TestAcropoleLhynnV1140()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "acropole v1.0.140 : master royaumes charge");
+		if (!ok) return;
+		const CityDef* lm = nullptr;
+		int acropoles = 0;
+		for (const CityDef& c : g.master.cities)
+		{
+			if (c.id == "ville_lhynn") lm = &c;
+			acropoles += c.acropole.enabled ? 1 : 0;
+		}
+		Check(lm && lm->acropole.enabled && acropoles == 1, "acropole v1.0.140 : Lhynn seule ville en gradins");
+		if (!lm || !lm->acropole.enabled) return;
+		const AcropoleShape& a = lm->acropole;
+		const auto ctr = engine::world::cells::CellCenter({ lm->n, lm->e });
+		const Vec2 cityC{ ctr.x + lm->positionXM, ctr.z + lm->positionZM };
+		Check(std::fabs(a.summit.x - (cityC.x - 104.0)) < 1e-6 && std::fabs(a.summit.z - cityC.z) < 1e-6
+				&& std::fabs(a.stairDir.x - 1.0) < 1e-9 && std::fabs(a.FootRadiusM() - 296.0) < 1e-9,
+			"acropole v1.0.140 : sommet 104 m a l'ouest de la ville, escalier vers l'est, pied a 296 m");
+		Check(std::fabs(AcropoleTerrace(a, 0.0) - 80.0) < 1e-9 && std::fabs(AcropoleTerrace(a, 68.0) - 70.0) < 1e-9
+				&& std::fabs(AcropoleTerrace(a, 104.0) - 60.0) < 1e-9 && std::fabs(AcropoleTerrace(a, 178.0) - 40.0) < 1e-9
+				&& AcropoleTerrace(a, 310.0) == 0.0,
+			"acropole v1.0.140 : profil des gradins (80, talus, 60, 40, pied)");
+		bool walkable = true;
+		for (double d = 0.0; d < 300.0; d += 0.5)
+			walkable = walkable && std::fabs(AcropoleTerrace(a, d + 0.5) - AcropoleTerrace(a, d)) <= 0.5 * 0.84 + 1e-9;
+		Check(walkable, "acropole v1.0.140 : talus a 40 deg au plus (praticables)");
+		const Vec2 s64 = a.summit + a.stairDir * 72.0;
+		Check(std::fabs(AcropoleOffset(a, s64) - (80.0 - 0.6 * 16.0)) < 1e-6 && std::fabs(AcropoleOffset(a, a.summit + a.stairDir * 92.0) - 60.0) < 1e-6,
+			"acropole v1.0.140 : rampe de l'escalier (pente 0,6 jusqu'au niveau de la grand-place)");
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g); BuildMacroSeaRoutes(g); // pleine mer (port)
+		auto w = std::make_unique<World>();
+		InitCell(*w, g, { lm->n, lm->e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildLandmarks(*w);
+		const CityDef* c = nullptr;
+		for (const CityDef& x : w->cities) if (x.id == "ville_lhynn") c = &x;
+		Check(c != nullptr, "acropole v1.0.140 : Lhynn dans la cellule");
+		if (c == nullptr) return;
+		const double sea = g.master.scale.seaLevelM;
+		Check(std::fabs(c->plateauY - (sea + 5.0)) < 1e-6, "acropole v1.0.140 : plateau de la ville basse inchange (mer + 5 m)");
+		Check(std::fabs(w->HeightAt(a.summit) - (c->plateauY + 80.0)) < 1.5 && std::fabs(w->HeightAt(c->center) - (c->plateauY + 60.0)) < 1.5,
+			"acropole v1.0.140 : palais a +80 m, grand-place a +60 m");
+		double maxGrade = 0.0;
+		for (double d = a.topRadiusM + 1.0; d < a.topRadiusM + 32.0; d += 2.0)
+			maxGrade = std::max(maxGrade, std::fabs(w->HeightAt(a.summit + a.stairDir * (d + 2.0)) - w->HeightAt(a.summit + a.stairDir * d)) / 2.0);
+		Check(maxGrade <= 0.7, "acropole v1.0.140 : rampe de l'escalier praticable (pente <= 0,7)");
+		auto count = [&](const char* mesh, uint8_t flags) {
+			int n = 0;
+			for (const ScatterDef& s : w->scatter) n += (s.mesh.find(mesh) != std::string::npos && s.flags == flags) ? 1 : 0;
+			return n;
+		};
+		Check(count("Palace_Imperial_Facade_1", 7u) == 1 && count("Palace_Imperial_Spire_1", 7u) == 4 && count("Throne_Wood_1", 1u) == 1
+				&& count("Stairs_Monumental_1", 0u) == 11,
+			"acropole v1.0.140 : palais bati (facade, 4 fleches, trone) et 11 volees d'escalier");
+		bool clear = true;
+		for (const BuildingPlacementDef& b : w->buildings)
+			clear = clear && std::hypot(b.position.x - a.summit.x, b.position.z - a.summit.z) > a.topRadiusM;
+		Check(clear, "acropole v1.0.140 : aucune maison sur la plateforme du palais");
+		// Retours du propriétaire (« c'est la capitale ») : rues en arc sur les replats et faubourgs
+		// à la place des champs, ville dense (121 bâtiments avant ces retours).
+		int houses = 0;
+		for (const BuildingPlacementDef& b : w->buildings)
+			houses += b.cityId == "ville_lhynn" ? 1 : 0;
+		Check(houses >= 450, "acropole v1.0.140 : capitale dense, faubourgs compris (au moins 450 batiments)");
+		// Retours du propriétaire (« on ne voit pas le port ! », « rajoute plus de champs ») :
+		// port avec navires à quai et grues ; champs de la capitale repoussés hors des faubourgs.
+		Check(count("Ship_Cog_1", 0u) >= 4 && count("Crane_Wood_1", 1u) == 2 && count("Boardwalk_Deck_1", 3u) >= 100,
+			"acropole v1.0.140 : port de Lhynn (navires amarres, grues, jetees)");
+		int depots = 0;
+		for (const BuildingPlacementDef& b : w->buildings) depots += b.displayName.rfind("Entrepot", 0) == 0 ? 1 : 0;
+		Check(depots >= 4, "acropole v1.0.140 : entrepots du port poses (esplanade reservee jusqu'a 20 m seulement)");
+		int crops = 0;
+		for (const ScatterDef& sd : w->scatter) crops += sd.mesh.find("Crop_") != std::string::npos ? 1 : 0;
+		Check(crops >= 1500, "acropole v1.0.140 : champs nombreux autour de la capitale");
+		std::ifstream cat(std::string(LCDLLN_CONTENT_DIR) + "/collision/building_pieces.json");
+		const std::string txt((std::istreambuf_iterator<char>(cat)), std::istreambuf_iterator<char>());
+		Check(txt.find("\"palace_imperial_facade_1\"") != std::string::npos && txt.find("\"palace_imperial_spire_1\"") != std::string::npos,
+			"acropole v1.0.140 : facade et fleche au catalogue de collision");
+	}
+
 	/// v1.0.133 (remarque du 21/11/2026 : « je me suis collé à la muraille de Lhynn ») : sur terrain en
 	/// pente, chaque colonne du rempart part du point le plus bas du sol sous elle (pas de jour dessous) et
 	/// dépasse d'au moins 2,5 m le point le plus haut (on ne l'enjambe pas depuis l'amont). Forteresse
@@ -4681,6 +4779,7 @@ int main()
 	TestRoutesSansDoublonV1134();
 	TestRemplissageV1135();
 	TestOracleV1136();
+	TestAcropoleLhynnV1140();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

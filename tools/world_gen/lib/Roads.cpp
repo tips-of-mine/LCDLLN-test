@@ -282,11 +282,28 @@ namespace tools::world_gen
 				}
 			}
 			const bool rivers = w.riverDist.data.size() == w.height.data.size();
+			// v1.0.140 — villes en gradins (acropole) : la chaussée suit les gradins de la ville et
+			// de la butte (aucun déblai : le profil en long reste celui du plateau de la ville basse).
+			std::vector<const CityDef*> acropoles;
+			for (const CityDef& c : w.cities)
+				if (c.acropole.enabled) acropoles.push_back(&c);
+			auto onAcropole = [&](double x, double z) {
+				for (const CityDef* c : acropoles)
+					if (std::hypot(x - c->center.x, z - c->center.z) < c->radiusM + 6.0
+						|| std::hypot(x - c->acropole.summit.x, z - c->acropole.summit.z) < c->acropole.FootRadiusM() + 20.0)
+						return true;
+				return false;
+			};
 			for (size_t q = 0; q < w.height.data.size(); ++q)
 			{
 				const float rd = dist.data[q];
 				if (rd > 9.0f) continue;
 				w.roadDist.data[q] = std::min(w.roadDist.data[q], rd);
+				if (!acropoles.empty())
+				{
+					const int i = static_cast<int>(q % static_cast<size_t>(w.height.width)), j = static_cast<int>(q / static_cast<size_t>(w.height.width));
+					if (onAcropole(w.height.WorldX(i), w.height.WorldZ(j))) continue;
+				}
 				// Lot carte v1.0.129 : le lit d'une rivière (et 1 m de berge) n'est plus comblé
 				// par la chaussée : un pont le franchit (BuildBridges), l'eau passe dessous.
 				if (rivers && w.riverDist.data[q] < 1.0f) continue;

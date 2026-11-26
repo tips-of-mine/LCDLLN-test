@@ -369,6 +369,15 @@ namespace tools::world_gen
 	/// v1.0.140 — vrai si \p p est sur la plateforme du sommet d'une acropole du master
 	/// (rayon topRadiusM + \p marginM). Terrain.cpp
 	bool OnAcropoleSummit(const WorldMaster& m, Vec2 p, double marginM);
+	/// v1.0.141 — plaines basses des élargissements de rivière (clés `valley_m`, `floor_y_m`) :
+	/// altitude \p h (m) en (x, z) abaissée vers floor_y_m autour de l'élargissement (moitié de
+	/// length_m), raccord sur valley_m ; inchangée ailleurs. Appliquée au terrain de la cellule
+	/// et au profil des routes, PAS au relief macro (le tracé des rivières n'en dépend pas).
+	double ValleyLowered(const WorldMaster& m, double x, double z, double h);
+	/// v1.0.141 — rayon d'emprise (m) d'une arène (POI de genre `arene`, Landmarks.cpp) :
+	/// gradins, rampe des geôles et dégagement compris, à l'échelle du POI. Sert à la
+	/// réservation de l'emprise dans la ville (Settlements.cpp) et au plateau (Terrain.cpp).
+	double ArenaFootprintM(const PoiDef& p);
 
 	struct GlobalWorld
 	{

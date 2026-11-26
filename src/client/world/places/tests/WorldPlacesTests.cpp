@@ -89,6 +89,8 @@ int main()
 		&& engine::client::PlaceKindLabel("phare") == "Phare" && engine::client::PlaceKindLabel("cascade") == "Cascade"
 		&& engine::client::PlaceKindLabel("pont") == "Pont", "PlaceKindLabel : lieux batis (v1.0.132)");
 	Check(engine::client::PlaceKindLabel("palais") == "Palais", "PlaceKindLabel : palais imperial de Lhynn (v1.0.140)");
+	Check(engine::client::PlaceKindLabel("arene") == "Ar\xC3\xA8ne" && engine::client::PlaceKindLabel("cathedrale") == "Cath\xC3\xA9" "drale",
+		"PlaceKindLabel : arene et cathedrale de Feyhin Lokcthat (v1.0.141)");
 	Check(engine::client::PlaceKindLabel("champ_bataille") == "Champ de bataille" && engine::client::PlaceKindLabel("etang") == "\xC3\x89tang"
 	      && engine::client::PlaceKindLabel("inconnu") == "inconnu", "libelles des genres de POI");
 

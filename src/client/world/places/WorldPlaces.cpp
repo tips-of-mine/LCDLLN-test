@@ -318,6 +318,9 @@ namespace engine::client
 		if (kind == "pont") return "Pont";
 		// v1.0.140 : palais impérial de Lhynn (sommet de la ville en gradins, Landmarks.cpp).
 		if (kind == "palais") return "Palais";
+		// v1.0.141 : Feyhin Lokcthat (BD-T2) — arène de la ville basse, cathédrale du sommet.
+		if (kind == "arene") return "Ar\xC3\xA8ne"; // « Arène » en UTF-8
+		if (kind == "cathedrale") return "Cath\xC3\xA9" "drale"; // « Cathédrale » en UTF-8
 		return std::string(kind);
 	}
 }

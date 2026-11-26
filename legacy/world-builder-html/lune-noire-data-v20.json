@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.140",
+    "version": "1.0.141",
     "notes": [
+      "v1.0.141 : [DÉCISION] Feyhin Lokcthat d'après le Tome 2 (p.7, 8, 10, 12) : ville perchée sur un éperon en gradins dans la boucle de la rivière, ville basse au pied de la falaise, long pont de pierre à arches sur la rivière élargie, arène des gladiateurs et ses geôles creusées sous les gradins, cathédrale à haute flèche au sommet, Porte 2 des enfers au pied de la falaise ; décors génériques n° 219 à 225 (LORE_BD §16.67).",
       "v1.0.140 : [DÉCISION] Lhynn en gradins : palais impérial au sommet (ville haute avancée vers la mer, ville basse vers l'est), escalier monumental depuis la grand-place ; façade, flèches et escalier modélisés (réinterprétation).",
       "v1.0.139 : [DÉCISION] Camp de l'Oracle : océan de tentes de pèlerins (quinze rangs) ; rendu lointain corrigé (arbres, champs, horizon).",
       "v1.0.138 : [DÉCISION] Atelier décors étendu aux tomes 6 à 14 : 19 objets génériques (n° 195 à 213) modélisés et placés (clé decors), éléments signature retirés.",
@@ -10444,8 +10445,8 @@
       "cell": "N008_E007",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": -495,
+      "position_z_m": -320,
       "faction_control": "",
       "region_id": "via_magna",
       "province": "",
@@ -10474,7 +10475,13 @@
         "pont vers Magistrya",
         "route vers Kendrhir",
         "Présence d'un des portails pour les enfers 2/5",
-        "Porte 2 des enfers sous la colline"
+        "Porte 2 des enfers sous la colline",
+        "ville haute sur un éperon rocheux en gradins, dans une boucle de la rivière",
+        "ville basse au pied de la falaise, au bord de l'eau",
+        "long pont de pierre à arches à l'arrivée (rivière élargie)",
+        "arène des gladiateurs dans la ville basse, geôles sous les gradins",
+        "cathédrale à haute flèche au sommet de l'éperon",
+        "place à colonnade et fontaine (grand-place)"
       ],
       "notes": [
         "[BD-T2] Première cité visitée par Wismerhill et ses compagnons dans le Tome 2.",
@@ -10494,32 +10501,44 @@
         "[GD] (v1.0.82) PNJ des peuples lointains présents : Bjarnulf Haddrek (Les Nordiques, mercenaire) ; Khulaïn Sorghat (L'Empire Minghol, mercenaire) ; Tokhimaru Seïdan (L'archipel d'Akhazumi, mercenaire) ; Qasrim Bhen-Haddar (Les émirats du Sheydhar, mercenaire) ; Kwesenda Mbhoro (Le royaume de Nkhaloa, mercenaire) (fiches persons, LORE_BD §16.11).",
         "[GD] (v1.0.85) Balisage (LORE_BD §16.14) — avertisseur : les bûcherons de Feyhin Lokcthat mettent en garde contre « la rivière du sud » et ses flammes orange (premier-né de Xygga, 66-70, N006_E007) ; ils ignorent où le dragon gîte.",
         "[GD] (v1.0.106) Extrémité de la route 000238 « Route Whispers Hill → Feyhin Lokcthat » (LORE_BD §16.35).",
-        "[DÉCISION] (v1.0.106) Feyhin Lokcthat (case isolée) est reliée à pied à Whispers Hill (000238) et à Mhozrak (000094) : cases de passage ouvertes (LORE_BD §16.35)."
+        "[DÉCISION] (v1.0.106) Feyhin Lokcthat (case isolée) est reliée à pied à Whispers Hill (000238) et à Mhozrak (000094) : cases de passage ouvertes (LORE_BD §16.35).",
+        "[DÉCISION] (v1.0.141) Ville perchée d'après le Tome 2 (demande du propriétaire du 26/11/2026, arbitrages Q1 a, Q2 a) : éperon de trois gradins (90 m au-dessus de la ville basse, talus praticables, revers en falaise sur la rivière), ville haute de 150 m de rayon sur la butte, ville basse au pied de la falaise ; ville posée à la main dans la boucle de la Rivière des deux lacs (le relief suit la ville). [BD-T2] p.7 (vue d'arrivée), p.8, p.10, p.12 (intérieur de la ville). Monde jouable : relief `acropole_feyhin` du master ; LORE_BD §16.67.",
+        "[DÉCISION] (v1.0.141) Long pont de pierre à arches sur la route d'arrivée (arbitrage Q3 a) : rivière élargie à 60 m sur 140 m sous le pont, plaine basse autour (la rivière ne coule plus en gorge à cet endroit), piles à avant-becs. [BD-T2] p.7. LORE_BD §16.67.",
+        "[DÉCISION] (v1.0.141) Arène dans la ville basse, près du pont (arbitrage Q4 a), geôles en vrai sous-sol creusé sous les gradins et couvert (arbitrage Q5 b, méthode « creuser et couvrir » retenue le 26/11/2026 : pas de masque de trous) ; cathédrale à haute flèche au sommet, portant le service temple (Q6 a) ; bannières unies sans blason (Q8 a) ; aux geôles, chaînes et anneaux seulement, pas de croix de contention (Q9 b) ; gargouilles génériques (Q10 a). LORE_BD §16.67."
       ],
       "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
+        "hauteur": "éperon de 90 m au-dessus de la ville basse ; flèche de la cathédrale de 52 m",
+        "largeur": "ville haute de 300 m sur la butte (butte de 420 m au pied)",
+        "diametre": "arène de 75 m (piste de 44 m)",
+        "zone_visible": "visible de la route d'arrivée, à plusieurs kilomètres"
       },
       "topographie": {
-        "forme_generale": "",
-        "relief": "Très grosse colline",
-        "implantation": "Sur une très grosse colline ; la Porte 2 des enfers se trouve sous la colline",
-        "pentes": "",
+        "forme_generale": "éperon rocheux en gradins dans une boucle de la rivière",
+        "relief": "Très grosse colline : trois gradins de 30 m, revers en falaise au nord sur la rivière",
+        "implantation": "Sur une très grosse colline ; la Porte 2 des enfers se trouve sous la colline. Ville haute sur les gradins, ville basse au pied de la falaise, au bord de l'eau",
+        "pentes": "talus praticables, escalier de rue de la grand-place à la cathédrale",
         "gorge": ""
       },
-      "elements_principaux": [],
+      "elements_principaux": [
+        "Éperon et ville haute [BD-T2 p.7] — maisons serrées qui grimpent jusqu'au sommet, haute flèche dominant le piton.",
+        "Ville basse [BD-T2 p.7] — nombreuses maisons au pied du rocher, au bord de l'eau.",
+        "Long pont de pierre à arches [BD-T2 p.7] — la route d'arrivée franchit la rivière élargie, rochers émergés.",
+        "Rue marchande en balcon [BD-T2 p.8] — colombages en encorbellement, escaliers et galeries de bois, tours rondes à toit conique d'ardoise, étals et auvents rayés.",
+        "Arène des gladiateurs [BD-T2 p.9-10] — piste de terre battue, palissade de planches, poteaux à braseros, gradins, entrée à piliers de gros blocs.",
+        "Ruelles de nuit [BD-T2 p.10] — maisons hautes, toits d'ardoise très pentus, gargouille sur un toit.",
+        "Place à colonnade [BD-T2 p.11-12] — arcs en plein cintre sur colonnes, fontaine à vasque, enseigne sur potence.",
+        "Geôles de l'arène [BD-T2 p.12] — couloirs voûtés, portes à barreaux, torches, chaînes."
+      ],
       "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
+        "presence": "dense",
+        "style": "médiéval : maisons à colombages en encorbellement, toits pointus d'ardoise bleue, tours rondes à toit conique, galeries de bois ; colonnades et arcs en plein cintre ; cathédrale gothique",
+        "etat": "intacte à l'époque du jeu (détruite au T14)"
       },
       "hydrographie": {
-        "type": "",
-        "eau": "",
+        "type": "rivière (Rivière des deux lacs)",
+        "eau": "rivière en boucle autour de l'éperon, élargie sous le pont d'arrivée",
         "couleur": "",
-        "elements": ""
+        "elements": "long pont de pierre à arches ; rochers émergés"
       },
       "vegetation": {
         "densite": "",
@@ -10530,11 +10549,17 @@
         "arbres": "",
         "herbe": ""
       },
-      "couleurs_dominantes": [],
+      "couleurs_dominantes": [
+        "vert des collines",
+        "ocre de la roche",
+        "ardoise bleue",
+        "pierre claire",
+        "terre battue de l'arène"
+      ],
       "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
+        "atmosphere": "cité animée des gladiateurs et du jeu",
+        "sentiment": "foule, marchés, ruelles dangereuses la nuit",
+        "niveau_menace": "moyen"
       },
       "ciel_climat": {
         "ciel": "",
@@ -10550,9 +10575,9 @@
       },
       "niveau_occupation": "",
       "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
+        "route_principale": "par le nord-est, sur le long pont (routes de Whispers Hill, d'Askhvir et de Mhozrak réunies)",
+        "distance_visuelle": "plusieurs kilomètres",
+        "dominance_paysage": "l'éperon et la flèche dominent la boucle de la rivière"
       },
       "remarques_visuelles": [],
       "prompt_image_ultra_detaille": "",
@@ -34630,7 +34655,8 @@
           "pnj_id": "char_goum"
         },
         {
-          "texte": "Le vaincre et recevoir 500 couronnes du maître-gladiateur."
+          "texte": "Le vaincre et recevoir 500 couronnes du maître-gladiateur.",
+          "lieu_id": "lieu_arene_feyhin_lokcthat"
         }
       ],
       "source_lore": [
@@ -34704,7 +34730,8 @@
           "pnj_id": "char_pile_ou_face"
         },
         {
-          "texte": "Calmer Goum grâce à Nasha."
+          "texte": "Calmer Goum grâce à Nasha.",
+          "lieu_id": "lieu_arene_feyhin_lokcthat"
         },
         {
           "texte": "Quitter la ville en chariot, de nuit."
@@ -244445,7 +244472,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Lhynn en gradins, palais impérial, capitale dense et faubourgs, port et champs ; docs/world/LORE_BD.md §16.66).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Lhynn en gradins, palais impérial, capitale dense et faubourgs, port et champs ; docs/world/LORE_BD.md §16.66). Ajout v1.0.141 : 5 entrées (Feyhin Lokcthat ville perchée, long pont d'arrivée, arène et geôles, cathédrale, Porte 2 des enfers ; docs/world/LORE_BD.md §16.67).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -247757,6 +247784,41 @@
           "nom": "Lhynn : port visible et champs",
           "decision": "Retours du propriétaire (25/11/2026) : « on ne voit pas le port ! » — port bâti (quai, jetées, navires amarrés, grues, entrepôts) ; « rajoute plus de champs, il y a beaucoup de gens à nourrir » — 18 grands champs au-delà des faubourgs. LORE_BD §16.66.",
           "version": "1.0.140"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_feyhin_lokcthat",
+          "nom": "Feyhin Lokcthat, ville perchée",
+          "decision": "Demande du propriétaire (26/11/2026) : améliorer Feyhin Lokcthat d'après le Tome 2 (p.7 : ville sur la montagne, rivière, pont, maisons sur la montagne et en bas ; p.8, 10, 12 : intérieur ; p.10 : arène ; p.12 : prison). Arbitrages Q1 a — éperon en gradins (90 m), revers en falaise sur la rivière ; Q2 a — ville posée dans la boucle de la Rivière des deux lacs, le relief suit la ville ; ville basse au pied de la falaise. LORE_BD §16.67.",
+          "version": "1.0.141"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_feyhin_lokcthat_pont_v1141",
+          "nom": "Feyhin Lokcthat, long pont d'arrivée",
+          "decision": "Arbitrage Q3 a (26/11/2026) : long pont de pierre à arches sur la route d'arrivée ; la rivière y est élargie (60 m sur 140 m) dans une plaine basse (elle ne coule plus en gorge à cet endroit). LORE_BD §16.67.",
+          "version": "1.0.141"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_arene_feyhin_lokcthat",
+          "nom": "Arène de Feyhin Lokcthat et ses geôles",
+          "decision": "Arbitrages du 26/11/2026 : Q4 a — arène dans la ville basse, près du pont ; Q5 b — geôles en vrai sous-sol, méthode « creuser et couvrir » (fosse creusée sous les gradins, voûtes et dalles marchables, sans masque de trous) ; Q9 b — chaînes et anneaux, pas de croix de contention. LORE_BD §16.67.",
+          "version": "1.0.141"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_cathedrale_feyhin_lokcthat",
+          "nom": "Cathédrale de Feyhin Lokcthat",
+          "decision": "Arbitrages du 26/11/2026 : Q6 a — cathédrale à haute flèche au sommet, portant le service temple ; Q8 a — bannières unies, sans blason ; Q10 a — gargouilles génériques. LORE_BD §16.67.",
+          "version": "1.0.141"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_portail_enfer_2",
+          "nom": "Porte 2 des enfers au pied de Feyhin Lokcthat",
+          "decision": "Arbitrage Q7 a (26/11/2026) : cercle de pierres au pied de la falaise de l'éperon, dans un renfoncement, à l'opposé de la ville haute. LORE_BD §16.67.",
+          "version": "1.0.141"
         }
       ]
     },
@@ -256393,14 +256455,15 @@
       "type": "",
       "importance": "",
       "cell": "N008_E007",
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": -600,
+      "position_z_m": -560,
       "region_id": "via_magna",
       "province": "",
       "zone_id": "porte_2_des_enfers",
       "faction_control": "",
       "features": [
-        "Sous la très grosse colline de Feyhin Lokcthat"
+        "Sous la très grosse colline de Feyhin Lokcthat",
+        "Au pied de la falaise de l'éperon de Feyhin Lokcthat, dans un renfoncement, à l'opposé de la ville haute"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -256411,7 +256474,7 @@
       "topographie": {
         "forme_generale": "Très grosse colline",
         "relief": "",
-        "implantation": "Sous la colline, au-dessous de la ville de Feyhin Lokcthat",
+        "implantation": "Sous la colline, au-dessous de la ville de Feyhin Lokcthat : cercle de pierres au pied de la falaise, côté de la rivière",
         "pentes": "",
         "gorge": ""
       },
@@ -256463,7 +256526,188 @@
       "remarques_visuelles": [],
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.141) Cercle de pierres au pied de la falaise de l'éperon, dans un renfoncement, à l'opposé de la ville haute (arbitrage Q7 a). Monde jouable : position manuelle de poi_porte_2 ; LORE_BD §16.67."
+      ]
+    },
+    {
+      "id": "lieu_arene_feyhin_lokcthat",
+      "name": "Arène de Feyhin Lokcthat",
+      "alias": "",
+      "type": "arena_poi",
+      "importance": "majeure",
+      "cell": "N008_E007",
+      "position_x_m": -420,
+      "position_z_m": -610,
+      "region_id": "via_magna",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "piste de terre battue de 44 m, palissade de planches de 2,6 m",
+        "poteaux de la palissade surmontés de braseros",
+        "neuf rangs de gradins, mur extérieur à arcades",
+        "entrée à piliers de gros blocs tournée vers la route du pont",
+        "geôles sous les gradins : galerie voûtée, cachot, portes à barreaux, torches, chaînes ; descente à ciel ouvert"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "gradins de 12,5 m ; geôles à 4,6 m sous la piste",
+        "largeur": "75 m hors tout",
+        "diametre": "piste de 44 m",
+        "zone_visible": "vue depuis le pont et la ville haute"
+      },
+      "topographie": {
+        "forme_generale": "amphithéâtre rond",
+        "relief": "ville basse, au pied de la falaise de l'éperon",
+        "implantation": "au bord de la rivière, près du long pont",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "monumentale",
+        "style": "arène de pierre et de bois (générique)",
+        "etat": "intacte à l'époque du jeu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "terre battue ocre",
+        "bois sombre de la palissade",
+        "pierre claire des gradins"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "route du pont (entrée)",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T2] p.9 (combat de Murata contre Goum le Terrible, gradins pleins), p.10 (piste de sable, palissade, braseros sur poteaux, piliers de gros blocs à l'entrée : « sous les acclamations de la foule »), p.12 (« il est retenu prisonnier dans l'arène » : couloirs voûtés des geôles, torches, portes à barreaux, grille au sol).",
+        "[DÉCISION] (v1.0.141) Arène dans la ville basse, près du long pont (arbitrage Q4 a) ; geôles en vrai sous-sol creusé sous les gradins et couvert (arbitrage Q5 b, méthode « creuser et couvrir ») ; chaînes et anneaux seulement (Q9 b). Monde jouable : POI poi_arene_feyhin_lokcthat (genre `arene`, forme générée par tools/world_gen Landmarks.cpp) ; service `arene` de la ville porté par l'arène (enseigne à l'entrée) ; LORE_BD §16.67."
+      ]
+    },
+    {
+      "id": "lieu_cathedrale_feyhin_lokcthat",
+      "name": "Cathédrale de Feyhin Lokcthat",
+      "alias": "",
+      "type": "cathedral_poi",
+      "importance": "majeure",
+      "cell": "N008_E007",
+      "position_x_m": -495,
+      "position_z_m": -450,
+      "region_id": "via_magna",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cathédrale gothique au sommet de l'éperon",
+        "clocher-porche à haute flèche de pierre (52 m)",
+        "nef à contreforts et lancettes, toit d'ardoise très pentu, rosace",
+        "gargouilles aux angles",
+        "parvis à bancs et braseros vers l'escalier de la grand-place"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "flèche de 52 m ; sommet à 90 m au-dessus de la ville basse",
+        "largeur": "nef de 30 x 14 m",
+        "diametre": "plateforme de 80 m",
+        "zone_visible": "visible de la route d'arrivée, à plusieurs kilomètres"
+      },
+      "topographie": {
+        "forme_generale": "plateforme ronde au sommet de l'éperon",
+        "relief": "sommet de la ville en gradins, revers en falaise sur la rivière",
+        "implantation": "chevet vers la falaise, portail vers l'escalier",
+        "pentes": "escalier de rue depuis la grand-place",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "monumentale",
+        "style": "gothique (générique, réinterprétation)",
+        "etat": "intacte à l'époque du jeu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "pierre claire",
+        "ardoise bleue"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "escalier de rue depuis la grand-place",
+        "distance_visuelle": "plusieurs kilomètres",
+        "dominance_paysage": "domine la ville et la boucle de la rivière"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T2] p.7 : haute flèche gothique dominant le piton de la ville ; p.12 : flèche fine au-dessus des toits.",
+        "[DÉCISION] (v1.0.141) Cathédrale au sommet de la ville perchée, portant le service temple (arbitrage Q6 a) ; nef, clocher à flèche et gargouilles modélisés (génériques). Monde jouable : POI poi_cathedrale_feyhin_lokcthat (genre `cathedrale`, Landmarks.cpp) ; LORE_BD §16.67."
+      ]
     },
     {
       "id": "lieu_abysses_baie",
@@ -356748,6 +356992,22 @@
       "shape": "diamond",
       "tier": "poi",
       "categorie": "lieu"
+    },
+    {
+      "id": "arena_poi",
+      "label": "Arène",
+      "color": "#c2a067",
+      "shape": "circle",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
+      "id": "cathedral_poi",
+      "label": "Cathédrale",
+      "color": "#8a8fb4",
+      "shape": "triangle",
+      "tier": "poi",
+      "categorie": "lieu"
     }
   ],
   "sea_lines": [
@@ -359416,7 +359676,7 @@
         "T2-P020-C1 (arcade en plein cintre)"
       ],
       "placement": "places, halles",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -359436,7 +359696,7 @@
         "T2-P044-C3"
       ],
       "placement": "Magistrya (ville en hauteur, décision du propriétaire)",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -359496,7 +359756,7 @@
         "T2-P012-C7 (soupirail à barreaux)"
       ],
       "placement": "sous-sols des villes, donjons",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -359604,7 +359864,7 @@
         "T2-P025-C5"
       ],
       "placement": "cachots, forges",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -361645,6 +361905,129 @@
       "placement": "Lhynn : port (navires amarrés aux jetées)",
       "generated": true,
       "source": "[BD] T7"
+    },
+    {
+      "id": "decor_219",
+      "num": 219,
+      "name": "Gradins d'arène (module de 15°) et leurs fondations",
+      "tome": 2,
+      "family": "monument",
+      "meshes": [
+        "Arena_Stands_1",
+        "Arena_Foundation_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P010-C1 (gradins, palissade de planches, braseros)",
+        "T2-P009-C1",
+        "T2-P012-C6..C8 (geôles sous l'arène : fondations visibles depuis la fosse)"
+      ],
+      "placement": "Feyhin Lokcthat : arène de la ville basse (poi_arene_feyhin_lokcthat)",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_220",
+      "num": 220,
+      "name": "Entrée d'arène à piliers de gros blocs",
+      "tome": 2,
+      "family": "monument",
+      "meshes": [
+        "Arena_Gate_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P010-C1 (piliers de gros blocs à l'entrée de la piste)"
+      ],
+      "placement": "Feyhin Lokcthat : entrée de l'arène, vers la route du pont",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_221",
+      "num": 221,
+      "name": "Poteau de palissade à corbeille à feu",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Arena_Post_Brazier_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P010-C1 (poteaux de la palissade surmontés de braseros)"
+      ],
+      "placement": "Feyhin Lokcthat : bord de la piste de l'arène",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_222",
+      "num": 222,
+      "name": "Pile de pont à avant-becs",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Bridge_Stone_Pier_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P007-C2 (long pont de pierre à arches multiples sur la rivière élargie)"
+      ],
+      "placement": "longs ponts des rivières élargies (Feyhin Lokcthat : pont d'arrivée)",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_223",
+      "num": 223,
+      "name": "Nef de cathédrale gothique",
+      "tome": 2,
+      "family": "monument",
+      "meshes": [
+        "Church_Nave_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P007-C2 (cathédrale dominant le piton, réinterprétation générique)"
+      ],
+      "placement": "Feyhin Lokcthat : sommet de la ville perchée (poi_cathedrale_feyhin_lokcthat)",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_224",
+      "num": 224,
+      "name": "Clocher-porche à haute flèche",
+      "tome": 2,
+      "family": "monument",
+      "meshes": [
+        "Spire_Church_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P007-C2 (haute flèche visible de loin)",
+        "T2-P012-C1 (flèche fine)"
+      ],
+      "placement": "Feyhin Lokcthat : façade de la cathédrale",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_225",
+      "num": 225,
+      "name": "Gargouille",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Gargoyle_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P010-C2 (gargouille accroupie sur un toit, générique)"
+      ],
+      "placement": "Feyhin Lokcthat : angles de la cathédrale",
+      "generated": true,
+      "source": "[BD] T2"
     }
   ]
 }

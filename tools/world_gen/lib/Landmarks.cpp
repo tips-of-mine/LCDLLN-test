@@ -432,11 +432,257 @@ namespace tools::world_gen
 		}
 	}
 
+	// ---------------------------------------------------------------------------------
+	// v1.0.141 — FEYHIN LOKCTHAT (BD-T2 p.7-12) : arène des gladiateurs et ses geôles
+	// creusées sous les gradins (POI de genre « arene »), cathédrale au sommet de la ville
+	// perchée (POI de genre « cathedrale », plateforme d'une acropole). Éléments génériques
+	// réinterprétés (LORE_BD §16.67) : aucun blason, aucun monument signature.
+	// ---------------------------------------------------------------------------------
+	namespace
+	{
+		constexpr double kArenaPisteR = 22.0;   ///< rayon de la piste (m, échelle 1), palissade au bord
+		constexpr double kArenaStandsR = 37.5;  ///< rayon extérieur des gradins (mur à arcades)
+		constexpr double kCellFloorDepth = 4.6; ///< sol des geôles sous la piste (m) : voûte de 4,4 m
+		constexpr double kSectorDeg = 15.0;     ///< secteur d'un module de gradins (24 modules)
+		constexpr double kRingPivotR = 29.75;   ///< pivot des modules d'anneau (decor_props.py ARENA_PIV)
+
+		/// Pose une pièce à l'altitude ABSOLUE \p y (m) : yOffset = y - sol à la position (le
+		/// client pose l'instance sur sa heightmap). \p flags : bits kSolid / kPiece / kOccluder.
+		/// \p yaw : lacet (degrés) ; \p cull : classe de distance de vue (0 = bâti, loin).
+		void PieceAbs(World& w, const char* mesh, Vec2 p, double y, double yaw, double scale, uint8_t flags, uint8_t cull = 0)
+		{
+			ScatterDef s;
+			s.mesh = std::string("meshes/props/") + mesh + ".gltf";
+			s.position = p; s.yOffset = y - w.HeightAt(p); s.yawDeg = yaw; s.scale = scale;
+			s.flags = flags; s.cullClass = cull;
+			w.scatter.push_back(std::move(s));
+		}
+
+		/// Applique \p fn(i, j, d) à chaque échantillon de la heightmap (et de la carte urbaine,
+		/// même grille) à moins de \p r mètres de \p c ; d = distance au centre (m).
+		template <typename F>
+		void ForEachSample(World& w, Vec2 c, double r, F&& fn)
+		{
+			const int i0 = std::max(0, w.height.IndexX(c.x - r)), i1 = std::min(w.height.width - 1, w.height.IndexX(c.x + r));
+			const int j0 = std::max(0, w.height.IndexZ(c.z - r)), j1 = std::min(w.height.height - 1, w.height.IndexZ(c.z + r));
+			for (int j = j0; j <= j1; ++j)
+				for (int i = i0; i <= i1; ++i)
+				{
+					const double d = std::hypot(w.height.WorldX(i) - c.x, w.height.WorldZ(j) - c.z);
+					if (d <= r) fn(i, j, d);
+				}
+		}
+
+		/// Lacet (degrés) qui tourne le +Z local d'un mesh (glTF) vers \p d (XZ) : convention des
+		/// monuments (PalaceMonument) ; côté Blender, le mesh regarde vers −Y.
+		double YawFront(Vec2 d) { return std::atan2(d.x, d.z) * 180.0 / kPi; }
+
+		/// Lumière ponctuelle de flamme (brasero, torche) à l'altitude absolue \p y.
+		void Flame(World& w, const std::string& id, Vec2 p, double y, double radius, double intensity)
+		{
+			PointLightDef L;
+			L.id = id; L.position = p; L.y = y;
+			L.radiusM = radius; L.intensity = intensity; L.r = 1.0; L.g = 0.6; L.b = 0.25;
+			w.pointLights.push_back(L);
+		}
+
+		/// Arène de gladiateurs (BD-T2 p.9-10) centrée sur \p A, entrée tournée vers \p u
+		/// (unitaire : vers la route), geôles dans l'axe \p g (unitaire, ≠ u : revers ou flanc le
+		/// plus loin de l'eau, choisi par l'appelant). \p sc : échelle du POI.
+		///  - piste de terre battue (rayon 22 m), palissade de planches et poteaux à braseros ;
+		///  - 24 modules de gradins de 15° (Arena_Stands_1 : neuf rangs, mur à arcades), dont le
+		///    module d'entrée (Arena_Gate_1 : piliers de gros blocs, passage de 6 m) ;
+		///  - geôles (BD-T2 p.12, arbitrage Q5 du propriétaire : vrai sous-sol creusé puis couvert,
+		///    sans masque de trous) : fosse creusée sous les gradins du revers, galerie de trois
+		///    travées voûtées (Dungeon_Vault_1) et cachot du fond, portes à barreaux, torches et
+		///    chaînes ; descente à ciel ouvert depuis l'extérieur (rampe à 0,5, murs de soutènement),
+		///    dalles marchables au niveau du sol sur le reste de la fosse ; zone d'ambiance sombre.
+		/// Effet de bord : w.height (fosse, rampe), w.urban (piste), w.scatter, w.pointLights,
+		/// w.ambianceZones, occupation de w.
+		void BuildArena(World& w, const PoiDef& p, Vec2 A, Vec2 u, Vec2 g, LandmarkRng& rng)
+		{
+			const double sc = p.scale;
+			const Vec2 v{ -u.z, u.x };
+			const Vec2 gn{ -g.z, g.x };
+			const double y0 = w.HeightAt(A);            // niveau de la piste
+			const double floorY = y0 - kCellFloorDepth * sc;
+			auto atG = [&](double radial, double across) { return A + g * (radial * sc) + gn * (across * sc); };
+
+			// --- 1. Fosse des geôles et rampe (AVANT toute pose : les yOffset suivent le sol final).
+			// Échantillons creusés : radial 28..58 m, de part et d'autre ±13 m dans l'axe des geôles ;
+			// toute la zone utile (cachot dès 33 m, ±2,4 m) est à plus d'un pas de heightmap (4,9 m)
+			// d'un échantillon non creusé : sol plat sous les voûtes. Au-delà de 45 m : rampe à 0,5.
+			const double rampStart = 45.0, slope = 0.5;
+			// Rayon d'emprise : tout le dispositif (dalles comprises, radial 62 m) tient dans
+			// ArenaFootprintM (64 m x échelle), réservé dans la ville avant les maisons (marge 4 m).
+			ForEachSample(w, A, 70.0 * sc, [&](int i, int j, double) {
+				{
+					const Vec2 q{ w.height.WorldX(i) - A.x, w.height.WorldZ(j) - A.z };
+					const double radial = (q.x * g.x + q.z * g.z) / sc, across = std::fabs(q.x * gn.x + q.z * gn.z) / sc;
+					if (radial < 28.0 || radial > 58.0 || across > 13.0) return;
+					const double depth = radial <= rampStart ? kCellFloorDepth : std::max(0.0, kCellFloorDepth - (radial - rampStart) * slope);
+					w.height.At(i, j) = std::min(w.height.At(i, j), y0 - depth * sc);
+				}
+			});
+
+			// --- 2. Piste : terre battue, plate, dégagée.
+			ForEachSample(w, A, kArenaStandsR * sc + 2.0, [&](int i, int j, double d) {
+				if (d <= kArenaPisteR * sc) w.urban.At(i, j) = 2;
+				else if (w.urban.At(i, j) == 0) w.urban.At(i, j) = 1;
+			});
+			w.Occupy(A, ArenaFootprintM(p));
+
+			// --- 3. Gradins (24 secteurs) : entrée au secteur 0 (vers u), fondations (jupes de
+			// pierre jusqu'à −5 m) sur les secteurs au-dessus de la fosse (axe g ± 2 secteurs).
+			const double a0 = std::atan2(u.z, u.x);
+			const double ag = std::atan2(g.z, g.x);
+			const uint8_t kMon = static_cast<uint8_t>(kSolid | kPiece | kOccluder);
+			for (int k = 0; k < 24; ++k)
+			{
+				const double a = a0 + k * kSectorDeg * kPi / 180.0;
+				const Vec2 dir{ std::cos(a), std::sin(a) };
+				const Vec2 mp = A + dir * (kRingPivotR * sc);
+				PieceAbs(w, k == 0 ? "Arena_Gate_1" : "Arena_Stands_1", mp, y0, YawFront(dir), sc, kMon);
+				if (std::fabs(std::remainder(a - ag, 2.0 * kPi)) < 38.0 * kPi / 180.0)
+					PieceAbs(w, "Arena_Foundation_1", mp, y0 - 5.2 * sc, YawFront(dir), sc, 0u);
+			}
+			// Poteaux à braseros au bord de la piste (tous les 30°, hors de l'entrée), un sur trois allumé.
+			for (int k = 1; k < 12; ++k)
+			{
+				const double a = a0 + (k * 30.0) * kPi / 180.0;
+				const Vec2 dir{ std::cos(a), std::sin(a) };
+				const Vec2 pp = A + dir * ((kArenaPisteR - 0.6) * sc);
+				PieceAbs(w, "Arena_Post_Brazier_1", pp, y0, YawFront(dir), sc, kSolid, 1);
+				if (k % 3 == 0) Flame(w, p.id + "_brasero_" + std::to_string(k), pp, y0 + 4.9 * sc, 16.0, 2.4);
+			}
+			// Enseigne du service « arene » devant l'entrée (pictogramme, Sign_Service_arene).
+			{
+				const Vec2 sp = A + u * ((kArenaStandsR + 4.0) * sc) + v * (6.0 * sc);
+				PieceAbs(w, "Sign_Service_arene", sp, w.HeightAt(sp), YawFront(u), 1.0, kSolid, 1);
+				for (int sg = -1; sg <= 1; sg += 2)
+				{
+					const Vec2 tp = A + u * ((kArenaStandsR + 1.5) * sc) + v * (sg * 5.0 * sc);
+					PieceAbs(w, "Brazier_Column_1", tp, w.HeightAt(tp), 0.0, 1.0, kSolid, 1);
+					Flame(w, p.id + "_entree_" + std::to_string(sg > 0 ? 1 : 0), tp, w.HeightAt(tp) + 2.0, 12.0, 2.0);
+				}
+			}
+
+			// --- 4. Geôles : galerie de trois travées voûtées (radial 33 à 45 m) et cachot du fond.
+			const double yawG = YawFront(g);
+			const uint8_t kVault = static_cast<uint8_t>(kSolid | kPiece);
+			for (int t = 0; t < 3; ++t)
+				PieceAbs(w, "Dungeon_Vault_1", atG(35.0 + 4.0 * t, 0.0), floorY, yawG, sc, kVault);
+			// Fond du cachot (radial 33 m) : mur plein, porte à barreaux devant (cellule fermée).
+			for (int sg = -1; sg <= 1; sg += 2)
+				PieceAbs(w, "Wall_UnevenBrick_Straight", atG(33.1, sg * 1.0), floorY, YawAlong(gn), sc, kVault);
+			PieceAbs(w, "Dungeon_Grate_1", atG(33.4, 0.0), floorY, YawFront(g), sc, 0u, 1);
+			// Portes de cellules contre les murs de la galerie, torches entre elles, chaînes au cachot.
+			for (int t = 0; t < 3; ++t)
+				for (int sg = -1; sg <= 1; sg += 2)
+				{
+					const Vec2 wallN = gn * static_cast<double>(-sg); // vers l'axe de la galerie
+					if (t < 2) PieceAbs(w, "Dungeon_Grate_1", atG(35.0 + 4.0 * t, sg * 1.95), floorY, YawFront(wallN), sc, 0u, 1);
+					const Vec2 tp = atG(37.0 + 4.0 * t, sg * 1.95);
+					PieceAbs(w, "Torch_Metal", tp, floorY + 1.9 * sc, YawFront(wallN), sc, 0u, 1);
+					if (t != 1) Flame(w, p.id + "_geole_" + std::to_string(t) + (sg > 0 ? "d" : "g"), tp + wallN * 0.4, floorY + 2.2 * sc, 7.0, 1.6);
+				}
+			// Chaînes pendues à la voûte du cachot (Chain_Hook_1 : 3,2 m, sommet sous la clé de voûte).
+			for (int sg = -1; sg <= 1; sg += 2)
+				PieceAbs(w, "Chain_Hook_1", atG(34.4, sg * 1.2), floorY + 0.8 * sc, YawFront(gn * static_cast<double>(-sg)), sc, 0u, 1);
+			PieceAbs(w, "Chain_Coil", atG(34.6, 0.8), floorY, rng.Next() * 360.0, sc, 0u, 1);
+			PieceAbs(w, "Bucket_Wooden_1", atG(36.2, -1.3), floorY, rng.Next() * 360.0, sc, 0u, 1);
+			// Tête de galerie (radial 45 m) : mur de soutènement autour de la voûte, du sol des geôles
+			// à 1,6 m au-dessus du sol extérieur (garde-corps) ; linteau au-dessus du passage de 4 m ;
+			// deux torches de part et d'autre de l'entrée.
+			for (double ac = -5.0; ac <= 5.01; ac += 2.0)
+			{
+				if (std::fabs(ac) < 2.5) continue;
+				for (int lv = 0; lv < 2; ++lv)
+					PieceAbs(w, "Wall_UnevenBrick_Straight", atG(45.2, ac), floorY + lv * kWallH * sc, YawAlong(gn), sc, kVault);
+			}
+			for (double ac : { -1.77, -0.59, 0.59, 1.77 })
+				PieceAbs(w, "Wall_UnevenBrick_Straight", atG(45.2, ac), floorY + 4.4 * sc, YawAlong(gn), 0.59 * sc, kVault);
+			for (int sg = -1; sg <= 1; sg += 2)
+			{
+				const Vec2 tp = atG(45.6, sg * 2.6);
+				PieceAbs(w, "Torch_Metal", tp, floorY + 2.4 * sc, YawFront(g * -1.0), sc, 0u, 1);
+				Flame(w, p.id + "_descente_" + std::to_string(sg > 0 ? 1 : 0), tp, floorY + 2.7 * sc, 8.0, 1.6);
+			}
+			// Descente : murs de soutènement de part et d'autre (±3 m), en gradins sur la rampe,
+			// jusqu'au-dessus du sol extérieur ; garde-corps d'un mur bas au sommet.
+			for (double r = rampStart + 1.0; r < rampStart + kCellFloorDepth / slope + 1.0; r += 2.0)
+			{
+				const double base = floorY + std::max(0.0, (r - 1.0 - rampStart) * slope) * sc;
+				for (int sg = -1; sg <= 1; sg += 2)
+					for (double yy = base; yy < y0 + 0.9 * sc; yy += kWallH * sc)
+						PieceAbs(w, "Wall_UnevenBrick_Straight", atG(r, sg * 3.2), yy, YawAlong(g), sc, kVault);
+			}
+			// Dalles au niveau du sol sur la fosse hors des gradins et hors de la descente, jusqu'aux
+			// premiers échantillons non creusés (fosse + un pas de heightmap : aucun creux visible).
+			for (double r = 38.0; r <= 62.0; r += 2.0)
+				for (double ac = -19.0; ac <= 19.01; ac += 2.0)
+				{
+					const Vec2 q = atG(r, ac);
+					if (std::hypot(q.x - A.x, q.z - A.z) < (kArenaStandsR - 0.5) * sc) continue;   // sous les gradins
+					if (r >= rampStart - 0.5 && std::fabs(ac) < 2.5) continue;                       // descente
+					PieceAbs(w, "Floor_UnevenBrick", q, y0 + 0.02, YawAlong(g), sc, static_cast<uint8_t>(kSolid | kPiece), 1);
+				}
+			// Zone d'ambiance sombre (geôles) : sous le niveau de la piste seulement.
+			AmbianceZoneDef az;
+			az.id = p.id + "_geoles"; az.label = p.name;
+			az.center = atG(39.0, 0.0); az.radiusM = 10.0 * sc;
+			az.floorY = floorY - 0.5; az.topY = y0 - 0.5; az.darkness = 0.75;
+			w.ambianceZones.push_back(az);
+		}
+
+		/// Cathédrale au sommet d'une ville perchée (BD-T2 p.7 : haute flèche visible de loin ;
+		/// service `temple` du lore) : nef gothique (Church_Nave_1, 30 x 14 m) portail vers
+		/// l'escalier \p u, clocher à flèche (Spire_Church_1) en façade, gargouilles aux angles,
+		/// parvis à bancs et braseros, enseigne du temple. \p c : centre de la plateforme, \p topR :
+		/// rayon de la plateforme. Effet de bord : w.scatter, w.pointLights, occupation de w.
+		void BuildCathedral(World& w, const PoiDef& p, Vec2 c, Vec2 u, double topR, LandmarkRng& rng)
+		{
+			const Vec2 v{ -u.z, u.x };
+			auto at = [&](double du, double dv) { return c + u * du + v * dv; };
+			const uint8_t kMon = static_cast<uint8_t>(kSolid | kPiece | kOccluder);
+			const double y = w.HeightAt(c);
+			// Nef : centre à −6 m (chevet vers le revers), façade à +9 m ; clocher-porche dans l'axe,
+			// devant la façade (BD : flèche dominant le piton).
+			PieceAbs(w, "Church_Nave_1", at(-6.0, 0.0), y, YawFront(u), 1.0, kMon);
+			PieceAbs(w, "Spire_Church_1", at(12.5, 0.0), y, YawFront(u), 1.0, kMon);
+			for (int sg = -1; sg <= 1; sg += 2)
+			{
+				PieceAbs(w, "Gargoyle_1", at(8.9, sg * 7.2), y + 15.2, YawFront(v * static_cast<double>(sg)), 1.0, 0u, 1);
+				PieceAbs(w, "Gargoyle_1", at(-20.9, sg * 7.2), y + 15.2, YawFront(v * static_cast<double>(sg)), 1.0, 0u, 1);
+			}
+			// Parvis : bancs, braseros allumés, enseigne du temple à droite du clocher.
+			for (int sg = -1; sg <= 1; sg += 2)
+			{
+				const Vec2 b = at(21.0, sg * 6.5);
+				PieceAbs(w, "Brazier_Column_1", b, y, 0.0, 1.0, kSolid, 1);
+				Flame(w, p.id + "_parvis_" + std::to_string(sg > 0 ? 1 : 0), b, y + 2.0, 12.0, 2.0);
+				PieceAbs(w, "Bench", at(24.0, sg * 10.0), y, YawFront(v * static_cast<double>(-sg)), 1.0, kSolid, 1);
+			}
+			PieceAbs(w, "Sign_Service_temple", at(17.5, 6.0), y, YawFront(u), 1.0, kSolid, 1);
+			for (int k = 0; k < 4; ++k)
+			{
+				const double a = rng.Next() * 2.0 * kPi, d = topR - 4.0 - rng.Next() * 4.0;
+				const Vec2 q = c + Vec2{ std::cos(a), std::sin(a) } * d;
+				if (std::fabs((q.x - c.x) * u.x + (q.z - c.z) * u.z) > 26.0) continue;
+				PieceAbs(w, k % 2 ? "Tree_Cypress_2" : "Tree_Cypress_1", q, w.HeightAt(q), rng.Next() * 360.0, 0.8, kSolid, 1);
+			}
+			w.Occupy(c, topR);
+		}
+	}
+
+	double ArenaFootprintM(const PoiDef& p) { return 64.0 * p.scale; }
+
 	void BuildLandmarks(World& w)
 	{
 		for (const PoiDef& p : w.pois)
 		{
-			if (p.kind != "tour" && p.kind != "chateau" && p.kind != "phare" && p.kind != "cascade" && p.kind != "pont" && p.kind != "palais") continue;
+			if (p.kind != "tour" && p.kind != "chateau" && p.kind != "phare" && p.kind != "cascade" && p.kind != "pont" && p.kind != "palais"
+				&& p.kind != "arene" && p.kind != "cathedrale") continue;
 			if (!w.OwnsPoint(p.center)) continue;
 			LandmarkRng rng{ Hash(w.master.seed, HashString(p.id.c_str()), 7131) };
 			const bool ruin = p.state == "ruine";
@@ -495,6 +741,49 @@ namespace tools::world_gen
 					if (c.acropole.enabled && std::hypot(c.acropole.summit.x - p.center.x, c.acropole.summit.z - p.center.z) < c.acropole.topRadiusM)
 						ac = &c.acropole;
 				BuildImperialPalace(w, p, ac ? ac->summit : p.center, ac ? ac->stairDir : toward, ac ? ac->topRadiusM : 56.0, rng);
+			}
+			else if (p.kind == "cathedrale")
+			{
+				// v1.0.141 : sur la plateforme de l'acropole la plus proche (portail vers son
+				// escalier), comme le palais ; sans acropole, plateforme de 40 m tournée vers la route.
+				const AcropoleShape* ac = nullptr;
+				for (const CityDef& c : w.cities)
+					if (c.acropole.enabled && std::hypot(c.acropole.summit.x - p.center.x, c.acropole.summit.z - p.center.z) < c.acropole.topRadiusM)
+						ac = &c.acropole;
+				BuildCathedral(w, p, ac ? ac->summit : p.center, ac ? ac->stairDir : toward, ac ? ac->topRadiusM : 40.0, rng);
+			}
+			else if (p.kind == "arene")
+			{
+				// v1.0.141 : entrée tournée vers la route la plus proche (à moins de 250 m : Feyhin,
+				// route du pont), sinon vers la ville de la case ; geôles du côté opposé.
+				Vec2 u = toward;
+				if (bd > 250.0)
+					for (const CityDef& c : w.cities)
+						if (c.n == p.n && c.e == p.e)
+						{
+							const Vec2 d = c.center - p.center;
+							const double l = std::hypot(d.x, d.z);
+							if (l > 1.0) u = d * (1.0 / l);
+						}
+				// Geôles : revers ou flanc dont le bout (60 m) est le plus loin de l'eau (dalles hors
+				// des berges) ; à égalité, le revers.
+				Vec2 g = u * -1.0;
+				double bestDry = -1.0;
+				for (const Vec2 cand : { u * -1.0, Vec2{ -u.z, u.x }, Vec2{ u.z, -u.x } })
+				{
+					// Distance au bord de l'eau la plus courte des points de la galerie et des dalles.
+					double dry = 1e9;
+					for (double r : { 40.0, 60.0, 75.0 })
+					{
+						const Vec2 q = p.center + cand * (r * p.scale);
+						for (const River& rv : w.rivers)
+							for (size_t k = 0; k < rv.points.size(); k += 2)
+								dry = std::min(dry, std::hypot(rv.points[k].x - q.x, rv.points[k].z - q.z) - rv.widthM[k] * 0.5);
+						if (w.IsWater(q)) dry = -1.0;
+					}
+					if (dry > bestDry + 1.0) { bestDry = dry; g = cand; }
+				}
+				BuildArena(w, p, p.center, u, g, rng);
 			}
 			else if (p.kind == "cascade")
 				BuildCascade(w, p, roadDir, rng);

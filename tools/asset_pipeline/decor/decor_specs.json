@@ -9776,6 +9776,166 @@
       "billboard": true,
       "replaces": null,
       "ref": "T7-P004-C1 (port de guerre de Lhynn, navires à quai) ; T10-P037-C1 (flotte) ; demande du propriétaire (25/11/2026 : « on ne voit pas le port »)"
+    },
+    {
+      "id": "Arena_Stands_1",
+      "num": 219,
+      "family": "monument",
+      "builder": "arena_stands",
+      "seed": 21901,
+      "budget": "monument",
+      "exact": true,
+      "width_m": [
+        11.1,
+        11.2
+      ],
+      "height_m": [
+        12.5,
+        12.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P010-C1 (gradins, palissade de planches, braseros) ; T2-P009-C1"
+    },
+    {
+      "id": "Arena_Foundation_1",
+      "num": 219,
+      "family": "monument",
+      "builder": "arena_foundation",
+      "seed": 21902,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        9.8,
+        9.8
+      ],
+      "height_m": [
+        5.25,
+        5.25
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P012-C6..C8 (geôles sous l'arène : fondations visibles depuis la fosse)"
+    },
+    {
+      "id": "Arena_Gate_1",
+      "num": 220,
+      "family": "monument",
+      "builder": "arena_gate",
+      "seed": 22001,
+      "budget": "monument",
+      "exact": true,
+      "width_m": [
+        10.9,
+        11.0
+      ],
+      "height_m": [
+        15.4,
+        15.4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P010-C1 (piliers de gros blocs à l'entrée de la piste)"
+    },
+    {
+      "id": "Arena_Post_Brazier_1",
+      "num": 221,
+      "family": "objets",
+      "builder": "arena_post_brazier",
+      "seed": 22101,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        1.0
+      ],
+      "height_m": [
+        5.05,
+        5.05
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P010-C1 (poteaux de la palissade surmontés de braseros)"
+    },
+    {
+      "id": "Bridge_Stone_Pier_1",
+      "num": 222,
+      "family": "kit",
+      "builder": "bridge_stone_pier",
+      "seed": 22201,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.9,
+        1.9
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 (long pont de pierre à arches multiples sur la rivière élargie)"
+    },
+    {
+      "id": "Church_Nave_1",
+      "num": 223,
+      "family": "monument",
+      "builder": "church_nave",
+      "seed": 22301,
+      "budget": "monument",
+      "exact": true,
+      "width_m": [
+        17.2,
+        17.2
+      ],
+      "height_m": [
+        27.25,
+        27.25
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 (cathédrale dominant le piton, réinterprétation générique)"
+    },
+    {
+      "id": "Spire_Church_1",
+      "num": 224,
+      "family": "monument",
+      "builder": "spire_church",
+      "seed": 22401,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        7.6,
+        7.6
+      ],
+      "height_m": [
+        52.0,
+        52.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 (haute flèche visible de loin) ; T2-P012-C1 (flèche fine)"
+    },
+    {
+      "id": "Gargoyle_1",
+      "num": 225,
+      "family": "objets",
+      "builder": "gargoyle",
+      "seed": 22501,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.9,
+        0.9
+      ],
+      "height_m": [
+        1.1,
+        1.1
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P010-C2 (gargouille accroupie sur un toit, générique)"
     }
   ]
 }

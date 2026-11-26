@@ -1236,6 +1236,48 @@
       "nom": "Navire marchand à quai (cogue)",
       "tome": 7,
       "placement_prevu": "Lhynn : port (navires amarrés aux jetées)"
+    },
+    {
+      "num": 219,
+      "nom": "Gradins d'arène (module de 15°) et leurs fondations",
+      "tome": 2,
+      "placement_prevu": "Feyhin Lokcthat : arène de la ville basse (poi_arene_feyhin_lokcthat)"
+    },
+    {
+      "num": 220,
+      "nom": "Entrée d'arène à piliers de gros blocs",
+      "tome": 2,
+      "placement_prevu": "Feyhin Lokcthat : entrée de l'arène, vers la route du pont"
+    },
+    {
+      "num": 221,
+      "nom": "Poteau de palissade à corbeille à feu",
+      "tome": 2,
+      "placement_prevu": "Feyhin Lokcthat : bord de la piste de l'arène"
+    },
+    {
+      "num": 222,
+      "nom": "Pile de pont à avant-becs",
+      "tome": 2,
+      "placement_prevu": "longs ponts des rivières élargies (Feyhin Lokcthat : pont d'arrivée)"
+    },
+    {
+      "num": 223,
+      "nom": "Nef de cathédrale gothique",
+      "tome": 2,
+      "placement_prevu": "Feyhin Lokcthat : sommet de la ville perchée (poi_cathedrale_feyhin_lokcthat)"
+    },
+    {
+      "num": 224,
+      "nom": "Clocher-porche à haute flèche",
+      "tome": 2,
+      "placement_prevu": "Feyhin Lokcthat : façade de la cathédrale"
+    },
+    {
+      "num": 225,
+      "nom": "Gargouille",
+      "tome": 2,
+      "placement_prevu": "Feyhin Lokcthat : angles de la cathédrale"
     }
   ]
 }

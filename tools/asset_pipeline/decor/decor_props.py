@@ -4451,6 +4451,347 @@ def p_ship_cog(spec, lod):
     return m.out()
 
 
+# ================================================================ Feyhin Lokcthat (T2)
+# v1.0.141 — arène des gladiateurs (T2 p.9-10), cathédrale du sommet (T2 p.7), pile de long
+# pont (T2 p.7), gargouille (T2 p.10). Éléments génériques réinterprétés, sans blason.
+# Modules d'anneau de l'arène : secteur de 15° autour de −Y (blender ; +Z glTF = vers
+# l'extérieur), pivot au milieu du secteur (rayon ARENA_PIV du centre de l'arène, qui est
+# en +Y) ; le générateur (Landmarks.cpp BuildArena) les pose à ARENA_PIV du centre.
+ARENA_PISTE = 22.0      # rayon de la piste (palissade)
+ARENA_OUT = 37.5        # rayon extérieur (mur à arcades)
+ARENA_PIV = 29.75       # pivot des modules d'anneau (milieu de 22..37,5)
+ARENA_HALF = math.radians(7.5)
+ARENA_ROWS = 9          # rangs de gradins (1,5 m de profondeur, 0,95 m de haut)
+
+
+def _polar(r, a, z):
+    """Point du repère de module d'anneau : rayon r depuis le centre de l'arène, angle a
+    (rad) autour de −Y, hauteur z."""
+    return Vector((r * math.sin(a), ARENA_PIV - r * math.cos(a), z))
+
+
+def _ring_quad(part, r0, r1, a0, a1, z0, z1, kind, uv=0.5):
+    """Face d'un anneau : 'top' (horizontale à z1 entre r0 et r1), 'in' (verticale à r0),
+    'out' (verticale à r1), 'bot' (dessous à z0), 'side0' / 'side1' (bords d'angle a0 / a1)."""
+    if kind == "top":
+        q = [_polar(r0, a0, z1), _polar(r0, a1, z1), _polar(r1, a1, z1), _polar(r1, a0, z1)]
+    elif kind == "bot":
+        q = [_polar(r0, a1, z0), _polar(r0, a0, z0), _polar(r1, a0, z0), _polar(r1, a1, z0)]
+    elif kind == "in":
+        q = [_polar(r0, a1, z0), _polar(r0, a1, z1), _polar(r0, a0, z1), _polar(r0, a0, z0)]
+    elif kind == "out":
+        q = [_polar(r1, a0, z0), _polar(r1, a0, z1), _polar(r1, a1, z1), _polar(r1, a1, z0)]
+    elif kind == "side0":
+        q = [_polar(r0, a0, z0), _polar(r0, a0, z1), _polar(r1, a0, z1), _polar(r1, a0, z0)]
+    else:
+        q = [_polar(r1, a1, z0), _polar(r1, a1, z1), _polar(r0, a1, z1), _polar(r0, a1, z0)]
+    L = (q[1] - q[0]).length
+    W = (q[3] - q[0]).length
+    part.quad(q[0], q[1], q[2], q[3], [(0, 0), (0, L * uv), (W * uv, L * uv), (W * uv, 0)])
+    part.smooth = False
+
+
+def _ring_block(part, r0, r1, a0, a1, z0, z1, n, faces=("top", "in", "out", "bot")):
+    """Bloc d'anneau (r0..r1, a0..a1, z0..z1) en n tranches d'angle ; flancs d'angle ajoutés
+    avec 'side' dans faces."""
+    for k in range(n):
+        b0 = a0 + (a1 - a0) * k / n
+        b1 = a0 + (a1 - a0) * (k + 1) / n
+        for f in faces:
+            if f in ("top", "in", "out", "bot"):
+                _ring_quad(part, r0, r1, b0, b1, z0, z1, f)
+    if "side" in faces:
+        _ring_quad(part, r0, r1, a0, a1, z0, z1, "side0")
+        _ring_quad(part, r0, r1, a0, a1, z0, z1, "side1")
+
+
+def _arena_rows(m, a0, a1, lod, n):
+    """Gradins de l'anneau entre a0 et a1 : palissade de planches (piste), neuf rangs de
+    pierre à assise de bois, dessous fermé à z = 0 (plafond des geôles)."""
+    s = m.p("Stone_Wall")
+    wood = m.p("Wood_Plank")
+    # Palissade : planches de 2,6 m au bord de la piste, chaperon.
+    _ring_block(wood, ARENA_PISTE, ARENA_PISTE + 0.3, a0, a1, 0.0, 2.6, n, ("in", "top", "side"))
+    _ring_block(m.p("Wood_Dark"), ARENA_PISTE - 0.05, ARENA_PISTE + 0.35, a0, a1, 2.6, 2.75, n, ("in", "top", "out"))
+    r = ARENA_PISTE + 0.3
+    for k in range(ARENA_ROWS):
+        r1 = 23.0 + 1.5 * (k + 1)
+        z1 = 2.75 + 0.95 * k
+        _ring_block(s, r, r1, a0, a1, 0.0, z1, n, ("top", "in", "bot", "side"))
+        if lod == 0:   # assise de planches au bord du rang
+            _ring_block(wood, r1 - 0.55, r1 - 0.05, a0, a1, z1, z1 + 0.06, n, ("top", "in"))
+        r = r1
+    # Dernier rang jusqu'au mur.
+    zlast = 2.75 + 0.95 * (ARENA_ROWS - 1)
+    _ring_block(s, r, ARENA_OUT - 1.0, a0, a1, 0.0, zlast, n, ("top", "bot", "side"))
+    return zlast
+
+
+def _arena_outer_wall(m, a0, a1, lod, n, z0=0.0):
+    """Mur extérieur à arcades aveugles (1 m d'épaisseur, 12,5 m) et parapet."""
+    s = m.p("Stone_Wall")
+    c = m.p("Stone_Carved")
+    _ring_block(s, ARENA_OUT - 1.0, ARENA_OUT, a0, a1, z0, 11.8, n, ("in", "out", "top", "bot", "side"))
+    _ring_block(c, ARENA_OUT - 1.1, ARENA_OUT + 0.15, a0, a1, 11.8, 12.5, n, ("in", "out", "top", "bot"))
+    if lod < 2:
+        # Bandeau et pilastres en saillie sur la face extérieure (rythme des arcades).
+        _ring_block(c, ARENA_OUT, ARENA_OUT + 0.18, a0, a1, 6.0, 6.45, n, ("out", "top", "bot"))
+        for a in (a0 + 0.02, (a0 + a1) / 2, a1 - 0.02):
+            h = 0.012
+            _ring_block(c, ARENA_OUT, ARENA_OUT + 0.3, a - h, a + h, 0.0, 11.8, 1, ("out", "side"))
+        if lod == 0:   # arcs aveugles : renfoncements sombres en plein cintre (2 par secteur)
+            d = m.p("Wood_Dark")
+            for k in range(2):
+                am = a0 + (a1 - a0) * (k + 0.5) / 2
+                hw = (a1 - a0) * 0.32
+                _ring_block(d, ARENA_OUT + 0.01, ARENA_OUT + 0.02, am - hw, am + hw, 0.6, 4.4, 2, ("out",))
+                for j in range(6):
+                    t0, t1 = math.pi * j / 6, math.pi * (j + 1) / 6
+                    rr = hw
+                    b0, b1 = am - rr * math.cos(t0), am - rr * math.cos(t1)
+                    lo, hi = sorted((b0, b1))
+                    zt = 4.4 + 1.3 * min(math.sin(t0), math.sin(t1))
+                    _ring_block(d, ARENA_OUT + 0.01, ARENA_OUT + 0.02, lo, hi, 4.4, zt + 0.15, 1, ("out",))
+
+
+def p_arena_stands(spec, lod):
+    """Module de gradins de l'arène (15°) : palissade de 2,6 m, neuf rangs, mur extérieur à
+    arcades de 12,5 m ; dessous fermé à z = 0 (plafond des geôles creusées dessous)."""
+    m = M()
+    n = {0: 4, 1: 2, 2: 1}[lod]
+    _arena_rows(m, -ARENA_HALF, ARENA_HALF, lod, n)
+    _arena_outer_wall(m, -ARENA_HALF, ARENA_HALF, lod, n)
+    return m.out()
+
+
+def p_arena_gate(spec, lod):
+    """Module d'entrée de l'arène (15°) : passage couvert de 5 m de large et 6 m de haut à
+    travers les gradins ; gradins conservés de part et d'autre (rang par rang, au-delà des
+    parois) ; piliers de gros blocs de part et d'autre à chaque bout (8 m côté piste, posés
+    sur la piste ; 14 m dehors), linteaux."""
+    m = M()
+    n = {0: 2, 1: 1, 2: 1}[lod]
+    hw = 2.5
+    s = m.p("Stone_Wall")
+    wood = m.p("Wood_Plank")
+    r = ARENA_PISTE + 0.3
+    for k in range(ARENA_ROWS):
+        r1 = 23.0 + 1.5 * (k + 1)
+        z1 = 2.75 + 0.95 * k
+        a = math.asin(min(0.99, (hw + 0.6) / r))
+        if a < ARENA_HALF - 0.005:
+            for lo, hi in ((-ARENA_HALF, -a), (a, ARENA_HALF)):
+                _ring_block(s, r, r1, lo, hi, 0.0, z1, n, ("top", "in", "bot", "side"))
+                if lod == 0:
+                    _ring_block(wood, r1 - 0.55, r1 - 0.05, lo, hi, z1, z1 + 0.06, n, ("top", "in"))
+        r = r1
+    eo = math.asin((hw + 0.6) / ARENA_OUT)
+    _arena_outer_wall(m, -ARENA_HALF, -eo, lod, n)
+    _arena_outer_wall(m, eo, ARENA_HALF, lod, n)
+    blk = m.p("Rock_Ochre")
+    y_in, y_out = ARENA_PIV - ARENA_PISTE, ARENA_PIV - ARENA_OUT
+    # Parois et couvrement du passage (de la piste au dehors), mur au-dessus de l'entrée.
+    for x in (-hw - 0.6, hw):
+        box(s, (x, y_out, 0.0), (x + 0.6, y_in, 6.6))
+    box(s, (-hw - 0.6, y_out, 6.0), (hw + 0.6, y_in, 6.8))
+    box(s, (-hw - 0.6, y_out, 6.8), (hw + 0.6, y_out + 1.0, 11.8))
+    box(m.p("Stone_Carved"), (-hw - 0.8, y_out - 0.2, 11.8), (hw + 0.8, y_out + 1.0, 12.5))
+    # Piliers de gros blocs (T2 p.10) : assises irrégulières, linteau.
+    rng = random.Random(spec.get("seed", 1))
+    for (y0, H) in ((y_in, 8.0), (y_out - 1.6, 14.0)):
+        for sx in (-1, 1):
+            x0 = hw if sx > 0 else -hw - 1.7
+            z = 0.0
+            while z < H - 0.01:
+                h = min(H - z, rng.uniform(1.1, 1.7))
+                j = rng.uniform(-0.08, 0.08) if lod == 0 else 0.0
+                box(blk, (x0 + j, y0 + j, z), (x0 + 1.7 - j, y0 + 1.6 - j, z + h - (0.04 if lod == 0 else 0.0)), uv=0.4)
+                z += h
+        box(blk, (-hw - 2.0, y0 - 0.1, H), (hw + 2.0, y0 + 1.7, H + 1.4), uv=0.4)
+    return m.out()
+
+
+def p_arena_foundation(spec, lod):
+    """Fondations d'un module de gradins (15°), origine à leur pied : jupes de pierre de
+    5,25 m sous la palissade et sous le mur extérieur ; posées par le générateur à −5,2 m
+    au-dessus de la fosse des geôles (le sol creusé ne laisse aucun jour)."""
+    m = M()
+    n = {0: 3, 1: 2, 2: 1}[lod]
+    s = m.p("Stone_Wall")
+    _ring_block(s, ARENA_PISTE - 0.05, ARENA_PISTE + 0.6, -ARENA_HALF, ARENA_HALF, 0.0, 5.25, n, ("in", "out", "side"))
+    _ring_block(s, ARENA_OUT - 1.0, ARENA_OUT + 0.05, -ARENA_HALF, ARENA_HALF, 0.0, 5.25, n, ("in", "out", "side"))
+    return m.out()
+
+
+def p_arena_post_brazier(spec, lod):
+    """Poteau de bois de la palissade surmonté d'une corbeille à feu de fer (T2 p.10),
+    H 4,9 m, braises."""
+    m = M()
+    w = m.p("Wood_Dark")
+    box(w, (-0.16, -0.16, 0.0), (0.16, 0.16, 4.3))
+    i = m.p("Iron")
+    lathe(i, [(0.08, 4.25), (0.45, 4.6), (0.5, 4.9)], S(lod, 10))
+    box(i, (-0.2, -0.2, 4.1), (0.2, 0.2, 4.3))
+    if lod < 2:
+        lathe(m.p("Brick_Red"), [(0.0, 4.82), (0.42, 4.85), (0.2, 5.0), (0.0, 5.05)], S(lod, 8))
+    return m.out()
+
+
+def p_bridge_stone_pier(spec, lod):
+    """Pile de long pont (T2 p.7) : 1,6 m le long du pont (X), 6,4 m en travers, 6 m de haut
+    (origine au pied) ; avant-becs triangulaires des deux côtés jusqu'à 4 m, chaperon."""
+    m = M()
+    s = m.p("Stone_Wall")
+    c = m.p("Stone_Carved")
+    box(s, (-0.8, -3.2, 0.0), (0.8, 3.2, 6.0))
+    for sy in (-1, 1):
+        y0 = sy * 3.2
+        y1 = sy * 4.6
+        pts = [Vector((-0.8, y0, 0.0)), Vector((0.8, y0, 0.0)), Vector((0.0, y1, 0.0))]
+        top = [p + Vector((0, 0, 4.0)) for p in pts]
+        part = s
+        i = len(part.v)
+        # Trois flancs du prisme et chaperon en pointe.
+        for a, b in ((0, 2), (2, 1)):
+            part.quad(pts[a], pts[b], top[b], top[a], [(0, 0), (1.6, 0), (1.6, 4.0), (0, 4.0)])
+        apex = Vector((0.0, y0 + (y1 - y0) * 0.3, 5.2))
+        for a, b in ((0, 2), (2, 1)):
+            i = len(c.v)
+            c.v += [top[a], top[b], apex]
+            c.f.append((i, i + 1, i + 2) if sy > 0 else (i, i + 2, i + 1))
+            c.uv.append([(0, 0), (1, 0), (0.5, 1)])
+            c.cn.append(None)
+    box(c, (-0.95, -3.35, 5.7), (0.95, 3.35, 6.0))
+    return m.out()
+
+
+def p_church_nave(spec, lod):
+    """Nef de cathédrale gothique (T2 p.7, réinterprétation générique) : 30 m (Y) x 14 m (X),
+    murs de 15 m à contreforts et lancettes, toit d'ardoise très pentu (faîte à 27 m),
+    pignon de façade (−Y) à rosace, chevet à trois pans (+Y). Origine au pied, au centre."""
+    m = M()
+    s = m.p("Stone_Wall")
+    c = m.p("Stone_Carved")
+    sl = m.p("Shingle_Slate")
+    W, L, H, R = 7.0, 15.0, 15.0, 27.0
+    box(s, (-W, -L, 0.0), (W, L - 4.0, H), uv=0.3)
+    # Chevet à trois pans (+Y).
+    ch = [Vector((-W, L - 4.0, 0)), Vector((-W * 0.55, L, 0)), Vector((W * 0.55, L, 0)), Vector((W, L - 4.0, 0))]
+    for a, b in zip(ch, ch[1:]):
+        s.quad(a, b, b + Vector((0, 0, H)), a + Vector((0, 0, H)), [(0, 0), (1, 0), (1, 1), (0, 1)])
+    # Toit : deux pans d'ardoise et croupe du chevet, pignon de façade plein.
+    e = 0.6
+    A0, A1 = Vector((-W - e, -L - 0.4, H - 0.3)), Vector((W + e, -L - 0.4, H - 0.3))
+    B0, B1 = Vector((-W - e, L - 4.0, H - 0.3)), Vector((W + e, L - 4.0, H - 0.3))
+    T0, T1 = Vector((0, -L - 0.4, R)), Vector((0, L - 4.0, R))
+    sl.quad(A0, B0, T1, T0, [(0, 0), (4, 0), (4, 3), (0, 3)])
+    sl.quad(B1, A1, T0, T1, [(0, 0), (4, 0), (4, 3), (0, 3)])
+    apexB = Vector((0, L + 0.4, H - 0.3))
+    for a, b in ((B0, T1), (T1, B1)):
+        i = len(sl.v)
+        sl.v += [a, apexB, b]
+        sl.f.append((i, i + 1, i + 2))
+        sl.uv.append([(0, 0), (1, 0), (0.5, 1)])
+        sl.cn.append(None)
+    i = len(s.v)
+    s.v += [Vector((-W, -L, H)), Vector((W, -L, H)), Vector((0, -L, R - 0.4))]
+    s.f.append((i, i + 1, i + 2))
+    s.uv.append([(0, 0), (1, 0), (0.5, 1)])
+    s.cn.append(None)
+    # Contreforts (6 par côté) à ressauts et pinacles.
+    for k in range(6):
+        y = -L + 2.0 + k * 4.6
+        for sx in (-1, 1):
+            x0 = sx * W
+            box(c, (min(x0, x0 + sx * 1.6), y - 0.5, 0.0), (max(x0, x0 + sx * 1.6), y + 0.5, H * 0.6))
+            box(c, (min(x0, x0 + sx * 0.9), y - 0.45, H * 0.6), (max(x0, x0 + sx * 0.9), y + 0.45, H + 0.6))
+            if lod < 2:
+                _pinnacle(c, x0 + sx * 0.45, y, H + 0.6, 0.35, 2.6, lod)
+    # Lancettes (verre) entre les contreforts, rosace de façade.
+    if lod < 2:
+        gl = m.p("Glass_Amber")
+        for k in range(5):
+            y = -L + 4.3 + k * 4.6
+            for sx in (-1, 1):
+                x = sx * (W + 0.02)
+                q = [Vector((x, y - 0.9, 3.5)), Vector((x, y + 0.9, 3.5)), Vector((x, y + 0.9, 11.0)), Vector((x, y - 0.9, 11.0))]
+                if sx < 0:
+                    q = [q[1], q[0], q[3], q[2]]
+                gl.quad(q[0], q[1], q[2], q[3], [(0, 0), (1, 0), (1, 1), (0, 1)])
+        rose = [Vector((3.2 * math.cos(a), -L - 0.03, 18.5 + 3.2 * math.sin(a))) for a in [k * 2 * math.pi / S(lod, 16) for k in range(S(lod, 16))]]
+        i = len(gl.v)
+        gl.v += rose
+        gl.f.append(tuple(range(i, i + len(rose)))[::-1])
+        gl.uv.append([(0.5 + 0.5 * math.cos(k * 2 * math.pi / len(rose)), 0.5 + 0.5 * math.sin(k * 2 * math.pi / len(rose))) for k in range(len(rose))])
+        gl.cn.append(None)
+    # Faîtage et crête.
+    box(c, (-0.15, -L - 0.4, R - 0.2), (0.15, L - 4.0, R + 0.25))
+    return m.out()
+
+
+def p_spire_church(spec, lod):
+    """Clocher-porche à haute flèche de pierre (T2 p.7, flèche dominant le piton) : tour
+    carrée de 6,4 m jusqu'à 24 m (abat-sons), galerie, flèche octogonale à crochets jusqu'à
+    52 m, portail en ogive au pied (−Y). Origine au pied, au centre."""
+    m = M()
+    s = m.p("Stone_Wall")
+    c = m.p("Stone_Carved")
+    box(s, (-3.2, -3.2, 0.0), (3.2, 3.2, 24.0), uv=0.3)
+    for cx in (-3.2, 3.2):
+        for cy in (-3.2, 3.2):
+            box(c, (cx - 0.6, cy - 0.6, 0.0), (cx + 0.6, cy + 0.6, 24.6))
+            if lod < 2:
+                _pinnacle(c, cx, cy, 24.6, 0.5, 3.4, lod)
+    # Portail en ogive (renfoncement sombre) et abat-sons.
+    d = m.p("Wood_Dark")
+    box(d, (-1.4, -3.25, 0.0), (1.4, -3.21, 4.6))
+    if lod < 2:
+        i = len(d.v)
+        d.v += [Vector((-1.4, -3.25, 4.6)), Vector((1.4, -3.25, 4.6)), Vector((0, -3.25, 6.6))]
+        d.f.append((i, i + 1, i + 2))
+        d.uv.append([(0, 0), (1, 0), (0.5, 1)])
+        d.cn.append(None)
+        for k in range(4):
+            a = k * math.pi / 2
+            ux, uy = math.cos(a), math.sin(a)
+            ctr = Vector((ux * 3.22, uy * 3.22, 0))
+            t = Vector((-uy, ux, 0))
+            q = [ctr - t * 1.0 + Vector((0, 0, 16.5)), ctr + t * 1.0 + Vector((0, 0, 16.5)),
+                 ctr + t * 1.0 + Vector((0, 0, 21.5)), ctr - t * 1.0 + Vector((0, 0, 21.5))]
+            d.quad(q[0], q[1], q[2], q[3], [(0, 0), (1, 0), (1, 1), (0, 1)])
+    box(c, (-3.7, -3.7, 24.0), (3.7, 3.7, 24.6))
+    lathe(c, [(3.0, 24.6), (2.6, 27.0), (0.06, 51.0)], 8)
+    if lod == 0:   # crochets sur les arêtes de la flèche
+        for k in range(8):
+            a = (k + 0.5) * math.pi / 4
+            for j in range(5):
+                z = 28.0 + j * 4.4
+                r = 2.6 * (51.0 - z) / 24.0 + 0.1
+                box(c, (r * math.cos(a) - 0.12, r * math.sin(a) - 0.12, z), (r * math.cos(a) + 0.12, r * math.sin(a) + 0.12, z + 0.5))
+    cyl(m.p("Brass"), (0, 0, 50.6), (0, 0, 52.0), 0.1, 0.03, S(lod, 6))
+    return m.out()
+
+
+def p_gargoyle(spec, lod):
+    """Gargouille de pierre (T2 p.10 : bête accroupie sur un toit, générique) : corps
+    trapu en saillie vers −Y, gueule ouverte (gargouille d'écoulement), ailerons repliés,
+    socle ; 1,5 m de long, origine au pied du socle."""
+    m = M()
+    s = m.p("Stone_Carved")
+    box(s, (-0.3, -0.2, 0.0), (0.3, 0.4, 0.25))
+    body = [Vector((0, 0.3, 0.45)), Vector((0, 0.0, 0.55)), Vector((0, -0.45, 0.6)), Vector((0, -0.95, 0.62))]
+    API["tube"](s, body, [0.26, 0.3, 0.24, 0.16], S(lod, 8), 0.5, True)
+    if lod < 2:
+        for sx in (-1, 1):   # pattes avant et ailerons
+            cyl(s, (sx * 0.18, -0.35, 0.25), (sx * 0.2, -0.45, 0.55), 0.07, 0.06, S(lod, 6))
+            API["tube"](s, [Vector((sx * 0.15, 0.15, 0.7)), Vector((sx * 0.4, 0.25, 0.95)), Vector((sx * 0.35, 0.45, 1.05))],
+                        [0.08, 0.05, 0.02], S(lod, 5), 0.5)
+        cyl(s, (0, -0.95, 0.66), (0, -1.25, 0.6), 0.12, 0.08, S(lod, 6))   # mâchoire supérieure
+        cyl(s, (0, -0.95, 0.56), (0, -1.2, 0.5), 0.08, 0.05, S(lod, 6))    # mâchoire inférieure
+        API["tube"](s, [Vector((0, 0.35, 0.4)), Vector((0, 0.6, 0.3)), Vector((0, 0.75, 0.42))], [0.08, 0.05, 0.02], S(lod, 5), 0.5)
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

@@ -305,9 +305,18 @@ namespace tools::world_gen
 		/// \param firstBuilding indice du premier bâtiment posé pour cette ville.
 		void PlaceServiceSigns(World& w, const CityDef& c, size_t firstBuilding)
 		{
+			// v1.0.141 — un service porté par un lieu bâti de la ville (arène, cathédrale du
+			// sommet : Landmarks.cpp) y reçoit son panneau ; aucune maison ne le porte.
+			auto heldByLandmark = [&](const std::string& svc) {
+				const char* kind = svc == "arene" ? "arene" : (svc == "temple" ? "cathedrale" : nullptr);
+				if (!kind) return false;
+				for (const PoiDef& p : w.pois)
+					if (p.kind == kind && p.n == c.n && p.e == c.e && std::hypot(p.center.x - c.center.x, p.center.z - c.center.z) < 1500.0) return true;
+				return false;
+			};
 			std::vector<std::string> todo;
 			for (const std::string& s : c.services)
-				if (HasFacadeSign(s) && std::find(todo.begin(), todo.end(), s) == todo.end()) todo.push_back(s);
+				if (HasFacadeSign(s) && !heldByLandmark(s) && std::find(todo.begin(), todo.end(), s) == todo.end()) todo.push_back(s);
 			if (todo.empty()) return;
 			std::vector<size_t> cand;
 			const size_t first = (c.id == w.master.importAnchorCity) ? 0 : firstBuilding;
@@ -720,7 +729,20 @@ namespace tools::world_gen
 				// origine du mesh au milieu de la volée, pied de la première marche à baseY.
 				const Vec2 p = a.summit + dir * (a.topRadiusM + 3.0 * k + 1.5);
 				const double baseY = c.plateauY + a.heightM - 1.8 * (k + 1);
-				AddProp(w, "Stairs_Monumental_1", p, YawFacing(climb), 1.0, 0, 0, 0.0, baseY - w.HeightAt(p));
+				if (!a.streetStairs)
+				{
+					AddProp(w, "Stairs_Monumental_1", p, YawFacing(climb), 1.0, 0, 0, 0.0, baseY - w.HeightAt(p));
+					continue;
+				}
+				// v1.0.141 — escalier de rue (Feyhin, BD-T2) : volées de 2,5 m (murets compris) côte à
+				// côte sur la largeur du couloir, origine au milieu de la volée comme l'escalier monumental.
+				const Vec2 side{ -dir.z, dir.x };
+				const int n = std::max(1, static_cast<int>(std::floor(2.0 * a.stairHalfWidthM / 2.5)));
+				for (int q = 0; q < n; ++q)
+				{
+					const Vec2 sp = p + side * ((q + 0.5 - n * 0.5) * 2.5);
+					AddProp(w, "Stairs_Street_1", sp, YawFacing(climb), 1.0, 0, 0, 0.0, baseY - w.HeightAt(sp));
+				}
 			}
 			// Graphe : de la grand-place au bord de la plateforme (rondes des gardes).
 			int prev = Nearest(L, a.summit + dir * a.stairBottomM);
@@ -937,8 +959,25 @@ namespace tools::world_gen
 			// Place : marque urbaine + occupation (dégagée).
 			w.Occupy(c.center, Rp + 1.0);
 
-			// v1.0.140 — ville en gradins : plateforme du sommet (palais) hors des rues et des lots.
+			// v1.0.141 — emprises des lieux bâtis de la ville (arène : Landmarks.cpp, posée après les
+			// agglomérations ; portail posé à la main) : réservées avant les rues et les lots (ni rue,
+			// ni maison dessus).
+			std::vector<std::pair<Vec2, double>> reserved;
+			for (const PoiDef& p : w.pois)
+			{
+				if (p.n != c.n || p.e != c.e || std::hypot(p.center.x - c.center.x, p.center.z - c.center.z) >= 1500.0) continue;
+				// Portail posé à la main dans la ville (Porte 2 des enfers au pied de Feyhin) : cercle de 22 m.
+				const bool townPortal = p.kind == "portail" && p.hasPosition && std::hypot(p.center.x - c.center.x, p.center.z - c.center.z) < R + 160.0;
+				const double rr = p.kind == "arene" ? ArenaFootprintM(p) + 4.0 : (townPortal ? 22.0 : 0.0);
+				if (rr <= 0.0) continue;
+				reserved.push_back({ p.center, rr });
+				w.Occupy(p.center, rr);
+			}
+			// v1.0.140 — ville en gradins : plateforme du sommet (palais) hors des rues et des lots ;
+			// v1.0.141 : emprises réservées (arène) aussi.
 			auto onSummit = [&](Vec2 q) {
+				for (const auto& [rc, rr] : reserved)
+					if (std::hypot(q.x - rc.x, q.z - rc.z) < rr) return true;
 				return c.acropole.enabled && std::hypot(q.x - c.acropole.summit.x, q.z - c.acropole.summit.z) < c.acropole.topRadiusM + 6.0;
 			};
 			// ... et pied de l'escalier monumental (étals et statues de la place s'en écartent).
@@ -1172,6 +1211,7 @@ namespace tools::world_gen
 			{
 				int attempts = 30;
 				if (c.kind == "capitale") attempts = c.acropole.enabled ? 2000 : 260; // v1.0.140 : capitale en gradins dense
+				else if (c.acropole.enabled) attempts = 900; // v1.0.141 : ville perchée (Feyhin) couverte de maisons
 				else if (c.kind == "grande_ville") attempts = 160;
 				else if (c.kind == "ville" || c.kind == "forteresse") attempts = 90;
 				else if (c.kind == "village") attempts = 50;
@@ -1283,6 +1323,33 @@ namespace tools::world_gen
 						if (!w.IsOccupied(gp + along * 4.0, 0.4) && !w.IsOccupied(gp - along * 4.0, 0.4))
 							AddProp(w, "Bunting_Garland_1", gp, YawAlong(along), 1.0, 0, 0);
 					}
+				// v1.0.141 — place à colonnade (BD-T2 p.11-12, n° 93) d'une ville perchée hors capitale
+				// (Feyhin Lokcthat) : arcs en plein cintre sur colonnes au bord de la grand-place, côté
+				// du sommet, de part et d'autre du pied de l'escalier, face à la fontaine.
+				if (c.acropole.enabled && c.kind != "capitale")
+				{
+					const double aUp = std::atan2(-c.acropole.stairDir.z, -c.acropole.stairDir.x);
+					std::vector<Vec2> arches;
+					for (int side = -1; side <= 1; side += 2)
+					{
+						int placed = 0;
+						for (double off = 0.45; off < 1.6 && placed < 2; off += 0.12)
+						{
+							const double a = aUp + side * off;
+							const Vec2 ap = c.center + Dir(a) * (Rp - 2.0);
+							// La place est entièrement occupée (dégagée) : on n'évite que l'escalier, les étals et
+							// les arcs déjà posés.
+							bool blocked = inStair(ap);
+							for (const Vec2& sf : L.stallFronts) blocked = blocked || std::hypot(sf.x - ap.x, sf.z - ap.z) < 4.5;
+							for (const Vec2& q : arches) blocked = blocked || std::hypot(q.x - ap.x, q.z - ap.z) < 5.0; // arcs de 4,9 m
+							if (blocked) continue;
+							arches.push_back(ap);
+							AddProp(w, "Arch_Stone_1", ap, YawAlong(Vec2{ -std::sin(a), std::cos(a) }), 1.0, kSolid, 0, 0.5);
+							w.Occupy(ap, 2.6);
+							++placed;
+						}
+					}
+				}
 				// Braseros-vasques sur fût (atelier décors T3, pl.28) aux grandes places.
 				if (c.kind == "capitale" || c.kind == "grande_ville")
 					for (int k = 0; k < 4; ++k)
@@ -1444,6 +1511,34 @@ namespace tools::world_gen
 			//     hors les murs (de R + 20 à R + 95 m), sauf du côté du revers (mer) et dans l'eau,
 			//     bordées de maisons des deux côtés ; les champs sont repoussés au-delà (kFaubourgM).
 			const double kFaubourgM = c.acropole.enabled ? 110.0 : 0.0;
+			// Rue hors les murs bordée de maisons des deux côtés (faubourgs, ville basse) : la
+			// polyligne \p run (points tous les ~3 m) est réservée (occupation) puis ses deux rives
+			// reçoivent des lots (6 % de vides). Effet de bord : w.buildings, occupation, \p L.
+			auto lineHouses = [&](const std::vector<Vec2>& run) {
+				if (run.size() < 4) return;
+				const std::vector<Vec2> pts = ResamplePolyline(run, 1.0);
+				for (const Vec2& q : run) w.Occupy(q, kStreetHalf + 0.4);
+				double along = rng.Range(0.0, 3.0);
+				while (along < static_cast<double>(pts.size()) - 2.0)
+				{
+					const size_t k = static_cast<size_t>(along);
+					Vec2 tdir = pts[std::min(pts.size() - 1, k + 1)] - pts[k];
+					const double tl = std::hypot(tdir.x, tdir.z);
+					if (tl < 1e-6) { along += 1.0; continue; }
+					tdir = tdir * (1.0 / tl);
+					const TemplateRef& t = PickWeighted(pal, rng.Next());
+					bool any = false;
+					for (int side = -1; side <= 1; side += 2)
+					{
+						if (rng.Chance(0.06)) continue;
+						const Vec2 nrm{ -tdir.z * side, tdir.x * side };
+						const Vec2 center = pts[k] + nrm * (kStreetHalf + 1.2 + t.halfD);
+						const int b = TryPlaceBuilding(w, c, t, center, nrm * -1.0, "Maison", false);
+						if (b >= 0) { L.buildingIndices.push_back(b); any = true; ++lotCount; }
+					}
+					along += any ? (2.0 * t.halfW + 1.4 + rng.Range(0.0, 1.4)) : 2.0;
+				}
+			};
 			if (c.acropole.enabled && c.state != "ruine")
 			{
 				for (double off : { 20.0, 45.0, 70.0, 95.0 })
@@ -1453,31 +1548,7 @@ namespace tools::world_gen
 					std::vector<Vec2> run;
 					int prevId = -1;
 					auto flush = [&]() {
-						if (run.size() >= 4)
-						{
-							const std::vector<Vec2> pts = ResamplePolyline(run, 1.0);
-							for (const Vec2& q : run) w.Occupy(q, kStreetHalf + 0.4);
-							double along = rng.Range(0.0, 3.0);
-							while (along < static_cast<double>(pts.size()) - 2.0)
-							{
-								const size_t k = static_cast<size_t>(along);
-								Vec2 tdir = pts[std::min(pts.size() - 1, k + 1)] - pts[k];
-								const double tl = std::hypot(tdir.x, tdir.z);
-								if (tl < 1e-6) { along += 1.0; continue; }
-								tdir = tdir * (1.0 / tl);
-								const TemplateRef& t = PickWeighted(pal, rng.Next());
-								bool any = false;
-								for (int side = -1; side <= 1; side += 2)
-								{
-									if (rng.Chance(0.06)) continue;
-									const Vec2 nrm{ -tdir.z * side, tdir.x * side };
-									const Vec2 center = pts[k] + nrm * (kStreetHalf + 1.2 + t.halfD);
-									const int b = TryPlaceBuilding(w, c, t, center, nrm * -1.0, "Maison", false);
-									if (b >= 0) { L.buildingIndices.push_back(b); any = true; ++lotCount; }
-								}
-								along += any ? (2.0 * t.halfW + 1.4 + rng.Range(0.0, 1.4)) : 2.0;
-							}
-						}
+						lineHouses(run);
 						run.clear();
 						prevId = -1;
 					};
@@ -1487,12 +1558,53 @@ namespace tools::world_gen
 						const Vec2 pt = c.center + dq * rr;
 						// Revers de la butte (côté opposé à l'escalier, la mer) : pas de faubourg.
 						const bool back = (dq.x * c.acropole.stairDir.x + dq.z * c.acropole.stairDir.z) < -0.35;
-						if (back || w.IsWater(pt) || w.IsWater(pt + dq * 8.0)) { flush(); continue; }
+						if (back || w.IsWater(pt) || w.IsWater(pt + dq * 8.0) || onSummit(pt)) { flush(); continue; }
 						run.push_back(pt);
 						if (q % 3 == 0)
 						{
 							const int id = AddNode(L, pt);
 							if (prevId >= 0) Link(L, prevId, id);
+							prevId = id;
+						}
+					}
+					flush();
+				}
+			}
+			// --- v1.0.141 (Feyhin Lokcthat, BD-T2 p.7 : « beaucoup de maisons sur la montagne mais
+			//     également en bas ») — VILLE BASSE au pied du revers (clé `back_town` du relief) :
+			//     trois rues en arc autour du sommet, à 14, 34 et 54 m au-delà du pied de la falaise
+			//     (mesuré direction par direction sur AcropoleOffset), du côté du revers seulement,
+			//     hors de l'eau ; maisons des deux côtés, nœuds reliés au graphe des PNJ.
+			if (c.acropole.enabled && c.acropole.backTown && c.state != "ruine")
+			{
+				const AcropoleShape& a = c.acropole;
+				const int n = 180;
+				std::vector<double> foot(n, -1.0);
+				for (int q = 0; q < n; ++q)
+				{
+					const Vec2 dq = Dir(q * 2.0 * kPi / n);
+					if (dq.x * a.stairDir.x + dq.z * a.stairDir.z > -0.2) continue; // côté du revers seulement
+					for (double d = a.topRadiusM; d < a.FootRadiusM() + 40.0; d += 2.0)
+						if (AcropoleOffset(a, a.summit + dq * d) < 1.0) { foot[static_cast<size_t>(q)] = d; break; }
+				}
+				for (double off : { 14.0, 34.0, 54.0 })
+				{
+					std::vector<Vec2> run;
+					int prevId = -1;
+					auto flush = [&]() { lineHouses(run); run.clear(); prevId = -1; };
+					for (int q = 0; q <= n; ++q)
+					{
+						const double fd = foot[static_cast<size_t>(q % n)];
+						if (fd < 0.0) { flush(); continue; }
+						const Vec2 dq = Dir((q % n) * 2.0 * kPi / n);
+						const Vec2 pt = a.summit + dq * (fd + off);
+						if (w.IsWater(pt) || w.IsWater(pt + dq * 8.0) || w.IsWater(pt - dq * 6.0) || onSummit(pt)) { flush(); continue; }
+						run.push_back(pt);
+						if (q % 2 == 0)
+						{
+							const int id = AddNode(L, pt);
+							if (prevId >= 0) Link(L, prevId, id);
+							else { const int nb = Nearest(L, pt, id); if (nb >= 0) Link(L, id, nb); }
 							prevId = id;
 						}
 					}

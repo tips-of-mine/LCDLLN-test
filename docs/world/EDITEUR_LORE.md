@@ -144,8 +144,10 @@ Z vers le sud**, au plus **±4300 m** par axe (arrondi au mètre). Champs du lor
 
 Refus côté scripts et générateur : une ville **ancrée sur un relief** (colline de Vaerdhun,
 crevasse de Vharholdt) ne se déplace pas — sauf un **gouffre**, qui suit sa ville (Thurvhal,
-v1.0.107), et une **acropole** (ville en gradins, Lhynn, v1.0.140) : la butte suit la ville ; le
-palais, posé à la main sur le sommet, se déplace à part. Dans une case à plusieurs lieux sans position, le marqueur commun déplace le
+v1.0.107), et une **acropole** (ville en gradins, Lhynn, v1.0.140 ; Feyhin Lokcthat, v1.0.141) :
+la butte suit la ville ; le palais ou la cathédrale, posés à la main sur le sommet, se déplacent
+à part (après un déplacement de la ville, les reposer sur le sommet). Types de lieux
+`arena_poi` (Arène) et `cathedral_poi` (Cathédrale) depuis la v1.0.141. Dans une case à plusieurs lieux sans position, le marqueur commun déplace le
 premier ; recommencer pour le suivant.
 
 ### 4.2 Tracer, modifier, brancher, supprimer une route

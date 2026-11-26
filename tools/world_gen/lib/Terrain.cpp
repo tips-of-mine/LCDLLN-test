@@ -631,6 +631,27 @@ namespace tools::world_gen
 		return h;
 	}
 
+	double ValleyLowered(const WorldMaster& m, double x, double z, double h)
+	{
+		for (const RiverCourseDef& rc : m.riverCourses)
+			for (const RiverCourseDef::Widening& wd : rc.widenings)
+			{
+				if (wd.valleyM <= 0.0) continue;
+				const double r0 = wd.lengthM * 0.5;
+				const double d = std::hypot(x - wd.center.x, z - wd.center.z);
+				if (d >= r0 + wd.valleyM) continue;
+				// Une acropole voisine n'est jamais entamée : l'abaissement s'efface dès que sa butte
+				// s'élève (0 à 15 m au-dessus de son pied) ; son pied tombe alors en falaise sur la plaine.
+				double keep = 0.0;
+				for (const ReliefDef& r : m.reliefs)
+					if (r.type == "acropole")
+						keep = std::max(keep, SmoothStep(0.0, 15.0, AcropoleOffset(r.acropole, { x, z })));
+				const double low = Lerp(wd.floorY, h, SmoothStep(r0, r0 + wd.valleyM, d));
+				h = std::min(h, Lerp(low, h, keep));
+			}
+		return h;
+	}
+
 	const ReliefDef* ReliefOfCity(const WorldMaster& m, const std::string& cityId)
 	{
 		for (const ReliefDef& r : m.reliefs)
@@ -1069,6 +1090,9 @@ namespace tools::world_gen
 		for (CityDef& c : g.cities)
 		{
 			c.radiusM = CityRadius(c.kind, c.procedural);
+			// v1.0.141 — ville perchée sur une acropole : rayon de ville du relief (Feyhin Lokcthat :
+			// les maisons couvrent toute la butte, BD-T2 p.7).
+			if (c.acropole.enabled && c.acropole.cityRadiusM > 0.0) c.radiusM = c.acropole.cityRadiusM;
 			const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ c.n, c.e });
 			// Position posée à la main (v1.0.95, « tu places, le jeu suit ») : la ville est
 			// posée exactement là, sans recherche de site ; son plateau (même calcul que
@@ -1619,6 +1643,18 @@ namespace tools::world_gen
 			River main = finish(std::move(path), rc.id, rc.widthM * 0.6, rc.widthM * 0.4, 700.0, [&](Vec2 p) {
 				return hillCalm(p) * (island ? SmoothStep(split, split + 1500.0, std::hypot(p.x - island->center.x, p.z - island->center.z)) : 1.0);
 			});
+			// v1.0.141 — élargissements locaux du lit (BD-T2 p.7 : la rivière s'étale sous le pont
+			// de Feyhin Lokcthat) : largeur portée à width_m sur la moitié centrale de length_m,
+			// raccord progressif sur l'autre moitié. Le lit et les berges suivent (CarveWater).
+			for (const RiverCourseDef::Widening& wd : rc.widenings)
+			{
+				const double half = wd.lengthM * 0.5;
+				for (size_t k = 0; k < main.points.size(); ++k)
+				{
+					const double d = std::hypot(main.points[k].x - wd.center.x, main.points[k].z - wd.center.z);
+					if (d < half) main.widthM[k] = std::max(main.widthM[k], Lerp(wd.widthM, main.widthM[k], SmoothStep(half * 0.5, half, d)));
+				}
+			}
 			if (!island)
 			{
 				g.rivers.push_back(std::move(main));
@@ -1802,7 +1838,7 @@ namespace tools::world_gen
 			for (int i = 0; i < N; ++i)
 			{
 				const double x = w.height.WorldX(i), z = w.height.WorldZ(j);
-				w.height.At(i, j) = MacroHeight(m, x, z);
+				w.height.At(i, j) = ValleyLowered(m, x, z, MacroHeight(m, x, z)); // v1.0.141 : plaines basses
 				w.biome.At(i, j) = MacroBiome(m, x, z);
 			}
 		});
@@ -1994,7 +2030,8 @@ namespace tools::world_gen
 			// v1.0.140 : un lieu posé sur le sommet d'une acropole (palais) garde la plateforme.
 			if (OnAcropoleSummit(w.master, p.center, 0.0)) continue;
 			// v1.0.132 : un château (enceinte, douves) demande un plateau plus large.
-			const double R = p.kind == "chateau" ? 40.0 * p.scale + 8.0 : 40.0;
+			// v1.0.141 : une arène (gradins, descente des geôles) aussi.
+			const double R = p.kind == "chateau" ? 40.0 * p.scale + 8.0 : (p.kind == "arene" ? ArenaFootprintM(p) : 40.0);
 			double sum = 0.0, cnt = 0.0;
 			ForDisc(w.height, p.center, R, [&](int i, int j, double) { sum += w.height.At(i, j); cnt += 1.0; });
 			flatten(p.center, R, 60.0, std::max(cnt > 0 ? sum / cnt : sea + 8.0, sea + 5.0), false);

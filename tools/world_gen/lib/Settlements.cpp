@@ -965,9 +965,13 @@ namespace tools::world_gen
 		}
 
 		/// Familles de murs des bâtiments de la ville-tour (même gabarit 2 × 3,12 m, variantes
-		/// Straight / Window_Thin_Round / Window_Wide_Round / Door_Round) et leur poids.
-		constexpr const char* kTowerWallFamilies[] = { "UnevenBrick", "Plaster", "DryStone", "RedBrick" };
-		constexpr double kTowerWallWeights[] = { 0.4, 0.25, 0.2, 0.15 };
+		/// Straight / Window_Thin_Round / Window_Wide_Round / Door_Round) et leur poids : pierre
+		/// ocre orangé comme dans la BD (T2 p.19-20 ; retour du propriétaire du 27/11/2026 :
+		/// « Magistrya n'est pas blanche mais plutôt orange ») — grès dominant, brique ocre,
+		/// un peu de brique rouge ; ni enduit blanc ni pierre grise.
+		constexpr const char* kTowerWallFamilies[] = { "Sandstone", "OchreBrick", "RedBrick" };
+		constexpr double kTowerWallWeights[] = { 0.55, 0.3, 0.15 };
+		constexpr int kTowerWallFamilyCount = 3;
 
 		/// Un bâtiment de la ville-tour : niveaux [tier0, tier0 + tiers) d'une colonne.
 		struct TowerBuilding
@@ -1055,7 +1059,7 @@ namespace tools::world_gen
 					TowerBuilding b;
 					b.tier0 = k; b.tiers = n;
 					double pick = rng.Next(), acc = 0.0;
-					for (int f = 0; f < 4; ++f) { acc += kTowerWallWeights[f]; if (pick < acc) { b.family = f; break; } }
+					for (int f = 0; f < kTowerWallFamilyCount; ++f) { acc += kTowerWallWeights[f]; if (pick < acc) { b.family = f; break; } }
 					b.facadeR = t.EnvelopeR((k + n) * Ht);
 					col.buildings.push_back(b);
 					k += n;
@@ -1149,7 +1153,7 @@ namespace tools::world_gen
 						const double aS = left ? col.a0 : col.a1;
 						const double v = (left ? 1.0 : -1.0) * (halfG + 1.9);
 						const Vec2 tp = o + outOf(aS) * (Rb + 0.4) + tanOf(aS) * v;
-						TowerProp(w, "Turret_Corner_1", tp, YawAlong(tanOf(aS)), 0.9, kSolid, 0, yTop - 9.0, 1.6);
+						TowerProp(w, "Turret_Corner_Ochre_1", tp, YawAlong(tanOf(aS)), 0.9, kSolid, 0, yTop - 9.0, 1.6);
 						++turrets;
 					}
 				}
@@ -1524,13 +1528,13 @@ namespace tools::world_gen
 				{
 					const double v = -width * 0.5 + 1.5 + 3.0 * k;
 					const bool door = k == 4;
-					TowerProp(w, door ? "Wall_UnevenBrick_Door_Round" : "Wall_UnevenBrick_Straight", at(depth + 0.2, v), YawAlong(tan * -1.0), ws,
+					TowerProp(w, door ? "Wall_Sandstone_Door_Round" : "Wall_Sandstone_Straight", at(depth + 0.2, v), YawAlong(tan * -1.0), ws,
 						kPieceFlags, 0, socleY);
 					if (!door && k % 2 == 1) TowerProp(w, "Dungeon_Window_1", at(depth + 0.35, v), YawAlong(tan * -1.0), 1.0, 0, 1, socleY + 3.4);
 				}
 				for (int sd = -1; sd <= 1; sd += 2)
 					for (int k = 0; k < 4; ++k)
-						TowerProp(w, "Wall_UnevenBrick_Straight", at(1.5 + 3.0 * k, sd * (width * 0.5 + 0.2)), YawAlong(out * static_cast<double>(sd)), ws,
+						TowerProp(w, "Wall_Sandstone_Straight", at(1.5 + 3.0 * k, sd * (width * 0.5 + 0.2)), YawAlong(out * static_cast<double>(sd)), ws,
 							kPieceFlags, 0, socleY);
 				const double doorV = -width * 0.5 + 1.5 + 12.0;
 				prisonDoor = at(depth + 2.4, doorV);

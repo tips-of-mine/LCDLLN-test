@@ -1314,6 +1314,24 @@
       "nom": "Colonne torsadée colossale",
       "tome": 2,
       "placement_prevu": "Magistrya : salle du trône du palais du Magister (deux rangées)"
+    },
+    {
+      "num": 232,
+      "nom": "Murs de grès ocre (kit)",
+      "tome": 2,
+      "placement_prevu": "Magistrya : bâtiments de la ville-tour"
+    },
+    {
+      "num": 233,
+      "nom": "Murs de brique ocre (kit)",
+      "tome": 2,
+      "placement_prevu": "Magistrya : bâtiments de la ville-tour"
+    },
+    {
+      "num": 234,
+      "nom": "Tourelle d'angle de pierre ocre",
+      "tome": 2,
+      "placement_prevu": "Magistrya : angles des bâtiments de la ville-tour"
     }
   ]
 }

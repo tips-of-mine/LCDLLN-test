@@ -1136,6 +1136,15 @@ TEXTURES.update({
     "Stone_Serpentine": stone_serpentine,
 })
 
+# Magistrya (BD-T2 p.19-20, 25, 27 ; retour du propriétaire du 27/11/2026 : « Magistrya n'est
+# pas blanche mais plutôt orange ») : toute la ville est de pierre chaude, ocre orangé, sous
+# des toits d'ardoise. Deux appareils : grès en moellons (dominant) et brique ocre ; teintes
+# naturelles nuancées (pas d'orange saturé ni de monochrome).
+TEXTURES.update({
+    "Stone_Sandstone": lambda: stonewall("Stone_Sandstone", 142, [(0, (128, 78, 42)), (0.5, (178, 116, 64)), (1, (214, 160, 102))]),
+    "Brick_Ochre": lambda: bricks("Brick_Ochre", 143, (184, 112, 58), (172, 148, 112)),
+})
+
 
 # ------------------------------------------------- Camp de l'Oracle (25/11/2026)
 # Lecture : T2-P044 (tumulus bleu), T2-P046 (grande porte), T1-P003..005 et

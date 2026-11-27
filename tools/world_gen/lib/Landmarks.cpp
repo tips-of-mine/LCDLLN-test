@@ -629,8 +629,15 @@ namespace tools::world_gen
 					double summitY = 0.0;
 					for (const CityDef& c : w.cities)
 						if (&c.tower == tw) summitY = c.plateauY + tw->heightM;
+					// Pierre ocre orangé comme toute la ville (BD-T2 p.19-20) : les murs gris du kit
+					// (tours et murs communs aux châteaux) passent au grès de Magistrya.
+					const std::string grey = "/Wall_UnevenBrick_", ochre = "/Wall_Sandstone_";
 					for (size_t k = s0; k < w.scatter.size(); ++k)
+					{
 						w.scatter[k].yOffset += summitY - w.HeightAt(w.scatter[k].position);
+						const size_t at = w.scatter[k].mesh.find(grey);
+						if (at != std::string::npos) w.scatter[k].mesh.replace(at, grey.size(), ochre);
+					}
 					for (size_t k = l0; k < w.pointLights.size(); ++k)
 						w.pointLights[k].y += summitY - w.HeightAt(w.pointLights[k].position);
 				}

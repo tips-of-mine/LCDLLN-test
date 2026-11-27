@@ -1930,8 +1930,10 @@ def p_turret_corner(spec, lod):
     flèche conique 5 m ; posée sur l'angle avant gauche des maisons hautes à ardoise."""
     m = M()
     n = S(lod, 18)
-    cyl(m.p("Stone_Wall"), (0, 0, -0.2), (0, 0, 1.0), 1.55, 1.55, n, cap=False)
-    cyl(m.p("Plaster"), (0, 0, 1.0), (0, 0, 9.0), 1.5, 1.5, n, cap=False)
+    # n° 234 (Magistrya, v1.0.142) : variante de pierre ocre (spec « stone » / « body »).
+    stone, body = spec.get("stone", "Stone_Wall"), spec.get("body", "Plaster")
+    cyl(m.p(stone), (0, 0, -0.2), (0, 0, 1.0), 1.55, 1.55, n, cap=False)
+    cyl(m.p(body), (0, 0, 1.0), (0, 0, 9.0), 1.5, 1.5, n, cap=False)
     cyl(m.p("Wood_Dark"), (0, 0, 8.85), (0, 0, 9.1), 1.6, 1.6, n)
     lathe(m.p("Shingle_Slate"), [(1.75, 9.0), (1.45, 10.0), (0.8, 12.0), (0.25, 13.6), (0.02, 14.0)], n)
     if lod < 2:

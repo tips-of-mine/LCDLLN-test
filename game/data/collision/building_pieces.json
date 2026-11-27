@@ -270,6 +270,44 @@
       "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
     },
 
+    "_comment_magistrya_walls": "v1.0.142 : murs de gres et de brique ocre de Magistrya (kit derive du Wall_Plaster, meme geometrie que la brique rouge).",
+    "wall_sandstone_straight": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_sandstone_window_wide_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_sandstone_window_thin_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_sandstone_door_round": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+    "wall_ochrebrick_straight": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_ochrebrick_window_wide_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_ochrebrick_window_thin_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_ochrebrick_door_round": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+
     "_comment_palace": "v1.0.140 : palais imperial (Lhynn). Facade : deux murs pleins de part et d'autre de la porte centrale (X [-4,4] libre : passage traversant vers la salle du trone), statues colossales sur socle devant les contreforts (face +Z). Fleche : fut carre et contreforts d'angle. Bornes mesurees sur les .gltf (validate_decor.py).",
     "palace_imperial_facade_1": {
       "box_count": 6,

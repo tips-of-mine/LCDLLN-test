@@ -5621,6 +5621,13 @@ décoratives). La spirale est remplacée ; le tableau ci-dessous décrit l'état
 | Geôles | — | salle de 24 × 12 m sur le socle, au pied de la tour entre deux cages : cinq **cellules voûtées** grillagées (`Dungeon_Vault_1`), piliers massifs, plafond de dalles, soupiraux, banquettes, chaînes, torches ; **service prison** et son geôlier (Q6 a) |
 | Palais | aucun lieu | POI `poi_palais_magister_magistrya` (genre `palais`, fiche `lieu_palais_magister_magistrya`) bâti par `Landmarks.cpp` (`BuildMagisterPalace`) sur le **dallage du sommet** (600 m, posé à plat : le rocher est en retrait), portail tourné vers la cage 0 : parapet de la plateforme, quatre tours rondes ; **salle du trône** en longueur (31 × 16 m, murs de 6 étages, sol de dalles), **portail gothique à rosace** (sans pentagramme), deux rangées de quatre **colonnes torsadées colossales**, tapis, braseros, trône sur estrade, fauteuil sculpté ; **laboratoire** au fond (porte de bois en plein cintre, charpente, table de pierre, étagères d'apothicaire, alambic, chaudron, chaînes à crochet) |
 
+**Couleur** (retour du propriétaire du 27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange », vérifié dans
+la BD : T2 p.19, 20, 25, 27) : toute la ville est de pierre **ocre orangé** sous des toits d'ardoise bleue ; bâtiments
+en grès ocre (≈ 55 %), brique ocre (≈ 30 %) et brique rouge (≈ 15 %), tourelles de pierre ocre, murs du palais en grès ;
+ni enduit blanc ni pierre grise (contrôlé par le test). Assets n° 232 (`Wall_Sandstone_*`, texture `Stone_Sandstone`),
+n° 233 (`Wall_OchreBrick_*`, texture `Brick_Ochre`), dérivés du kit (même géométrie, collision du catalogue), et
+n° 234 (`Turret_Corner_Ochre_1`, variante de la tourelle n° 92).
+
 **Asset** (atelier décors, `decor_specs.json` n° 231, budget `building`) : `Column_Twisted_Giant_1` (3,7 × 15,8 m :
 socle mouluré, fût de quatre brins torsadés renflé au milieu, chapiteau ; 1 508 / 700 / 248 triangles), texture
 procédurale `Stone_Serpentine` (vert sourd veiné, pas de vert saturé) ; collision par trois boîtes
@@ -5630,7 +5637,7 @@ procédurale `Stone_Serpentine` (vert sourd veiné, pas de vert saturé) ; colli
 **Lore** : ville (features, dimensions 600 m, aiguille et cages d'escalier, ponton unique, prompt corrigé), service prison (`grille.ajustements`) et
 geôlier ; Magister vivant (`alive`, note [DÉCISION]) ; mort du T2 annotée hors continuité ; étapes de
 `quest_t2_audience_magister` ancrées (arrivée et geôles sur la ville — la première pointait par erreur sur le Mont des
-Neuf Pics —, audience et laboratoire sur le palais) ; 4 entrées au registre des décisions.
+Neuf Pics —, audience et laboratoire sur le palais) ; 5 entrées au registre des décisions.
 
 **PNJ à altitude réelle** (Q1 b) : le graphe des PNJ de la ville-tour est en 3D (altitude de chaque nœud : socle, deux nœuds par volée, paliers, plateforme) ; les habitants partent des portes des paliers et parcourent les cages ; `spawners.json` reçoit, dans la routine, `realHeight: true` et `pathY` (une altitude par point du chemin, champs additifs) ; le shard interpole l'altitude le long du segment et fait rentrer le PNJ en refaisant son chemin à l'envers (`AmbientRoutine`) ; l'entité porte le drapeau répliqué `kEntityStateRealHeight` et le client la pose sur la surface marchable sous son altitude (`WalkableSurfaceProbe`) au lieu de la heightmap ; pas d'agenda de métier pour ces PNJ (ses trajets directs traverseraient les étages).
 

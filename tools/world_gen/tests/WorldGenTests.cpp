@@ -4417,7 +4417,7 @@ namespace
 			count("Stair_Interior_Rails"), count("Bridge_Stone_Deck_1"), count("Roof_Slate_4x4"), count("Door_1_Round"));
 		Check(count("Stair_Interior_Rails") == flightsTotal, "ville-tour v1.0.142 : une volee posee par volee des cages");
 		int walls = 0, families = 0;
-		for (const char* f : { "Wall_UnevenBrick_", "Wall_Plaster_", "Wall_DryStone_", "Wall_RedBrick_" })
+		for (const char* f : { "Wall_Sandstone_", "Wall_OchreBrick_", "Wall_RedBrick_" })
 		{
 			int n = 0;
 			for (const ScatterDef& s : w->scatter)
@@ -4425,8 +4425,12 @@ namespace
 			walls += n;
 			families += n > 300 ? 1 : 0;
 		}
-		Check(walls >= 10000 && families == 4 && count("Roof_Slate_4x4") >= 800 && count("Turret_Corner_1") >= 20,
-			"ville-tour v1.0.142 : batiments distincts (quatre materiaux, toits a chaque retrait, tourelles d'angle)");
+		int pale = 0; // ni enduit blanc ni pierre grise : la ville est ocre orangé (BD-T2 p.19-20)
+		for (const ScatterDef& s : w->scatter)
+			pale += (s.mesh.find("/Wall_Plaster_") != std::string::npos || s.mesh.find("/Wall_DryStone_") != std::string::npos
+				|| s.mesh.find("/Wall_UnevenBrick_") != std::string::npos) && std::hypot(s.position.x - t.center.x, s.position.z - t.center.z) <= t.SocleR() ? 1 : 0;
+		Check(walls >= 10000 && families == 3 && pale == 0 && count("Roof_Slate_4x4") >= 800 && count("Turret_Corner_Ochre_1") >= 20,
+			"ville-tour v1.0.142 : batiments distincts de pierre ocre (gres, brique ocre, brique rouge), toits a chaque retrait, tourelles d'angle");
 		Check(count("Door_1_Round") >= 1000 && count("Torch_Metal") >= 200 && towerPieces < 60000,
 			"ville-tour v1.0.142 : portes decoratives sur les paliers, torches, budget de pieces tenu");
 		// Façades et toits dans l'enveloppe, jamais dans le vide d'une cage ouverte.
@@ -4526,7 +4530,8 @@ namespace
 		std::ifstream cat(std::string(LCDLLN_CONTENT_DIR) + "/collision/building_pieces.json");
 		const std::string txt((std::istreambuf_iterator<char>(cat)), std::istreambuf_iterator<char>());
 		Check(txt.find("\"column_twisted_giant_1\"") != std::string::npos && txt.find("\"stair_interior_rails\"") != std::string::npos
-				&& txt.find("\"bridge_stone_deck_1\"") != std::string::npos && txt.find("\"wall_drystone_straight\"") != std::string::npos,
+				&& txt.find("\"bridge_stone_deck_1\"") != std::string::npos && txt.find("\"wall_sandstone_straight\"") != std::string::npos
+				&& txt.find("\"wall_ochrebrick_door_round\"") != std::string::npos,
 			"ville-tour v1.0.142 : volees, dalles, murs et colonne au catalogue de collision");
 	}
 

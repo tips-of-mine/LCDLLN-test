@@ -10787,7 +10787,8 @@
         "[GD] (v1.0.82) PNJ des peuples lointains présents : Ysmhera Vhaul (Les Vharnoctes, marchand) ; Faryzhad Ilkhaner (Le Kharzhad, erudit) ; Senmhoret Djhaïs (Le royaume de Nebkhara, erudit) (fiches persons, LORE_BD §16.11).",
         "[DÉCISION] (v1.0.142) Un seul long ponton de bois depuis la rive, comme sur la planche p.19 (arbitrage Q2 a) : la note « 4 pontons cardinaux » est abandonnée ; gibets et poteau indicateur à la tête du ponton ; LORE_BD §16.68.",
         "[DÉCISION] (v1.0.142) Geôles voûtées au socle, adossées à la face de la tour (arbitrage Q3 a ; [BD-T2] p.22 : voûtes, gros piliers, banquettes, anneaux, soupiraux) ; service prison ajouté, avec son geôlier (Q6 a) ; LORE_BD §16.68.",
-        "[DÉCISION] (v1.0.142) Retour du test visuel du propriétaire (27/11/2026) : la rampe en spirale rappelait la tour de Babel ou Minas Tirith ; Magistrya est plus droite et plus haute, sans palier circulaire, et l'on voit les séparations entre les bâtiments, avec des escaliers entre chacun. Arbitrages : hauteur 600 m ; accès à pied partout jusqu'au sommet ; silhouette en cône étroit (rayon 120 m au socle, 30 m au sommet) ; bâtiments non visitables, portes décoratives sur les paliers (Q3 a). Aiguille rocheuse couverte de bâtiments distincts d'un à trois niveaux de 12,5 m (pierre, enduit, brique, pierre sèche), toits d'ardoise à chaque retrait, tourelles d'angle ; 24 cages d'escalier sous 300 m, 12 au-dessus, du socle au palais ; les habitants vivent et circulent dans les étages (altitude réelle). Remplace une première version en spirale de 250 m (Q1 b), jamais livrée. LORE_BD §16.68."
+        "[DÉCISION] (v1.0.142) Retour du test visuel du propriétaire (27/11/2026) : la rampe en spirale rappelait la tour de Babel ou Minas Tirith ; Magistrya est plus droite et plus haute, sans palier circulaire, et l'on voit les séparations entre les bâtiments, avec des escaliers entre chacun. Arbitrages : hauteur 600 m ; accès à pied partout jusqu'au sommet ; silhouette en cône étroit (rayon 120 m au socle, 30 m au sommet) ; bâtiments non visitables, portes décoratives sur les paliers (Q3 a). Aiguille rocheuse couverte de bâtiments distincts d'un à trois niveaux de 12,5 m (pierre, enduit, brique, pierre sèche), toits d'ardoise à chaque retrait, tourelles d'angle ; 24 cages d'escalier sous 300 m, 12 au-dessus, du socle au palais ; les habitants vivent et circulent dans les étages (altitude réelle). Remplace une première version en spirale de 250 m (Q1 b), jamais livrée. LORE_BD §16.68.",
+        "[DÉCISION] (v1.0.142) Couleur : Magistrya n'est pas blanche mais orangée (retour du propriétaire du 27/11/2026, vérifié dans la BD : T2 p.19, 20, 25, 27, pierre ocre orangé sous des toits d'ardoise bleue) ; bâtiments en grès ocre (dominant), brique ocre et un peu de brique rouge, tourelles de pierre ocre ; ni enduit blanc ni pierre grise ; LORE_BD §16.68."
       ],
       "dimensions_estimees": {
         "hauteur": "600 m (sommet du palais au-dessus du socle) [DÉCISION v1.0.142]",
@@ -10832,11 +10833,11 @@
         "herbe": "Herbes rases sur les berges"
       },
       "couleurs_dominantes": [
+        "Ocre orangé",
         "Ocre doré",
-        "Beige pierre",
-        "Bleu profond",
-        "Bleu azur",
         "Brun chaud",
+        "Bleu ardoise (toits)",
+        "Bleu profond",
         "Jaune lumineux"
       ],
       "ambiance": {
@@ -244614,7 +244615,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Lhynn en gradins, palais impérial, capitale dense et faubourgs, port et champs ; docs/world/LORE_BD.md §16.66). Ajout v1.0.141 : 4 entrées (Camp de l'Oracle : salle de l'Oracle, salle des Échos, rocher de cristal et portes, camp extérieur ; docs/world/LORE_BD.md §16.67). Ajout v1.0.142 : 3 entrées (ponton unique, geôles et prison, Magister vivant ; docs/world/LORE_BD.md §16.68). Ajout v1.0.142 (suite) : 1 entrée (Magistrya, aiguille de 600 m et cages d'escalier ; docs/world/LORE_BD.md §16.68).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Lhynn en gradins, palais impérial, capitale dense et faubourgs, port et champs ; docs/world/LORE_BD.md §16.66). Ajout v1.0.141 : 4 entrées (Camp de l'Oracle : salle de l'Oracle, salle des Échos, rocher de cristal et portes, camp extérieur ; docs/world/LORE_BD.md §16.67). Ajout v1.0.142 : 3 entrées (ponton unique, geôles et prison, Magister vivant ; docs/world/LORE_BD.md §16.68). Ajout v1.0.142 (suite) : 1 entrée (Magistrya, aiguille de 600 m et cages d'escalier ; docs/world/LORE_BD.md §16.68). Ajout v1.0.142 (suite) : 1 entrée (Magistrya orangée).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -247981,6 +247982,13 @@
           "id": "sauken_glude_of_magistrya_aiguille_v1142",
           "nom": "Magistrya : aiguille de 600 m et cages d'escalier",
           "decision": "Retour du test visuel du propriétaire (27/11/2026) : la spirale rappelait la tour de Babel. Arbitrages : 600 m, accès à pied jusqu'au sommet, cône étroit (120 m → 30 m), bâtiments distincts empilés séparés par des cages d'escalier praticables du socle au palais, sans palier circulaire ; bâtiments non visitables (portes décoratives, Q3 a) ; PNJ à altitude réelle dans les cages (graphe 3D, Q1 b). Remplace une première version en spirale de 250 m (Q1 b), jamais livrée. LORE_BD §16.68.",
+          "version": "1.0.142"
+        },
+        {
+          "collection": "villes",
+          "id": "sauken_glude_of_magistrya_couleur_v1142",
+          "nom": "Magistrya : pierre ocre orangé",
+          "decision": "Retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange », vérifié dans la BD T2 p.19-20) : murs de grès ocre et de brique ocre (assets n° 232, 233), un peu de brique rouge, tourelles de pierre ocre (n° 234), murs du palais en grès ; ni enduit blanc ni pierre grise. LORE_BD §16.68.",
           "version": "1.0.142"
         }
       ]
@@ -257965,7 +257973,7 @@
         "herbe": ""
       },
       "couleurs_dominantes": [
-        "pierre ocre",
+        "pierre ocre orangé",
         "vert de serpentine",
         "or",
         "bleu nuit"
@@ -362207,6 +362215,66 @@
         "générique, sans emblème"
       ],
       "placement": "Magistrya : salle du trône du palais du Magister (deux rangées)",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_232",
+      "num": 232,
+      "name": "Murs de grès ocre (kit)",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Wall_Sandstone_Straight",
+        "Wall_Sandstone_Window_Wide_Round",
+        "Wall_Sandstone_Window_Thin_Round",
+        "Wall_Sandstone_Door_Round"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise)",
+        "retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+      ],
+      "placement": "Magistrya : bâtiments de la ville-tour",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_233",
+      "num": 233,
+      "name": "Murs de brique ocre (kit)",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Wall_OchreBrick_Straight",
+        "Wall_OchreBrick_Window_Wide_Round",
+        "Wall_OchreBrick_Window_Thin_Round",
+        "Wall_OchreBrick_Door_Round"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise)",
+        "retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+      ],
+      "placement": "Magistrya : bâtiments de la ville-tour",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_234",
+      "num": 234,
+      "name": "Tourelle d'angle de pierre ocre",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Turret_Corner_Ochre_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P020-C3, C4 (tours d'angle de Magistrya, pierre ocre)",
+        "retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+      ],
+      "placement": "Magistrya : angles des bâtiments de la ville-tour",
       "generated": true,
       "source": "[BD] T2"
     }

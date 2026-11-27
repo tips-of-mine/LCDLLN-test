@@ -4838,6 +4838,390 @@ def p_ship_cog(spec, lod):
     return m.out()
 
 
+# ============================================================== Kendrhir (BD T1)
+# n° 231-237 : enceinte de rondins de 20 m de Kendrhir (lore : « remparts en bois 20 m »),
+# tours, porte, contreforts obliques, donjon à flèche (réinterprétation générique, sans
+# reproduction de la citadelle des planches) et restes du siège. Références : pages du PDF
+# du tome 1 (p.23, 26, 37, 39, 42). Repère des pièces d'enceinte : X le long du mur (module
+# de 4 m), ligne des rondins en y = 0, +Y = EXTÉRIEUR de la ville, -Y = intérieur (chemin
+# de ronde) ; étendue Y symétrique pour que le centrage de build_decor (center_xy) laisse
+# la ligne des rondins à l'origine (le générateur pose la pièce sur le cercle du rempart).
+_RAMPART_H = 19.2   # hauteur des fûts (pointe en plus, ~0,8 m)
+_WALK_Z = 17.2      # plancher du chemin de ronde
+
+
+def _tri(part, a, b, c, uv=((0, 0), (1, 0), (0.5, 1))):
+    i = len(part.v)
+    part.v += [Vector(a), Vector(b), Vector(c)]
+    part.f.append((i, i + 1, i + 2))
+    part.uv.append(list(uv))
+    part.cn.append(None)
+
+
+def _pyramid(part, half, z0, apex_z, uv_w=3.0):
+    """Toit pyramidal carré (4 pans) de demi-côté `half`, égout à z0, faîte à apex_z."""
+    cs = [Vector((-half, -half, z0)), Vector((half, -half, z0)), Vector((half, half, z0)), Vector((-half, half, z0))]
+    apex = Vector((0, 0, apex_z))
+    for k in range(4):
+        _tri(part, cs[k], cs[(k + 1) % 4], apex, ((0, 0), (uv_w, 0), (uv_w / 2, (apex_z - z0) / 1.5)))
+
+
+def _stone_footing(m, lod, rng):
+    """Semelle de moellons au pied extérieur du rempart (y 0,2 à 1,6, H 0,6) : cache la base
+    des fûts sur terrain irrégulier."""
+    s = m.p("Stone_Wall")
+    box(s, (-2.0, 0.18, 0.0), (2.0, 1.6, 0.35))
+    if lod < 2:
+        for k in range({0: 5, 1: 3}[lod]):
+            x = -1.6 + 3.2 * k / max(1, {0: 4, 1: 2}[lod])
+            box(s, (x - 0.35, 0.25, 0.3), (x + 0.35, 1.0 + rng.uniform(0, 0.4), 0.55 + rng.uniform(0, 0.15)))
+
+
+def _rampart_logs(m, lod, rng, tex, broken=False):
+    """Fûts jointifs du module de 4 m (pointes taillées ; `broken` : têtes rompues, 9 à 16 m)."""
+    d = m.p(tex)
+    n = {0: 12, 1: 7, 2: 4}[lod]
+    r = 4.0 / n / 2 * 0.97
+    tops = []
+    for k in range(n):
+        x = -2.0 + 4.0 * (k + 0.5) / n
+        if broken:
+            h = rng.uniform(9.0, 16.0)
+            cyl(d, (x, 0, -0.3), (x, 0, h), r, r * 0.9, S(lod, 8), False)
+            # tête rompue en biseau : cône court décentré
+            cyl(d, (x, 0, h), (x + rng.uniform(-0.1, 0.1), rng.uniform(-0.1, 0.1), h + rng.uniform(0.3, 0.9)), r * 0.9, 0.03, S(lod, 8), False)
+        else:
+            h = _RAMPART_H + rng.uniform(-0.2, 0.25)
+            cyl(d, (x, 0, -0.3), (x, 0, h), r, r * 0.93, S(lod, 8), False)
+            cyl(d, (x, 0, h), (x, 0, h + 0.8), r * 0.93, 0.02, S(lod, 8), False)
+        tops.append(h)
+    return r, tops
+
+
+def _rampart(spec, lod, tex):
+    m = M()
+    rng = random.Random(spec["seed"])
+    r, _ = _rampart_logs(m, lod, rng, tex)
+    dk = m.p("Wood_Dark")
+    # Lisses extérieures (côté +Y) et intérieures (côté -Y) qui lient les fûts.
+    for z in ((2.5, 9.0, 15.5) if lod < 2 else (9.0,)):
+        box(dk, (-2.0, r, z), (2.0, r + 0.16, z + 0.3))
+        box(dk, (-2.0, -r - 0.16, z), (2.0, -r, z + 0.3))
+    # Chemin de ronde côté intérieur, sur poteaux, et contre-fiches.
+    w = m.p("Wood_Plank")
+    plank_row(w, -2.0, 2.0, -1.6, -r - 0.02, _WALK_Z - 0.1, _WALK_Z, {0: 8, 1: 4, 2: 1}[lod])
+    for x in (-1.5, 1.5):
+        box(dk, (x - 0.12, -1.6, 0.0), (x + 0.12, -1.36, _WALK_Z - 0.1))
+        if lod < 2:
+            API["tube"](dk, [Vector((x, -1.5, 0.3)), Vector((x, -r - 0.05, 8.5))], [0.08, 0.08], 4)
+    _stone_footing(m, lod, rng)
+    return m.out()
+
+
+def p_rampart_wood(spec, lod):
+    """Rempart de rondins de 20 m, bois grisé d'origine (module 4 m, n° 231)."""
+    return _rampart(spec, lod, "Wood_Weathered")
+
+
+def p_rampart_wood_new(spec, lod):
+    """Rempart de rondins de 20 m reconstruit, bois neuf (module 4 m, n° 231)."""
+    return _rampart(spec, lod, "Wood_Fresh")
+
+
+def p_rampart_wood_burnt(spec, lod):
+    """Pan de rempart incendié (n° 232) : fûts calcinés aux têtes rompues (9 à 16 m), sans
+    chemin de ronde ; une poutre effondrée appuyée côté intérieur."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    r, tops = _rampart_logs(m, lod, rng, "Wood_Charred", broken=True)
+    c = m.p("Wood_Charred")
+    for z in ((2.5, 7.5) if lod < 2 else (5.0,)):
+        box(c, (-2.0, r, z), (2.0, r + 0.16, z + 0.3))
+        box(c, (-2.0, -r - 0.16, z), (2.0, -r, z + 0.3))
+    if lod < 2:
+        # Poteau du chemin de ronde tombé contre le mur (intérieur).
+        API["tube"](c, [Vector((-0.8, -1.6, 0.1)), Vector((0.6, -r - 0.1, min(tops) - 0.5))], [0.12, 0.1], 5)
+    _stone_footing(m, lod, rng)
+    if lod == 0:
+        box(m.p("Wood_Charred"), (-1.2, -1.55, 0.0), (1.2, -1.15, 0.22))  # planches tombées au pied
+    return m.out()
+
+
+def p_rampart_wood_breach(spec, lod):
+    """Brèche du rempart (n° 232) : souches calcinées (0,3 à 2,2 m) et deux fûts abattus en
+    travers (franchissable : posé sans collision par le générateur)."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    c = m.p("Wood_Charred")
+    n = {0: 12, 1: 7, 2: 4}[lod]
+    r = 4.0 / n / 2 * 0.97
+    for k in range(n):
+        x = -2.0 + 4.0 * (k + 0.5) / n
+        h = rng.uniform(0.3, 2.2) if k not in (0, n - 1) else 2.1
+        cyl(c, (x, 0, -0.3), (x, 0, h), r, r * 0.9, S(lod, 7), False)
+        cyl(c, (x, 0, h), (x, 0, h + 0.2), r * 0.9, 0.04, S(lod, 7), False)
+    for (x0, x1, a) in ((-1.2, 0.9, 0.2), (1.1, -0.6, -0.25)):
+        cyl(c, (x0, -3.0, 0.2), (x1, 3.0, 0.2 + a), 0.18, 0.16, S(lod, 8))
+    if lod < 2:
+        s = m.p("Stone_Wall")
+        for k in range({0: 6, 1: 3}[lod]):
+            x, y = rng.uniform(-1.8, 1.8), rng.uniform(-1.4, 1.4)
+            box(s, (x - 0.3, y - 0.25, 0.0), (x + 0.3, y + 0.25, rng.uniform(0.2, 0.4)))
+    return m.out()
+
+
+def _tower_shaft(m, lod, tex, half, z_top, rng, broken=False):
+    """Fût de tour carré en planches verticales et poteaux d'angle ; `broken` : têtes de
+    planches arrachées à des hauteurs variables autour de z_top."""
+    w = m.p(tex)
+    n = {0: 10, 1: 5, 2: 2}[lod]
+    for side in range(4):
+        xf = Matrix.Rotation(side * math.pi / 2, 4, "Z")
+        for k in range(n):
+            x0 = -half + 2 * half * k / n + 0.01
+            x1 = -half + 2 * half * (k + 1) / n - 0.01
+            top = z_top + (rng.uniform(-3.5, 0.5) if broken else 0.0)
+            box(w, (x0, -half - 0.08, 0.0), (x1, -half, top), 1.0, xf)
+    d = m.p("Wood_Charred" if broken else "Wood_Dark")
+    for (x, y) in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        box(d, (x * half - 0.22, y * half - 0.22, 0.0), (x * half + 0.22, y * half + 0.22, z_top - (1.5 if broken else 0.0)))
+    return w, d
+
+
+def p_tower_rampart_wood(spec, lod):
+    """Tour carrée de rempart en bois (n° 233) : 6 x 6 m, fût de planches à poteaux d'angle,
+    hourd en encorbellement (21-23,5 m) percé d'archères, toit pyramidal de bardeaux (28 m)."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    half = 3.0
+    w, d = _tower_shaft(m, lod, "Wood_Weathered", half, 21.0, rng)
+    # Hourd : plancher débordant, parois de planches, corbeaux.
+    hh = 3.5
+    box(d, (-hh, -hh, 21.0), (hh, hh, 21.25))
+    for side in range(4):
+        xf = Matrix.Rotation(side * math.pi / 2, 4, "Z")
+        box(w, (-hh, -hh - 0.08, 21.25), (hh, -hh + 0.02, 23.5), 1.0, xf)
+        if lod < 2:
+            for x in (-2.2, 0.0, 2.2):   # corbeaux sous le hourd
+                box(d, (x - 0.12, -hh, 20.4), (x + 0.12, -half, 21.0), 1.0, xf)
+        if lod == 0:
+            for x in (-1.6, 0.0, 1.6):   # archères (fentes sombres)
+                box(m.p("Wood_Charred"), (x - 0.08, -hh - 0.1, 22.0), (x + 0.08, -hh - 0.09, 23.0), 1.0, xf)
+            for z in (8.0, 14.0):
+                box(m.p("Wood_Charred"), (-0.08, -half - 0.1, z), (0.08, -half - 0.09, z + 1.1), 1.0, xf)
+    _pyramid(m.p("Shingle"), hh + 0.25, 23.5, 28.0)
+    if lod < 2:
+        cyl(m.p("Iron"), (0, 0, 27.9), (0, 0, 28.6), 0.035, 0.02, 5)
+    return m.out()
+
+
+def p_tower_rampart_wood_ruined(spec, lod):
+    """Tour de rempart étêtée par l'incendie (n° 233) : fût calciné rompu vers 13-16 m, sans
+    toit, échafaudage de bois neuf côté intérieur (-Y), éboulis de planches côté extérieur."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    half = 3.0
+    _tower_shaft(m, lod, "Wood_Charred", half, 15.5, rng, broken=True)
+    f = m.p("Wood_Fresh")
+    # Échafaudage : 3 perches, 3 lisses, 2 platelages (côté intérieur).
+    ys = -half - 0.4
+    for x in (-2.6, 0.0, 2.6):
+        cyl(f, (x, ys, 0.0), (x, ys, 15.0), 0.07, 0.06, S(lod, 6))
+    for z in ((4.0, 8.5, 13.0) if lod < 2 else (8.5,)):
+        cyl(f, (-2.8, ys, z), (2.8, ys, z), 0.05, 0.05, S(lod, 5))
+        if lod < 2:
+            plank_row(f, -2.6, 2.6, ys - 0.5, ys + 0.3, z - 0.06, z, 3 if lod == 0 else 1)
+    # Éboulis de planches calcinées au pied extérieur (+Y), symétrique de l'échafaudage.
+    c = m.p("Wood_Charred")
+    for k in range({0: 5, 1: 3, 2: 1}[lod]):
+        x = rng.uniform(-2.2, 2.2)
+        box(c, (-1.4, -0.1, 0), (1.4, 0.1, 0.12), 1.0,
+            Matrix.Translation((x, half + 0.4 + rng.uniform(0, 0.4), 0.06 * k)) @ Matrix.Rotation(rng.uniform(-0.6, 0.6), 4, "Z"))
+    return m.out()
+
+
+def p_gate_rampart_wood(spec, lod):
+    """Porte du rempart de bois (n° 234), entre deux tours : passage de 8 m (sous linteau à
+    6,6 m, praticable par un nain comme par un démon ailé), mur de planches et chemin de
+    ronde au-dessus, vantaux ouverts vers l'intérieur (-Y), seuil de planches à l'extérieur
+    (+Y). Posée sans collision : le passage reste libre."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    hw = 4.2
+    w = m.p("Wood_Weathered")
+    d = m.p("Wood_Dark")
+    # Linteau (poutre double) et mur de fûts au-dessus.
+    box(d, (-hw, -0.35, 6.6), (hw, 0.35, 7.2))
+    n = {0: 14, 1: 8, 2: 4}[lod]
+    r = 2 * hw / n / 2 * 0.97
+    for k in range(n):
+        x = -hw + 2 * hw * (k + 0.5) / n
+        h = _RAMPART_H + rng.uniform(-0.2, 0.25)
+        cyl(w, (x, 0, 7.2), (x, 0, h), r, r * 0.93, S(lod, 8), False)
+        cyl(w, (x, 0, h), (x, 0, h + 0.8), r * 0.93, 0.02, S(lod, 8), False)
+    plank_row(m.p("Wood_Plank"), -hw, hw, -1.6, -r - 0.02, _WALK_Z - 0.1, _WALK_Z, {0: 8, 1: 4, 2: 1}[lod])
+    # Bretèche (avancée) au-dessus du passage, côté extérieur.
+    box(w, (-1.6, r, 9.0), (1.6, 1.5, 9.2))
+    box(w, (-1.6, 1.4, 9.2), (1.6, 1.5, 11.2))
+    for x in (-1.6, 1.6):
+        box(w, (x - 0.06, r, 9.2), (x + 0.06, 1.5, 11.2))
+    # Vantaux ouverts à 78° vers l'intérieur, pivots en x = ±(hw - 0,2).
+    a = math.radians(78)
+    for s in (-1, 1):
+        hinge = Vector((s * (hw - 0.2), -0.4, 0.0))
+        xf = Matrix.Translation(hinge) @ Matrix.Rotation(s * a, 4, "Z")
+        nl = {0: 6, 1: 3, 2: 1}[lod]
+        for k in range(nl):
+            x0 = -s * 4.0 * k / nl
+            x1 = -s * 4.0 * (k + 1) / nl
+            box(w, (min(x0, x1) + 0.01, -0.1, 0.0), (max(x0, x1) - 0.01, 0.0, 6.3), 1.0, xf)
+        for z in (0.6, 3.1, 5.6):
+            box(d, (min(0, -s * 4.0), -0.16, z), (max(0, -s * 4.0), -0.1, z + 0.22), 1.0, xf)
+    # Seuil de planches à l'extérieur (symétrie de l'emprise ; non bloquant).
+    plank_row(m.p("Wood_Plank"), -2.6, 2.6, 0.4, 4.1, 0.0, 0.06, {0: 6, 1: 3, 2: 1}[lod])
+    return m.out()
+
+
+def p_rampart_buttress_wood(spec, lod):
+    """Contrefort oblique massif (n° 235) : caisson de rondins incliné contre la face
+    extérieure du rempart (BD T1 p.37). Emprise 3,6 x 6 m, appui au mur en y = -3 (13 m de
+    haut), pied en y = +3 ; le générateur le pose devant chaque pan sain."""
+    m = M()
+    w = m.p("Wood_Weathered")
+    d = m.p("Wood_Dark")
+    hx, y0, y1, z0, z1 = 1.8, -3.0, 3.0, 13.0, 0.8
+    # Rondins posés dans la pente (dessus), de bas en haut.
+    n = {0: 9, 1: 5, 2: 3}[lod]
+    rr = 2 * hx / n / 2 * 0.95
+    for k in range(n):
+        x = -hx + 2 * hx * (k + 0.5) / n
+        cyl(w, (x, y1, z1), (x, y0, z0), rr, rr * 0.92, S(lod, 7), False)
+    # Flancs de planches et face avant.
+    for x in (-hx, hx):
+        _quad(w, (x, y0, 0.0), (x, y1, 0.0), (x, y1, z1), (x, y0, z0), ((0, 0), (6, 0), (6, 0.8), (0, 13)))
+    _quad(w, (-hx, y1, 0.0), (hx, y1, 0.0), (hx, y1, z1), (-hx, y1, z1), ((0, 0), (3.6, 0), (3.6, 0.8), (0, 0.8)))
+    # Moises horizontales et tirants.
+    if lod < 2:
+        for t in (0.25, 0.55, 0.85):
+            y = y1 + (y0 - y1) * t
+            z = z1 + (z0 - z1) * t
+            box(d, (-hx - 0.1, y - 0.15, z + rr - 0.05), (hx + 0.1, y + 0.15, z + rr + 0.25))
+    return m.out()
+
+
+def _keep(spec, lod, site):
+    """Donjon à flèche (n° 236), réinterprétation générique du point haut de la ville :
+    socle de moellons 14 x 14 m (9 m), deux niveaux de pans de bois, galerie en
+    encorbellement (15-19 m), toit pyramidal de bardeaux, flèche octogonale (38 m).
+    `site` : flèche en reconstruction (charpente nue, bas seulement couvert, échafaudage)."""
+    m = M()
+    s = m.p("Stone_Wall")
+    box(s, (-7.0, -7.0, 0.0), (7.0, 7.0, 9.0))
+    box(m.p("Stone_Carved"), (-7.25, -7.25, 0.0), (7.25, 7.25, 0.8))
+    box(m.p("Stone_Carved"), (-7.2, -7.2, 8.8), (7.2, 7.2, 9.1))
+    d = m.p("Wood_Dark")
+    p = m.p("Plaster")
+    # Étage de pans de bois (9-15 m) : enduit entre poteaux.
+    box(p, (-6.8, -6.8, 9.1), (6.8, 6.8, 15.0))
+    if lod < 2:
+        for side in range(4):
+            xf = Matrix.Rotation(side * math.pi / 2, 4, "Z")
+            for x in (-6.8, -4.0, -1.4, 1.4, 4.0, 6.8):
+                box(d, (x - 0.15, -6.95, 9.1), (x + 0.15, -6.8, 15.0), 1.0, xf)
+            box(d, (-6.8, -6.95, 11.9), (6.8, -6.8, 12.15), 1.0, xf)
+            if lod == 0:   # fenêtres à petits carreaux (sans motif)
+                for x in (-2.7, 2.7):
+                    box(m.p("Glass_Clear"), (x - 0.6, -6.97, 12.6), (x + 0.6, -6.95, 14.2), 1.0, xf)
+    # Galerie en encorbellement (15-19 m) : plancher débordant sur corbeaux, planches.
+    g = 7.8
+    box(d, (-g, -g, 15.0), (g, g, 15.3))
+    w = m.p("Wood_Plank")
+    for side in range(4):
+        xf = Matrix.Rotation(side * math.pi / 2, 4, "Z")
+        box(w, (-g, -g - 0.08, 15.3), (g, -g + 0.02, 19.0), 1.0, xf)
+        if lod < 2:
+            for x in (-5.5, -2.0, 2.0, 5.5):
+                box(d, (x - 0.15, -g, 14.2), (x + 0.15, -6.8, 15.0), 1.0, xf)
+        if lod == 0:
+            for x in (-4.5, 0.0, 4.5):
+                box(m.p("Glass_Clear"), (x - 0.7, -g - 0.1, 16.6), (x + 0.7, -g - 0.09, 18.2), 1.0, xf)
+    # Toit pyramidal de bardeaux.
+    _pyramid(m.p("Shingle"), g + 0.5, 19.0, 27.0, 4.0)
+    # Flèche octogonale.
+    n = S(lod, 8)
+    if not site:
+        cyl(m.p("Shingle_Slate"), (0, 0, 24.5), (0, 0, 37.6), 2.2, 0.05, n, False)
+        cyl(m.p("Iron"), (0, 0, 37.4), (0, 0, 38.4), 0.05, 0.02, 5)
+    else:
+        # Bas de la flèche recouvert (bardeaux neufs), haut en charpente nue + échafaudage.
+        cyl(m.p("Shingle_Slate"), (0, 0, 24.5), (0, 0, 29.0), 2.2, 1.45, n, False)
+        f = m.p("Wood_Fresh")
+        for k in range(n):
+            a = 2 * math.pi * k / n
+            cyl(f, (1.45 * math.cos(a), 1.45 * math.sin(a), 29.0), (0.05 * math.cos(a), 0.05 * math.sin(a), 37.6), 0.07, 0.05, 4, False)
+        if lod < 2:
+            for z, rad in ((31.5, 1.05), (34.0, 0.62)):
+                cyl(f, (0, 0, z), (0, 0, z + 0.12), rad, rad, n, False)
+        for k in range(4 if lod < 2 else 2):
+            a = math.pi / 4 + k * math.pi / 2 * (1 if lod < 2 else 2)
+            x, y = 3.0 * math.cos(a), 3.0 * math.sin(a)
+            cyl(f, (x, y, 22.0), (x, y, 36.0), 0.08, 0.07, 5, False)
+        if lod < 2:
+            for z in (26.0, 30.0, 34.0):
+                for k in range(4):
+                    a0, a1 = math.pi / 4 + k * math.pi / 2, math.pi / 4 + (k + 1) * math.pi / 2
+                    cyl(f, (3.0 * math.cos(a0), 3.0 * math.sin(a0), z), (3.0 * math.cos(a1), 3.0 * math.sin(a1), z), 0.05, 0.05, 4, False)
+    # Porte (décor) sur la face +Y.
+    box(d, (-1.3, 7.0, 0.8), (1.3, 7.12, 4.2))
+    return m.out()
+
+
+def p_keep_timber_spire(spec, lod):
+    return _keep(spec, lod, False)
+
+
+def p_keep_timber_spire_site(spec, lod):
+    return _keep(spec, lod, True)
+
+
+def _recolor(src_parts, m, xf, mapping):
+    """Fusionne des parties dans m en remplaçant leurs matériaux (mapping tex -> tex)."""
+    for p in src_parts:
+        tex = p.mat.name.replace("MI_Decor_", "")
+        pm = m.p(mapping.get(tex, tex))
+        off = len(pm.v)
+        pm.v += [xf @ Vector(v) for v in p.v]
+        pm.f += [tuple(i + off for i in f) for f in p.f]
+        pm.uv += p.uv
+        pm.cn += p.cn
+
+
+def p_siege_tower_wreck(spec, lod):
+    """Tour de siège effondrée et calcinée (n° 237), couchée au sol (~16 x 5,5 m)."""
+    m = M()
+    burnt = {"Wood_Plank": "Wood_Charred", "Wood_Dark": "Wood_Charred", "Iron": "Iron"}
+    tower = p_siege_tower(spec, lod)
+    xf = Matrix.Translation((0, -8.0, 2.55)) @ Matrix.Rotation(math.radians(-88), 4, "X")
+    _recolor(tower, m, xf, burnt)
+    if lod < 2:
+        rng = random.Random(spec["seed"])
+        c = m.p("Wood_Charred")
+        for k in range({0: 6, 1: 3}[lod]):
+            box(c, (-1.5, -0.12, 0), (1.5, 0.12, 0.1), 1.0,
+                Matrix.Translation((rng.uniform(-3.5, 3.5), rng.uniform(-6.0, 6.0), 0.0)) @ Matrix.Rotation(rng.uniform(0, 3), 4, "Z"))
+    return m.out()
+
+
+def p_catapult_burnt(spec, lod):
+    """Mangonneau brûlé et affaissé sur un flanc (n° 237)."""
+    m = M()
+    burnt = {"Wood_Dark": "Wood_Charred", "Wood_Plank": "Wood_Charred", "Wood_Weathered": "Wood_Charred"}
+    cat = p_catapult(spec, lod)
+    xf = Matrix.Translation((0, 0, -0.12)) @ Matrix.Rotation(math.radians(9), 4, "X")
+    _recolor(cat, m, xf, burnt)
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

@@ -240,6 +240,22 @@ namespace tools::world_gen
 			// Mise en page dédiée (v1.0.136) : vide (générique) ou « oracle ».
 			d.layout = GetStr(c, "layout");
 			if (!d.layout.empty() && d.layout != "oracle") { err = "master: layout inconnu pour '" + d.id + "' : " + d.layout; return false; }
+			// Apparence propre (v1.0.142) : objet optionnel, valeurs fermées (une faute de
+			// frappe dans le lore doit casser la génération, pas passer inaperçue).
+			if (const JsonValue* ap = FindObjectMember(c, "apparence"))
+			{
+				if (ap->type != JsonType::Object) { err = "master: apparence de '" + d.id + "' n'est pas un objet"; return false; }
+				d.apparence.enceinte = GetStr(*ap, "enceinte");
+				d.apparence.donjon = GetStr(*ap, "donjon");
+				d.apparence.bati = GetStr(*ap, "bati");
+				d.apparence.vestigesSiege = GetBool(*ap, "vestiges_siege", false);
+				if (!d.apparence.enceinte.empty() && d.apparence.enceinte != "rempart_bois")
+				{ err = "master: apparence.enceinte inconnue pour '" + d.id + "' : " + d.apparence.enceinte; return false; }
+				if (!d.apparence.donjon.empty() && d.apparence.donjon != "tour_fleche")
+				{ err = "master: apparence.donjon inconnu pour '" + d.id + "' : " + d.apparence.donjon; return false; }
+				if (!d.apparence.bati.empty() && d.apparence.bati != "planches")
+				{ err = "master: apparence.bati inconnu pour '" + d.id + "' : " + d.apparence.bati; return false; }
+			}
 			out.cities.push_back(std::move(d));
 		}
 		// Une seule ville de départ par faction (v1.0.61 : start_for porte des

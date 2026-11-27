@@ -135,6 +135,27 @@ namespace tools::world_gen
 		/// a pas. Le plateau de la ville (plateauY) reste celui de la ville basse ; le sol
 		/// d'un point de la ville vaut plateauY + AcropoleOffset(acropole, point).
 		AcropoleShape acropole;
+		/// Apparence propre à la ville (v1.0.142, clé `apparence` du master, objet recopié
+		/// du lore par tools/lore/sync_apparence.py ; absente = règles génériques par
+		/// type, race et état). Ex. Kendrhir (BD T1) :
+		/// `{ "enceinte": "rempart_bois", "donjon": "tour_fleche", "bati": "planches",
+		///    "vestiges_siege": true }`.
+		struct Appearance
+		{
+			/// Enceinte : vide = règle générique (rempart / palissade selon le type) ;
+			/// « rempart_bois » = rempart de rondins de 20 m, tours, contreforts et portes
+			/// de bois ; en état « reconstruction », pans neufs, calcinés et brèches.
+			std::string enceinte;
+			/// Édifice du point haut : vide = aucun ; « tour_fleche » = donjon à flèche
+			/// (flèche en chantier si la ville est en reconstruction).
+			std::string donjon;
+			/// Bâti : vide = palette générique ; « planches » = maisons de planches
+			/// majoritaires (≈ 70 %), ruines de planches en reconstruction.
+			std::string bati;
+			/// Restes d'un siège passé hors les murs (tour de siège effondrée, mangonneaux
+			/// brûlés, mantelets, pieux, échelles), rares et loin des routes.
+			bool vestigesSiege = false;
+		} apparence;
 	};
 
 	/// Point d'intérêt (section `pois`).

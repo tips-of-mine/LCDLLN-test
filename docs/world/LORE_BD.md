@@ -51,6 +51,7 @@ Tout ce qui fait foi est inscrit dans le JSON (`regles_transverses`, catégorie 
 | 1.0.48 | Marches étendues au nord de la Faille ; itinéraire complet de la horde (carte p.25) : Tbarak → Klindor → Hazol → **Mhorgad** → **Dhunfal** → Faille → Kendrhir. |
 | 1.0.49 | Lieux mineurs : Forêt de la Rencontre (N012_E008), **Hayvekh** (N018_E013, ruine), Camp de l'Étang (N018_E012), Champ de la Première Bataille (N018_E011), **Askhrof** (N017_E012, ruine). |
 | 1.0.50 | Restes du T1 : 10 butins orphelins des créatures du T1 créés ; extrémités des routes 000003, 000020, 000058 resynchronisées sur la nouvelle cellule de Kendrhir ; `companion_pilou_ou_face` → `companion_pilou`. |
+| 1.0.142 | Kendrhir d'après les p.23 à 42 du PDF : enceinte, donjon, bâti et restes du siège (§16.68) ; références [T1-Pxxx] des décors réalignées sur le PDF. |
 
 ## 3. Tome 2 — « Le Vent des Dragons » (v1.0.50)
 
@@ -1076,6 +1077,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.64](#1664-atelier-décors--tomes-6-à-14-v10138) | v1.0.138 | Atelier décors : tomes 6 à 14 | 19 objets génériques (n° 195 à 213) modélisés et placés ; tomes 11 à 14 sans objet générique nouveau ; signatures retirées, Empire du Jade réservé à l'extension. |
 | [16.65](#1665-rendu-lointain-et-océan-de-tentes-de-loracle-v10139) | v1.0.139 | Rendu lointain et océan de tentes de l'Oracle | Réserve matériaux 64 → 2048, LOD et billboards des arbres sombres, couvert des cultures, teinte aérienne au soleil réel ; quinze rangs de tentes de pèlerins (decor_214). |
 | [16.67](#1667-camp-de-loracle--salles-intérieures-portes-de-cristal-et-camp-extérieur-v10141) | v1.0.141 | Camp de l'Oracle : salles intérieures, portes de cristal et camp extérieur | Rocher de cristal bleu, 8 grandes portes peintes sur socle de brique, escaliers de 6 m ; salle de l'Oracle (porte SO, quête) et salle des Échos (porte E, raid de 3+) ; passages conditionnels du shard ; tentes agrandies et de couleur, fanions, feux, bassins, menhirs de 3-5 m. |
+| [16.68](#1668-kendrhir-daprès-le-tome-1-v10142) | v1.0.142 | Kendrhir d'après le tome 1 | Rempart de rondins de 20 m en reconstruction (pans d'origine, neufs, calcinés, brèches), tours, portes, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège (decor_231 à decor_237) ; clé `apparence` ; références du tome 1 réalignées sur le PDF. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5589,6 +5591,60 @@ ramenées à la BD.
 colonne de brume, dalles et couche de cristal, tentes de couleur et fanions, bassins et abreuvoirs, 4 passages et leurs
 conditions, 2 PNJ, raid, zones d'ambiance) ; `door_passages_tests` (shard) ; `validate_decor.py`.
 
+### 16.68 Kendrhir d'après le tome 1 (v1.0.142)
+
+**Demande du propriétaire** (25/11/2026) : améliorer les éléments de décor de Kendrhir d'après les pages 23, 26, 32,
+35, 37, 39 et 42 du tome 1 (pages du **PDF** : la p.39 du PDF porte le numéro imprimé 37). Critère : test visuel en jeu.
+
+**Lecture** (pages du PDF) : p.23 c.1, « Kendrhir, cité des grands mages » sur un éperon rocheux, hautes maisons de bois
+serrées à toits très pentus, édifice à flèche au sommet ; p.23 c.2 et p.26 c.1, hautes baies grillagées ; p.26 c.2,
+portes de bois enfoncées ; p.26 c.5 à c.7, rue de maisons de planches à étages et galeries, toits de bardeaux en feu ;
+p.32, cachot et paysage enneigé (sans élément de la ville identifiable) ; p.35 c.1, la ville sur sa colline et le camp
+assiégeant ; p.37 c.1-2, enceinte très haute à contreforts obliques massifs, tours de siège adossées, enceinte en feu ;
+p.39 c.2 et p.42 c.2, la ville sur sa falaise, tours carrées, édifice à flèche, l'armée dans la plaine.
+
+**Décisions** :
+
+| Sujet | Décision |
+|---|---|
+| Pages | Celles du PDF. Les références [T1-Pxxx] de l'atelier décors, prises sur un autre scan, sont réalignées : ancienne numérotation moins 6 (vérifié sur p.20, 31, 33, 36 et sur la dernière page, 52 → 46). Les « pp. » des notes du lore sur Kendrhir (citadelle pp.29-39, muraille pp.43-45) suivent encore l'ancienne numérotation. |
+| Enceinte | Rempart de rondins de 20 m (la fiche le disait, le jeu posait une clôture basse) ; ville détruite puis en reconstruction : pans d'origine, pans reconstruits en bois neuf (échafaudages, grues), pans calcinés aux têtes rompues, trois brèches franchissables ; portes remises en état. |
+| Tours | En bois (p.23) ; tours étêtées sur les pans calcinés. |
+| Contreforts | Contreforts obliques (p.37) devant un pan sain sur cinq. |
+| Point haut | Donjon à flèche, réinterprétation générique validée (aucune reproduction de la silhouette ni des baies de la citadelle) ; flèche en chantier. |
+| Siège | Restes du siège hors les murs. |
+| Neige | Ignorée (une seule saison, v1.0.137) ; à prévoir avec le cycle des saisons. |
+| Grande baie grillagée | Déjà au catalogue (`Window_Great_1`, decor_069) : références p.23 c.2 et p.26 c.1 ajoutées. |
+| Déclaration | Clé `apparence` de la fiche (lore), recopiée au master par `tools/lore/sync_apparence.py` : `{"enceinte": "rempart_bois", "donjon": "tour_fleche", "bati": "planches", "vestiges_siege": true}`. Aucune autre ville ne change. |
+
+**Nouveaux objets** (collection `decors`) :
+
+| N° | Objet | Assets | Placement |
+|---|---|---|---|
+| 231 | Rempart de rondins de 20 m (module de 4 m) | `Rampart_Wood_1` (bois grisé), `Rampart_Wood_New_1` (bois neuf) | enceinte, cercle R + 3 m |
+| 232 | Pan incendié, brèche de souches calcinées | `Rampart_Wood_Burnt_1`, `Rampart_Wood_Breach_1` (sans collision) | pans calcinés, trois brèches |
+| 233 | Tour carrée de rempart en bois à hourd (28 m) | `Tower_Rampart_Wood_1`, `Tower_Rampart_Wood_Ruined_1` | tous les ~44 m, de part et d'autre des portes |
+| 234 | Porte de rempart (passage 8,4 × 6,6 m, vantaux ouverts, bretèche) | `Gate_Rampart_Wood_1` (sans collision) | une porte par route qui arrive |
+| 235 | Contrefort oblique en caisson de rondins (13 m) | `Rampart_Buttress_Wood_1` | côté extérieur |
+| 236 | Donjon à flèche (socle de moellons, pans de bois, galerie en encorbellement, 38 m) | `Keep_Timber_Spire_1`, `Keep_Timber_Spire_Site_1` | au nord, entre la rue circulaire et le rempart |
+| 237 | Restes de siège | `SiegeTower_Wreck_1`, `Catapult_Burnt_1` (avec mantelets, échelles, pieux et roues existants) | 30 à 110 m hors les murs, à plus de 12 m des routes |
+
+Textures générées ajoutées : `Wood_Charred` (brun-gris chaud, jamais noir), `Wood_Fresh`. Maisons ajoutées au catalogue
+paramétrique : `maison_haute_planches_6x8` (3 niveaux) et `ruine_planches_6x8`. Collisions : boîtes des pièces
+d'enceinte, des tours, des contreforts et du donjon dans `game/data/collision/building_pieces.json`.
+
+**Mesures** (cellule N015_E012, avant → après) : bâtiments de Kendrhir 109 → 113 ; maisons de planches 18 sur 54
+maisons habitées → 36 sur 59 ; enceinte : clôture basse → 130 modules de rempart (52 d'origine, 40 neufs, 38 calcinés),
+9 modules de brèche, 15 tours (2 étêtées), 2 portes, 16 contreforts ; échafaudages 12 → 26, grues 5 → 14 ; donjon 1 ;
+restes du siège 18 objets. Champs : 2 grandes parcelles (328 cultures) → 4 parcelles plus petites et plus variées
+(120 cultures, blé, orge, colza, maïs) : le tirage des champs dépend du relief de la colline et de la suite
+aléatoire de la ville, que changent les nouveaux bâtiments. Ville témoin (Tbarak, N018_E010) : sorties identiques
+octet pour octet. Toujours un seul cimetière à Kendrhir (total de 666 inchangé).
+
+**Contrôles** : `validate_decor.py` (432 assets), `world_gen_tests` (Kendrhir : enceinte, tours, portes, contreforts
+dehors, donjon en chantier au nord, maisons de planches, restes du siège ; clé `apparence` validée et refusée si
+inconnue), `sync_apparence.py --check`, `sync_decors.py --check`, contrôles habituels du lore.
+
 ## 17. Questions ouvertes
 
 - **Liste consolidée (v1.0.108)** de tous les points encore ouverts ou à valider, branche carte comprise : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) §4.
@@ -5642,3 +5698,5 @@ conditions, 2 PNJ, raid, zones d'ambiance) ; `door_passages_tests` (shard) ; `va
 - Routes manquantes (v1.0.106) : tracés [GD] des 11 routes créées, noms et niveaux des 64 lieux, baie de l'Île de la Trêve sans route, Piste des Morts en double de 000074 (16.35).
 - Gouffre de Deathtrap Canyon (v1.0.107) : noms [GD] (Gouffre des Revenus, Thurvhal, Ghaurdes, PNJ, quêtes), lumières des torches et fond sombre à rendre côté client, mécanisme de lieu découvert, part de S008_E011 renvoyée au gouffre (16.36).
 - Lieux secrets (v1.0.110) : mécanisme de « lieu découvert » (révéler au joueur un secret qu'il a trouvé) à concevoir côté client et serveur ; Entrée des Abysses (`entree_cachee`) laissée publique (16.37).
+- Kendrhir sous la neige (v1.0.142) : les p.35 à 42 du tome 1 montrent la ville en hiver ; à rendre avec le cycle des saisons (16.68).
+- Kendrhir (v1.0.142) : maisons à étages en encorbellement (p.26) non rendues, le kit modulaire des maisons ne sait pas faire déborder un étage ; « pp. » des notes du lore du tome 1 encore dans l'ancienne numérotation (16.68).

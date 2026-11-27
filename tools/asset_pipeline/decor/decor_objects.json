@@ -1308,6 +1308,48 @@
       "nom": "Mât à long fanion des pèlerins",
       "tome": 2,
       "placement_prevu": "Camp de l'Oracle : océan de tentes"
+    },
+    {
+      "num": 231,
+      "nom": "Rempart de rondins de 20 m (bois d'origine grisé, bois neuf des pans reconstruits)",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : enceinte de rondins (enceinte rempart_bois)"
+    },
+    {
+      "num": 232,
+      "nom": "Pan de rempart incendié aux têtes rompues, brèche de souches calcinées",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : pans calcinés et trois brèches franchissables (ville en reconstruction)"
+    },
+    {
+      "num": 233,
+      "nom": "Tour carrée de rempart en bois à hourd (intacte ou étêtée par l'incendie)",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : tours tous les ~44 m et de part et d'autre des portes"
+    },
+    {
+      "num": 234,
+      "nom": "Porte de rempart en bois, vantaux ouverts, bretèche",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : une porte par route qui arrive"
+    },
+    {
+      "num": 235,
+      "nom": "Contrefort oblique en caisson de rondins",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : devant un pan sain sur cinq, côté extérieur"
+    },
+    {
+      "num": 236,
+      "nom": "Donjon à flèche à pans de bois et galerie en encorbellement (réinterprétation générique ; flèche en chantier)",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : point haut de la ville, au nord (donjon tour_fleche)"
+    },
+    {
+      "num": 237,
+      "nom": "Restes de siège : tour de siège effondrée, mangonneau brûlé",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : abords hors les murs, loin des routes (vestiges_siege)"
     }
   ]
 }

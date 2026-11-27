@@ -165,6 +165,7 @@ namespace engine::server
 		// Seconde carte : un téléport (même sur une Porte des enfers, /tp Porte des enfers I)
 		// ne déclenche pas le portail au premier Input ; réarmement 5 s hors du rayon.
 		PortalNetwork::Disarm(client.portalTravel);
+		DoorPassages::Disarm(client.doorPassageTravel);
 		client.velocityMetersPerSecondX = 0.0f;
 		client.velocityMetersPerSecondY = 0.0f;
 		client.velocityMetersPerSecondZ = 0.0f;

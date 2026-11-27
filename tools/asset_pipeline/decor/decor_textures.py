@@ -1136,6 +1136,184 @@ TEXTURES.update({
     "Stone_Serpentine": stone_serpentine,
 })
 
+
+# ------------------------------------------------- Camp de l'Oracle (25/11/2026)
+# Lecture : T2-P044 (tumulus bleu), T2-P046 (grande porte), T1-P003..005 et
+# T3-P005..007 (salle de l'Oracle). Palettes bleu-gris, violet, ocre et blanc cassé :
+# pas de bleu saturé ni de monochrome (direction artistique du propriétaire).
+def _voronoi(h, w, seed, n):
+    """Cellules de Voronoï tuilables : (id de cellule, distance au bord normalisée)."""
+    rng = np.random.default_rng(seed)
+    pts = rng.random((n, 2)).astype(np.float32)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    yy /= h
+    xx /= w
+    d1 = np.full((h, w), 9.0, np.float32)
+    d2 = np.full((h, w), 9.0, np.float32)
+    ids = np.zeros((h, w), np.int32)
+    for k, (py, px) in enumerate(pts):
+        for oy in (-1, 0, 1):
+            for ox in (-1, 0, 1):
+                d = np.hypot(yy - (py + oy), xx - (px + ox))
+                closer = d < d1
+                d2 = np.where(closer, d1, np.minimum(d2, d))
+                ids = np.where(closer, k, ids)
+                d1 = np.where(closer, d, d1)
+    edge = np.clip((d2 - d1) * math.sqrt(n) * 1.6, 0, 1)
+    return ids, edge
+
+
+def crystal(name="Crystal_Blue", seed=120, size=1024):
+    """Cristal bleu-gris à facettes (rocher de l'Oracle, T2-P044, T3-P006) : grandes
+    facettes de tons voisins (bleu-gris, ardoise, pointes violettes et sarcelle),
+    arêtes claires, veines pâles ; rugosité basse."""
+    h = w = size
+    ids, edge = _voronoi(h, w, seed, 34)
+    rng = np.random.default_rng(seed + 1)
+    pal = np.array([[78, 96, 128], [92, 112, 146], [70, 86, 116], [104, 122, 152],
+                    [88, 92, 132], [76, 104, 122], [112, 132, 160]], np.float32)
+    col = pal[rng.integers(0, len(pal), 64)[ids % 64]]
+    shade = rng.uniform(0.82, 1.12, 64)[ids % 64]
+    grad = fbm(h, w, seed + 2, 4, 3)
+    col = col * (shade * (0.9 + 0.2 * grad))[..., None]
+    rim = (edge < 0.06).astype(np.float32)
+    col = col * (1 - rim[..., None] * 0.5) + np.array([176, 196, 214], np.float32) * rim[..., None] * 0.5
+    vein = fbm(h, w, seed + 3, 5, 8)
+    vm = np.clip(1 - np.abs(vein - 0.5) * 18, 0, 1)[..., None] * 0.35
+    col = col * (1 - vm) + np.array([196, 214, 226], np.float32) * vm
+    hgt = np.clip(edge, 0, 1) * 0.6 + 0.4 * grad
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt.astype(np.float32), 3.0))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt.astype(np.float32), 0.34, 0.0, 0.35))
+
+
+def carved_stone(name="Stone_Oracle", seed=121, size=1024):
+    """Pierre sculptée gris-violet de la salle (T1-P003, T3-P007) : assises larges,
+    frises gravées horizontales, cannelures verticales fines."""
+    h = w = size
+    n = fbm(h, w, seed, 5, 10)
+    yy = np.arange(h)[:, None] / h
+    xx = np.arange(w)[None, :] / w
+    course = (np.abs((yy * 4) % 1 - 0.5) > 0.47).astype(np.float32)
+    frieze = ((np.abs((yy * 4) % 1 - 0.18) < 0.05) & (np.abs(np.sin(xx * 2 * np.pi * 12 + np.sin(yy * 2 * np.pi * 4) * 2)) > 0.6)).astype(np.float32)
+    flute = (np.abs((xx * 16) % 1 - 0.5) < 0.08).astype(np.float32) * ((yy * 4) % 1 > 0.3)
+    groove = np.clip(course + frieze * 0.8 + flute * 0.5, 0, 1)
+    col = colorize(n, [(0, (66, 62, 78)), (0.5, (98, 92, 112)), (1, (132, 124, 142))])
+    col = col * (1 - 0.45 * groove[..., None])
+    hgt = (1 - groove) * (0.8 + 0.2 * n)
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt.astype(np.float32), 5.0))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt.astype(np.float32), 0.82, 0.0, 0.55))
+
+
+def floor_rings(name="Floor_Oracle", seed=122, size=1024):
+    """Dessus du dais (T1-P003, T3-P007) : anneaux concentriques gravés et rayons,
+    pierre blanc cassé ; motif géométrique, sans figure ni symbole. UV = disque entier."""
+    h = w = size
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32) / size - 0.5
+    r = np.hypot(xx, yy) * 2
+    a = (np.arctan2(yy, xx) + np.pi) / (2 * np.pi)
+    n = fbm(h, w, seed, 5, 12)
+    ring = np.zeros_like(r)
+    for rr in (0.12, 0.2, 0.34, 0.5, 0.64, 0.8, 0.93):
+        ring = np.maximum(ring, (np.abs(r - rr) < 0.008).astype(np.float32))
+    spokes = ((np.abs((a * 24) % 1 - 0.5) > 0.485) & (r > 0.2) & (r < 0.8)).astype(np.float32)
+    ticks = ((np.abs((a * 96) % 1 - 0.5) > 0.46) & (r > 0.8) & (r < 0.93)).astype(np.float32)
+    groove = np.clip(ring + spokes + ticks, 0, 1)
+    col = colorize(n, [(0, (176, 170, 158)), (0.5, (198, 192, 180)), (1, (218, 212, 200))])
+    col = col * (1 - 0.4 * groove[..., None])
+    col[r > 1.0] = [150, 144, 136]
+    hgt = (1 - groove) * (0.85 + 0.15 * n)
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt.astype(np.float32), 4.0))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt.astype(np.float32), 0.6, 0.0, 0.5))
+
+
+def mist(name="Mist_Frozen", seed=123, size=512):
+    """Brume figée de l'Oracle (T1-P003, T3-P007) : volutes blanc bleuté (émissif)."""
+    h = w = size
+    n = fbm(h, w, seed, 5, 4, aspect=(3.0, 1.0))
+    sw = fbm(h, w, seed + 1, 4, 8)
+    col = colorize(0.6 * n + 0.4 * sw, [(0, (176, 196, 214)), (0.5, (212, 224, 234)), (1, (238, 242, 246))])
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(n, 1.5))
+    save(f"T_Decor_{name}_ORM.png", orm(n, 0.5, 0.0, 0.1))
+
+
+def door_oracle(name="Door_Oracle", seed=124, size=1024):
+    """Vantaux de la grande porte (réinterprétation de T2-P046, validée : emblème
+    abstrait, pas de visage) : champ bleu-gris peint, rangée de phases de lune et
+    disque solaire en haut, rosace d'anneaux rouge sombre et ivoire à graduations,
+    croissant ivoire au centre, colonnes de glyphes inventés sur les bords. La
+    texture couvre les deux vantaux (u 0..1 = largeur totale)."""
+    h = w = size
+    rng = np.random.default_rng(seed)
+    n = fbm(h, w, seed, 5, 6)
+    col = colorize(n, [(0, (52, 70, 112)), (0.5, (64, 84, 128)), (1, (80, 100, 142))])
+    img = Image.fromarray(col.clip(0, 255).astype(np.uint8))
+    d = ImageDraw.Draw(img)
+    ivory, red, dark, gold = (222, 212, 186), (132, 44, 38), (34, 40, 58), (206, 168, 84)
+    # bordure
+    d.rectangle([8, 8, w - 9, h - 9], outline=dark, width=10)
+    # phases de lune (haut) + soleil
+    for k in range(6):
+        cx, cy, r = int(w * (0.2 + 0.11 * k)), int(h * 0.11), int(w * 0.035)
+        if k == 5:
+            d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=gold, outline=dark, width=3)
+            continue
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=ivory, outline=dark, width=3)
+        off = int(r * 2 * (1 - k / 4.0)) if k < 4 else 0
+        if k < 4:
+            d.ellipse([cx - r + off, cy - r, cx + r + off, cy + r], fill=tuple(int(c) for c in col[cy, min(w - 1, cx + r + off)]))
+    # rosace : anneaux à graduations
+    cx, cy = w // 2, int(h * 0.55)
+    for rr, fillc in ((0.36, red), (0.32, ivory), (0.28, red), (0.235, (64, 84, 128))):
+        R = int(w * rr)
+        d.ellipse([cx - R, cy - R, cx + R, cy + R], fill=fillc, outline=dark, width=4)
+    for k in range(72):
+        a = 2 * math.pi * k / 72
+        r0, r1 = w * (0.285 if k % 2 else 0.295), w * 0.355
+        d.line([(cx + r0 * math.cos(a), cy + r0 * math.sin(a)), (cx + r1 * math.cos(a), cy + r1 * math.sin(a))],
+               fill=dark if k % 3 else ivory, width=3)
+    # croissant central (emblème abstrait)
+    R = int(w * 0.17)
+    mask = Image.new("L", (w, h), 0)
+    md = ImageDraw.Draw(mask)
+    md.ellipse([cx - R, cy - R, cx + R, cy + R], fill=255)
+    md.ellipse([cx - R + int(R * 0.55), cy - R - int(R * 0.1), cx + R + int(R * 0.55), cy + R - int(R * 0.1)], fill=0)
+    img.paste(Image.new("RGB", (w, h), ivory), (0, 0), mask)
+    d.arc([cx - R, cy - R, cx + R, cy + R], 60, 300, fill=dark, width=4)
+    # glyphes inventés sur les bords
+    for side in (0.07, 0.93):
+        for k in range(14):
+            gx, gy = int(w * side), int(h * (0.24 + 0.052 * k))
+            for s in range(3):
+                a = rng.uniform(0, math.pi)
+                L = rng.uniform(8, 18)
+                d.line([(gx - L * math.cos(a), gy - L * math.sin(a)), (gx + L * math.cos(a), gy + L * math.sin(a))],
+                       fill=ivory, width=3)
+    # joint central des vantaux
+    d.line([(w // 2, 0), (w // 2, h)], fill=dark, width=6)
+    arr = np.asarray(img, np.float32) * (0.92 + 0.12 * n)[..., None]
+    lum = arr.mean(-1) / 255.0
+    save(f"T_Decor_{name}_BaseColor.png", arr.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height((0.5 + 0.5 * lum).astype(np.float32), 2.5))
+    save(f"T_Decor_{name}_ORM.png", orm(n, 0.7, 0.0, 0.3))
+
+
+TEXTURES.update({
+    "Crystal_Blue": crystal,
+    "Crystal_Glow": lambda: flat("Crystal_Glow", 125, (196, 222, 236), 0.3, 0.12),
+    "Stone_Oracle": carved_stone,
+    "Floor_Oracle": floor_rings,
+    "Mist_Frozen": mist,
+    "Door_Oracle": door_oracle,
+    "Brick_Oracle": lambda: bricks("Brick_Oracle", 126, (110, 48, 40), (70, 58, 52), 14, 5),
+    "Cloth_Yellow": lambda: flat("Cloth_Yellow", 129, (204, 168, 64), 0.9, 0.16, (1.0, 8.0)),
+    "Stone_Menhir": lambda: rock("Stone_Menhir", 127, [(0, (64, 76, 104)), (0.5, (86, 100, 128)), (1, (118, 130, 150))]),
+})
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

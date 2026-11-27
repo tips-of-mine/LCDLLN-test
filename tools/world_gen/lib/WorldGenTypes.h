@@ -174,15 +174,15 @@ namespace tools::world_gen
 		/// Mise en page dédiée (v1.0.136, clé `layout` du master, défaut vide = agglomération
 		/// générique de BuildSettlements) : « oracle » = Camp de l'Oracle bâti selon le plan
 		/// (rocher, escaliers, océan de tentes, menhirs ; Oracle.cpp, LORE_BD §16.62) ;
-		/// v1.0.141 : « ville_tour » = ville-tour sur une aiguille rocheuse au milieu d'un lac
-		/// (Magistrya ; exige un relief `pic` ancré sur la ville, Settlements.cpp, LORE_BD §16.67 ;
+		/// v1.0.142 : « ville_tour » = ville-tour sur une aiguille rocheuse au milieu d'un lac
+		/// (Magistrya ; exige un relief `pic` ancré sur la ville, Settlements.cpp, LORE_BD §16.68 ;
 		/// v1.0.142 : bâtiments empilés et cages d'escalier, TowerShape).
 		std::string layout;
 		/// v1.0.140 — ville en gradins (relief `acropole` du master) : vide si la ville n'en
 		/// a pas. Le plateau de la ville (plateauY) reste celui de la ville basse ; le sol
 		/// d'un point de la ville vaut plateauY + AcropoleOffset(acropole, point).
 		AcropoleShape acropole;
-		/// v1.0.141 — ville-tour (relief `pic` du master) : vide si la ville n'en a pas. Le
+		/// v1.0.142 — ville-tour (relief `pic` du master) : vide si la ville n'en a pas. Le
 		/// plateau (plateauY) est le SOCLE (quai au ras du lac) ; le sol (rocher) d'un point de
 		/// l'aiguille vaut plateauY + TowerOffset(tower, point).
 		TowerShape tower;
@@ -287,7 +287,7 @@ namespace tools::world_gen
 	struct ReliefDef
 	{
 		std::string id;
-		std::string type;          ///< colline|crevasse|massif|gouffre|falaise|acropole (v1.0.140)|pic (v1.0.141)
+		std::string type;          ///< colline|crevasse|massif|gouffre|falaise|acropole (v1.0.140)|pic (v1.0.142)
 		std::string cityId;        ///< ville ancrée (posée au centre de sa case) ; vide pour un massif
 		std::string cell;          ///< massif : case d'ancrage (identifiant N019_W013)
 		double offsetXM = 0.0;     ///< massif : décalage du centre vers l'est (m)
@@ -323,7 +323,7 @@ namespace tools::world_gen
 		std::vector<double> galleryAlong; ///< gouffre : abscisse curviligne (m) de chaque point de la galerie
 		double galleryExitM = 0.0; ///< gouffre : abscisse (m) où la galerie sort du fond et de ses parois (le sol y quitte floorY)
 		AcropoleShape acropole;    ///< acropole (v1.0.140) : forme résolue (sommet, gradins, escalier)
-		TowerShape tower;          ///< pic (v1.0.141, v1.0.142) : forme résolue (aiguille, cages, socle, lac)
+		TowerShape tower;          ///< pic (v1.0.142) : forme résolue (aiguille, cages, socle, lac)
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).

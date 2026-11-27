@@ -431,7 +431,7 @@ namespace tools::world_gen
 			w.Occupy(c, topR);
 		}
 
-		/// v1.0.141 — PALAIS DU MAGISTER (Magistrya, BD-T2 p.20, 23, 25 ; LORE_BD §16.67), au
+		/// v1.0.142 — PALAIS DU MAGISTER (Magistrya, BD-T2 p.20, 23, 25 ; LORE_BD §16.68), au
 		/// sommet de la ville-tour (POI de genre « palais » sur la plateforme d'un pic). Repère :
 		/// \p u vers l'arrivée de la rampe (portail), \p v à gauche. Construit : parapet de la
 		/// plateforme (ouvert sur la rampe), quatre tours rondes aux angles ; SALLE DU TRÔNE en
@@ -617,7 +617,7 @@ namespace tools::world_gen
 					if (c.tower.enabled && std::hypot(c.tower.center.x - p.center.x, c.tower.center.z - p.center.z) < c.tower.topRadiusM)
 						tw = &c.tower;
 				}
-				// v1.0.141 : sommet d'une ville-tour (Magistrya) : palais du Magister, portail vers
+				// v1.0.142 : sommet d'une ville-tour (Magistrya) : palais du Magister, portail vers
 				// l'arrivée de la cage d'escalier 0 (direction du ponton). v1.0.142 : le sommet de
 				// l'aiguille n'est pas un plateau de heightmap (rocher en retrait, dallage posé par
 				// BuildTowerCity à l'altitude du sommet) : les pièces du palais, posées par rapport

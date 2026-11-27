@@ -868,7 +868,7 @@ namespace tools::world_gen
 			// Position d'une extrémité nommée (ville, sinon POI) ; faux si inconnue.
 			auto entityAnchor = [&](const std::string& id, Anchor& a) {
 				if (id.empty()) return false;
-				// v1.0.141 : une ville-tour (au milieu d'un lac) est reliée à la rive (CityRoadAnchor).
+				// v1.0.142 : une ville-tour (au milieu d'un lac) est reliée à la rive (CityRoadAnchor).
 				if (const CityDef* c = g.FindCity(id)) { a.p = CityRoadAnchor(*c); a.id = id; a.city = true; a.ok = true; return true; }
 				for (const PoiDef& poi : g.pois)
 					if (poi.id == id) { a.p = poi.center; a.id = id; a.ok = true; return true; }
@@ -886,7 +886,7 @@ namespace tools::world_gen
 						const double d = std::hypot(c.center.x - ctr.x, c.center.z - ctr.z);
 						if (d < bd) { bd = d; best = &c; }
 					}
-				if (best) { a.p = CityRoadAnchor(*best); a.id = best->id; a.city = true; a.ok = true; return true; } // v1.0.141 : rive d'une ville-tour
+				if (best) { a.p = CityRoadAnchor(*best); a.id = best->id; a.city = true; a.ok = true; return true; } // v1.0.142 : rive d'une ville-tour
 				a.ok = PracticablePointInCell(cg, n, e, JitteredCellPoint(m, n, e), a.p); // v1.0.131 : pas le centre
 				return a.ok;
 			};
@@ -1673,7 +1673,7 @@ namespace tools::world_gen
 			for (size_t k = 0; k < r.points.size(); k += 25)
 				if (w.InPlayableBounds(r.points[k], 30.0)) targets.push_back({ r.points[k], std::string(), r.profileY[k] });
 		for (const CityDef& c : w.cities)
-			if (c.procedural.empty()) targets.push_back({ CityRoadAnchor(c), c.id, c.tower.enabled ? w.HeightAt(CityRoadAnchor(c)) : c.plateauY }); // v1.0.141 : rive d'une ville-tour
+			if (c.procedural.empty()) targets.push_back({ CityRoadAnchor(c), c.id, c.tower.enabled ? w.HeightAt(CityRoadAnchor(c)) : c.plateauY }); // v1.0.142 : rive d'une ville-tour
 
 		std::vector<Road> paths;
 		for (const CityDef* pl : places)

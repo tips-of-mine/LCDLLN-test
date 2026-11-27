@@ -868,8 +868,8 @@ namespace tools::world_gen
 	}
 
 	// ---------------------------------------------------------------------------------
-	// v1.0.141, v1.0.142 — MAGISTRYA, VILLE-TOUR (mise en page « ville_tour », relief
-	// `pic` ; BD-T2 p.19-27, LORE_BD §16.67). Aiguille rocheuse au milieu d'un lac, couverte
+	// v1.0.142 — MAGISTRYA, VILLE-TOUR (mise en page « ville_tour », relief
+	// `pic` ; BD-T2 p.19-27, LORE_BD §16.68). Aiguille rocheuse au milieu d'un lac, couverte
 	// de BÂTIMENTS DISTINCTS empilés (un à trois niveaux chacun, matériaux variés, toits
 	// d'ardoise à chaque retrait, tourelles d'angle) jusqu'au palais du sommet ; entre deux
 	// colonnes de bâtiments, une CAGE D'ESCALIER praticable (volées en zigzag, paliers,
@@ -1634,7 +1634,7 @@ namespace tools::world_gen
 				w.layouts.push_back(std::move(L));
 				continue;
 			}
-			// v1.0.141, v1.0.142 : Magistrya, ville-tour sur son aiguille au milieu du lac.
+			// v1.0.142 : Magistrya, ville-tour sur son aiguille au milieu du lac.
 			if (c.layout == "ville_tour" && c.tower.enabled)
 			{
 				BuildTowerCity(w, c, L, firstBuilding);

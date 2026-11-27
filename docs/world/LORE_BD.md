@@ -76,7 +76,7 @@ Tout ce qui fait foi est inscrit dans le JSON (`regles_transverses`, catégorie 
 | L'Atmosphère | S001_W003 | [DÉDUCTION] = entrée de la Passe des Dragons (paroi en visage, p.27) ; POI `poi_atmosphere`. |
 | Palais du Maître des Dragons | S003_W004 | = « Palais abandonné de la Passe » (`zone_palais_abandonne_passe`, POI existant). |
 | Feyhin Lokcthat ↔ Magistrya | — | Route 000117 ajoutée (panneau p.19) ; une écurie de plus dans chaque ville. |
-| Magistrya | N003_W003 | Ville **tout en hauteur** : prévoir de très nombreux escaliers [GD] ; l'arène est à Feyhin, pas à Magistrya. v1.0.141 : ville-tour au milieu du lac ; v1.0.142 : aiguille de 600 m, bâtiments empilés et cages d'escalier (§16.67). |
+| Magistrya | N003_W003 | Ville **tout en hauteur** : prévoir de très nombreux escaliers [GD] ; l'arène est à Feyhin, pas à Magistrya. v1.0.142 : ville-tour au milieu du lac, aiguille de 600 m, bâtiments empilés et cages d'escalier (§16.68). |
 | Passe → Oracle | — | Positions conservées ; l'indication « à l'ouest » de Desdémone est notée non fiable. |
 
 ### 3.3 Autres corrections
@@ -1075,6 +1075,8 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.63](#1663-atelier-décors--de-la-bd-au-jeu-v10137) | v1.0.137 | Atelier décors : de la BD au jeu | 182 objets génériques des tomes 1 à 5 modélisés (3 LOD, billboard), placés par le générateur ou au catalogue ; collection `decors` du lore ; signatures retirées ; enseignes à pictogramme ; tombes anciennes ; grands champs. |
 | [16.64](#1664-atelier-décors--tomes-6-à-14-v10138) | v1.0.138 | Atelier décors : tomes 6 à 14 | 19 objets génériques (n° 195 à 213) modélisés et placés ; tomes 11 à 14 sans objet générique nouveau ; signatures retirées, Empire du Jade réservé à l'extension. |
 | [16.65](#1665-rendu-lointain-et-océan-de-tentes-de-loracle-v10139) | v1.0.139 | Rendu lointain et océan de tentes de l'Oracle | Réserve matériaux 64 → 2048, LOD et billboards des arbres sombres, couvert des cultures, teinte aérienne au soleil réel ; quinze rangs de tentes de pèlerins (decor_214). |
+| [16.67](#1667-camp-de-loracle--salles-intérieures-portes-de-cristal-et-camp-extérieur-v10141) | v1.0.141 | Camp de l'Oracle : salles intérieures, portes de cristal et camp extérieur | Rocher de cristal bleu, 8 grandes portes peintes sur socle de brique, escaliers de 6 m ; salle de l'Oracle (porte SO, quête) et salle des Échos (porte E, raid de 3+) ; passages conditionnels du shard ; tentes agrandies et de couleur, fanions, feux, bassins, menhirs de 3-5 m. |
+| [16.68](#1668-magistrya-ville-tour-v10142) | v1.0.142 | Magistrya, ville-tour | Aiguille de 600 m au milieu d'un lac, bâtiments distincts empilés et cages d'escalier du socle au palais du Magister (salle du trône, laboratoire) ; ponton, geôles ; habitants à altitude réelle. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5403,6 +5405,7 @@ village par :
   une teinte côté client (shader du terrain).
 - Non fait : puits intérieur (8, invisible de l'extérieur), visage blanc, phases de lune et brume de la porte (pas de
   mesh ni de particules).
+- **Mis à jour en v1.0.141** (16.67) : rocher de cristal, grandes portes, escaliers de 6 m, salles intérieures, menhirs de 3-5 m.
 
 **Contrôles** : `world_gen_tests` (`TestOracleV1136` : aucune maison dans le camp, ≥ 40 tentes, 8 escaliers et 8 portes,
 ≥ 18 menhirs et leurs lueurs bleues, rocher ≥ 50 m au-dessus de la plaine à parois > 45°, aucune route sur le rocher,
@@ -5548,12 +5551,51 @@ héraldique ; le propriétaire l'a demandé malgré le retrait des signatures en
 **Contrôles** : `world_gen_tests` (`TestAcropoleLhynnV1140` : gradins, plateforme, rampe, palais bâti, collision du
 catalogue) ; `world_places_tests` (libellé « Palais ») ; `validate_decor.py` ; contrôles du lore.
 
-### 16.67 Magistrya, ville-tour (v1.0.141, v1.0.142)
+### 16.67 Camp de l'Oracle : salles intérieures, portes de cristal et camp extérieur (v1.0.141)
+
+**Demande du propriétaire** (25/11/2026) : « le camp de l'Oracle, le visuel doit être encore amélioré » d'après
+T1 p.3-5 (intérieur), T2 p.44 (camp), p.45 (escalier), p.46 (porte), T3 p.5 (camp de nuit), p.6-7 (intérieur) —
+numéros de page des PDF fournis (T1 p.3-5 = album p.9-11 ; T2 p.46 = illustration finale, « T2 p.48 » en 16.62) ;
+puis, pendant le chantier : ajuster aussi l'extérieur (tentes, eau, autres éléments) et agrandir les tentes, trop
+petites par rapport au joueur. **Arbitrages** (validés par numéros) : salle creusée dans le relief et couverte d'une
+voûte (pas d'instance) ; porte SO ouverte sur quête ; porte E vers une quête et un raid ; éclairage intérieur par zone
+d'ambiance ; rocher de cristal (maillage de près, couche de cristal du terrain de loin) ; porte réinterprétée
+(emblème abstrait, sans visage) ; brume figée lumineuse et émissif des décors ; échelles d'escalier et de menhirs
+ramenées à la BD.
+
+| Élément | Avant (16.62, 16.65) | v1.0.140 |
+|---|---|---|
+| Rocher | Roche pâle du splat, bleu des seules lumières | Canal A du splat rendu en **cristal bleu** sous la roche peinte (zone.json `render.terrain.crystal_layer`, `terrain.frag`) ; 56 dalles de cristal (`decor_219`) au pied des parois et sur la couronne |
+| Portes | Façade de murs de brique, porte ronde | 8 **grandes portes** peintes 10 × 14,5 m (`decor_221` : phases de lune, rosace, croissant lumineux, glyphes inventés) sur **socle de brique** rouge sombre (`decor_222`) ; amas de cristaux de part et d'autre |
+| Escaliers | 12 m de large (33 pièces) | **6 m** (15 rangs de 2 pièces de 3 m), palier entaillé de 10 m au lieu de 16 |
+| Intérieur | Aucun (porte fermée sur la roche) | **Salle de l'Oracle** : cratère de 50 m de rayon au niveau des paliers, 16 parois sculptées à niches (`decor_224`), 16 colonnes (`decor_223`), dais gravé à gradins (`decor_225`), colonne de brume figée et de lumière (`decor_227`, sans figure), chaînes (`decor_228`), amas de cristaux (`decor_220`), voûte de cristal (`decor_226`) ; zone d'ambiance sombre, lumière froide |
+| Raid | — | **Salle des Échos** sous la facette est (94 m du centre, rayon 28 m) : Gardien des Échos (créature 170, niveau 20) et 4 échos de cristal (171, niveau 18) |
+| Accès | — | **Passages conditionnels** (`world/<monde>/passages.json`, généré ; shard `DoorPassages`) : porte SO → salle de l'Oracle si « L'Appel de l'Oracle » est acceptée ; porte E → salle des Échos si « L'Épreuve des Échos » est acceptée et le groupe compte au moins 3 membres ; sorties sans condition ; refus signalé une fois par message système |
+| PNJ de quête | — | Veilleur de la grande porte (pied de l'escalier SO, donne `oracle_appel`), prêtresse du dais (salle de l'Oracle, reçoit `oracle_appel`, donne et reçoit `oracle_echos`, hebdomadaire, crédit partagé) |
+| Tentes | Faîte de 1,6 à 2,3 m | **Agrandies ×1,5** (×1,4 la tente longue) : 2,7 à 3,3 m au faîte ; toiles **rouge sombre** et **bleu-gris** (`Tent_Pilgrim_4`, `_5`) ; pavillon de l'auberge et tentes des échoppes agrandis |
+| Plaine | — | Mâts à longs fanions jaunes (`decor_230`), feux de familles éclairés la nuit (au plus 90), **4 bassins des pèlerins** (eau, `water.bin`) à 618 m du centre avec abreuvoirs, abreuvoirs le long de l'allée |
+| Menhirs | Dalles de 6 à 10 m | **Menhirs bleus de 3 à 5 m** (`decor_229`, T2 p.44) |
+
+- **Émissif des décors** (client) : `emissiveFactor` du glTF (atelier décors : `Crystal_Glow` 0,55, `Mist_Frozen` 0,35)
+  → bit `Emissive` du matériau → `GBufferC.a` (comme la lave) ; les cristaux et la brume brillent de jour comme de nuit.
+- **Collision** : parois de salle par boîte de catalogue (`building_pieces.json`, `oracle_hall_wall`) ; salles fermées par le
+  relief (parois d'au moins 30 m) : on n'y entre que par les passages du shard.
+- **BD et jeu** : la règle « pas de combat à l'Oracle » vaut pour le camp et la salle de l'Oracle ; le combat est confiné à
+  la salle des Échos (choix du propriétaire). La salle de l'Oracle reçoit plusieurs joueurs à la fois (la BD : « un être à la fois »).
+- **Modèles provisoires** : Gardien et échos sur le modèle `nains` agrandi, en attendant un modèle de golem de cristal.
+- **Économie** : `oracle_appel` 400 XP et 20 or (une fois) ; `oracle_echos` 2 500 XP et 150 or par semaine et par joueur
+  du groupe (crédit partagé) ; aucun objet.
+
+**Contrôles** : `world_gen_tests` (`TestOracleV1136` étendu : salles creusées et fermées, 32 parois, 2 voûtes, dais et
+colonne de brume, dalles et couche de cristal, tentes de couleur et fanions, bassins et abreuvoirs, 4 passages et leurs
+conditions, 2 PNJ, raid, zones d'ambiance) ; `door_passages_tests` (shard) ; `validate_decor.py`.
+
+### 16.68 Magistrya, ville-tour (v1.0.142)
 
 **Demande du propriétaire** (26/11/2026, atelier : « Améliore Magistrya », Tome 2 joint) : la ville doit suivre la BD —
 ville tout en hauteur au milieu du lac, ponton, intérieur de la ville (ponts, bâtiments en hauteur, escaliers, tours
 d'angle et toits), porte du palais au sommet, prison, salle du trône, laboratoire du Magister. Arbitrages : **Q1 b**
-(250 m), **Q2 a** (un seul long ponton), **Q3 a** (geôles au socle), **Q4 c** (le Magister n'est pas mort dans la
+(250 m, porté à 600 m après le test visuel), **Q2 a** (un seul long ponton), **Q3 a** (geôles au socle), **Q4 c** (le Magister n'est pas mort dans la
 continuité du jeu), **Q5 b** (colonne torsadée modélisée, le reste en assets existants), **Q6 a** (service prison),
 **Q7 b** (tout sur le pic, pas de ville basse), **Q8 c** (Magister présent, rôle dans les quêtes à écrire). Références :
 `[BD-T2]` p.19 (la ville-tour au milieu du lac, le ponton, gibets et panneau « Feyhin Lokcthat »), p.20 (rues encaissées
@@ -5561,12 +5603,12 @@ et ponts, escalier sur arc rampant, tours d'angle et toits, portail du palais), 
 longueur et vue du trône, laboratoire), p.25 (hauteur de la ville, porte du laboratoire), p.27 (la ville au loin).
 Époque du jeu : ville **intacte** (v1.0.54) ; l'incendie de la p.27 n'est pas repris.
 
-**Retour du test visuel** (27/11/2026, v1.0.142) : la rampe en spirale de la v1.0.141 rappelait la tour de Babel (tableau)
+**Retour du test visuel** (27/11/2026) : la rampe en spirale d'une première version (250 m, Q1 b, jamais livrée) rappelait la tour de Babel (tableau)
 ou Minas Tirith ; « Magistrya est plus droite et plus haute ; il n'y a pas de palier circulaire ; on doit voir les
 séparations entre les bâtiments, il y a des escaliers entre chaque ». Arbitrages : hauteur **600 m** ; accès **à pied
 partout jusqu'au sommet** ; silhouette en **cône étroit** ; **Q1 b** (graphe des PNJ en 3D, shard et client compris) ;
 **Q2 a** (budget de pièces accepté, mesuré avant envoi) ; **Q3 a** (bâtiments = volumes non visitables, portes
-décoratives). La spirale est remplacée ; le tableau ci-dessous décrit l'état v1.0.142.
+décoratives). La spirale est remplacée ; le tableau ci-dessous décrit l'état livré.
 
 | Élément | Avant | Après |
 |---|---|---|
@@ -5579,7 +5621,7 @@ décoratives). La spirale est remplacée ; le tableau ci-dessous décrit l'état
 | Geôles | — | salle de 24 × 12 m sur le socle, au pied de la tour entre deux cages : cinq **cellules voûtées** grillagées (`Dungeon_Vault_1`), piliers massifs, plafond de dalles, soupiraux, banquettes, chaînes, torches ; **service prison** et son geôlier (Q6 a) |
 | Palais | aucun lieu | POI `poi_palais_magister_magistrya` (genre `palais`, fiche `lieu_palais_magister_magistrya`) bâti par `Landmarks.cpp` (`BuildMagisterPalace`) sur le **dallage du sommet** (600 m, posé à plat : le rocher est en retrait), portail tourné vers la cage 0 : parapet de la plateforme, quatre tours rondes ; **salle du trône** en longueur (31 × 16 m, murs de 6 étages, sol de dalles), **portail gothique à rosace** (sans pentagramme), deux rangées de quatre **colonnes torsadées colossales**, tapis, braseros, trône sur estrade, fauteuil sculpté ; **laboratoire** au fond (porte de bois en plein cintre, charpente, table de pierre, étagères d'apothicaire, alambic, chaudron, chaînes à crochet) |
 
-**Asset** (atelier décors, `decor_specs.json` n° 219, budget `building`) : `Column_Twisted_Giant_1` (3,7 × 15,8 m :
+**Asset** (atelier décors, `decor_specs.json` n° 231, budget `building`) : `Column_Twisted_Giant_1` (3,7 × 15,8 m :
 socle mouluré, fût de quatre brins torsadés renflé au milieu, chapiteau ; 1 508 / 700 / 248 triangles), texture
 procédurale `Stone_Serpentine` (vert sourd veiné, pas de vert saturé) ; collision par trois boîtes
 (`building_pieces.json`). Juriste PI : **générique** (colonne torsadée), aucune reproduction des signatures de la BD
@@ -5588,9 +5630,9 @@ procédurale `Stone_Serpentine` (vert sourd veiné, pas de vert saturé) ; colli
 **Lore** : ville (features, dimensions 600 m, aiguille et cages d'escalier, ponton unique, prompt corrigé), service prison (`grille.ajustements`) et
 geôlier ; Magister vivant (`alive`, note [DÉCISION]) ; mort du T2 annotée hors continuité ; étapes de
 `quest_t2_audience_magister` ancrées (arrivée et geôles sur la ville — la première pointait par erreur sur le Mont des
-Neuf Pics —, audience et laboratoire sur le palais) ; 5 entrées au registre des décisions (v1.0.141 : 4, v1.0.142 : 1).
+Neuf Pics —, audience et laboratoire sur le palais) ; 4 entrées au registre des décisions.
 
-**PNJ à altitude réelle** (v1.0.142, Q1 b) : le graphe des PNJ de la ville-tour est en 3D (altitude de chaque nœud : socle, deux nœuds par volée, paliers, plateforme) ; les habitants partent des portes des paliers et parcourent les cages ; `spawners.json` reçoit, dans la routine, `realHeight: true` et `pathY` (une altitude par point du chemin, champs additifs) ; le shard interpole l'altitude le long du segment et fait rentrer le PNJ en refaisant son chemin à l'envers (`AmbientRoutine`) ; l'entité porte le drapeau répliqué `kEntityStateRealHeight` et le client la pose sur la surface marchable sous son altitude (`WalkableSurfaceProbe`) au lieu de la heightmap ; pas d'agenda de métier pour ces PNJ (ses trajets directs traverseraient les étages).
+**PNJ à altitude réelle** (Q1 b) : le graphe des PNJ de la ville-tour est en 3D (altitude de chaque nœud : socle, deux nœuds par volée, paliers, plateforme) ; les habitants partent des portes des paliers et parcourent les cages ; `spawners.json` reçoit, dans la routine, `realHeight: true` et `pathY` (une altitude par point du chemin, champs additifs) ; le shard interpole l'altitude le long du segment et fait rentrer le PNJ en refaisant son chemin à l'envers (`AmbientRoutine`) ; l'entité porte le drapeau répliqué `kEntityStateRealHeight` et le client la pose sur la surface marchable sous son altitude (`WalkableSurfaceProbe`) au lieu de la heightmap ; pas d'agenda de métier pour ces PNJ (ses trajets directs traverseraient les étages).
 
 **Inchangé** : case N003_W003, services existants et leurs PNJ, routes du lore, région.
 
@@ -5619,7 +5661,7 @@ au palais, habitants à altitude réelle, collision) ; `ambient_routine_tests`, 
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
 - Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur tranché en v1.0.105 (16.34 : le générateur suit les routes du lore) ; sauvegarde complète vérifiée en v1.0.98 (16.27) : ~~références orphelines laissées par les suppressions~~ (0 en v1.0.115, 16.42) et noms vides de 159 fiches à traiter.
 - Fiches complètes (v1.0.100) : niveaux par faction à définir (`niveau_par_faction` vide), niveaux des 8 régions et 33 raids sans repère, étapes situées des 71 quêtes non pré-remplies (16.29).
-- Magistrya (v1.0.141, v1.0.142) : rôle du Magister dans les quêtes (donneur de quêtes ou adversaire, Q8) ; intérieurs des bâtiments de la tour non construits (Q3 a : portes décoratives) ; ponts entre bâtiments (p.20) non posés : les cages d'escalier assurent la montée ; salles du palais autres que la salle du trône et le laboratoire non construites ; geôles bâties sur le socle (pas de souterrain) ; vue lointaine de la p.27 (la tour vue de la plaine) à vérifier en jeu (chargement des cellules, HLOD) (16.67).
+- Magistrya (v1.0.142) : rôle du Magister dans les quêtes (donneur de quêtes ou adversaire, Q8) ; intérieurs des bâtiments de la tour non construits (Q3 a : portes décoratives) ; ponts entre bâtiments (p.20) non posés : les cages d'escalier assurent la montée ; salles du palais autres que la salle du trône et le laboratoire non construites ; geôles bâties sur le socle (pas de souterrain) ; vue lointaine de la p.27 (la tour vue de la plaine) à vérifier en jeu (chargement des cellules, HLOD) (16.68).
 - Palais impérial de Lhynn (v1.0.140) : intérieur limité à la salle du trône ; salles du conseil, appartements, atelier de Shamballeau et salle cachée sous le trône (T11 p.12-13) non construits ; monument signature réinterprété en attente de la réponse de Mediatoon (16.66).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).

@@ -12,7 +12,9 @@
 //    heightmap est IDENTIQUE des deux côtés (raccord sans couture) ; puis d'une
 //    cellule de départ de faction (Haeldorf) : spawn par défaut au sec.
 // 6. État « reconstruction » (Kendrhir) : maisons, ruines et chantiers
-//    mêlés, auberge en service, étais autour des chantiers.
+//    mêlés, auberge en service, étais autour des chantiers ; v1.0.142 : apparence
+//    d'après le tome 1 (rempart de rondins, tours, portes, contreforts, donjon,
+//    maisons de planches, restes du siège) et clé `apparence` du master validée.
 // 7. EAU.5 : cuvettes sous la mer isolées comblées (mer reliée conservée) ;
 //    lac creusé d'après son polygone, rives au-dessus de l'eau même à flanc
 //    de pente (digue), pas de digue sur un lit de rivière.
@@ -884,7 +886,112 @@ namespace
 				&& ReadText(tmp / "zones" / cell / "runtime_manifest.json").find("\"terrain_ground_map\"") != std::string::npos,
 				"sols SND.2b : zone.json et runtime_manifest referencent la carte des sols");
 		}
+		// v1.0.142 — Kendrhir d'après le tome 1 (clé apparence du master) : rempart de
+		// rondins de 20 m en reconstruction (pans d'origine, neufs, calcinés, brèches), tours,
+		// une porte par route, contreforts dehors, donjon en chantier au nord, maisons de
+		// planches majoritaires, restes du siège hors les murs et loin des portes.
+		{
+			tools::world_gen::Vec2 center{};
+			int n = 0;
+			for (const auto& p : pls)
+				if (p.displayName.find(suffix) != std::string::npos) { center.x += p.worldPosition.x; center.z += p.worldPosition.z; ++n; }
+			if (n > 0) center = center * (1.0 / n);
+			auto count = [&](const char* mesh, double rMin, double rMax, double* rSum = nullptr) {
+				int k = 0;
+				for (const auto& in : sf.instances)
+				{
+					if (sf.meshPaths[in.meshIndex] != std::string("meshes/props/") + mesh + ".gltf") continue;
+					const double r = std::hypot(in.x - center.x, in.z - center.z);
+					if (r < rMin || r > rMax) continue;
+					++k;
+					if (rSum) *rSum += r;
+				}
+				return k;
+			};
+			double rWall = 0.0, rButt = 0.0;
+			const int old = count("Rampart_Wood_1", 0, 200, &rWall), fresh = count("Rampart_Wood_New_1", 0, 200);
+			const int burnt = count("Rampart_Wood_Burnt_1", 0, 200), breach = count("Rampart_Wood_Breach_1", 0, 200);
+			const int butt = count("Rampart_Buttress_Wood_1", 0, 200, &rButt);
+			Check(old > 20 && fresh > 5 && burnt > 5 && breach >= 3 && old + fresh + burnt + breach > 100,
+				"Kendrhir v1.0.142 : rempart de rondins (pans d'origine, neufs, calcines, breches)");
+			// Les clôtures des champs commencent à R + 9 m ; l'ancienne palissade était sur le cercle du rempart.
+			Check(old > 0 && count("Prop_WoodenFence_Single", 0, rWall / old + 1.5) == 0, "Kendrhir v1.0.142 : plus de cloture basse en guise d'enceinte");
+			Check(count("Tower_Rampart_Wood_1", 0, 200) >= 6 && count("Tower_Rampart_Wood_Ruined_1", 0, 200) >= 1,
+				"Kendrhir v1.0.142 : tours de bois, dont des tours etetees");
+			Check(count("Gate_Rampart_Wood_1", 0, 200) >= 2, "Kendrhir v1.0.142 : une porte par route qui arrive");
+			Check(butt >= 4 && old > 0 && rButt / butt > rWall / old + 2.0, "Kendrhir v1.0.142 : contreforts poses cote exterieur");
+			// Donjon : un seul, en chantier (ville en reconstruction), au nord du centre (-Z).
+			int keeps = 0;
+			bool north = false;
+			for (const auto& in : sf.instances)
+				if (sf.meshPaths[in.meshIndex].find("/Keep_Timber_Spire") != std::string::npos
+					&& std::hypot(in.x - center.x, in.z - center.z) < 150.0)
+				{
+					++keeps;
+					north = sf.meshPaths[in.meshIndex] == "meshes/props/Keep_Timber_Spire_Site_1.gltf" && in.z < center.z - 30.0;
+				}
+			Check(keeps == 1 && north, "Kendrhir v1.0.142 : donjon a fleche en chantier au nord de la ville");
+			// Bâti de planches majoritaire parmi les maisons habitées.
+			int plank = 0, houses = 0;
+			for (const auto& p : pls)
+			{
+				if (p.displayName.find(suffix) == std::string::npos || p.templateType != "maison" || p.variantId.rfind("ruine_", 0) == 0) continue;
+				++houses;
+				plank += p.variantId.find("planches") != std::string::npos ? 1 : 0;
+			}
+			Check(houses > 0 && plank * 2 > houses, "Kendrhir v1.0.142 : maisons de planches majoritaires");
+			int plankRuins = 0;
+			for (const auto& p : pls)
+				plankRuins += (p.displayName.find(suffix) != std::string::npos && p.variantId == "ruine_planches_6x8") ? 1 : 0;
+			Check(plankRuins > 0, "Kendrhir v1.0.142 : ruines de planches (quartiers incendies)");
+			// Restes du siège : hors les murs (au-delà du rempart et de ses contreforts).
+			const int wreck = count("SiegeTower_Wreck_1", 125, 260), cats = count("Catapult_Burnt_1", 125, 260);
+			Check(wreck == 1 && cats >= 1 && count("SiegeTower_Wreck_1", 0, 125) == 0 && count("Catapult_Burnt_1", 0, 125) == 0,
+				"Kendrhir v1.0.142 : restes du siege hors les murs");
+		}
 		fs::remove_all(tmp, ec);
+	}
+
+	/// v1.0.142 — clé `apparence` du master : valeurs fermées (une faute dans le lore casse
+	/// le chargement), seule Kendrhir en porte une (les autres villes restent sur les règles
+	/// génériques, donc inchangées).
+	void TestCityAppearance()
+	{
+		namespace fs = std::filesystem;
+		tools::world_gen::WorldMaster m;
+		std::string err;
+		Check(tools::world_gen::LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", m, err), "apparence v1.0.142 : master royaumes charge");
+		int withAppearance = 0;
+		const tools::world_gen::CityDef* kendrhir = nullptr;
+		for (const auto& c : m.cities)
+		{
+			const bool any = !c.apparence.enceinte.empty() || !c.apparence.donjon.empty() || !c.apparence.bati.empty() || c.apparence.vestigesSiege;
+			withAppearance += any ? 1 : 0;
+			if (c.id == "kendrhir_vale") kendrhir = &c;
+		}
+		Check(kendrhir && kendrhir->apparence.enceinte == "rempart_bois" && kendrhir->apparence.donjon == "tour_fleche"
+			&& kendrhir->apparence.bati == "planches" && kendrhir->apparence.vestigesSiege,
+			"apparence v1.0.142 : Kendrhir (rempart de bois, donjon, planches, vestiges)");
+		Check(withAppearance == 1, "apparence v1.0.142 : aucune autre ville ne change");
+		// Valeur inconnue : le chargement échoue avec un message explicite.
+		const fs::path root = fs::temp_directory_path() / "lcdlln_world_gen_tests_apparence";
+		std::error_code ec;
+		fs::remove_all(root, ec);
+		fs::create_directories(root / "world" / "royaumes", ec);
+		std::string text = ReadText(fs::path(LCDLLN_CONTENT_DIR) / "world" / "royaumes" / "world_master.json");
+		const std::string good = "\"enceinte\": \"rempart_bois\"";
+		const size_t at = text.find(good);
+		Check(at != std::string::npos, "apparence v1.0.142 : cle enceinte presente dans le master");
+		if (at != std::string::npos)
+		{
+			text.replace(at, good.size(), "\"enceinte\": \"rempart_pierre\"");
+			std::ofstream(root / "world" / "royaumes" / "world_master.json", std::ios::binary) << text;
+			tools::world_gen::WorldMaster bad;
+			std::string e;
+			Check(!tools::world_gen::LoadWorldMaster(root.string(), "royaumes", bad, e) && e.find("apparence.enceinte") != std::string::npos,
+				"apparence v1.0.142 : valeur inconnue refusee");
+		}
+		fs::remove_all(root, ec);
 	}
 
 	/// FIX.12 — tracés de la carte : routes globales, chemins locaux, rues
@@ -2695,14 +2802,15 @@ namespace
 				// v1.0.128 : 10 villes portuaires posées au bord de la mer (LORE_BD §16.54).
 				|| c.id == "hishtarland" || c.id == "town_0123" || c.id == "town_truceholm" || c.id == "town_0137" || c.id == "town_ile_ashwick"
 				|| c.id == "town_brinehaven" || c.id == "hamlet_0172" || c.id == "hamlet_0189" || c.id == "town_riverfold" || c.id == "ville_equiton"
-				// v1.0.141 : Feyhin Lokcthat sur son éperon, dans la boucle de la rivière (LORE_BD §16.67).
+				// v1.0.144 : Feyhin Lokcthat sur son éperon, dans la boucle de la rivière (LORE_BD §16.70).
 				|| c.id == "ville_feyhin_lokcthat");
 		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
 			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes", "poi_temple_methraton", "poi_seuil_lhynn",
 			"poi_borne_monts_de_moork", // v1.0.128 : au bord de la route Moork - Ghrunke Dash (000242)
 			"poi_palais_imperial_lhynn", // v1.0.140 : sommet de Lhynn en gradins (LORE_BD §16.66)
-			// v1.0.141 : cathédrale au sommet, arène de la ville basse, Porte 2 au pied de la falaise
-			// de Feyhin Lokcthat (LORE_BD §16.67).
+			"poi_palais_magister_magistrya", // v1.0.143 : sommet de la ville-tour de Magistrya (LORE_BD §16.69)
+			// v1.0.144 : cathédrale au sommet, arène de la ville basse, Porte 2 au pied de la falaise
+			// de Feyhin Lokcthat (LORE_BD §16.70).
 			"poi_cathedrale_feyhin_lokcthat", "poi_arene_feyhin_lokcthat", "poi_porte_2" };
 		size_t posees = 0;
 		for (const PoiDef& p : g0.master.pois)
@@ -2711,7 +2819,7 @@ namespace
 			none = none && balises.count(p.id);
 			++posees;
 		}
-		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128), Feyhin Lokcthat (v1.0.141) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140) ; Feyhin Lokcthat, sa cathedrale, son arene et la Porte 2 (v1.0.141)");
+		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128), Feyhin Lokcthat (v1.0.144) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140), palais du Magister (v1.0.143) ; Feyhin Lokcthat, sa cathedrale, son arene et la Porte 2 (v1.0.144)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
@@ -4233,8 +4341,8 @@ namespace
 			if (c.id == "ville_lhynn") lm = &c;
 			acropoles += c.acropole.enabled ? 1 : 0;
 		}
-		// v1.0.141 : Feyhin Lokcthat est la seconde ville en gradins (TestFeyhinLokcthatV1141).
-		Check(lm && lm->acropole.enabled && acropoles == 2, "acropole v1.0.140 : Lhynn ville en gradins (avec Feyhin Lokcthat, v1.0.141)");
+		// v1.0.144 : Feyhin Lokcthat est la seconde ville en gradins (TestFeyhinLokcthatV1144).
+		Check(lm && lm->acropole.enabled && acropoles == 2, "acropole v1.0.140 : Lhynn ville en gradins (avec Feyhin Lokcthat, v1.0.144)");
 		if (!lm || !lm->acropole.enabled) return;
 		const AcropoleShape& a = lm->acropole;
 		const auto ctr = engine::world::cells::CellCenter({ lm->n, lm->e });
@@ -4306,34 +4414,268 @@ namespace
 			"acropole v1.0.140 : facade et fleche au catalogue de collision");
 	}
 
-	/// v1.0.141 — Feyhin Lokcthat d'après le Tome 2 (LORE_BD §16.67) : ville perchée sur un éperon de
-	/// trois gradins dans la boucle de la Rivière des deux lacs, ville basse au pied de la falaise,
-	/// long pont de pierre sur la rivière élargie (plaine basse), arène et geôles creusées sous ses
-	/// gradins, cathédrale au sommet, Porte 2 au pied de la falaise ; services arène et temple portés
-	/// par leurs lieux bâtis ; collisions des nouvelles pièces au catalogue.
-	void TestFeyhinLokcthatV1141()
+	/// v1.0.143 — Magistrya, ville-tour (BD-T2 p.19-27, LORE_BD §16.69) : aiguille de
+	/// 600 m en cône étroit couverte de bâtiments distincts, cages d'escalier praticables du socle
+	/// au palais (volées continues, paliers, rocher toujours dessous, rien dans les cages), lac
+	/// centré et île hors de l'eau, ponton jusqu'à la rive, routes arrêtées sur la rive, geôles
+	/// (prison), palais du Magister posé à plat au sommet, graphe des PNJ en 3D et routines à
+	/// altitude réelle.
+	void TestVilleTourMagistryaV1143()
 	{
 		using namespace tools::world_gen;
 		GlobalWorld g;
 		std::string err;
 		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
-		Check(ok, "feyhin v1.0.141 : master royaumes charge");
+		Check(ok, "ville-tour v1.0.143 : master royaumes charge");
+		if (!ok) return;
+		const CityDef* mc = nullptr;
+		int towers = 0;
+		for (const CityDef& c : g.master.cities)
+		{
+			if (c.id == "sauken_glude_of_magistrya") mc = &c;
+			towers += c.tower.enabled ? 1 : 0;
+		}
+		Check(mc && mc->tower.enabled && mc->layout == "ville_tour" && towers == 1, "ville-tour v1.0.143 : Magistrya seule ville-tour");
+		if (!mc || !mc->tower.enabled) return;
+		const TowerShape& t = mc->tower;
+		const int T = t.Tiers();
+		const double Ht = t.TierM(), halfG = t.shaftM * 0.5;
+		// Silhouette : 600 m, cône étroit (120 m au socle, 30 m au sommet), niveaux de 12,5 m.
+		Check(std::fabs(t.heightM - 600.0) < 1e-9 && std::fabs(t.EnvelopeR(0.0) - 120.0) < 1e-9 && std::fabs(t.EnvelopeR(600.0) - 30.0) < 1e-9
+				&& T == 48 && std::fabs(Ht - 12.5) < 1e-9 && t.SplitTier() == 24,
+			"ville-tour v1.0.143 : aiguille de 600 m, rayons 120 -> 30 m, 48 niveaux de 12,5 m");
+		Check(std::fabs(TowerOffset(t, t.center) - (600.0 - 0.5)) < 1e-9 && TowerOffset(t, t.center + Vec2{ t.SocleR() + 1.0, 0.0 }) < -1e8
+				&& std::fabs(TowerOffset(t, t.center + Vec2{ t.baseRadiusM + 5.0, 0.0 })) < 1e-9,
+			"ville-tour v1.0.143 : rocher sous le dallage du sommet, socle plat, rien au-dela du socle");
+		// Cages d'escalier (fonctions pures) : volées continues, paliers sous chaque arrivée et
+		// chaque départ, rocher toujours sous les volées et les paliers, cages dans l'enveloppe.
+		const double rise = Ht / 3.0;
+		int toSummit = 0, flightsTotal = 0;
+		bool continuous = true, rockBelow = true, inside = true, stepsOk = true;
+		for (int j = 0; j < t.shaftsLow; ++j)
+		{
+			const std::vector<TowerFlight> fl = TowerShaftFlights(t, j);
+			const std::vector<TowerLanding> la = TowerShaftLandings(t, j);
+			flightsTotal += static_cast<int>(fl.size());
+			if (TowerShaftTiers(t, j) == T) ++toSummit;
+			continuous = continuous && la.size() == fl.size() + 1 && !fl.empty();
+			const double a = TowerShaftAngle(t, j);
+			const Vec2 u{ std::cos(a), std::sin(a) }, v{ -u.z, u.x };
+			auto rockAt = [&](double r, double s) { return TowerOffset(t, t.center + u * r + v * s); };
+			for (size_t g2 = 0; g2 < fl.size(); ++g2)
+			{
+				const TowerFlight& f = fl[g2];
+				stepsOk = stepsOk && std::fabs(f.rise - rise) < 1e-9 && std::fabs(f.yBottom - g2 * rise) < 1e-6
+					&& std::fabs(std::fabs(f.rTop - f.rBottom) - (kTowerStairFrontM + kTowerStairBackM) * TowerStairScale(t)) < 1e-9;
+				const TowerLanding& lo = la[g2];
+				const TowerLanding& hi = la[g2 + 1];
+				continuous = continuous && f.rBottom >= lo.rIn - 1e-9 && f.rBottom <= lo.rOut + 1e-9 && std::fabs(lo.y - f.yBottom) < 1e-9
+					&& f.rTop >= hi.rIn - 1e-9 && f.rTop <= hi.rOut + 1e-9 && std::fabs(hi.y - (f.yBottom + f.rise)) < 1e-9
+					&& std::fabs(f.lane) + kTowerStairHalfWidthM * TowerStairScale(t) <= halfG;
+				if (f.level > 0)
+					for (double s : { -halfG, halfG })
+						rockBelow = rockBelow && rockAt(std::min(f.rBottom, f.rTop), s) <= f.yBottom + 1e-6 && rockAt(std::max(f.rBottom, f.rTop), s) <= f.yBottom + 1e-6;
+				inside = inside && std::max(f.rBottom, f.rTop) <= TowerShaftOuterR(t, f.tier) + 1e-9;
+			}
+			for (const TowerLanding& L0 : la)
+			{
+				if (L0.level > 0)
+					for (double s : { -halfG, halfG })
+						rockBelow = rockBelow && rockAt(L0.rIn, s) <= L0.y - 1.0 && rockAt(L0.rOut, s) <= L0.y - 1.0;
+				inside = inside && L0.rOut <= TowerShaftOuterR(t, std::max(0, (L0.level - 1) / 3)) + 1e-9 && L0.rOut - L0.rIn >= kTowerLandingM - 1e-9;
+			}
+			if (TowerShaftTiers(t, j) == T) continuous = continuous && std::fabs(la.back().y - t.heightM) < 1e-6;
+		}
+		Check(continuous && stepsOk, "ville-tour v1.0.143 : volees d'un tiers de niveau, paliers continus sous chaque arrivee et chaque depart");
+		Check(rockBelow, "ville-tour v1.0.143 : rocher toujours sous les volees et les paliers des cages");
+		Check(inside, "ville-tour v1.0.143 : cages en retrait des facades voisines");
+		Check(toSummit == 11, "ville-tour v1.0.143 : onze cages jusqu'au palais (la douzieme s'arrete sous le laboratoire)");
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		const Lake* lake = nullptr;
+		for (const Lake& l : g.lakes) if (l.name == "lac_sauken_glude_of_magistrya") lake = &l;
+		int caseLakes = 0;
+		for (const Lake& l : g.lakes)
+			caseLakes += (std::fabs(l.center.x - t.center.x) < 5000.0 && std::fabs(l.center.z - t.center.z) < 5000.0) ? 1 : 0;
+		Check(lake && std::hypot(lake->center.x - t.center.x, lake->center.z - t.center.z) < 1e-6 && lake->islandRadiusM > t.SocleR() && caseLakes == 1,
+			"ville-tour v1.0.143 : lac centre sur l'aiguille (seul lac de la case), ile du socle");
+		if (!lake) return;
+		auto w = std::make_unique<World>();
+		InitCell(*w, g, { mc->n, mc->e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildLandmarks(*w);
+		const CityDef* c = nullptr;
+		for (const CityDef& x : w->cities) if (x.id == "sauken_glude_of_magistrya") c = &x;
+		Check(c != nullptr, "ville-tour v1.0.143 : Magistrya dans la cellule");
+		if (c == nullptr) return;
+		const double socleY = c->plateauY, summitY = socleY + t.heightM;
+		Check(std::fabs(socleY - (lake->waterY + kTowerSocleAboveWaterM)) < 1e-6 && std::fabs(c->radiusM - t.SocleR()) < 1e-6,
+			"ville-tour v1.0.143 : socle au ras du lac, rayon de la ville = socle");
+		const Vec2 entry{ std::cos(t.entryRad), std::sin(t.entryRad) };
+		Check(std::fabs(w->HeightAt(t.center) - (summitY - 0.5)) < 1.5 && std::fabs(w->HeightAt(t.center + entry * (t.SocleR() - 6.0)) - socleY) < 1.0,
+			"ville-tour v1.0.143 : rocher du sommet sous le dallage, socle au pied du ponton");
+		Check(!w->IsWater(t.center + Vec2{ t.SocleR() - 3.0, 0.0 }) && w->IsWater(t.center + Vec2{ t.SocleR() + 60.0, 0.0 }),
+			"ville-tour v1.0.143 : le socle n'est pas de l'eau, le lac l'entoure");
+		auto count = [&](const char* mesh) {
+			int n = 0;
+			for (const ScatterDef& s : w->scatter) n += s.mesh.find(std::string("/") + mesh + ".gltf") != std::string::npos ? 1 : 0;
+			return n;
+		};
+		// Budget (mesuré) : pièces de la ville-tour dans le rayon du socle.
+		size_t towerPieces = 0;
+		for (const ScatterDef& s : w->scatter)
+			towerPieces += std::hypot(s.position.x - t.center.x, s.position.z - t.center.z) <= t.SocleR() ? 1 : 0;
+		std::printf("  Magistrya : %zu pieces dans le socle (volees %d, dalles %d, toits %d, portes %d)\n", towerPieces,
+			count("Stair_Interior_Rails"), count("Bridge_Stone_Deck_1"), count("Roof_Slate_4x4"), count("Door_1_Round"));
+		Check(count("Stair_Interior_Rails") == flightsTotal, "ville-tour v1.0.143 : une volee posee par volee des cages");
+		int walls = 0, families = 0;
+		for (const char* f : { "Wall_Sandstone_", "Wall_OchreBrick_", "Wall_RedBrick_" })
+		{
+			int n = 0;
+			for (const ScatterDef& s : w->scatter)
+				n += s.mesh.find(f) != std::string::npos && std::hypot(s.position.x - t.center.x, s.position.z - t.center.z) < t.baseRadiusM + 1.0 ? 1 : 0;
+			walls += n;
+			families += n > 300 ? 1 : 0;
+		}
+		int pale = 0; // ni enduit blanc ni pierre grise : la ville est ocre orangé (BD-T2 p.19-20)
+		for (const ScatterDef& s : w->scatter)
+			pale += (s.mesh.find("/Wall_Plaster_") != std::string::npos || s.mesh.find("/Wall_DryStone_") != std::string::npos
+				|| s.mesh.find("/Wall_UnevenBrick_") != std::string::npos) && std::hypot(s.position.x - t.center.x, s.position.z - t.center.z) <= t.SocleR() ? 1 : 0;
+		Check(walls >= 10000 && families == 3 && pale == 0 && count("Roof_Slate_4x4") >= 800 && count("Turret_Corner_Ochre_1") >= 20,
+			"ville-tour v1.0.143 : batiments distincts de pierre ocre (gres, brique ocre, brique rouge), toits a chaque retrait, tourelles d'angle");
+		Check(count("Door_1_Round") >= 1000 && count("Torch_Metal") >= 200 && towerPieces < 60000,
+			"ville-tour v1.0.143 : portes decoratives sur les paliers, torches, budget de pieces tenu");
+		// Façades et toits dans l'enveloppe, jamais dans le vide d'une cage ouverte.
+		bool envelopeOk = true, shaftsClear = true;
+		for (const ScatterDef& s : w->scatter)
+		{
+			const bool wall = s.mesh.find("/Wall_") != std::string::npos, roof = s.mesh.find("/Roof_Slate") != std::string::npos;
+			if (!wall && !roof) continue;
+			const Vec2 d = s.position - t.center;
+			const double r = std::hypot(d.x, d.z);
+			if (r >= t.baseRadiusM + 1.0) continue; // socle : geôles
+			const double y = w->HeightAt(s.position) + s.yOffset - socleY;
+			if (y >= t.heightM - 0.3) continue; // palais, sur la plateforme du sommet
+			envelopeOk = envelopeOk && r <= t.EnvelopeR(y) + 0.6;
+			const int k = std::clamp(static_cast<int>(std::floor((y + 0.2) / Ht)), 0, T - 1);
+			for (int j = 0; j < t.shaftsLow; ++j)
+			{
+				if (!TowerShaftOpenAt(t, j, k)) continue;
+				const double a = TowerShaftAngle(t, j);
+				const Vec2 u{ std::cos(a), std::sin(a) }, v{ -u.z, u.x };
+				const double along = d.x * u.x + d.z * u.z, side = d.x * v.x + d.z * v.z;
+				if (along > TowerShaftOuterR(t, k) - 12.0 && along < TowerShaftOuterR(t, k) && std::fabs(side) < halfG - 0.05)
+				{
+					shaftsClear = false;
+				}
+			}
+		}
+		Check(envelopeOk, "ville-tour v1.0.143 : facades et toits dans l'enveloppe en cone (aucune saillie circulaire)");
+		Check(shaftsClear, "ville-tour v1.0.143 : aucun mur ni toit dans le vide d'une cage ouverte");
+		int houses = 0, inns = 0;
+		for (const BuildingPlacementDef& b : w->buildings)
+			if (b.cityId == c->id) { ++houses; inns += b.isInn ? 1 : 0; }
+		Check(inns == 1, "ville-tour v1.0.143 : auberge au socle");
+		Check(count("Boardwalk_Deck_1") >= 600 && count("Gallows_1") == 2 && count("Signpost_1") >= 1,
+			"ville-tour v1.0.143 : long ponton de bois, gibets et poteau indicateur");
+		Check(count("Dungeon_Vault_1") == 5 && count("Dungeon_Grate_1") == 15 && count("Dungeon_Pillar_1") == 8 && count("Sign_Service_prison") == 1,
+			"ville-tour v1.0.143 : geoles voutees au socle (prison)");
+		Check(count("Column_Twisted_Giant_1") == 8 && count("Throne_Wood_1") == 1 && count("Table_Stone_1") == 1 && count("Portal_Gothic_1") == 1,
+			"ville-tour v1.0.143 : palais du Magister (colonnes torsadees, trone, laboratoire, portail)");
+		double throneY = -1e9;
+		for (const ScatterDef& s : w->scatter)
+			if (s.mesh.find("/Throne_Wood_1.gltf") != std::string::npos) throneY = w->HeightAt(s.position) + s.yOffset;
+		Check(std::fabs(throneY - (summitY + 0.37)) < 0.05, "ville-tour v1.0.143 : palais pose a plat a l'altitude du sommet");
+		bool roadsOut = true;
+		for (const Road& r : w->roads)
+			for (const Vec2& p : r.points)
+				roadsOut = roadsOut && (r.path || std::hypot(p.x - t.center.x, p.z - t.center.z) > lake->radiusM * 0.9);
+		Check(roadsOut, "ville-tour v1.0.143 : routes du monde arretees sur la rive (aucune dans le lac)");
+		// Graphe 3D : toutes les altitudes renseignées, connexe, du socle au sommet, arêtes
+		// praticables (pente <= celle d'une volée).
+		const SettlementLayout* lay = nullptr;
+		for (const SettlementLayout& x : w->layouts) if (x.cityId == c->id) lay = &x;
+		Check(lay && lay->hasGraveyard, "ville-tour v1.0.143 : cimetiere sur la rive");
+		if (lay)
+		{
+			bool allY = true, edgesOk = true;
+			double topNode = -1e9;
+			for (const StreetNode& n : lay->nodes)
+			{
+				allY = allY && n.HasY();
+				topNode = std::max(topNode, n.y - socleY);
+				for (int l : n.links)
+				{
+					const StreetNode& m = lay->nodes[static_cast<size_t>(l)];
+					const double dy = std::fabs(m.y - n.y), dxz = std::hypot(m.p.x - n.p.x, m.p.z - n.p.z);
+					edgesOk = edgesOk && (dy < 0.6 || (dy <= rise + 1e-6 && dy / std::max(0.1, dxz) <= 0.8));
+				}
+			}
+			std::vector<char> seen(lay->nodes.size(), 0);
+			std::vector<int> stack{ 0 };
+			seen[0] = 1;
+			size_t reached = 1;
+			while (!stack.empty())
+			{
+				const int n = stack.back(); stack.pop_back();
+				for (int l : lay->nodes[static_cast<size_t>(n)].links)
+					if (!seen[static_cast<size_t>(l)]) { seen[static_cast<size_t>(l)] = 1; ++reached; stack.push_back(l); }
+			}
+			Check(allY && reached == lay->nodes.size() && std::fabs(topNode - t.heightM) < 1e-6 && edgesOk,
+				"ville-tour v1.0.143 : graphe des PNJ en 3D, connexe, du socle au palais, aretes praticables");
+			Check(lay->homeDoors.size() == lay->homeDoorY.size() && lay->homeDoors.size() == lay->homeDoorNode.size() && lay->homeDoors.size() >= 1000,
+				"ville-tour v1.0.143 : logis sur les paliers (porte, altitude, noeud)");
+		}
+		// Routines : altitude réelle de chaque point, habitants dans les étages.
+		BuildPopulation(*w);
+		int real = 0, high = 0;
+		bool pathsOk = true;
+		for (const SpawnerDef& s : w->spawners)
+		{
+			if (s.id.find("amb_sauken_glude_of_magistrya_villageois_") != 0) continue;
+			pathsOk = pathsOk && s.realHeight && s.pathY.size() == s.path.size() && s.agendaProfession.empty()
+				&& std::fabs(s.y - s.pathY.front()) < 1e-9;
+			real += s.realHeight ? 1 : 0;
+			for (double y : s.pathY) if (y > socleY + 50.0) { ++high; break; }
+		}
+		Check(real >= 5 && pathsOk && high >= 1, "ville-tour v1.0.143 : habitants a altitude reelle (chemins 3D, sans agenda)");
+		std::ifstream cat(std::string(LCDLLN_CONTENT_DIR) + "/collision/building_pieces.json");
+		const std::string txt((std::istreambuf_iterator<char>(cat)), std::istreambuf_iterator<char>());
+		Check(txt.find("\"column_twisted_giant_1\"") != std::string::npos && txt.find("\"stair_interior_rails\"") != std::string::npos
+				&& txt.find("\"bridge_stone_deck_1\"") != std::string::npos && txt.find("\"wall_sandstone_straight\"") != std::string::npos
+				&& txt.find("\"wall_ochrebrick_door_round\"") != std::string::npos,
+			"ville-tour v1.0.143 : volees, dalles, murs et colonne au catalogue de collision");
+	}
+
+	/// v1.0.144 — Feyhin Lokcthat d'après le Tome 2 (LORE_BD §16.70) : ville perchée sur un éperon de
+	/// trois gradins dans la boucle de la Rivière des deux lacs, ville basse au pied de la falaise,
+	/// long pont de pierre sur la rivière élargie (plaine basse), arène et geôles creusées sous ses
+	/// gradins, cathédrale au sommet, Porte 2 au pied de la falaise ; services arène et temple portés
+	/// par leurs lieux bâtis ; collisions des nouvelles pièces au catalogue.
+	void TestFeyhinLokcthatV1144()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "feyhin v1.0.144 : master royaumes charge");
 		if (!ok) return;
 		const CityDef* fm = nullptr;
 		for (const CityDef& c : g.master.cities) if (c.id == "ville_feyhin_lokcthat") fm = &c;
 		Check(fm && fm->acropole.enabled && fm->acropole.backTown && fm->acropole.streetStairs && std::fabs(fm->acropole.cityRadiusM - 150.0) < 1e-9
-				&& fm->hasPosition, "feyhin v1.0.141 : ville perchee posee a la main (acropole, ville basse, escalier de rue, rayon 150 m)");
+				&& fm->hasPosition, "feyhin v1.0.144 : ville perchee posee a la main (acropole, ville basse, escalier de rue, rayon 150 m)");
 		if (!fm || !fm->acropole.enabled) return;
 		const AcropoleShape a = fm->acropole;
 		const RiverCourseDef* rc = nullptr;
 		for (const RiverCourseDef& r : g.master.riverCourses) if (r.id == "cours_liaison_lacs") rc = &r;
 		Check(rc && rc->widenings.size() == 1 && rc->widenings[0].widthM >= 55.0 && rc->widenings[0].valleyM > 0.0,
-			"feyhin v1.0.141 : riviere elargie sous le pont, plaine basse");
+			"feyhin v1.0.144 : riviere elargie sous le pont, plaine basse");
 		if (!rc || rc->widenings.empty()) return;
 		const Vec2 W = rc->widenings[0].center;
 		Check(std::fabs(ValleyLowered(g.master, W.x, W.z, 200.0) - rc->widenings[0].floorY) < 1e-6
 				&& std::fabs(ValleyLowered(g.master, a.summit.x, a.summit.z, 200.0) - 200.0) < 1e-6,
-			"feyhin v1.0.141 : plaine basse au pont, butte jamais entamee");
+			"feyhin v1.0.144 : plaine basse au pont, butte jamais entamee");
 		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
 		auto w = std::make_unique<World>();
 		InitCell(*w, g, { fm->n, fm->e });
@@ -4343,9 +4685,9 @@ namespace
 		BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w);
 		const CityDef* c = nullptr;
 		for (const CityDef& x : w->cities) if (x.id == "ville_feyhin_lokcthat") c = &x;
-		Check(c != nullptr && std::fabs(c->radiusM - 150.0) < 1e-9, "feyhin v1.0.141 : ville dans la cellule, rayon 150 m");
+		Check(c != nullptr && std::fabs(c->radiusM - 150.0) < 1e-9, "feyhin v1.0.144 : ville dans la cellule, rayon 150 m");
 		if (c == nullptr) return;
-		Check(std::fabs(w->HeightAt(a.summit) - (c->plateauY + 90.0)) < 2.0, "feyhin v1.0.141 : sommet a +90 m au-dessus de la ville basse");
+		Check(std::fabs(w->HeightAt(a.summit) - (c->plateauY + 90.0)) < 2.0, "feyhin v1.0.144 : sommet a +90 m au-dessus de la ville basse");
 		// La rivière garde sa boucle autour de l'éperon (pas de lit dans la ville) et passe au pied du revers.
 		double near = 1e9, widest = 0.0;
 		for (const River& r : w->rivers)
@@ -4354,7 +4696,7 @@ namespace
 				near = std::min(near, std::hypot(r.points[k].x - a.summit.x, r.points[k].z - a.summit.z));
 				if (std::hypot(r.points[k].x - W.x, r.points[k].z - W.z) < 30.0) widest = std::max(widest, r.widthM[k]);
 			}
-		Check(near > a.topRadiusM + 120.0 && near < 450.0 && widest >= 55.0, "feyhin v1.0.141 : riviere au pied du revers, elargie au pont");
+		Check(near > a.topRadiusM + 120.0 && near < 450.0 && widest >= 55.0, "feyhin v1.0.144 : riviere au pied du revers, elargie au pont");
 		auto count = [&](const char* mesh, Vec2 at, double radius) {
 			int n = 0;
 			for (const ScatterDef& sd : w->scatter)
@@ -4362,7 +4704,7 @@ namespace
 			return n;
 		};
 		Check(count("Bridge_Stone_Pier_1", W, 120.0) >= 4 && count("Bridge_Stone_Deck_1", W, 120.0) >= 40,
-			"feyhin v1.0.141 : long pont de pierre (piles a avant-becs, tablier)");
+			"feyhin v1.0.144 : long pont de pierre (piles a avant-becs, tablier)");
 		// Arène et geôles.
 		const PoiDef* ar = nullptr;
 		const PoiDef* ca = nullptr;
@@ -4373,23 +4715,23 @@ namespace
 			if (p.id == "poi_cathedrale_feyhin_lokcthat") ca = &p;
 			if (p.id == "poi_porte_2") p2 = &p;
 		}
-		Check(ar && ca && p2 && ar->kind == "arene" && ca->kind == "cathedrale", "feyhin v1.0.141 : arene, cathedrale et Porte 2 dans la cellule");
+		Check(ar && ca && p2 && ar->kind == "arene" && ca->kind == "cathedrale", "feyhin v1.0.144 : arene, cathedrale et Porte 2 dans la cellule");
 		if (!ar || !ca || !p2) return;
 		const Vec2 A = ar->center;
 		Check(count("Arena_Stands_1", A, 40.0) == 23 && count("Arena_Gate_1", A, 40.0) == 1 && count("Arena_Post_Brazier_1", A, 30.0) == 11
 				&& count("Arena_Foundation_1", A, 40.0) == 5 && count("Sign_Service_arene", A, 60.0) == 1,
-			"feyhin v1.0.141 : arene batie (23 modules de gradins, entree, 11 braseros, fondations, enseigne)");
+			"feyhin v1.0.144 : arene batie (23 modules de gradins, entree, 11 braseros, fondations, enseigne)");
 		Vec2 vault{ 0.0, 0.0 };
 		int vaults = 0;
 		for (const ScatterDef& sd : w->scatter)
 			if (sd.mesh.find("Dungeon_Vault_1") != std::string::npos && std::hypot(sd.position.x - A.x, sd.position.z - A.z) < 60.0) { vault = vault + sd.position; ++vaults; }
-		Check(vaults == 3, "feyhin v1.0.141 : galerie des geoles (3 travees voutees)");
+		Check(vaults == 3, "feyhin v1.0.144 : galerie des geoles (3 travees voutees)");
 		if (vaults == 3)
 		{
 			vault = vault * (1.0 / 3.0);
 			const double y0 = w->HeightAt(A);
 			Check(std::fabs(w->HeightAt(vault) - (y0 - 4.6)) < 0.3 && count("Floor_UnevenBrick", A, 70.0) >= 100,
-				"feyhin v1.0.141 : geoles creusees a 4,6 m sous la piste, fosse couverte de dalles");
+				"feyhin v1.0.144 : geoles creusees a 4,6 m sous la piste, fosse couverte de dalles");
 		}
 		bool clearA = true, clearP = true;
 		for (const BuildingPlacementDef& b : w->buildings)
@@ -4397,16 +4739,16 @@ namespace
 			clearA = clearA && std::hypot(b.position.x - A.x, b.position.z - A.z) > ArenaFootprintM(*ar);
 			clearP = clearP && std::hypot(b.position.x - p2->center.x, b.position.z - p2->center.z) > 20.0;
 		}
-		Check(clearA && clearP, "feyhin v1.0.141 : aucune maison sur l'arene ni sur la Porte 2");
+		Check(clearA && clearP, "feyhin v1.0.144 : aucune maison sur l'arene ni sur la Porte 2");
 		// Cathédrale au sommet, services portés par les lieux bâtis (une seule enseigne chacun).
 		Check(std::hypot(ca->center.x - a.summit.x, ca->center.z - a.summit.z) < 1.0 && count("Church_Nave_1", a.summit, 40.0) == 1
 				&& count("Spire_Church_1", a.summit, 40.0) == 1 && count("Gargoyle_1", a.summit, 40.0) == 4,
-			"feyhin v1.0.141 : cathedrale au sommet (nef, clocher a fleche, gargouilles)");
+			"feyhin v1.0.144 : cathedrale au sommet (nef, clocher a fleche, gargouilles)");
 		Check(count("Sign_Service_temple", a.summit, 40.0) == 1 && count("Sign_Service_temple", c->center, 2000.0) == 1
-				&& count("Sign_Service_arene", c->center, 2000.0) == 1, "feyhin v1.0.141 : enseignes du temple et de l'arene sur leurs lieux seulement");
+				&& count("Sign_Service_arene", c->center, 2000.0) == 1, "feyhin v1.0.144 : enseignes du temple et de l'arene sur leurs lieux seulement");
 		Check(count("Stairs_Street_1", a.summit, 160.0) >= 20 && count("Stairs_Monumental_1", a.summit, 160.0) == 0 && count("Arch_Stone_1", c->center, 20.0) >= 2,
-			"feyhin v1.0.141 : escalier de rue jusqu'au sommet, place a colonnade");
-		// Ville dense sur la butte et ville basse au pied du revers (137 bâtiments avant v1.0.141).
+			"feyhin v1.0.144 : escalier de rue jusqu'au sommet, place a colonnade");
+		// Ville dense sur la butte et ville basse au pied du revers (137 bâtiments avant v1.0.144).
 		int houses = 0, low = 0;
 		for (const BuildingPlacementDef& b : w->buildings)
 		{
@@ -4416,13 +4758,13 @@ namespace
 			const double l = std::hypot(d.x, d.z);
 			if (l > 100.0 && (d.x * a.stairDir.x + d.z * a.stairDir.z) / l < -0.35) ++low;
 		}
-		Check(houses >= 400 && low >= 25, "feyhin v1.0.141 : ville dense (au moins 400 batiments), ville basse au pied de la falaise");
+		Check(houses >= 400 && low >= 25, "feyhin v1.0.144 : ville dense (au moins 400 batiments), ville basse au pied de la falaise");
 		std::ifstream cat(std::string(LCDLLN_CONTENT_DIR) + "/collision/building_pieces.json");
 		const std::string txt((std::istreambuf_iterator<char>(cat)), std::istreambuf_iterator<char>());
 		bool cataloged = true;
 		for (const char* k : { "\"arena_stands_1\"", "\"arena_gate_1\"", "\"bridge_stone_pier_1\"", "\"church_nave_1\"", "\"spire_church_1\"", "\"dungeon_vault_1\"" })
 			cataloged = cataloged && txt.find(k) != std::string::npos;
-		Check(cataloged, "feyhin v1.0.141 : gradins, entree, pile de pont, cathedrale et voute au catalogue de collision");
+		Check(cataloged, "feyhin v1.0.144 : gradins, entree, pile de pont, cathedrale et voute au catalogue de collision");
 	}
 
 	/// v1.0.133 (remarque du 21/11/2026 : « je me suis collé à la muraille de Lhynn ») : sur terrain en
@@ -4696,8 +5038,9 @@ namespace
 			const double d = dist(s.position);
 			if (s.mesh.find("Tent_Pilgrim_") != std::string::npos && (s.flags & 1u) && d > 220.0 && d < 432.0) ++tents;
 			if (s.mesh.find("Stairs_Exterior_Straight") != std::string::npos && d < 210.0) ++stairs;
-			if (s.mesh.find("Door_2_Round") != std::string::npos && d < 170.0) ++doors;
-			if (s.mesh.find("Pebble_Square_5") != std::string::npos && s.scale >= 12.0 && d > 420.0 && d < 560.0) ++stones;
+			// v1.0.141 : grandes portes peintes (8 dehors + 2 portes intérieures des salles).
+			if (s.mesh.find("Oracle_Door_Grand") != std::string::npos && d < 170.0) ++doors;
+			if (s.mesh.find("Oracle_Menhir_") != std::string::npos && d > 420.0 && d < 560.0) ++stones;
 			if (s.mesh.find("Stall_") != std::string::npos && d > 340.0 && d < 760.0)
 			{
 				const Vec2 q{ s.position.x - o.x, s.position.z - o.z };
@@ -4712,7 +5055,8 @@ namespace
 		Check(houses == 0, "oracle v1.0.136 : aucune maison europeenne dans le camp");
 		// Retour propriétaire du 23/11/2026 : « pas assez de tentes autour » -> quinze rangs.
 		Check(tents >= 1200, "oracle : ocean de tentes de pelerins (1200 tentes au moins)");
-		Check(stairs == 8 * 33 && doors == 8, "oracle v1.0.136 : 8 escaliers et 8 portes");
+		// v1.0.141 : escaliers de 6 m (15 rangs de 2 pièces de 3 m), 8 portes + 2 portes intérieures.
+		Check(stairs == 8 * 30 && doors == 10, "oracle v1.0.141 : 8 escaliers de 6 m, 8 grandes portes et 2 portes interieures");
 		Check(stones >= 18 && blueStones >= 9, "oracle v1.0.136 : menhirs bleus sur le grand cercle");
 		Check(stallsSw >= 8, "oracle v1.0.136 : echoppes des faux devins le long du chemin du sud-ouest");
 		// Rocher : sommet ≥ 50 m au-dessus de la plaine, paroi raide, plaine plate.
@@ -4723,7 +5067,10 @@ namespace
 			const double a = (k + 0.5) * 3.141592653589793 / 4.0;
 			steep = std::max(steep, w->SlopeDegAt(o + Vec2{ std::cos(a), std::sin(a) } * 150.0));
 		}
-		Check(w->HeightAt(o) - plain >= 50.0 && steep > 45.0 && std::fabs(plain - c->plateauY) < 0.5,
+		// v1.0.141 : le centre est la salle de l'Oracle (creusée) ; le rocher est mesuré à 110 m
+		// du centre, à l'ouest-nord-ouest (hors des salles).
+		const Vec2 onRock = o + Vec2{ std::cos(4.5 * 3.141592653589793 / 4.0), std::sin(4.5 * 3.141592653589793 / 4.0) } * 110.0;
+		Check(w->HeightAt(onRock) - plain >= 50.0 && steep > 45.0 && std::fabs(plain - c->plateauY) < 0.5,
 			"oracle v1.0.136 : rocher dominant la plaine, parois infranchissables");
 		int roadOnRock = 0;
 		for (const Road& r : w->roads) for (const Vec2& p : r.points) roadOnRock += dist(p) < 205.0 ? 1 : 0;
@@ -4747,13 +5094,88 @@ namespace
 			if (s.id == "amb_" + c->id + "_aubergiste") ++inn;
 			if (s.id.find("amb_" + c->id + "_marchand_") == 0) ++merchants;
 			if (s.id.find("amb_" + c->id + "_villageois_") == 0) ++villagers;
-			if (s.routineKind.empty() && dist(s.position) < 700.0) ++fauna;
+			// v1.0.141 : le raid de la salle des Échos (170, 171) n'est pas de la faune du camp.
+			if (s.routineKind.empty() && dist(s.position) < 700.0 && s.archetypeId != 170u && s.archetypeId != 171u) ++fauna;
 		}
 		for (const RespawnDef& r : w->respawns) graveyards += (r.type == "graveyard" && r.graveyardId == c->id) ? 1 : 0;
 		Check(inn == 1 && merchants >= 11 && L->stallFronts.size() >= 11 && villagers >= 10 && !L->homeDoors.empty(),
 			"oracle v1.0.136 : services gardes (auberge, etals et marchands, pelerins)");
 		Check(graveyards == 1 && L->hasGraveyard && dist(L->graveyard) > 360.0, "oracle v1.0.136 : un seul cimetiere, hors des tentes");
 		Check(fauna == 0, "oracle v1.0.136 : ni faune ni monstre dans le camp (lieu neutre)");
+
+		// ---- v1.0.141 (demande du propriétaire du 25/11/2026) : salles, portes, raid, camp.
+		const double floorY = plain + 22.0;
+		const Vec2 nE{ 1.0, 0.0 };
+		const Vec2 ec = o + nE * 94.0;
+		Check(std::fabs(w->HeightAt(o) - floorY) < 0.6 && std::fabs(w->HeightAt(o + Vec2{ 20.0, -15.0 }) - floorY) < 0.6,
+			"oracle v1.0.141 : salle de l'Oracle creusee au niveau des paliers");
+		Check(std::fabs(w->HeightAt(ec) - floorY) < 0.6, "oracle v1.0.141 : salle des Echos creusee au niveau des paliers");
+		// Parois pleines : entre les deux salles, entre la salle des Échos et le palier est, autour.
+		double between = 1e9, eastWall = 0.0, ring = 1e9;
+		for (double r = 53.0; r <= 63.0; r += 2.0) between = std::min(between, w->HeightAt(o + nE * r) - floorY);
+		for (double r = 124.0; r <= 132.0; r += 2.0) eastWall = std::max(eastWall, w->HeightAt(o + nE * r) - floorY);
+		for (int k = 0; k < 16; ++k)
+		{
+			const double a = (k + 0.5) * 3.141592653589793 / 8.0;
+			if (std::cos(a) > 0.7) continue; // côté de la salle des Échos
+			ring = std::min(ring, w->HeightAt(o + Vec2{ std::cos(a), std::sin(a) } * 56.0) - floorY);
+		}
+		std::fprintf(stderr, "  oracle v1.0.141 : paroi entre salles %.1f m, paroi est %.1f m, pourtour %.1f m\n", between, eastWall, ring);
+		Check(between > 30.0 && eastWall > 30.0 && ring > 25.0, "oracle v1.0.141 : salles fermees par le rocher (acces par les passages seulement)");
+		int walls = 0, vaults = 0, dais = 0, pillar = 0, colored4 = 0, colored5 = 0, pennants = 0, troughs = 0, slabs = 0;
+		for (const ScatterDef& s : w->scatter)
+		{
+			const double d = dist(s.position);
+			walls += s.mesh.find("Oracle_Hall_Wall") != std::string::npos ? 1 : 0;
+			vaults += s.mesh.find("Oracle_Vault") != std::string::npos ? 1 : 0;
+			dais += (s.mesh.find("Oracle_Hall_Dais") != std::string::npos && d < 1.0) ? 1 : 0;
+			pillar += (s.mesh.find("Oracle_Light_Pillar") != std::string::npos && d < 1.0) ? 1 : 0;
+			colored4 += s.mesh.find("Tent_Pilgrim_4") != std::string::npos ? 1 : 0;
+			colored5 += s.mesh.find("Tent_Pilgrim_5") != std::string::npos ? 1 : 0;
+			pennants += s.mesh.find("Pennant_Pole_1") != std::string::npos ? 1 : 0;
+			troughs += s.mesh.find("Trough_Stone_1") != std::string::npos ? 1 : 0;
+			slabs += s.mesh.find("Oracle_Crystal_Slab_") != std::string::npos ? 1 : 0;
+		}
+		std::fprintf(stderr, "  oracle v1.0.141 : parois %d, voutes %d, tentes rouges %d, bleues %d, fanions %d, abreuvoirs %d, dalles %d\n",
+			walls, vaults, colored4, colored5, pennants, troughs, slabs);
+		Check(walls == 32 && vaults == 2 && dais == 1 && pillar == 1, "oracle v1.0.141 : salles habillees (parois, voutes, dais, colonne de brume)");
+		Check(slabs >= 40 && w->crystalLayer, "oracle v1.0.141 : rocher de cristal (dalles et couche de cristal du terrain)");
+		Check(colored4 >= 100 && colored5 >= 100 && pennants >= 20, "oracle v1.0.141 : tentes de couleur et mats a fanion");
+		int ponds = 0;
+		for (const Lake& l : w->lakes) ponds += l.name.find(c->id + "_bassin_") == 0 ? 1 : 0;
+		Check(ponds >= 3 && troughs >= 10, "oracle v1.0.141 : bassins des pelerins et abreuvoirs");
+		// Passages conditionnels (shard).
+		const PassageDef* soIn = nullptr; const PassageDef* eIn = nullptr; int outs = 0;
+		for (const PassageDef& p : w->passages)
+		{
+			if (p.id == c->id + "_porte_so_entree") soIn = &p;
+			if (p.id == c->id + "_porte_e_entree") eIn = &p;
+			if (p.id.find("_sortie") != std::string::npos && p.requiredQuests.empty() && p.minGroup == 0
+				&& std::fabs(w->HeightAt(p.destination) - floorY) < 0.6) ++outs;
+		}
+		Check(w->passages.size() == 4 && outs == 2, "oracle v1.0.141 : 2 entrees et 2 sorties sans condition (arrivee sur le palier)");
+		Check(soIn && soIn->requiredQuests == std::vector<std::string>{ "oracle_appel" } && soIn->minGroup == 0
+			&& dist(soIn->destination) < 44.0 && std::fabs(w->HeightAt(soIn->destination) - floorY) < 0.6,
+			"oracle v1.0.141 : porte SO -> salle de l'Oracle, quete L'Appel de l'Oracle");
+		Check(eIn && eIn->requiredQuests.size() == 2 && eIn->minGroup == 3
+			&& std::hypot(eIn->destination.x - ec.x, eIn->destination.z - ec.z) < 24.0,
+			"oracle v1.0.141 : porte E -> salle des Echos, quete et groupe de 3");
+		// PNJ de quête, raid, ambiances.
+		int npcs = 0, boss = 0, echoes = 0;
+		for (const InteractableDef& d : w->interactables)
+			npcs += (d.npcTargetId == "npc:oracle_veilleur" && dist({ d.x, d.z }) > 200.0)
+				|| (d.npcTargetId == "npc:oracle_pretresse" && dist({ d.x, d.z }) < 30.0) ? 1 : 0;
+		for (const SpawnerDef& s : w->spawners)
+		{
+			const double de = std::hypot(s.position.x - ec.x, s.position.z - ec.z);
+			boss += (s.archetypeId == 170u && de < 2.0) ? 1 : 0;
+			echoes += (s.archetypeId == 171u && de < 20.0) ? 1 : 0;
+		}
+		int dark = 0;
+		for (const AmbianceZoneDef& z : w->ambianceZones) dark += (z.id.find(c->id + "_salle_") == 0 && z.darkness > 0.5) ? 1 : 0;
+		Check(npcs == 2, "oracle v1.0.141 : veilleur dehors, pretresse dans la salle");
+		Check(boss == 1 && echoes == 4, "oracle v1.0.141 : raid de la salle des Echos (gardien et 4 echos)");
+		Check(dark == 2, "oracle v1.0.141 : salles sombres (zones d'ambiance)");
 	}
 
 	/// v1.0.134 — routes soudées, plus de doublon (LORE_BD §16.60). Sur le réseau macro des
@@ -4865,6 +5287,7 @@ int main()
 	TestStartCorridors();
 	TestGenerationAndInvariants();
 	TestReconstruction();
+	TestCityAppearance();
 	TestMapFeatures();
 	TestWaterShores();
 	TestRiverIslandAndSharedPois();
@@ -4905,7 +5328,8 @@ int main()
 	TestRemplissageV1135();
 	TestOracleV1136();
 	TestAcropoleLhynnV1140();
-	TestFeyhinLokcthatV1141();
+	TestVilleTourMagistryaV1143();
+	TestFeyhinLokcthatV1144();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

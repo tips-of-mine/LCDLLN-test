@@ -256,7 +256,7 @@
   {
    "bufferView": 8,
    "componentType": 5126,
-   "count": 864,
+   "count": 840,
    "max": [
     4.5,
     15.399999618530273,
@@ -272,19 +272,19 @@
   {
    "bufferView": 9,
    "componentType": 5126,
-   "count": 864,
+   "count": 840,
    "type": "VEC3"
   },
   {
    "bufferView": 10,
    "componentType": 5126,
-   "count": 864,
+   "count": 840,
    "type": "VEC2"
   },
   {
    "bufferView": 11,
    "componentType": 5123,
-   "count": 1296,
+   "count": 1260,
    "type": "SCALAR"
   }
  ],
@@ -339,26 +339,26 @@
   },
   {
    "buffer": 0,
-   "byteLength": 10368,
+   "byteLength": 10080,
    "byteOffset": 20160,
    "target": 34962
   },
   {
    "buffer": 0,
-   "byteLength": 10368,
-   "byteOffset": 30528,
+   "byteLength": 10080,
+   "byteOffset": 30240,
    "target": 34962
   },
   {
    "buffer": 0,
-   "byteLength": 6912,
-   "byteOffset": 40896,
+   "byteLength": 6720,
+   "byteOffset": 40320,
    "target": 34962
   },
   {
    "buffer": 0,
-   "byteLength": 2592,
-   "byteOffset": 47808,
+   "byteLength": 2520,
+   "byteOffset": 47040,
    "target": 34963
   }
  ],
@@ -370,7 +370,7 @@
  ],
  "buffers": [
   {
-   "byteLength": 50400,
+   "byteLength": 49560,
    "uri": "Arena_Gate_1_LOD1.bin"
   }
  ]

@@ -430,13 +430,131 @@ namespace tools::world_gen
 			}
 			w.Occupy(c, topR);
 		}
+
+		/// v1.0.143 — PALAIS DU MAGISTER (Magistrya, BD-T2 p.20, 23, 25 ; LORE_BD §16.69), au
+		/// sommet de la ville-tour (POI de genre « palais » sur la plateforme d'un pic). Repère :
+		/// \p u vers l'arrivée de la rampe (portail), \p v à gauche. Construit : parapet de la
+		/// plateforme (ouvert sur la rampe), quatre tours rondes aux angles ; SALLE DU TRÔNE en
+		/// longueur (46 × 18 m, murs de 6 étages, sol de dalles), portail gothique à rosace sans
+		/// pentagramme (Portal_Gothic_1, Window_Rose_1), deux rangées de colonnes torsadées
+		/// colossales (Column_Twisted_Giant_1, ≈ 16 m), tapis, braseros, trône sur estrade et
+		/// fauteuil sculpté ; LABORATOIRE au fond (porte de bois en plein cintre, charpente, table
+		/// de pierre, étagères d'apothicaire, alambic, chaudron, chaînes à crochet). Signatures de
+		/// la BD (pentagramme marqué « H », machine d'extraction) non reproduites. Effet de bord :
+		/// w.scatter, w.pointLights, occupation de w.
+		void BuildMagisterPalace(World& w, const PoiDef& p, Vec2 c, Vec2 u, double topR, LandmarkRng& rng)
+		{
+			const Vec2 v{ -u.z, u.x };
+			auto at = [&](double du, double dv) { return c + u * du + v * dv; };
+			const double yawU = std::atan2(u.x, u.z) * 180.0 / kPi; // +Z local vers u
+			auto light = [&](const std::string& id, Vec2 q, double y, double radius, double intensity) {
+				PointLightDef L;
+				L.id = p.id + "_" + id; L.position = q; L.y = w.HeightAt(q) + y;
+				L.radiusM = radius; L.intensity = intensity; L.r = 1.0; L.g = 0.62; L.b = 0.3;
+				w.pointLights.push_back(L);
+			};
+			// Parapet de la plateforme, ouvert de 14 m sur l'arrivée de la rampe.
+			const double rimR = topR - 0.5;
+			const int nRim = static_cast<int>(std::lround(2.0 * kPi * rimR / 2.0));
+			const double au = std::atan2(u.z, u.x);
+			for (int k = 0; k < nRim; ++k)
+			{
+				const double a = (k + 0.5) * 2.0 * kPi / nRim;
+				if (std::fabs(std::remainder(a - au, 2.0 * kPi)) * rimR < 7.0) continue;
+				const Vec2 dir{ std::cos(a), std::sin(a) };
+				Piece(w, "Bridge_Stone_Parapet_1", c + dir * rimR, 0.0, YawAlong(Vec2{ -dir.z, dir.x }), 1.0, true);
+			}
+			// Tours rondes aux angles (« des tours dans les angles », p.20).
+			for (int k = 0; k < 4; ++k)
+			{
+				const double a = au + kPi / 4.0 + k * kPi / 2.0;
+				const Vec2 dir{ std::cos(a), std::sin(a) };
+				BuildTower(w, c + dir * (topR - 4.5), 2.8, 7, true, dir * -1.0, false, rng);
+			}
+			// Salle du trône : murs (6 étages ≈ 18,7 m), passage au portail, arche vers le laboratoire.
+			// Dimensions proportionnées à la plateforme (rayon 32 m : salle de 34 × 16 m).
+			const double hallFront = 0.6 * topR, hallBack = -0.45 * topR, hallHalf = 8.0;
+			for (int sg = -1; sg <= 1; sg += 2)
+			{
+				BuildWall(w, at(hallBack, sg * hallHalf), at(hallFront, sg * hallHalf), 6, false, false, rng);
+				BuildWall(w, at(hallFront, sg * hallHalf), at(hallFront, sg * 4.0), 6, false, false, rng);
+			}
+			BuildWall(w, at(hallBack, -hallHalf), at(hallBack, hallHalf), 6, false, true, rng);
+			for (double du = hallBack + 1.0; du < hallFront; du += 2.0)
+				for (double dv = -hallHalf + 1.0; dv < hallHalf; dv += 2.0)
+					Piece(w, "Floor_Brick", at(du, dv), 0.02, yawU, 1.0, true);
+			// Portail gothique (rosace sans pentagramme) et rosace au-dessus.
+			Piece(w, "Portal_Gothic_1", at(hallFront + 0.5, 0.0), 0.0, YawAlong(v), 1.25, false);
+			Piece(w, "Window_Rose_1", at(hallFront + 0.4, 0.0), 13.2, YawAlong(v), 1.2, false);
+			for (int sg = -1; sg <= 1; sg += 2)
+			{
+				const Vec2 b = at(hallFront + 4.0, sg * 6.0);
+				Piece(w, "Brazier_Column_1", b, 0.0, 0.0, 1.4, true);
+				light("parvis_" + std::to_string(sg > 0 ? 1 : 0), b, 3.2, 14.0, 2.0);
+			}
+			// Colonnes torsadées colossales (deux rangées), tapis, braseros.
+			// (collision par le catalogue de pièces : socle, fût, chapiteau ; grande distance de vue)
+			for (int k = 0; k < 4; ++k)
+				for (int sg = -1; sg <= 1; sg += 2)
+				{
+					ScatterDef col;
+					col.mesh = "meshes/props/Column_Twisted_Giant_1.gltf";
+					col.position = at(hallFront - 4.0 - 7.0 * k, sg * 4.8);
+					col.yawDeg = rng.Next() * 360.0;
+					col.flags = static_cast<uint8_t>(kSolid | kPiece);
+					col.cullClass = 0;
+					w.scatter.push_back(std::move(col));
+				}
+			for (int k = 0; k < 2; ++k)
+				Piece(w, "Carpet_Runner_1", at(hallFront - 7.0 - 12.0 * k, 0.0), 0.06, yawU, 1.0, false);
+			for (int k = 0; k < 3; ++k)
+				for (int sg = -1; sg <= 1; sg += 2)
+				{
+					const Vec2 b = at(hallFront - 7.5 - 7.0 * k, sg * 2.6);
+					Piece(w, "Brazier_Column_1", b, 0.0, 0.0, 1.0, true);
+					if (sg > 0) light("salle_" + std::to_string(k), b, 2.4, 12.0, 1.8);
+				}
+			// Estrade (dalles relevées), trône face au portail, fauteuil sculpté à côté.
+			for (double du = hallBack + 2.0; du <= hallBack + 6.0; du += 2.0)
+				for (double dv = -3.0; dv <= 3.0; dv += 2.0)
+					Piece(w, "Bridge_Stone_Deck_1", at(du, dv), 0.36, yawU, 1.0, true);
+			Piece(w, "Throne_Wood_1", at(hallBack + 3.0, 0.0), 0.37, yawU, 1.5, true);
+			Piece(w, "Armchair_Carved_1", at(hallBack + 3.4, 2.2), 0.37, yawU, 1.0, true);
+			// Laboratoire (p.23, p.25) : murs de 3 étages, sol de dalles, porte de bois en plein
+			// cintre ouverte dans l'arche, charpente, mobilier d'alchimiste.
+			const double labBack = -0.84 * topR, labHalf = 7.0;
+			for (int sg = -1; sg <= 1; sg += 2)
+				BuildWall(w, at(labBack, sg * labHalf), at(hallBack, sg * labHalf), 3, false, false, rng);
+			BuildWall(w, at(labBack, -labHalf), at(labBack, labHalf), 3, false, false, rng);
+			for (double du = labBack + 1.0; du < hallBack; du += 2.0)
+				for (double dv = -labHalf + 1.0; dv < labHalf; dv += 2.0)
+					Piece(w, "Floor_Brick", at(du, dv), 0.02, yawU, 1.0, true);
+			Piece(w, "Door_2_Round", at(hallBack - 0.4, -1.2), 0.0, yawU + 70.0, 1.0, false);
+			const double labMid = 0.5 * (labBack + hallBack);
+			for (int k = 0; k < 3; ++k)
+			{
+				const double du = hallBack - 2.5 - 3.6 * k;
+				Piece(w, "Beam_Truss_1", at(du, 0.0), 6.2, YawAlong(v), 1.75, false);
+				Piece(w, "Chain_Hook_1", at(du, -2.5 + 2.5 * k), 3.0, 0.0, 1.0, false);
+			}
+			Piece(w, "Table_Stone_1", at(labMid, 0.0), 0.0, YawAlong(u), 1.2, true);
+			Piece(w, "Alembic_1", at(labMid, 0.5), 1.08, 0.0, 1.0, false);
+			Piece(w, "Book_5", at(labMid - 0.2, -0.6), 1.09, 30.0, 1.0, false);
+			Piece(w, "Cauldron", at(labBack + 2.0, 4.0), 0.0, 0.0, 1.2, true);
+			for (int k = 0; k < 2; ++k)
+				for (int sg = -1; sg <= 1; sg += 2)
+					Piece(w, "Shelf_Apothecary_1", at(hallBack - 3.0 - 4.0 * k, sg * (labHalf - 0.6)), 0.0, YawAlong(u) + (sg > 0 ? 180.0 : 0.0), 1.0, true);
+			Piece(w, "Shelf_Small_Bottles", at(labBack + 0.6, 2.0), 0.0, yawU, 1.0, false);
+			light("laboratoire", at(labMid, 0.0), 4.0, 12.0, 1.5);
+			w.Occupy(c, topR);
+		}
 	}
 
 	// ---------------------------------------------------------------------------------
-	// v1.0.141 — FEYHIN LOKCTHAT (BD-T2 p.7-12) : arène des gladiateurs et ses geôles
+	// v1.0.144 — FEYHIN LOKCTHAT (BD-T2 p.7-12) : arène des gladiateurs et ses geôles
 	// creusées sous les gradins (POI de genre « arene »), cathédrale au sommet de la ville
 	// perchée (POI de genre « cathedrale », plateforme d'une acropole). Éléments génériques
-	// réinterprétés (LORE_BD §16.67) : aucun blason, aucun monument signature.
+	// réinterprétés (LORE_BD §16.70) : aucun blason, aucun monument signature.
 	// ---------------------------------------------------------------------------------
 	namespace
 	{
@@ -737,14 +855,44 @@ namespace tools::world_gen
 				// v1.0.140 : sur la plateforme de l'acropole la plus proche (porte vers son
 				// escalier) ; sans acropole, plateforme de 56 m tournée vers la route.
 				const AcropoleShape* ac = nullptr;
+				const TowerShape* tw = nullptr;
 				for (const CityDef& c : w.cities)
+				{
 					if (c.acropole.enabled && std::hypot(c.acropole.summit.x - p.center.x, c.acropole.summit.z - p.center.z) < c.acropole.topRadiusM)
 						ac = &c.acropole;
-				BuildImperialPalace(w, p, ac ? ac->summit : p.center, ac ? ac->stairDir : toward, ac ? ac->topRadiusM : 56.0, rng);
+					if (c.tower.enabled && std::hypot(c.tower.center.x - p.center.x, c.tower.center.z - p.center.z) < c.tower.topRadiusM)
+						tw = &c.tower;
+				}
+				// v1.0.143 : sommet d'une ville-tour (Magistrya) : palais du Magister, portail vers
+				// l'arrivée de la cage d'escalier 0 (direction du ponton). v1.0.143 : le sommet de
+				// l'aiguille n'est pas un plateau de heightmap (rocher en retrait, dallage posé par
+				// BuildTowerCity à l'altitude du sommet) : les pièces du palais, posées par rapport
+				// au sol, sont ramenées à un sol PLAT à cette altitude.
+				if (tw)
+				{
+					const size_t s0 = w.scatter.size(), l0 = w.pointLights.size();
+					BuildMagisterPalace(w, p, tw->center, Vec2{ std::cos(tw->entryRad), std::sin(tw->entryRad) }, tw->topRadiusM, rng);
+					double summitY = 0.0;
+					for (const CityDef& c : w.cities)
+						if (&c.tower == tw) summitY = c.plateauY + tw->heightM;
+					// Pierre ocre orangé comme toute la ville (BD-T2 p.19-20) : les murs gris du kit
+					// (tours et murs communs aux châteaux) passent au grès de Magistrya.
+					const std::string grey = "/Wall_UnevenBrick_", ochre = "/Wall_Sandstone_";
+					for (size_t k = s0; k < w.scatter.size(); ++k)
+					{
+						w.scatter[k].yOffset += summitY - w.HeightAt(w.scatter[k].position);
+						const size_t at = w.scatter[k].mesh.find(grey);
+						if (at != std::string::npos) w.scatter[k].mesh.replace(at, grey.size(), ochre);
+					}
+					for (size_t k = l0; k < w.pointLights.size(); ++k)
+						w.pointLights[k].y += summitY - w.HeightAt(w.pointLights[k].position);
+				}
+				else
+					BuildImperialPalace(w, p, ac ? ac->summit : p.center, ac ? ac->stairDir : toward, ac ? ac->topRadiusM : 56.0, rng);
 			}
 			else if (p.kind == "cathedrale")
 			{
-				// v1.0.141 : sur la plateforme de l'acropole la plus proche (portail vers son
+				// v1.0.144 : sur la plateforme de l'acropole la plus proche (portail vers son
 				// escalier), comme le palais ; sans acropole, plateforme de 40 m tournée vers la route.
 				const AcropoleShape* ac = nullptr;
 				for (const CityDef& c : w.cities)
@@ -754,7 +902,7 @@ namespace tools::world_gen
 			}
 			else if (p.kind == "arene")
 			{
-				// v1.0.141 : entrée tournée vers la route la plus proche (à moins de 250 m : Feyhin,
+				// v1.0.144 : entrée tournée vers la route la plus proche (à moins de 250 m : Feyhin,
 				// route du pont), sinon vers la ville de la case ; geôles du côté opposé.
 				Vec2 u = toward;
 				if (bd > 250.0)

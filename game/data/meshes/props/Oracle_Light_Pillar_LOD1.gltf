@@ -1,0 +1,278 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Oracle_Light_Pillar_LOD1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Mist_Frozen",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   },
+   "emissiveFactor": [
+    0.35,
+    0.35,
+    0.35
+   ]
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Crystal_Glow",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   },
+   "emissiveFactor": [
+    0.55,
+    0.55,
+    0.55
+   ]
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Oracle_Light_Pillar_LOD1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Mist_Frozen_Normal.png",
+   "uri": "T_Decor_Mist_Frozen_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Mist_Frozen_BaseColor.png",
+   "uri": "T_Decor_Mist_Frozen_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Mist_Frozen_ORM.png",
+   "uri": "T_Decor_Mist_Frozen_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Crystal_Glow_Normal.png",
+   "uri": "T_Decor_Crystal_Glow_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Crystal_Glow_BaseColor.png",
+   "uri": "T_Decor_Crystal_Glow_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Crystal_Glow_ORM.png",
+   "uri": "T_Decor_Crystal_Glow_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 270,
+   "max": [
+    4.853036403656006,
+    33.476348876953125,
+    5.105644226074219
+   ],
+   "min": [
+    -4.944807052612305,
+    -0.12396907806396484,
+    -4.311513900756836
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 270,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 270,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 960,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 35,
+   "max": [
+    0.47404107451438904,
+    27.477569580078125,
+    0.4357420802116394
+   ],
+   "min": [
+    -0.6861295700073242,
+    0,
+    -0.5467161536216736
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 35,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 35,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 45,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 3240,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3240,
+   "byteOffset": 3240,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2160,
+   "byteOffset": 6480,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1920,
+   "byteOffset": 8640,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 420,
+   "byteOffset": 10560,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 420,
+   "byteOffset": 10980,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 280,
+   "byteOffset": 11400,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 90,
+   "byteOffset": 11680,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 11772,
+   "uri": "Oracle_Light_Pillar_LOD1.bin"
+  }
+ ]
+}

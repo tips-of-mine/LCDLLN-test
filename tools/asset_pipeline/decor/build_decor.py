@@ -119,6 +119,15 @@ def card(part, center, size_w, size_h, normal, up_hint, outward, anchor="center"
 # ======================================================================= matériaux
 _MATS = {}
 
+# Matériaux émissifs (Camp de l'Oracle, 25/11/2026) : texture -> intensité [0, 1], écrite
+# dans le glTF (emissiveFactor gris) au post-traitement d'export. Le client la lit
+# (StaticMeshLoader, champ emissive) et l'envoie au G-buffer (gbuffer_geometry.frag :
+# GBufferC.a = 1 - émission) ; lighting.frag ajoute albedo × émission × 6.
+EMISSIVE = {
+    "Crystal_Glow": 0.55,
+    "Mist_Frozen": 0.35,
+}
+
 
 def _img(name, non_color):
     path = os.path.join(PROPS, name)
@@ -821,6 +830,11 @@ KIT_STYLES = {
     # Atelier décors T4 (n° 156) : maisons de brique rouge de Dis.
     "redbrick": {"MI_Plaster": "Brick_Red", "MI_UnevenBrick": "Brick_Red", "MI_WoodTrim": "Wood_Dark",
                  "MI_Brick": "Brick_Red", "MI_RockTrim": "Stone_Carved", "MI_RoundTiles": "Shingle"},
+    # Atelier décors T2 (n° 239, 240) : pierre ocre orangé de Magistrya (grès, brique ocre).
+    "sandstone": {"MI_Plaster": "Stone_Sandstone", "MI_UnevenBrick": "Stone_Sandstone", "MI_WoodTrim": "Wood_Dark",
+                  "MI_Brick": "Stone_Sandstone", "MI_RockTrim": "Stone_Sandstone", "MI_RoundTiles": "Shingle_Slate"},
+    "ochrebrick": {"MI_Plaster": "Brick_Ochre", "MI_UnevenBrick": "Brick_Ochre", "MI_WoodTrim": "Wood_Dark",
+                   "MI_Brick": "Brick_Ochre", "MI_RockTrim": "Stone_Sandstone", "MI_RoundTiles": "Shingle_Slate"},
     # Atelier décors T2 (n° 92) : ardoise bleue des villes de l'Empire.
     "slate": {"MI_Plaster": "Plaster", "MI_UnevenBrick": "Stone_Wall", "MI_WoodTrim": "Wood_Dark",
               "MI_Brick": "Stone_Wall", "MI_RockTrim": "Stone_Wall", "MI_RoundTiles": "Shingle_Slate"},
@@ -890,6 +904,10 @@ def export(ob, path, alpha_mats):
             m["alphaMode"] = "MASK"
             m["alphaCutoff"] = 0.5
         m["doubleSided"] = True
+        tex = m.get("name", "").replace("MI_Decor_", "")
+        if tex in EMISSIVE:
+            k = EMISSIVE[tex]
+            m["emissiveFactor"] = [k, k, k]
     for im in g.get("images", []):
         if "uri" in im:
             im["uri"] = os.path.basename(im["uri"].replace("\\", "/"))

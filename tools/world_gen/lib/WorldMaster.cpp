@@ -239,7 +239,24 @@ namespace tools::world_gen
 			if (d.secret && !d.startFor.empty()) { err = "master: la ville de depart '" + d.id + "' ne peut pas etre secrete"; return false; }
 			// Mise en page dédiée (v1.0.136) : vide (générique) ou « oracle ».
 			d.layout = GetStr(c, "layout");
-			if (!d.layout.empty() && d.layout != "oracle") { err = "master: layout inconnu pour '" + d.id + "' : " + d.layout; return false; }
+			// v1.0.143 : « ville_tour » (Magistrya ; relief `pic` exigé, contrôlé après les reliefs).
+			if (!d.layout.empty() && d.layout != "oracle" && d.layout != "ville_tour") { err = "master: layout inconnu pour '" + d.id + "' : " + d.layout; return false; }
+			// Apparence propre (v1.0.142) : objet optionnel, valeurs fermées (une faute de
+			// frappe dans le lore doit casser la génération, pas passer inaperçue).
+			if (const JsonValue* ap = FindObjectMember(c, "apparence"))
+			{
+				if (ap->type != JsonType::Object) { err = "master: apparence de '" + d.id + "' n'est pas un objet"; return false; }
+				d.apparence.enceinte = GetStr(*ap, "enceinte");
+				d.apparence.donjon = GetStr(*ap, "donjon");
+				d.apparence.bati = GetStr(*ap, "bati");
+				d.apparence.vestigesSiege = GetBool(*ap, "vestiges_siege", false);
+				if (!d.apparence.enceinte.empty() && d.apparence.enceinte != "rempart_bois")
+				{ err = "master: apparence.enceinte inconnue pour '" + d.id + "' : " + d.apparence.enceinte; return false; }
+				if (!d.apparence.donjon.empty() && d.apparence.donjon != "tour_fleche")
+				{ err = "master: apparence.donjon inconnu pour '" + d.id + "' : " + d.apparence.donjon; return false; }
+				if (!d.apparence.bati.empty() && d.apparence.bati != "planches")
+				{ err = "master: apparence.bati inconnu pour '" + d.id + "' : " + d.apparence.bati; return false; }
+			}
 			out.cities.push_back(std::move(d));
 		}
 		// Une seule ville de départ par faction (v1.0.61 : start_for porte des
@@ -368,7 +385,7 @@ namespace tools::world_gen
 					}
 					d.cellNE.push_back({ n, e });
 				}
-				// v1.0.141 — élargissements locaux du lit (Feyhin Lokcthat, BD-T2 p.7) : point (m depuis
+				// v1.0.144 — élargissements locaux du lit (Feyhin Lokcthat, BD-T2 p.7) : point (m depuis
 				// le centre d'une case du cours), largeur 1 à 6 fois celle du cours, sur 40 à 600 m.
 				if (const JsonValue* wl = FindObjectMember(v, "widenings"); wl && wl->type == JsonType::Array)
 					for (const JsonValue& q : wl->arrayValue)
@@ -502,7 +519,8 @@ namespace tools::world_gen
 				// Le relief est dessiné au centre de la case de sa ville : une ville perchée
 				// ou au fond d'une crevasse ne peut pas être déplacée à la main (v1.0.95).
 				// Gouffre (v1.0.107) : il SUIT la ville (position manuelle admise).
-				if (city->hasPosition && d.type != "gouffre" && d.type != "acropole")
+				// Acropole (v1.0.140) et pic (v1.0.143) aussi : le relief suit la ville.
+				if (city->hasPosition && d.type != "gouffre" && d.type != "acropole" && d.type != "pic")
 				{
 					err = "master: ville '" + d.cityId + "' ancree sur le relief '" + d.id + "' : position manuelle interdite"; return false;
 				}
@@ -530,9 +548,9 @@ namespace tools::world_gen
 					a.stairHalfWidthM = GetNum(v, "stair_half_width_m", 0.0);
 					a.stairBottomM = GetNum(v, "stair_bottom_m", 0.0);
 					a.backFactor = GetNum(v, "back_factor", 1.0);
-					a.cityRadiusM = GetNum(v, "city_radius_m", 0.0); // v1.0.141 (0 = rayon du genre)
-					a.backTown = GetBool(v, "back_town", false);     // v1.0.141 : ville basse au pied du revers
-					a.streetStairs = GetStr(v, "stair_style") == "rue"; // v1.0.141 : escalier de rue (Feyhin)
+					a.cityRadiusM = GetNum(v, "city_radius_m", 0.0); // v1.0.144 (0 = rayon du genre)
+					a.backTown = GetBool(v, "back_town", false);     // v1.0.144 : ville basse au pied du revers
+					a.streetStairs = GetStr(v, "stair_style") == "rue"; // v1.0.144 : escalier de rue (Feyhin)
 					if (off > 1e-6) a.stairDir = { -d.offsetXM / off, -d.offsetZM / off };
 					d.center = a.summit;
 					// Talus praticables (pente ≤ 40° : bank ≥ 1,19 × hauteur d'un gradin), sommet dans
@@ -553,6 +571,56 @@ namespace tools::world_gen
 					}
 					d.footRadiusM = a.FootRadiusM();
 					city->acropole = a;
+					out.reliefs.push_back(std::move(d));
+					continue;
+				}
+				// Pic (v1.0.143, ville-tour : Magistrya, BD-T2 p.19-27 : aiguille de
+				// bâtiments empilés et cages d'escalier, TowerShape). Le pic suit la ville (position
+				// manuelle admise) ; il n'entre pas dans le relief macro : il est sculpté dans la
+				// heightmap de sa cellule par BuildTowerCity. La ville doit avoir la mise en page
+				// « ville_tour ».
+				if (d.type == "pic")
+				{
+					TowerShape& t = d.tower;
+					t.enabled = true;
+					t.center = { ctr.x + (city->hasPosition ? city->positionXM : 0.0), ctr.z + (city->hasPosition ? city->positionZM : 0.0) };
+					t.heightM = d.heightM;
+					t.topRadiusM = d.topRadiusM;
+					t.baseRadiusM = GetNum(v, "base_radius_m", 0.0);
+					t.tierTargetM = GetNum(v, "tier_m", 0.0);
+					t.shaftM = GetNum(v, "shaft_m", 0.0);
+					t.shaftsLow = static_cast<int>(GetNum(v, "shafts_low", 0.0));
+					t.shaftsHigh = static_cast<int>(GetNum(v, "shafts_high", 0.0));
+					t.splitM = GetNum(v, "split_m", 0.0);
+					t.socleM = GetNum(v, "socle_m", 0.0);
+					t.lakeRadiusM = GetNum(v, "lake_radius_m", 0.0);
+					t.entryRad = GetNum(v, "entry_deg", 0.0) * 3.14159265358979323846 / 180.0;
+					d.center = t.center;
+					// Formes admises : aiguille (rayon du sommet au moins 24 m pour le palais, base
+					// plus large), niveaux de 8 à 16 m, cages de 3,8 à 6 m (deux volées côte à côte),
+					// cages hautes diviseur des basses, assez de façade entre deux cages au sommet,
+					// coupure entre les deux, lac plus large que le socle (ponton d'au moins 150 m),
+					// tout dans la case.
+					const double pi = 3.14159265358979323846;
+					const bool countsOk = t.shaftsLow >= 4 && t.shaftsLow <= 48 && t.shaftsHigh >= 2
+						&& t.shaftsHigh <= t.shaftsLow && t.shaftsLow % t.shaftsHigh == 0;
+					const bool shapeOk = countsOk && t.heightM >= 100.0 && t.heightM <= 900.0
+						&& t.topRadiusM >= 24.0 && t.topRadiusM <= 80.0
+						&& t.baseRadiusM >= t.topRadiusM + 20.0 && t.baseRadiusM <= 400.0
+						&& t.tierTargetM >= 8.0 && t.tierTargetM <= 16.0
+						&& t.shaftM >= 3.8 && t.shaftM <= 6.0
+						&& 2.0 * pi * t.topRadiusM / t.shaftsHigh >= t.shaftM + 6.0
+						&& t.splitM > t.tierTargetM && t.splitM < t.heightM - t.tierTargetM
+						&& t.socleM >= 10.0 && t.socleM <= 80.0
+						&& t.lakeRadiusM >= t.SocleR() + 150.0 && t.lakeRadiusM <= 2000.0
+						&& std::fabs(t.center.x - ctr.x) + t.lakeRadiusM * 1.1 + kTowerRoadReachM <= 4700.0
+						&& std::fabs(t.center.z - ctr.z) + t.lakeRadiusM * 1.1 + kTowerRoadReachM <= 4700.0;
+					if (!shapeOk)
+					{
+						err = "master: relief '" + d.id + "' : pic invalide (hauteur, rayons, niveaux, cages basses/hautes, coupure, socle, lac, tout dans la case)"; return false;
+					}
+					d.footRadiusM = t.SocleR();
+					city->tower = t;
 					out.reliefs.push_back(std::move(d));
 					continue;
 				}
@@ -632,6 +700,15 @@ namespace tools::world_gen
 			for (const ReliefDef& r : out.reliefs)
 				if (r.type == "gouffre" || r.type == "crevasse" || r.type == "colline")
 					out.calmZones.push_back({ r.center, std::max({ r.footRadiusM, r.floorRadiusM * 3.0, 1500.0 }) });
+			// v1.0.143 : lac de la ville-tour et ses rives (pas de source de ruisseau).
+			for (const ReliefDef& r : out.reliefs)
+				if (r.type == "pic") out.calmZones.push_back({ r.center, r.tower.lakeRadiusM * 1.1 + kTowerRoadReachM });
+			// v1.0.143 : mise en page « ville_tour » <=> relief `pic` ancré sur la ville.
+			for (const CityDef& c : out.cities)
+				if ((c.layout == "ville_tour") != c.tower.enabled)
+				{
+					err = "master: ville '" + c.id + "' : la mise en page ville_tour exige un relief pic (et inversement)"; return false;
+				}
 			for (const ReliefDef& r : out.reliefs)
 				if (r.type == "gouffre")
 				{

@@ -39,6 +39,10 @@ struct StaticSubMesh
     std::string normalUri;        ///< URI normal map (linéaire). Vide si absent.
     std::string ormUri;           ///< URI ORM / metallic-roughness (linéaire). Vide si absent.
     bool        alphaCutout = false; ///< true si alphaMode != OPAQUE (feuillages : decoupe alpha).
+    /// Lore v1.0.141 — intensité d'émission [0, 1] : max des composantes d'emissiveFactor
+    /// glTF (× KHR_materials_emissive_strength si présent), 0 = matériau non émissif
+    /// (cristaux et brume de l'Oracle, atelier décors).
+    float       emissive = 0.0f;
 };
 
 /// Données CPU d'un mesh statique : sommets + indices triangulaires + sous-maillages.

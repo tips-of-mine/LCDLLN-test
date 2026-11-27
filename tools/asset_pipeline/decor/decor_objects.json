@@ -1239,42 +1239,180 @@
     },
     {
       "num": 219,
+      "nom": "Dalle de cristal géante du rocher de l'Oracle",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : parois et couronne du rocher"
+    },
+    {
+      "num": 220,
+      "nom": "Amas de cristaux lumineux",
+      "tome": 3,
+      "placement_prevu": "Camp de l'Oracle : salle de l'Oracle et salle des Échos"
+    },
+    {
+      "num": 221,
+      "nom": "Grande porte de l'Oracle (vantaux peints, croissant)",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : huit portes du rocher"
+    },
+    {
+      "num": 222,
+      "nom": "Socle de brique de la grande porte",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : paliers des huit portes"
+    },
+    {
+      "num": 223,
+      "nom": "Colonne sculptée de la salle de l'Oracle",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : salle de l'Oracle et salle des Échos"
+    },
+    {
+      "num": 224,
+      "nom": "Paroi sculptée à niches de la salle",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : salle de l'Oracle et salle des Échos"
+    },
+    {
+      "num": 225,
+      "nom": "Dais circulaire gravé à gradins",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : centre de la salle de l'Oracle"
+    },
+    {
+      "num": 226,
+      "nom": "Voûte de cristal de la salle",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : couvre la salle de l'Oracle et la salle des Échos"
+    },
+    {
+      "num": 227,
+      "nom": "Colonne de brume figée et de lumière",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : sur le dais de la salle de l'Oracle"
+    },
+    {
+      "num": 228,
+      "nom": "Chaîne suspendue",
+      "tome": 1,
+      "placement_prevu": "Camp de l'Oracle : voûte de la salle de l'Oracle"
+    },
+    {
+      "num": 229,
+      "nom": "Menhir bleu",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : grand cercle de la plaine"
+    },
+    {
+      "num": 230,
+      "nom": "Mât à long fanion des pèlerins",
+      "tome": 2,
+      "placement_prevu": "Camp de l'Oracle : océan de tentes"
+    },
+    {
+      "num": 231,
+      "nom": "Rempart de rondins de 20 m (bois d'origine grisé, bois neuf des pans reconstruits)",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : enceinte de rondins (enceinte rempart_bois)"
+    },
+    {
+      "num": 232,
+      "nom": "Pan de rempart incendié aux têtes rompues, brèche de souches calcinées",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : pans calcinés et trois brèches franchissables (ville en reconstruction)"
+    },
+    {
+      "num": 233,
+      "nom": "Tour carrée de rempart en bois à hourd (intacte ou étêtée par l'incendie)",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : tours tous les ~44 m et de part et d'autre des portes"
+    },
+    {
+      "num": 234,
+      "nom": "Porte de rempart en bois, vantaux ouverts, bretèche",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : une porte par route qui arrive"
+    },
+    {
+      "num": 235,
+      "nom": "Contrefort oblique en caisson de rondins",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : devant un pan sain sur cinq, côté extérieur"
+    },
+    {
+      "num": 236,
+      "nom": "Donjon à flèche à pans de bois et galerie en encorbellement (réinterprétation générique ; flèche en chantier)",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : point haut de la ville, au nord (donjon tour_fleche)"
+    },
+    {
+      "num": 237,
+      "nom": "Restes de siège : tour de siège effondrée, mangonneau brûlé",
+      "tome": 1,
+      "placement_prevu": "Kendrhir (apparence du master) : abords hors les murs, loin des routes (vestiges_siege)"
+    },
+    {
+      "num": 238,
+      "nom": "Colonne torsadée colossale",
+      "tome": 2,
+      "placement_prevu": "Magistrya : salle du trône du palais du Magister (deux rangées)"
+    },
+    {
+      "num": 239,
+      "nom": "Murs de grès ocre (kit)",
+      "tome": 2,
+      "placement_prevu": "Magistrya : bâtiments de la ville-tour"
+    },
+    {
+      "num": 240,
+      "nom": "Murs de brique ocre (kit)",
+      "tome": 2,
+      "placement_prevu": "Magistrya : bâtiments de la ville-tour"
+    },
+    {
+      "num": 241,
+      "nom": "Tourelle d'angle de pierre ocre",
+      "tome": 2,
+      "placement_prevu": "Magistrya : angles des bâtiments de la ville-tour"
+    },
+    {
+      "num": 242,
       "nom": "Gradins d'arène (module de 15°) et leurs fondations",
       "tome": 2,
       "placement_prevu": "Feyhin Lokcthat : arène de la ville basse (poi_arene_feyhin_lokcthat)"
     },
     {
-      "num": 220,
+      "num": 243,
       "nom": "Entrée d'arène à piliers de gros blocs",
       "tome": 2,
       "placement_prevu": "Feyhin Lokcthat : entrée de l'arène, vers la route du pont"
     },
     {
-      "num": 221,
+      "num": 244,
       "nom": "Poteau de palissade à corbeille à feu",
       "tome": 2,
       "placement_prevu": "Feyhin Lokcthat : bord de la piste de l'arène"
     },
     {
-      "num": 222,
+      "num": 245,
       "nom": "Pile de pont à avant-becs",
       "tome": 2,
       "placement_prevu": "longs ponts des rivières élargies (Feyhin Lokcthat : pont d'arrivée)"
     },
     {
-      "num": 223,
+      "num": 246,
       "nom": "Nef de cathédrale gothique",
       "tome": 2,
       "placement_prevu": "Feyhin Lokcthat : sommet de la ville perchée (poi_cathedrale_feyhin_lokcthat)"
     },
     {
-      "num": 224,
+      "num": 247,
       "nom": "Clocher-porche à haute flèche",
       "tome": 2,
       "placement_prevu": "Feyhin Lokcthat : façade de la cathédrale"
     },
     {
-      "num": 225,
+      "num": 248,
       "nom": "Gargouille",
       "tome": 2,
       "placement_prevu": "Feyhin Lokcthat : angles de la cathédrale"

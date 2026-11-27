@@ -206,7 +206,7 @@ namespace tools::world_gen
 					}
 				return best;
 			}
-			/// v1.0.141 — largeur (m) du lit le plus large à moins de \p radius du point, ou 0.
+			/// v1.0.144 — largeur (m) du lit le plus large à moins de \p radius du point, ou 0.
 			double WidthNear(Vec2 p, double radius) const
 			{
 				double best = 0.0;
@@ -227,7 +227,7 @@ namespace tools::world_gen
 			}
 		};
 
-		/// v1.0.141 — au-delà de cette largeur de lit (m), une route franchit la rivière par un
+		/// v1.0.144 — au-delà de cette largeur de lit (m), une route franchit la rivière par un
 		/// LONG PONT à arches (BD-T2 p.7, Feyhin Lokcthat) : tablier à kLongBridgeDeckM au-dessus
 		/// de l'eau, rampes d'accès sur les berges, piles à avant-becs (BuildBridges).
 		constexpr double kLongBridgeWidthM = 40.0;
@@ -272,7 +272,7 @@ namespace tools::world_gen
 			}
 			for (size_t k = 0; k < np; ++k)
 				r.profileY[k] = std::max({ r.profileY[k], sea + 0.8, rivers.WaterYNear(r.points[k], 14.0) + (r.path ? 0.9 : 1.6) }); // v1.0.129 : tablier de pont au-dessus de l'eau
-			// v1.0.141 — long pont (lit élargi) : tablier relevé au-dessus de l'eau, puis rampes
+			// v1.0.144 — long pont (lit élargi) : tablier relevé au-dessus de l'eau, puis rampes
 			// d'accès à la pente maximale (on ne fait que relever : les autres routes ne changent pas).
 			if (!r.path)
 			{
@@ -847,7 +847,7 @@ namespace tools::world_gen
 					std::vector<double> ground(road.points.size());
 					ParallelRows(static_cast<int>(road.points.size()), [&](int k) {
 						const Vec2 q = road.points[static_cast<size_t>(k)];
-						ground[static_cast<size_t>(k)] = ValleyLowered(m, q.x, q.z, MacroHeight(m, q.x, q.z)); // v1.0.141 : plaines basses
+						ground[static_cast<size_t>(k)] = ValleyLowered(m, q.x, q.z, MacroHeight(m, q.x, q.z)); // v1.0.144 : plaines basses
 					});
 					ComputeProfile(road, ground, g.cities, rivers, sea, 0.16);
 					if (pr.a.snap >= 0) BlendJunctionProfile(road, true, out[static_cast<size_t>(pr.a.snap)].profileY[pr.a.k]);
@@ -911,7 +911,8 @@ namespace tools::world_gen
 			// Position d'une extrémité nommée (ville, sinon POI) ; faux si inconnue.
 			auto entityAnchor = [&](const std::string& id, Anchor& a) {
 				if (id.empty()) return false;
-				if (const CityDef* c = g.FindCity(id)) { a.p = c->center; a.id = id; a.city = true; a.ok = true; return true; }
+				// v1.0.143 : une ville-tour (au milieu d'un lac) est reliée à la rive (CityRoadAnchor).
+				if (const CityDef* c = g.FindCity(id)) { a.p = CityRoadAnchor(*c); a.id = id; a.city = true; a.ok = true; return true; }
 				for (const PoiDef& poi : g.pois)
 					if (poi.id == id) { a.p = poi.center; a.id = id; a.ok = true; return true; }
 				return false;
@@ -928,7 +929,7 @@ namespace tools::world_gen
 						const double d = std::hypot(c.center.x - ctr.x, c.center.z - ctr.z);
 						if (d < bd) { bd = d; best = &c; }
 					}
-				if (best) { a.p = best->center; a.id = best->id; a.city = true; a.ok = true; return true; }
+				if (best) { a.p = CityRoadAnchor(*best); a.id = best->id; a.city = true; a.ok = true; return true; } // v1.0.143 : rive d'une ville-tour
 				a.ok = PracticablePointInCell(cg, n, e, JitteredCellPoint(m, n, e), a.p); // v1.0.131 : pas le centre
 				return a.ok;
 			};
@@ -1211,7 +1212,7 @@ namespace tools::world_gen
 					std::vector<double> ground(road.points.size());
 					ParallelRows(static_cast<int>(road.points.size()), [&](int k) {
 						const Vec2 q = road.points[static_cast<size_t>(k)];
-						ground[static_cast<size_t>(k)] = ValleyLowered(m, q.x, q.z, MacroHeight(m, q.x, q.z)); // v1.0.141 : plaines basses
+						ground[static_cast<size_t>(k)] = ValleyLowered(m, q.x, q.z, MacroHeight(m, q.x, q.z)); // v1.0.144 : plaines basses
 					});
 					ComputeProfile(road, ground, g.cities, rivers, sea, road.path ? 0.18 : 0.16);
 					if (A.snapPiece >= 0) BlendJunctionProfile(road, true, pieces[static_cast<size_t>(A.snapPiece)].profileY[A.snapK]);
@@ -1625,7 +1626,7 @@ namespace tools::world_gen
 			std::vector<double> ground(road.points.size());
 			ParallelRows(static_cast<int>(road.points.size()), [&](int k) {
 				const Vec2 q = road.points[static_cast<size_t>(k)];
-				ground[static_cast<size_t>(k)] = ValleyLowered(m, q.x, q.z, MacroHeight(m, q.x, q.z)); // v1.0.141 : plaines basses
+				ground[static_cast<size_t>(k)] = ValleyLowered(m, q.x, q.z, MacroHeight(m, q.x, q.z)); // v1.0.144 : plaines basses
 			});
 			ComputeProfile(road, ground, g.cities, rivers, sea, 0.16);
 			networkRaw.push_back(std::move(raw));
@@ -1717,7 +1718,7 @@ namespace tools::world_gen
 			for (size_t k = 0; k < r.points.size(); k += 25)
 				if (w.InPlayableBounds(r.points[k], 30.0)) targets.push_back({ r.points[k], std::string(), r.profileY[k] });
 		for (const CityDef& c : w.cities)
-			if (c.procedural.empty()) targets.push_back({ c.center, c.id, c.plateauY });
+			if (c.procedural.empty()) targets.push_back({ CityRoadAnchor(c), c.id, c.tower.enabled ? w.HeightAt(CityRoadAnchor(c)) : c.plateauY }); // v1.0.143 : rive d'une ville-tour
 
 		std::vector<Road> paths;
 		for (const CityDef* pl : places)
@@ -1899,7 +1900,7 @@ namespace tools::world_gen
 						AddBridgeProp(w, stone ? "Bridge_Stone_Parapet_1" : "Prop_WoodenFence_Single", e, y, yaw, 1.0, true);
 					}
 				}
-				// v1.0.141 — long pont (lit élargi, BD-T2 p.7) : travées de ~9 m, chacune une arche
+				// v1.0.144 — long pont (lit élargi, BD-T2 p.7) : travées de ~9 m, chacune une arche
 				// portée à la largeur de la travée sur chaque face (clé de l'arche sous le tablier), et
 				// une pile à avant-becs (Bridge_Stone_Pier_1) entre deux travées, de la vase au tablier.
 				if (stone && water > -1e8 && rivers.WidthNear(mid, 4.0) > kLongBridgeWidthM)

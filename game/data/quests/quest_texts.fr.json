@@ -124,5 +124,17 @@
     "description": "Abattez deux chiens des Cendres qui rodent pres de la cite.",
     "completion": "La Legion t'accueille. Porte ceci avec fierte.",
     "steps": ["Chiens des Cendres abattus : {current}/{required}"]
+  },
+  "oracle_appel": {
+    "title": "L'Appel de l'Oracle",
+    "description": "Le veilleur de la grande porte a reconnu en vous un appelé. Montez l'escalier du sud-ouest : la porte de l'Oracle s'ouvrira devant vous. Parlez à la prêtresse du dais.",
+    "completion": "Le nœud des probabilités t'a vu venir, voyageur. Écoute, puis va.",
+    "steps": ["Parler à la prêtresse du dais : {current}/{required}"]
+  },
+  "oracle_echos": {
+    "title": "L'Épreuve des Échos",
+    "description": "Derrière la porte de l'est, la salle des Échos garde ce que l'Oracle tait. Réunissez un groupe d'au moins trois compagnons et abattez le Gardien des Échos.",
+    "completion": "Les échos se sont tus. Reviens quand la lune aura tourné.",
+    "steps": ["Gardien des Échos abattu : {current}/{required}"]
   }
 }

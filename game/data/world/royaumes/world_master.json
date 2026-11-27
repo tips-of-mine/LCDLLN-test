@@ -1018,9 +1018,10 @@
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
-      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "ecole_magie", "cimetiere"],
+      "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "prison", "ecole_magie", "cimetiere"],
       "start_for": [],
       "source": "[BD] BD-T2",
+      "layout": "ville_tour",
       "description": "Immense ville-tour construite autour d'un pic rocheux, s'enroulant comme 'un serpent de pierre'. Les plus belles demeures sont vers les hauteurs."
     },
     {
@@ -1032,6 +1033,7 @@
       "state": "reconstruction",
       "faction": "neutre",
       "services": ["auberge", "potions", "armes", "armures", "forgeron", "marche", "ecurie", "temple", "banque", "guilde", "infirmerie", "bibliotheque", "cimetiere"],
+      "apparence": {"enceinte": "rempart_bois", "donjon": "tour_fleche", "bati": "planches", "vestiges_siege": true},
       "start_for": [],
       "source": "[BD] BD-T1 ; nom [DÉCISION] v1.0.94 (ancien nom Kendrhir Vale)",
       "description": "Cité des Grands Mages — prise par la horde de Ghorghor Bey puis dévastée par la tempête de Wismerhill à la fin du tome 1 ; en reconstruction : quartiers en ruine, brèches dans les murs, maisons et quartiers en chantier."
@@ -2318,8 +2320,8 @@
       "description": "Un cercle de pierres noires qui suinte la chaleur.",
       "link": "enfers:poi_enfers_porte_2"
     },
-    {"id": "poi_cathedrale_feyhin_lokcthat", "name": "Cathédrale de Feyhin Lokcthat", "cell": "N008_E007", "position": { "x_m": -495, "z_m": -450 }, "kind": "cathedrale", "description": "Cathédrale gothique au sommet de la ville perchée, haute flèche visible de loin ; service temple de la ville (BD-T2 p.7, p.12) [DÉCISION v1.0.141 : forme générée par tools/world_gen Landmarks.cpp, éléments génériques]."},
-    {"id": "poi_arene_feyhin_lokcthat", "name": "Arène de Feyhin Lokcthat", "cell": "N008_E007", "position": { "x_m": -420, "z_m": -610 }, "kind": "arene", "description": "Arène des gladiateurs de la ville basse, près du long pont : piste, palissade à braseros, gradins, entrée à piliers de gros blocs ; geôles creusées sous les gradins (BD-T2 p.9-12) [DÉCISION v1.0.141 : forme générée par tools/world_gen Landmarks.cpp]."},
+    {"id": "poi_cathedrale_feyhin_lokcthat", "name": "Cathédrale de Feyhin Lokcthat", "cell": "N008_E007", "position": { "x_m": -495, "z_m": -450 }, "kind": "cathedrale", "description": "Cathédrale gothique au sommet de la ville perchée, haute flèche visible de loin ; service temple de la ville (BD-T2 p.7, p.12) [DÉCISION v1.0.144 : forme générée par tools/world_gen Landmarks.cpp, éléments génériques]."},
+    {"id": "poi_arene_feyhin_lokcthat", "name": "Arène de Feyhin Lokcthat", "cell": "N008_E007", "position": { "x_m": -420, "z_m": -610 }, "kind": "arene", "description": "Arène des gladiateurs de la ville basse, près du long pont : piste, palissade à braseros, gradins, entrée à piliers de gros blocs ; geôles creusées sous les gradins (BD-T2 p.9-12) [DÉCISION v1.0.144 : forme générée par tools/world_gen Landmarks.cpp]."},
     {
       "id": "poi_porte_3",
       "name": "Porte des enfers III",
@@ -2388,6 +2390,14 @@
       "position": { "x_m": -3804, "z_m": -2600 },
       "kind": "palais",
       "description": "Palais impérial millénaire au sommet de la ville en gradins, face à la mer de l'ouest ; escalier monumental depuis la grand-place (BD-T3 p.23-26, T4 p.6-7, T10 p.37) [DÉCISION v1.0.140 : réinterprétation, forme générée par tools/world_gen Landmarks.cpp]."
+    },
+    {
+      "id": "poi_palais_magister_magistrya",
+      "name": "Palais du Magister",
+      "cell": "N003_W003",
+      "position": { "x_m": 0, "z_m": 0 },
+      "kind": "palais",
+      "description": "Palais du Magister au sommet de la ville-tour de Magistrya : salle du trône en longueur aux colonnes torsadées, laboratoire, tours d'angle ; arrivée des cages d'escalier devant le portail (BD-T2 p.20, 23, 25) [DÉCISION v1.0.143 : réinterprétation, forme générée par tools/world_gen Landmarks.cpp ; le Magister y réside]."
     },
     {
       "id": "poi_port_franc",
@@ -10666,7 +10676,7 @@
     "spawners": "zones/feyhin/spawners.json",
     "quest_poi": "quests/quest_poi_feyhin.json"
   },
-  "_comment_river_courses": "Cours d'eau traces a la main (tools/world_gen, Terrain.cpp BuildMacroRivers) : la riviere suit les centres des cases listees (codes riviere de la grille), puis descend vers la mer ; island_city = ville entouree par deux bras (ile fluviale). v1.0.72 : une source dans la case d'une ville perchee sur une colline (reliefs) nait au pied de la colline. Noms provisoires : le proprietaire nommera les fleuves, rivieres et lacs. v1.0.129 : les 8 rivieres principales du lore y sont (cours_*, lore_id), to_sea=false pour un cours qui finit dans un lac ; le trace suit le terrain entre les cases (A* de vallee), les ancres intermediaires sont decalees de 1,8 km au plus ; ruisseaux generes en plus (Terrain.cpp). v1.0.141 : widenings = elargissements locaux du lit (cell, x_m, z_m depuis le centre de la case, width_m de 1 a 6 fois la largeur du cours, length_m de 40 a 600 m) ; valley_m > 0 et floor_y_m (altitude absolue) y creusent une plaine basse dans le terrain de la cellule et le profil des routes (pas dans le relief macro : le trace des rivieres n'en depend pas ; une acropole voisine n'est jamais entamee) ; une route y franchit le lit elargi (plus de 40 m) par un long pont a arches et piles a avant-becs, tablier a 5,5 m au moins au-dessus de l'eau (Roads.cpp).",
+  "_comment_river_courses": "Cours d'eau traces a la main (tools/world_gen, Terrain.cpp BuildMacroRivers) : la riviere suit les centres des cases listees (codes riviere de la grille), puis descend vers la mer ; island_city = ville entouree par deux bras (ile fluviale). v1.0.72 : une source dans la case d'une ville perchee sur une colline (reliefs) nait au pied de la colline. Noms provisoires : le proprietaire nommera les fleuves, rivieres et lacs. v1.0.129 : les 8 rivieres principales du lore y sont (cours_*, lore_id), to_sea=false pour un cours qui finit dans un lac ; le trace suit le terrain entre les cases (A* de vallee), les ancres intermediaires sont decalees de 1,8 km au plus ; ruisseaux generes en plus (Terrain.cpp). v1.0.144 : widenings = elargissements locaux du lit (cell, x_m, z_m depuis le centre de la case, width_m de 1 a 6 fois la largeur du cours, length_m de 40 a 600 m) ; valley_m > 0 et floor_y_m (altitude absolue) y creusent une plaine basse dans le terrain de la cellule et le profil des routes (pas dans le relief macro : le trace des rivieres n'en depend pas ; une acropole voisine n'est jamais entamee) ; une route y franchit le lit elargi (plus de 40 m) par un long pont a arches et piles a avant-becs, tablier a 5,5 m au moins au-dessus de l'eau (Roads.cpp).",
   "river_courses": [
     {
       "id": "fleuve_sysigie",
@@ -10698,7 +10708,7 @@
       "width_m": 24,
       "to_sea": false,
       "widenings": [{ "cell": "N008_E007", "x_m": -268, "z_m": -616, "width_m": 60, "length_m": 140, "valley_m": 260, "floor_y_m": 43 }],
-      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore ; v1.0.141 : elargi a 60 m sur 140 m sous le long pont de Feyhin Lokcthat, dans une plaine basse a 43 m (widenings, BD-T2 p.7)"
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore ; v1.0.144 : elargi a 60 m sur 140 m sous le long pont de Feyhin Lokcthat, dans une plaine basse a 43 m (widenings, BD-T2 p.7)"
     },
     {
       "id": "cours_lac_sud",
@@ -10758,7 +10768,7 @@
       "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
     }
   ],
-  "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond. massif (v1.0.77) : relief de cretes et de pics SANS ville, ancre sur le centre de la case 'cell' decale de offset_x_m / offset_z_m (m, est / sud) : dome de rayon foot_radius_m (contour lobe) haut de height_m, decoupe par un bruit en cretes (cretes, pics, ravins) ; il ne s'applique qu'aux terres deja emergees : la cote ne bouge pas et le relief y monte en falaise. Le code de la case ne change pas (Ile de la Treve : foret T, pics boises ; le lore met ces cases en mountain). gouffre (v1.0.107) : fosse CREUSEE sous la ville 'city' posee au fond (position manuelle admise : le gouffre suit la ville) ; fond plat a l'altitude du point le plus bas du pourtour moins depth_m, rayon floor_radius_m (contour lobe), parois abruptes sur wall_m ; galerie de sortie 'gallery' (points en m depuis le centre du gouffre, du fond vers l'entree cachee), fente de gallery_half_width_m de demi-largeur et parois de gallery_wall_m dont le sol monte regulierement du fond a l'entree ; ni routes ni lieux proceduraux ni faune dedans ; torches au fond et dans la galerie (docs/world/LORE_BD.md section 16.36). falaise (v1.0.120) : cote en falaise de craie sur les cases 'cells' (sans ville) : a beach_m de la mer (mer reliee au large), la terre monte de height_m (+/- 15 %) sur wall_m, puis plateau ; plage au pied ; extinction sur fade_m hors des cases ; paroi blanche dans le splat et sur la carte du monde. acropole (v1.0.140) : ville en gradins (Lhynn) ; la position manuelle de la ville est admise (le relief la suit) ; sommet decale de offset_x_m / offset_z_m depuis la ville, plateforme de top_radius_m a height_m au-dessus du plateau de la ville basse, puis terraces gradins (talus lineaires de bank_m, pente <= 40 deg, replats de terrace_m) ; escalier monumental direct (demi-largeur stair_half_width_m, pente 0,6) du bord de la plateforme vers la ville jusqu'a stair_bottom_m du sommet (bord de la grand-place) ; revers (cote oppose a la ville) raidi par back_factor (1 a 3 : distances etirees au-dela de la plateforme, la butte tombe en falaise) ; meme masque des terres emergees que les massifs ; les routes ne creusent pas la butte ; le POI de genre palais pose sur le sommet y est bati (Landmarks.cpp). v1.0.141 (Feyhin Lokcthat) : city_radius_m (60 a 260 m, 0 = rayon du genre) agrandit la ville sur la butte ; back_town = true pose une ville basse (rues en arc et maisons) au pied du revers, hors de l'eau ; stair_style = rue remplace l'escalier monumental par des volees d'escalier de rue ; le POI de genre cathedrale pose sur le sommet y est bati (Landmarks.cpp).",
+  "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond. massif (v1.0.77) : relief de cretes et de pics SANS ville, ancre sur le centre de la case 'cell' decale de offset_x_m / offset_z_m (m, est / sud) : dome de rayon foot_radius_m (contour lobe) haut de height_m, decoupe par un bruit en cretes (cretes, pics, ravins) ; il ne s'applique qu'aux terres deja emergees : la cote ne bouge pas et le relief y monte en falaise. Le code de la case ne change pas (Ile de la Treve : foret T, pics boises ; le lore met ces cases en mountain). gouffre (v1.0.107) : fosse CREUSEE sous la ville 'city' posee au fond (position manuelle admise : le gouffre suit la ville) ; fond plat a l'altitude du point le plus bas du pourtour moins depth_m, rayon floor_radius_m (contour lobe), parois abruptes sur wall_m ; galerie de sortie 'gallery' (points en m depuis le centre du gouffre, du fond vers l'entree cachee), fente de gallery_half_width_m de demi-largeur et parois de gallery_wall_m dont le sol monte regulierement du fond a l'entree ; ni routes ni lieux proceduraux ni faune dedans ; torches au fond et dans la galerie (docs/world/LORE_BD.md section 16.36). falaise (v1.0.120) : cote en falaise de craie sur les cases 'cells' (sans ville) : a beach_m de la mer (mer reliee au large), la terre monte de height_m (+/- 15 %) sur wall_m, puis plateau ; plage au pied ; extinction sur fade_m hors des cases ; paroi blanche dans le splat et sur la carte du monde. acropole (v1.0.140) : ville en gradins (Lhynn) ; la position manuelle de la ville est admise (le relief la suit) ; sommet decale de offset_x_m / offset_z_m depuis la ville, plateforme de top_radius_m a height_m au-dessus du plateau de la ville basse, puis terraces gradins (talus lineaires de bank_m, pente <= 40 deg, replats de terrace_m) ; escalier monumental direct (demi-largeur stair_half_width_m, pente 0,6) du bord de la plateforme vers la ville jusqu'a stair_bottom_m du sommet (bord de la grand-place) ; revers (cote oppose a la ville) raidi par back_factor (1 a 3 : distances etirees au-dela de la plateforme, la butte tombe en falaise) ; meme masque des terres emergees que les massifs ; les routes ne creusent pas la butte ; le POI de genre palais pose sur le sommet y est bati (Landmarks.cpp). v1.0.144 (Feyhin Lokcthat) : city_radius_m (60 a 260 m, 0 = rayon du genre) agrandit la ville sur la butte ; back_town = true pose une ville basse (rues en arc et maisons) au pied du revers, hors de l'eau ; stair_style = rue remplace l'escalier monumental par des volees d'escalier de rue ; le POI de genre cathedrale pose sur le sommet y est bati (Landmarks.cpp). pic (v1.0.143) : ville-tour (Magistrya, mise en page de la ville 'ville_tour' exigee) ; la position manuelle de la ville est admise (le pic la suit) ; aiguille rocheuse hors du relief macro, sculptee dans sa cellule (Settlements.cpp BuildTowerCity) : socle (quai a kTowerSocleAboveWaterM au-dessus du lac) de rayon base_radius_m + socle_m ; enveloppe des facades en cone etroit (rayon base_radius_m au socle, top_radius_m au sommet, height_m au-dessus du socle), rocher en retrait ; batiments distincts empiles (niveaux d'environ tier_m, deux etages de murs chacun, un a trois niveaux par batiment, toits d'ardoise a chaque retrait) separes par des cages d'escalier de shaft_m de large (deux volees en zigzag, paliers a chaque tiers de niveau) : shafts_low cages sous split_m, shafts_high au-dessus (une cage basse sur shafts_low / shafts_high continue jusqu'au sommet), la cage 0 dans la direction d'entree (entry_deg, atan2(z, x) en degres, X est / Z sud) ; lac centre de lake_radius_m (le lac de la case est remplace) ; un seul ponton du socle a la rive dans la direction d'entree ; les routes aboutissent sur la rive (CityRoadAnchor) ; le POI de genre palais pose au centre y est bati (palais du Magister, Landmarks.cpp).",
   "reliefs": [
     {
       "id": "colline_verdansur",
@@ -10922,7 +10932,7 @@
       "city_radius_m": 150,
       "back_town": true,
       "stair_style": "rue",
-      "source": "[DÉCISION] v1.0.141 (proprietaire, 26/11/2026) : Feyhin Lokcthat ville perchee d'apres le Tome 2 (p.7 : ville sur la montagne au-dessus de la riviere, maisons sur la montagne et en bas) : eperon de 3 gradins de 30 m (talus de 36 m praticables), cathedrale au sommet (poi_cathedrale_feyhin_lokcthat), revers en falaise au nord sur la boucle de la riviere (back_factor 3), ville haute de 150 m de rayon sur la butte, ville basse au pied du revers (back_town), escalier de rue de la grand-place au sommet (stair_style). Le relief suit la ville (position manuelle admise)."
+      "source": "[DÉCISION] v1.0.144 (proprietaire, 26/11/2026) : Feyhin Lokcthat ville perchee d'apres le Tome 2 (p.7 : ville sur la montagne au-dessus de la riviere, maisons sur la montagne et en bas) : eperon de 3 gradins de 30 m (talus de 36 m praticables), cathedrale au sommet (poi_cathedrale_feyhin_lokcthat), revers en falaise au nord sur la boucle de la riviere (back_factor 3), ville haute de 150 m de rayon sur la butte, ville basse au pied du revers (back_town), escalier de rue de la grand-place au sommet (stair_style). Le relief suit la ville (position manuelle admise)."
     },
     {
       "id": "acropole_lhynn",
@@ -10939,6 +10949,23 @@
       "stair_bottom_m": 92,
       "back_factor": 2.2,
       "source": "[DÉCISION] v1.0.140 (proprietaire, 25/11/2026) : Lhynn est une ville en gradins, le palais imperial au sommet (BD-T3 p.23, T10 p.37) ; sommet avance vers la mer de l'ouest (revers en falaise, back_factor 2,2), ville basse vers l'est ; 4 gradins de 20 m (talus de 24 m, praticables), escalier monumental direct de la grand-place au palais (poi_palais_imperial_lhynn). Le relief suit la ville (position manuelle admise)."
+    },
+    {
+      "id": "pic_magistrya",
+      "type": "pic",
+      "city": "sauken_glude_of_magistrya",
+      "height_m": 600,
+      "top_radius_m": 30,
+      "base_radius_m": 120,
+      "tier_m": 12.5,
+      "shaft_m": 4.0,
+      "shafts_low": 24,
+      "shafts_high": 12,
+      "split_m": 300,
+      "socle_m": 30,
+      "lake_radius_m": 650,
+      "entry_deg": -27,
+      "source": "[DÉCISION] v1.0.143 (proprietaire, 26-27/11/2026) : Magistrya est une ville-tour au centre d'un lac (BD-T2 p.19-20, 25, 27) ; tout est sur le pic (Q7 b) ; un seul long ponton de bois (Q2 a), tourne vers Feyhin Lokcthat (panneau de la p.19) ; geoles au socle (Q3 a). Retour du test visuel (la premiere version en spirale de 250 m rappelait la tour de Babel) : aiguille droite de 600 m en cone etroit (rayon 120 m au socle, 30 m au sommet), sans palier circulaire ; batiments distincts empiles (un a trois niveaux de 12,5 m chacun), separes par des cages d'escalier praticables du socle au palais (24 cages sous 300 m, 12 au-dessus) ; batiments non visitables, portes decoratives sur les paliers (Q3 a). Le pic suit la ville (position manuelle admise)."
     }
   ],
   "_comment_sea_lines": "GENERE par tools/lore/sync_sea_lines.py depuis le lore (sea_lines) — v1.0.125 : lignes maritimes servies par des bateaux visibles (embarquement au quai, marche libre sur le pont, LORE_BD 16.51). stops : ville et case du ponton ; loop : boucle (sinon aller-retour) ; price_gold_per_leg : or par etape, paye au depart du quai ; boats : bateaux sur la ligne ; stop_seconds : arret a quai. Ne pas editer a la main.",

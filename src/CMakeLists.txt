@@ -146,6 +146,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # Seconde carte (Les Enfers) : portails entre cartes.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
+    # Lore v1.0.141 : passages conditionnels d'une même carte (portes de l'Oracle).
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DoorPassages.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp
     # v1.0.124 : lignes maritimes ; v1.0.125 : bateaux (BoatFleet).
@@ -684,6 +686,13 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # Lore v1.0.141 — passages conditionnels d'une même carte (portes du rocher de l'Oracle :
+  # quêtes exigées, groupe minimal, réarmement, refus signalé une fois).
+  lcdlln_add_simple_test(door_passages_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/DoorPassagesTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DoorPassages.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
+
   # v1.0.123 — lave mortelle des Enfers (masque lava_mask.lvmk, mort en 3 s).
   lcdlln_add_simple_test(lava_hazard_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/LavaHazardTests.cpp
@@ -763,6 +772,14 @@ elseif(UNIX)
   lcdlln_add_simple_test(ambient_routine_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/tests/AmbientRoutineTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp)
+
+  # v1.0.143 : format des routines à altitude réelle (spawners.json : realHeight, pathY),
+  # aller-retour générateur → SpawnerRuntime (ville-tour de Magistrya).
+  lcdlln_add_simple_test(spawner_routine_format_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/tests/SpawnerRoutineFormatTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/DailyAgenda.cpp)
 
   # ETAPE4.4 : agenda déterministe des PNJ (pur).
   lcdlln_add_simple_test(daily_agenda_tests
@@ -1313,6 +1330,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(composite_world_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CompositeWorldColliderTests.cpp)
 
+  # v1.0.143 — PNJ à altitude réelle (ville-tour) : posé sur la dalle ou la marche sous
+  # son Y répliqué, pas sur l'étage du dessous ni sur un mur.
+  lcdlln_add_simple_test(walkable_surface_probe_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/WalkableSurfaceProbeTests.cpp)
+
   # Préréglages de distance de vue (render.quality_preset) : défaut, ordre, bornes.
   lcdlln_add_simple_test(view_distance_preset_tests
     ${CMAKE_SOURCE_DIR}/src/client/settings/tests/ViewDistancePresetTests.cpp)
@@ -1698,6 +1720,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # Seconde carte (Les Enfers) : portails entre cartes.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
+    # Lore v1.0.141 : passages conditionnels d'une même carte (portes de l'Oracle).
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DoorPassages.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp
     # v1.0.124 : lignes maritimes ; v1.0.125 : bateaux (BoatFleet).

@@ -172,7 +172,7 @@ Seuls `world/royaumes/world_master.json` (source) et
 | `zones/<c>/terrain_forest.frms` | densité forestière 1024² (FORET.1) : arbres et sous-bois des forêts posés par le client |
 | `zones/<c>/terrain_ground.gndm` | nature du sol 2048² (SND.2b) : sons de pas (terre battue, sable, boue, gravier, marbre…), client seul |
 | `zones/<c>/zone.json` | cadrage (`terrain.origin_x/z` = coin min GLOBAL), PNJ statiques, réglages client |
-| `zones/<c>/spawners.json` | PNJ d'ambiance (routines, agendas de métier — cf. `docs/architecture/etape4_simulation.md` §4.4) + faune, `zoneId` = id de la cellule, positions globales |
+| `zones/<c>/spawners.json` | PNJ d'ambiance (routines, agendas de métier — cf. `docs/architecture/etape4_simulation.md` §4.4) + faune, `zoneId` = id de la cellule, positions globales ; v1.0.143 : routine à **altitude réelle** (graphe 3D de la ville-tour) : `routine.realHeight: true` et `routine.pathY` (une altitude par point de `path`, champs additifs ignorés d'un shard plus ancien) |
 | `zones/<c>/respawn_points.txt` | cimetières / auberges |
 | `zones/<c>/runtime_manifest.json` | `zone_id` = nom, `zone_numeric_id` = id serveur |
 | `instances/zone_<c>/scatter.bin` | décor instancié **LCSC v2** (table de chunks 20 × 20 de 500 m) |
@@ -259,7 +259,22 @@ voisines raccord au mètre près :
    pied de la plateforme, rues en arc sur chaque replat, volées `Stairs_Monumental_1` posées sur la rampe ; faubourgs hors les murs (quatre rues en anneau, sauf côté revers) et champs repoussés au-delà ; port (`BuildHarbour` : esplanade, quai, jetées, navires `Ship_Cog_1`, grues, entrepôts) si la ville a le service `port` ; un POI de
    genre `palais` sur le sommet est bâti par `Landmarks.cpp`. Ex. : Lhynn et son palais
    impérial (LORE_BD §16.66).
-   Depuis la v1.0.141 (Feyhin Lokcthat, LORE_BD §16.67), une acropole peut aussi porter
+   Depuis la v1.0.143, `pic` dresse une **ville-tour** (mise en page `ville_tour` de sa ville
+   `city`, exigée ; position manuelle admise : le pic suit la ville) : **aiguille
+   rocheuse** hors du relief macro, sculptée dans sa cellule par `BuildTowerCity`
+   (Settlements.cpp) après l'eau : socle au ras du lac (`kTowerSocleAboveWaterM`) jusqu'à
+   `base_radius_m` + `socle_m` ; enveloppe des façades en cône (`base_radius_m` au socle,
+   `top_radius_m` au sommet, `height_m` au-dessus du socle), rocher `kTowerRockInsetM` en
+   retrait ; niveaux d'environ `tier_m` (deux étages de murs) ; **bâtiments distincts** empilés
+   d'un à trois niveaux (façade, toits d'ardoise sur chaque retrait, tourelles d'angle) entre
+   des **cages d'escalier** de `shaft_m` (volées `Stair_Interior_Rails` en zigzag, paliers,
+   parapets, portes décoratives) : `shafts_low` cages sous `split_m`, `shafts_high` au-dessus,
+   la cage 0 vers `entry_deg` ; lac centré de `lake_radius_m` qui remplace celui de la case
+   (île = socle) ; un ponton du socle à la rive ; routes arrêtées sur la rive
+   (`CityRoadAnchor`) ; geôles ; graphe des PNJ en **3D** (altitude de chaque nœud) ; un POI de
+   genre `palais` au centre est bâti par `Landmarks.cpp` sur le dallage du sommet (palais du
+   Magister). Ex. : Magistrya (LORE_BD §16.69).
+   Depuis la v1.0.144 (Feyhin Lokcthat, LORE_BD §16.70), une acropole peut aussi porter
    `city_radius_m` (rayon de la ville sur la butte, 60 à 260 m), `back_town` (ville basse
    au pied du revers : trois rues en arc au-delà du pied de la falaise, hors de l'eau) et
    `stair_style` = `rue` (volées `Stairs_Street_1` au lieu de l'escalier monumental) ; un
@@ -283,7 +298,7 @@ voisines raccord au mètre près :
    contourne les autres villes, prend de grands méandres (~7 km) puis descend
    vers la mer ; elle remplace la rivière automatique de sa composante.
    `island_city` : le lit se divise en deux bras qui entourent la ville (île
-   fluviale de Sysigie). `widenings` (v1.0.141) élargit le lit autour d'un point (Feyhin
+   fluviale de Sysigie). `widenings` (v1.0.144) élargit le lit autour d'un point (Feyhin
    Lokcthat : 60 m sous le pont d'arrivée) ; avec `valley_m` et `floor_y_m`, le terrain de la
    cellule et le profil des routes y descendent en plaine basse (pas le relief macro : le tracé
    ne change pas ; une acropole voisine n'est jamais entamée) ; une route y franchit le lit
@@ -349,6 +364,19 @@ voisines raccord au mètre près :
    chantiers entourés d'étais et de matériaux, trois brèches avec gravats dans
    le rempart ou la palissade ; auberge, marché, forge, pavage et PNJ comme une
    ville intacte — ex. Kendrhir après le tome 1).
+   **Apparence propre** (v1.0.142, clé `apparence` des `cities`, recopiée du lore par
+   `tools/lore/sync_apparence.py`) : `enceinte: rempart_bois` remplace rempart ou palissade
+   par un rempart de rondins de 20 m (modules de 4 m sur le cercle R + 3 m, tour carrée
+   de bois tous les ~44 m, une porte entre deux tours par route qui arrive, contrefort
+   oblique devant un pan sain sur cinq ; en reconstruction : arcs de six modules d'origine,
+   reconstruits en bois neuf avec échafaudages et grues, ou calcinés avec tours étêtées,
+   trois brèches franchissables, portes remises en état) ; `donjon: tour_fleche` pose un
+   donjon à flèche au nord, entre la rue circulaire et le rempart (flèche en chantier en
+   reconstruction) ; `bati: planches` donne ≈ 70 % de maisons de planches (dont des maisons
+   hautes de 3 niveaux) et des ruines de planches ; `vestiges_siege` sème hors les murs une
+   tour de siège effondrée, des mangonneaux brûlés, des mantelets, des échelles, des lignes
+   de pieux et des roues brisées, à plus de 12 m des routes. Seule Kendrhir en porte une
+   (LORE_BD §16.68).
 9. `Vegetation.cpp` : treillis **global** jitterisé (aucun motif répété),
    couverture nuancée (bois dans les plaines, clairières dans les forêts).
    **Forêts et lisières (FORET.1)** : leurs arbres ne sont plus stockés dans

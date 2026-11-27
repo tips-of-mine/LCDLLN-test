@@ -13,6 +13,8 @@
 // l'Oracle `cell_n000_e000` ; 1 case du lore = 1 cellule de 10 km
 // (src/shared/world/WorldCells.h).
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -82,6 +84,48 @@ namespace tools::world_gen
 		double FootRadiusM() const { return topRadiusM + terraces * bankM + (terraces - 1) * terraceM; }
 	};
 
+	/// v1.0.143 — VILLE-TOUR (relief `pic` du master, Magistrya, BD-T2 p.19-27) : AIGUILLE
+	/// rocheuse au centre d'un lac, couverte de BÂTIMENTS DISTINCTS empilés jusqu'au palais du
+	/// sommet, séparés par des CAGES D'ESCALIER praticables (volées en zigzag et paliers) qui
+	/// montent du socle au sommet. Silhouette : cône étroit ; l'enveloppe des façades a pour
+	/// rayon baseRadiusM au ras du socle et topRadiusM au sommet (linéaire en altitude). Le
+	/// rocher reste kTowerRockInsetM en retrait de l'enveloppe (caché par les bâtiments, visible
+	/// au fond des cages). Étages : Tiers() niveaux de TierM() m (deux étages de murs), trois
+	/// volées par niveau. Cages : shaftsLow régulièrement réparties sous splitM, shaftsHigh
+	/// au-dessus (une cage basse sur shaftsLow / shaftsHigh continue jusqu'au sommet, les
+	/// autres s'arrêtent sous la coupure) ; la cage 0 regarde entryRad (ponton, portail du
+	/// palais). Copié dans la ville (CityDef::tower) et dans son relief au chargement.
+	struct TowerShape
+	{
+		bool   enabled = false;
+		Vec2   center;               ///< axe de l'aiguille (m, global) = centre de la ville
+		double heightM = 0.0;        ///< altitude du sommet (plateforme du palais) au-dessus du socle (m)
+		double topRadiusM = 0.0;     ///< rayon de l'enveloppe des façades au sommet (m)
+		double baseRadiusM = 0.0;    ///< rayon de l'enveloppe des façades au ras du socle (m)
+		double tierTargetM = 0.0;    ///< hauteur visée d'un niveau de bâtiments (m ; ajustée : Tiers())
+		double shaftM = 0.0;         ///< largeur d'une cage d'escalier (m, deux volées côte à côte)
+		int    shaftsLow = 0;        ///< nombre de cages sous splitM
+		int    shaftsHigh = 0;       ///< nombre de cages au-dessus de splitM (diviseur de shaftsLow)
+		double splitM = 0.0;         ///< altitude (au-dessus du socle) du passage shaftsLow → shaftsHigh
+		double socleM = 0.0;         ///< largeur du quai du socle au-delà de l'enveloppe basse (m)
+		double lakeRadiusM = 0.0;    ///< rayon moyen du lac centré sur l'aiguille (m)
+		double entryRad = 0.0;       ///< direction (atan2(z, x), radians) du ponton et de la cage 0
+		/// Nombre de niveaux de bâtiments (au moins 1).
+		int Tiers() const { return tierTargetM > 0.0 ? std::max(1, static_cast<int>(std::lround(heightM / tierTargetM))) : 1; }
+		/// Hauteur exacte d'un niveau (m) : heightM / Tiers().
+		double TierM() const { return heightM / Tiers(); }
+		/// Premier niveau au-dessus de la coupure des cages (niveaux [0, SplitTier()) : shaftsLow).
+		int SplitTier() const { return std::clamp(static_cast<int>(std::ceil(splitM / TierM() - 1e-9)), 1, Tiers()); }
+		/// Rayon du bord du socle (quai, au-dessus de l'eau).
+		double SocleR() const { return baseRadiusM + socleM; }
+		/// Rayon de l'enveloppe des façades à l'altitude \p h (m au-dessus du socle, bornée).
+		double EnvelopeR(double h) const
+		{
+			const double k = heightM > 0.0 ? std::clamp(h / heightM, 0.0, 1.0) : 0.0;
+			return baseRadiusM - (baseRadiusM - topRadiusM) * k;
+		}
+	};
+
 	struct CityDef
 	{
 		std::string id;
@@ -129,12 +173,19 @@ namespace tools::world_gen
 		bool   secret = false;
 		/// Mise en page dédiée (v1.0.136, clé `layout` du master, défaut vide = agglomération
 		/// générique de BuildSettlements) : « oracle » = Camp de l'Oracle bâti selon le plan
-		/// (rocher, escaliers, océan de tentes, menhirs ; Oracle.cpp, LORE_BD §16.62).
+		/// (rocher, escaliers, océan de tentes, menhirs ; Oracle.cpp, LORE_BD §16.62) ;
+		/// v1.0.143 : « ville_tour » = ville-tour sur une aiguille rocheuse au milieu d'un lac
+		/// (Magistrya ; exige un relief `pic` ancré sur la ville, Settlements.cpp, LORE_BD §16.69 ;
+		/// v1.0.143 : bâtiments empilés et cages d'escalier, TowerShape).
 		std::string layout;
 		/// v1.0.140 — ville en gradins (relief `acropole` du master) : vide si la ville n'en
 		/// a pas. Le plateau de la ville (plateauY) reste celui de la ville basse ; le sol
 		/// d'un point de la ville vaut plateauY + AcropoleOffset(acropole, point).
 		AcropoleShape acropole;
+		/// v1.0.143 — ville-tour (relief `pic` du master) : vide si la ville n'en a pas. Le
+		/// plateau (plateauY) est le SOCLE (quai au ras du lac) ; le sol (rocher) d'un point de
+		/// l'aiguille vaut plateauY + TowerOffset(tower, point).
+		TowerShape tower;
 		/// Apparence propre à la ville (v1.0.142, clé `apparence` du master, objet recopié
 		/// du lore par tools/lore/sync_apparence.py ; absente = règles génériques par
 		/// type, race et état). Ex. Kendrhir (BD T1) :
@@ -257,7 +308,7 @@ namespace tools::world_gen
 	struct ReliefDef
 	{
 		std::string id;
-		std::string type;          ///< colline|crevasse|massif|gouffre|falaise|acropole (v1.0.140)
+		std::string type;          ///< colline|crevasse|massif|gouffre|falaise|acropole (v1.0.140)|pic (v1.0.143)
 		std::string cityId;        ///< ville ancrée (posée au centre de sa case) ; vide pour un massif
 		std::string cell;          ///< massif : case d'ancrage (identifiant N019_W013)
 		double offsetXM = 0.0;     ///< massif : décalage du centre vers l'est (m)
@@ -293,6 +344,7 @@ namespace tools::world_gen
 		std::vector<double> galleryAlong; ///< gouffre : abscisse curviligne (m) de chaque point de la galerie
 		double galleryExitM = 0.0; ///< gouffre : abscisse (m) où la galerie sort du fond et de ses parois (le sol y quitte floorY)
 		AcropoleShape acropole;    ///< acropole (v1.0.140) : forme résolue (sommet, gradins, escalier)
+		TowerShape tower;          ///< pic (v1.0.143) : forme résolue (aiguille, cages, socle, lac)
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).

@@ -10368,6 +10368,288 @@
       "billboard": false,
       "replaces": null,
       "ref": "T1-P042-C1 ; T1-P039-C2"
+    },
+    {
+      "id": "Column_Twisted_Giant_1",
+      "num": 238,
+      "family": "monument",
+      "builder": "column_twisted_giant",
+      "seed": 21901,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        3.6,
+        3.8
+      ],
+      "height_m": [
+        15.7,
+        15.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P023-C1, C2 (salle du trône du Magister, personnages à la base : colonnes ≈ 8 fois leur hauteur) ; arbitrage Q5 b du propriétaire (26/11/2026) ; générique, sans emblème"
+    },
+    {
+      "id": "Wall_Sandstone_Straight",
+      "num": 239,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Straight",
+      "style": "sandstone",
+      "seed": 23201,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        -0.002,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise) ; retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+    },
+    {
+      "id": "Wall_Sandstone_Window_Wide_Round",
+      "num": 239,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Wide_Round",
+      "style": "sandstone",
+      "seed": 23202,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise) ; retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+    },
+    {
+      "id": "Wall_Sandstone_Window_Thin_Round",
+      "num": 239,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Thin_Round",
+      "style": "sandstone",
+      "seed": 23203,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise) ; retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+    },
+    {
+      "id": "Wall_Sandstone_Door_Round",
+      "num": 239,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Door_Round",
+      "style": "sandstone",
+      "seed": 23204,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise) ; retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+    },
+    {
+      "id": "Wall_OchreBrick_Straight",
+      "num": 240,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Straight",
+      "style": "ochrebrick",
+      "seed": 23301,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        -0.002,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise) ; retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+    },
+    {
+      "id": "Wall_OchreBrick_Window_Wide_Round",
+      "num": 240,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Wide_Round",
+      "style": "ochrebrick",
+      "seed": 23302,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise) ; retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+    },
+    {
+      "id": "Wall_OchreBrick_Window_Thin_Round",
+      "num": 240,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Thin_Round",
+      "style": "ochrebrick",
+      "seed": 23303,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise) ; retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+    },
+    {
+      "id": "Wall_OchreBrick_Door_Round",
+      "num": 240,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Door_Round",
+      "style": "ochrebrick",
+      "seed": 23304,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise) ; retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+    },
+    {
+      "id": "Turret_Corner_Ochre_1",
+      "num": 241,
+      "family": "kit",
+      "builder": "turret_corner",
+      "seed": 23401,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        3.2,
+        3.6
+      ],
+      "height_m": [
+        14.2,
+        14.5
+      ],
+      "billboard": false,
+      "ref": "T2-P020-C3, C4 (tours d'angle de Magistrya, pierre ocre) ; retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)",
+      "stone": "Stone_Sandstone",
+      "body": "Brick_Ochre",
+      "replaces": null
     }
   ]
 }

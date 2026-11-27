@@ -44,6 +44,8 @@ namespace engine::server::ambient
 		float homeX, float homeZ, float (*roll01)(void*), void* ctx)
 	{
 		const size_t n = def.path.size();
+		// v1.0.143 : le segment qui commence part de la cible atteinte (ou du logis).
+		state.origin = state.hasTarget ? state.target : HomePoint(def, homeX, homeZ);
 		switch (def.kind)
 		{
 		case RoutineKind::Tour:
@@ -85,7 +87,7 @@ namespace engine::server::ambient
 			if (radius <= 0.05f) { state.target = base; break; }
 			const float a = roll01(ctx) * 6.2831853f;
 			const float r = std::sqrt(roll01(ctx)) * radius;
-			state.target = { base.x + std::cos(a) * r, base.z + std::sin(a) * r };
+			state.target = { base.x + std::cos(a) * r, base.z + std::sin(a) * r, base.y };
 			break;
 		}
 		default:
@@ -103,5 +105,43 @@ namespace engine::server::ambient
 		const float lo = std::max(0.0f, def.pauseMinSec);
 		const float hi = std::max(lo, def.pauseMaxSec);
 		return lo + (hi - lo) * roll01(ctx);
+	}
+
+	float RoutineHeightAlong(const RoutinePoint& from, const RoutinePoint& to, float x, float z)
+	{
+		const float dx = to.x - from.x, dz = to.z - from.z;
+		const float len2 = dx * dx + dz * dz;
+		if (len2 < 1e-8f) return to.y;
+		const float k = std::clamp(((x - from.x) * dx + (z - from.z) * dz) / len2, 0.0f, 1.0f);
+		return from.y + (to.y - from.y) * k;
+	}
+
+	void BeginHomeRetrace(const RoutineDefinition& def, RoutineState& state, float homeX, float homeZ)
+	{
+		state.homeRetrace = true;
+		if (def.path.empty())
+		{
+			state.origin = state.target;
+			state.target = { homeX, homeZ, state.target.y };
+			state.waypoint = 0;
+			state.hasTarget = true;
+			return;
+		}
+		const size_t n = def.path.size();
+		const uint32_t w = static_cast<uint32_t>(std::min<size_t>(state.waypoint, n - 1));
+		// Le PNJ est entre path[w − 1] et path[w] : il fait demi-tour vers path[w − 1].
+		state.origin = state.hasTarget ? state.target : def.path[w];
+		state.waypoint = w > 0 ? w - 1 : 0;
+		state.target = def.path[state.waypoint];
+		state.hasTarget = true;
+	}
+
+	bool AdvanceHomeRetrace(const RoutineDefinition& def, RoutineState& state)
+	{
+		if (def.path.empty() || state.waypoint == 0) return true;
+		state.origin = state.target;
+		--state.waypoint;
+		state.target = def.path[state.waypoint];
+		return false;
 	}
 }

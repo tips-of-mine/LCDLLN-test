@@ -172,7 +172,7 @@ Seuls `world/royaumes/world_master.json` (source) et
 | `zones/<c>/terrain_forest.frms` | densité forestière 1024² (FORET.1) : arbres et sous-bois des forêts posés par le client |
 | `zones/<c>/terrain_ground.gndm` | nature du sol 2048² (SND.2b) : sons de pas (terre battue, sable, boue, gravier, marbre…), client seul |
 | `zones/<c>/zone.json` | cadrage (`terrain.origin_x/z` = coin min GLOBAL), PNJ statiques, réglages client |
-| `zones/<c>/spawners.json` | PNJ d'ambiance (routines, agendas de métier — cf. `docs/architecture/etape4_simulation.md` §4.4) + faune, `zoneId` = id de la cellule, positions globales |
+| `zones/<c>/spawners.json` | PNJ d'ambiance (routines, agendas de métier — cf. `docs/architecture/etape4_simulation.md` §4.4) + faune, `zoneId` = id de la cellule, positions globales ; v1.0.143 : routine à **altitude réelle** (graphe 3D de la ville-tour) : `routine.realHeight: true` et `routine.pathY` (une altitude par point de `path`, champs additifs ignorés d'un shard plus ancien) |
 | `zones/<c>/respawn_points.txt` | cimetières / auberges |
 | `zones/<c>/runtime_manifest.json` | `zone_id` = nom, `zone_numeric_id` = id serveur |
 | `instances/zone_<c>/scatter.bin` | décor instancié **LCSC v2** (table de chunks 20 × 20 de 500 m) |
@@ -259,6 +259,21 @@ voisines raccord au mètre près :
    pied de la plateforme, rues en arc sur chaque replat, volées `Stairs_Monumental_1` posées sur la rampe ; faubourgs hors les murs (quatre rues en anneau, sauf côté revers) et champs repoussés au-delà ; port (`BuildHarbour` : esplanade, quai, jetées, navires `Ship_Cog_1`, grues, entrepôts) si la ville a le service `port` ; un POI de
    genre `palais` sur le sommet est bâti par `Landmarks.cpp`. Ex. : Lhynn et son palais
    impérial (LORE_BD §16.66).
+   Depuis la v1.0.143, `pic` dresse une **ville-tour** (mise en page `ville_tour` de sa ville
+   `city`, exigée ; position manuelle admise : le pic suit la ville) : **aiguille
+   rocheuse** hors du relief macro, sculptée dans sa cellule par `BuildTowerCity`
+   (Settlements.cpp) après l'eau : socle au ras du lac (`kTowerSocleAboveWaterM`) jusqu'à
+   `base_radius_m` + `socle_m` ; enveloppe des façades en cône (`base_radius_m` au socle,
+   `top_radius_m` au sommet, `height_m` au-dessus du socle), rocher `kTowerRockInsetM` en
+   retrait ; niveaux d'environ `tier_m` (deux étages de murs) ; **bâtiments distincts** empilés
+   d'un à trois niveaux (façade, toits d'ardoise sur chaque retrait, tourelles d'angle) entre
+   des **cages d'escalier** de `shaft_m` (volées `Stair_Interior_Rails` en zigzag, paliers,
+   parapets, portes décoratives) : `shafts_low` cages sous `split_m`, `shafts_high` au-dessus,
+   la cage 0 vers `entry_deg` ; lac centré de `lake_radius_m` qui remplace celui de la case
+   (île = socle) ; un ponton du socle à la rive ; routes arrêtées sur la rive
+   (`CityRoadAnchor`) ; geôles ; graphe des PNJ en **3D** (altitude de chaque nœud) ; un POI de
+   genre `palais` au centre est bâti par `Landmarks.cpp` sur le dallage du sommet (palais du
+   Magister). Ex. : Magistrya (LORE_BD §16.69).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
    départ ou ancrée sur un relief ; **position manuelle** `position`

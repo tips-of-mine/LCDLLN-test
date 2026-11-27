@@ -103,7 +103,7 @@ DEFAULT_GRILLE = {
     "ecurie": {"route_types": ["road"], "minimum": 1},
     "ajustements": {
         "ville_oracle_camp": {"temple": [1, 1]},
-        "sauken_glude_of_magistrya": {"ecole_magie": [2, 2]},
+        "sauken_glude_of_magistrya": {"ecole_magie": [2, 2], "prison": [1, 1]},  # prison : v1.0.143 (geoles du socle)
         "city_dragon_palace": {"temple": [1, 1]},
     },
 }

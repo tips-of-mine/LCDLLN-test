@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.142",
+    "version": "1.0.143",
     "notes": [
+      "v1.0.143 : [DÉCISION] Magistrya ville-tour : aiguille droite de 600 m en cône étroit au milieu d'un lac, bâtiments distincts empilés séparés par des cages d'escalier praticables du socle au palais (sans palier circulaire), long ponton, geôles au socle (service prison), palais du Magister au sommet (salle du trône, laboratoire) ; habitants à altitude réelle dans les cages ; le Magister est vivant dans la continuité du jeu.",
       "v1.0.142 : [DÉCISION] Kendrhir d'après le tome 1 (p.23 à 42 du PDF) : rempart de rondins de 20 m en reconstruction (pans neufs, calcinés, brèches), tours et portes de bois, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège ; références du tome 1 des décors réalignées sur le PDF.",
       "v1.0.141 : [DÉCISION] Camp de l'Oracle amélioré (T1 p.3-5, T2 p.44-46, T3 p.5-7) : rocher de cristal bleu, huit grandes portes réinterprétées sur socle de brique, escaliers de 6 m ; salle de l'Oracle creusée au cœur du rocher (porte SO, quête « L'Appel de l'Oracle ») et salle des Échos (porte E, raid « L'Épreuve des Échos », groupe d'au moins 3) ; tentes agrandies et de couleur, mâts à fanions, feux, bassins des pèlerins, menhirs bleus de 3 à 5 m.",
       "v1.0.140 : [DÉCISION] Lhynn en gradins : palais impérial au sommet (ville haute avancée vers la mer, ville basse vers l'est), escalier monumental depuis la grand-place ; façade, flèches et escalier modélisés (réinterprétation).",
@@ -10761,14 +10762,18 @@
         "banque",
         "guilde",
         "infirmerie",
+        "prison",
         "ecole_magie",
         "cimetiere"
       ],
       "features": [
-        "ville-tour très haute",
-        "escaliers multiples",
-        "au centre d’un grand lac",
-        "4 pontons cardinaux"
+        "ville-tour droite et très haute (600 m) en cône étroit autour d'une aiguille rocheuse",
+        "bâtiments distincts empilés (un à trois niveaux chacun), toits d'ardoise à chaque retrait, tourelles d'angle",
+        "escaliers entre chaque colonne de bâtiments (cages d'escalier du socle au palais)",
+        "au centre d'un grand lac",
+        "un long ponton de bois depuis la rive (gibets et poteau indicateur à l'entrée)",
+        "geôles voûtées au socle",
+        "palais du Magister au sommet (salle du trône, laboratoire)"
       ],
       "notes": [
         "[BD-T2] Immense ville-tour construite autour d'un pic rocheux, s'enroulant comme 'un serpent de pierre'. Les plus belles demeures sont vers les hauteurs.",
@@ -10788,29 +10793,33 @@
         "[DÉCISION] (v1.0.56) Graphie THS « Magestrya » en alias (Q12) ; Magistrya garde sa case N003_W003 (Q18), malgré sa position au sud de Lhynn sur la carte THS.",
         "[GD] (v1.0.58) Économie : école de magie (apprentissage des sorts), herbes et réactifs des marais [GD].",
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
-        "[GD] (v1.0.82) PNJ des peuples lointains présents : Ysmhera Vhaul (Les Vharnoctes, marchand) ; Faryzhad Ilkhaner (Le Kharzhad, erudit) ; Senmhoret Djhaïs (Le royaume de Nebkhara, erudit) (fiches persons, LORE_BD §16.11)."
+        "[GD] (v1.0.82) PNJ des peuples lointains présents : Ysmhera Vhaul (Les Vharnoctes, marchand) ; Faryzhad Ilkhaner (Le Kharzhad, erudit) ; Senmhoret Djhaïs (Le royaume de Nebkhara, erudit) (fiches persons, LORE_BD §16.11).",
+        "[DÉCISION] (v1.0.143) Un seul long ponton de bois depuis la rive, comme sur la planche p.19 (arbitrage Q2 a) : la note « 4 pontons cardinaux » est abandonnée ; gibets et poteau indicateur à la tête du ponton ; LORE_BD §16.69.",
+        "[DÉCISION] (v1.0.143) Geôles voûtées au socle, adossées à la face de la tour (arbitrage Q3 a ; [BD-T2] p.22 : voûtes, gros piliers, banquettes, anneaux, soupiraux) ; service prison ajouté, avec son geôlier (Q6 a) ; LORE_BD §16.69.",
+        "[DÉCISION] (v1.0.143) Retour du test visuel du propriétaire (27/11/2026) : la rampe en spirale rappelait la tour de Babel ou Minas Tirith ; Magistrya est plus droite et plus haute, sans palier circulaire, et l'on voit les séparations entre les bâtiments, avec des escaliers entre chacun. Arbitrages : hauteur 600 m ; accès à pied partout jusqu'au sommet ; silhouette en cône étroit (rayon 120 m au socle, 30 m au sommet) ; bâtiments non visitables, portes décoratives sur les paliers (Q3 a). Aiguille rocheuse couverte de bâtiments distincts d'un à trois niveaux de 12,5 m (pierre, enduit, brique, pierre sèche), toits d'ardoise à chaque retrait, tourelles d'angle ; 24 cages d'escalier sous 300 m, 12 au-dessus, du socle au palais ; les habitants vivent et circulent dans les étages (altitude réelle). Remplace une première version en spirale de 250 m (Q1 b), jamais livrée. LORE_BD §16.69.",
+        "[DÉCISION] (v1.0.143) Couleur : Magistrya n'est pas blanche mais orangée et claire (retours du propriétaire du 27/11/2026, vérifiés dans la BD : T2 p.19, 20, 25, 27, pierre ocre doré sous des toits d'ardoise bleue) ; bâtiments en grès doré clair (dominant), brique ocre et un peu de brique rouge, tourelles de pierre ocre ; ni enduit blanc ni pierre grise ; LORE_BD §16.69."
       ],
       "dimensions_estimees": {
-        "hauteur": "800-1200m",
+        "hauteur": "600 m (sommet du palais au-dessus du socle) [DÉCISION v1.0.143]",
         "largeur": "",
-        "diametre": "150-250m",
+        "diametre": "socle de 300 m ; tour de 240 m à la base, 60 m au sommet",
         "zone_visible": "Visible à plusieurs dizaines de kilomètres en terrain plat, structure dominante isolée"
       },
       "topographie": {
-        "forme_generale": "Tour monolithique cylindro-conique composée d’empilements architecturaux successifs",
+        "forme_generale": "aiguille rocheuse couverte de bâtiments empilés en cône étroit, sans rampe ni palier circulaire",
         "relief": "Implantée au centre d’un vaste lac calme entouré de plaines basses",
         "implantation": "Édifiée sur un socle rocheux central émergeant de l’eau",
-        "pentes": "Flancs verticaux avec légers retraits en terrasses successives",
+        "pentes": "verticale : on monte par les cages d'escalier entre les bâtiments (volées en zigzag et paliers)",
         "gorge": ""
       },
       "elements_principaux": [
-        "Tour centrale colossale",
-        "Socle circulaire massif",
-        "Pontons cardinaux convergeant vers une entrée principale",
-        "Multiples ponts et arches internes",
-        "Escaliers extérieurs et passerelles suspendues",
-        "Quartiers résidentiels superposés",
-        "Sommet effilé dominant les nuages"
+        "Aiguille rocheuse centrale couverte de bâtiments empilés",
+        "Socle circulaire massif (quai au ras de l'eau)",
+        "Long ponton de bois depuis la rive",
+        "Cages d'escalier entre les bâtiments, du socle au palais",
+        "Bâtiments distincts (pierre, enduit, brique), toits d'ardoise, tourelles d'angle",
+        "Geôles voûtées au socle",
+        "Palais du Magister au sommet"
       ],
       "architecture": {
         "presence": "Très dense verticalement",
@@ -10821,7 +10830,7 @@
         "type": "Lac",
         "eau": "Calme, miroir partiel du ciel",
         "couleur": "Bleu clair à reflets dorés",
-        "elements": "Rives plates, embarcadères en bois, passerelles sur pilotis"
+        "elements": "Rives plates et marécageuses, un long ponton de bois sur pieux"
       },
       "vegetation": {
         "densite": "Faible autour de la tour",
@@ -10833,11 +10842,11 @@
         "herbe": "Herbes rases sur les berges"
       },
       "couleurs_dominantes": [
+        "Ocre orangé",
         "Ocre doré",
-        "Beige pierre",
-        "Bleu profond",
-        "Bleu azur",
         "Brun chaud",
+        "Bleu ardoise (toits)",
+        "Bleu profond",
         "Jaune lumineux"
       ],
       "ambiance": {
@@ -10859,7 +10868,7 @@
       },
       "niveau_occupation": "Élevé, population visible dans les rues internes et sur les pontons",
       "acces": {
-        "route_principale": "Quatre longues passerelles en bois alignées sur les points cardinaux menant au socle",
+        "route_principale": "Un long ponton de bois depuis la rive (gibets et poteau indicateur à l'entrée), jusqu'au socle",
         "distance_visuelle": "Visible bien avant d’atteindre les rives du lac",
         "dominance_paysage": "Structure ultra-dominante écrasant totalement l’horizon"
       },
@@ -10870,7 +10879,7 @@
         "Aspect de cité-école tournée vers le savoir plutôt que la défense militaire",
         "Sommet semblant se perdre dans les nuages"
       ],
-      "prompt_image_ultra_detaille": "Immense cité-tour arcanique isolée au centre d’un vaste lac calme, structure cylindrique monumentale de 1000 mètres de haut composée de strates architecturales superposées, arches gothiques, ponts suspendus en pierre reliant différents niveaux, escaliers extérieurs serpentant le long des façades, quartiers résidentiels verticaux intégrés dans la maçonnerie, quatre longues passerelles en bois partant des points cardinaux vers un socle circulaire massif, lumière dorée d’aube ou crépuscule, ciel bleu profond avec nuages volumineux entourant la partie haute, style bande dessinée franco-belge heroic fantasy, encrage noir marqué, couleurs ocres et bleues contrastées, atmosphère grandiose, académique et mystique, perspective accentuant la verticalité extrême.",
+      "prompt_image_ultra_detaille": "Immense cité-tour arcanique isolée au centre d’un vaste lac calme, flèche monumentale en cône étroit d'environ 600 mètres de haut composée de strates architecturales superposées, arches gothiques, ponts suspendus en pierre reliant différents niveaux, escaliers extérieurs serpentant le long des façades, quartiers résidentiels verticaux intégrés dans la maçonnerie, un long ponton de bois partant de la rive vers un socle circulaire massif, lumière dorée d’aube ou crépuscule, ciel bleu profond avec nuages volumineux entourant la partie haute, style bande dessinée franco-belge heroic fantasy, encrage noir marqué, couleurs ocres et bleues contrastées, atmosphère grandiose, académique et mystique, perspective accentuant la verticalité extrême.",
       "footprint_tiles": [
         "N003_W003"
       ],
@@ -11020,6 +11029,14 @@
           "race_id": "race_human",
           "service": "infirmerie",
           "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_sauken_glude_of_magistrya_prison_01",
+          "name": "Rolwald Fervigne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "prison",
+          "metier": "geolier"
         },
         {
           "id": "pnj_sauken_glude_of_magistrya_ecole_magie_01",
@@ -34876,22 +34893,27 @@
       "etapes_struct": [
         {
           "texte": "Arriver à Magistrya (1 semaine après le Mont des Neuf Pics).",
-          "lieu_id": "lieu_mont_neufs_pics"
+          "ville_id": "sauken_glude_of_magistrya"
         },
         {
-          "texte": "Demander une audience seul au Magister."
+          "texte": "Demander une audience seul au Magister.",
+          "lieu_id": "lieu_palais_magister_magistrya"
         },
         {
-          "texte": "Être soumis à la machine d'extraction d'essence vitale."
+          "texte": "Être soumis à la machine d'extraction d'essence vitale.",
+          "lieu_id": "lieu_palais_magister_magistrya"
         },
         {
-          "texte": "Résister / Rejeter la machine par l'énergie élémentale."
+          "texte": "Résister / Rejeter la machine par l'énergie élémentale.",
+          "lieu_id": "lieu_palais_magister_magistrya"
         },
         {
-          "texte": "Contraindre Desdémone à révéler la localisation de l'Oracle."
+          "texte": "Contraindre Desdémone à révéler la localisation de l'Oracle.",
+          "lieu_id": "lieu_palais_magister_magistrya"
         },
         {
-          "texte": "Libérer tous les prisonniers des geôles."
+          "texte": "Libérer tous les prisonniers des geôles.",
+          "ville_id": "sauken_glude_of_magistrya"
         }
       ],
       "source_lore": [
@@ -34917,7 +34939,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T2] Pages 19-27.",
-        "[BD-T2] Magistrya est une ville tout en hauteur : la montée vers le palais du sommet se fait par rampes et escaliers (p.20)."
+        "[BD-T2] Magistrya est une ville tout en hauteur : la montée vers le palais du sommet se fait par rampes et escaliers (p.20).",
+        "[DÉCISION] (v1.0.143) Étapes ancrées : arrivée et geôles sur la ville (la première étape pointait par erreur sur le Mont des Neuf Pics), audience, machine, révélation de l'Oracle sur le palais du Magister (lieu_palais_magister_magistrya) ; le Magister survit dans la continuité du jeu (Q4 c) ; LORE_BD §16.69."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -47072,7 +47095,9 @@
       "factions": [],
       "ref_type": "quest",
       "ref_id": "quest_t2_audience_magister",
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.143) Événement de la BD conservé mais hors de la continuité du jeu : le Magister survit (arbitrage Q4 c) ; LORE_BD §16.69."
+      ]
     },
     {
       "id": "event_t2_mort_dracchennauknh",
@@ -165240,7 +165265,7 @@
       "id": "char_magister_magistrya",
       "name": "Le Magister de Magistrya",
       "importance": "secondary",
-      "alive": false,
+      "alive": true,
       "tomes": [
         "t02"
       ],
@@ -165251,7 +165276,7 @@
       "visual": "[BD-T2] Très vieil homme à longue moustache blanche, haute coiffe noire cylindrique ornée d'un joyau, col d'hermine, robe bleu nuit, mains griffues (pp.20, 23).",
       "personality": "Rusé, manipulateur, désespéré de survivre. Utilise des êtres vivants comme carburant magique pour prolonger sa propre vie.",
       "description": "Sorcier-roi de Magistrya. Très vieux, cherche à prolonger sa vie en extrayant l'essence vitale des elfes et demi-elfes via une machine magique. Son amante Desdémone le manipule à son insu.",
-      "arc": "Tente d'exploiter Wismerhill → échec → mort",
+      "arc": "Tente d'exploiter Wismerhill → échec ; dans la continuité du jeu, il survit [DÉCISION v1.0.143]",
       "abilities": [
         "Machine d'extraction d'essence vitale",
         "Magie corrosive verte",
@@ -165274,7 +165299,8 @@
         "[BD-T2] 'Les elfes sont immortels et leur essence vitale possède de grandes vertus — ceux en qui coule le sang des elfes ont la meilleure.'",
         "[BD-T2] Sa machine est rejetée par l'énergie élémentale de Wismerhill — il meurt, desséché ; « Il a rejoint notre maître ! » (p.26).",
         "[BD-T2] Son amante Desdémone le manipule et sert en réalité une entité démoniaque distincte.",
-        "[BD-T2] Ses portes, son trône et sa salle portent un pentagramme marqué « H » (pp.20, 23)."
+        "[BD-T2] Ses portes, son trône et sa salle portent un pentagramme marqué « H » (pp.20, 23).",
+        "[DÉCISION] (v1.0.143) Le Magister n'est pas mort dans la continuité du jeu (arbitrage Q4 c du propriétaire, 26/11/2026 : « dans l'histoire le Magister n'est pas mort, ce qui permet un morceau de l'histoire ») ; il réside dans la salle du trône de son palais, au sommet de Magistrya (lieu_palais_magister_magistrya) ; son laboratoire est en activité. Son rôle dans les quêtes (donneur de quêtes, adversaire) reste à écrire [GD] (Q8 c : présence seule pour l'instant) ; LORE_BD §16.69."
       ]
     },
     {
@@ -244598,7 +244624,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Lhynn en gradins, palais impérial, capitale dense et faubourgs, port et champs ; docs/world/LORE_BD.md §16.66). Ajout v1.0.141 : 4 entrées (Camp de l'Oracle : salle de l'Oracle, salle des Échos, rocher de cristal et portes, camp extérieur ; docs/world/LORE_BD.md §16.67). Ajout v1.0.142 : 3 entrées (Kendrhir d'après le tome 1 : enceinte, donjon, bâti et restes du siège ; références du tome 1 réalignées sur le PDF ; neige renvoyée au cycle des saisons ; docs/world/LORE_BD.md §16.68).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Lhynn en gradins, palais impérial, capitale dense et faubourgs, port et champs ; docs/world/LORE_BD.md §16.66). Ajout v1.0.141 : 4 entrées (Camp de l'Oracle : salle de l'Oracle, salle des Échos, rocher de cristal et portes, camp extérieur ; docs/world/LORE_BD.md §16.67). Ajout v1.0.142 : 3 entrées (Kendrhir d'après le tome 1 : enceinte, donjon, bâti et restes du siège ; références du tome 1 réalignées sur le PDF ; neige renvoyée au cycle des saisons ; docs/world/LORE_BD.md §16.68). Ajout v1.0.143 : 3 entrées (ponton unique, geôles et prison, Magister vivant ; docs/world/LORE_BD.md §16.69). Ajout v1.0.143 (suite) : 1 entrée (Magistrya, aiguille de 600 m et cages d'escalier ; docs/world/LORE_BD.md §16.69). Ajout v1.0.143 (suite) : 1 entrée (Magistrya orangée et claire).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -247959,6 +247985,41 @@
           "nom": "Neige de Kendrhir renvoyée au cycle des saisons",
           "decision": "Décision du propriétaire (25/11/2026) : la neige des p.35 à 42 du tome 1 n'est pas rendue tant que le jeu n'a qu'une saison ; à prévoir avec le cycle des saisons. LORE_BD §16.68.",
           "version": "1.0.140"
+        },
+        {
+          "collection": "villes",
+          "id": "sauken_glude_of_magistrya_ponton_v1143",
+          "nom": "Magistrya : un seul ponton",
+          "decision": "Arbitrage Q2 a (26/11/2026) : un seul long ponton de bois depuis la rive, comme sur la planche T2 p.19 ; la note « 4 pontons cardinaux » est abandonnée. LORE_BD §16.69.",
+          "version": "1.0.143"
+        },
+        {
+          "collection": "villes",
+          "id": "sauken_glude_of_magistrya_geoles_v1143",
+          "nom": "Magistrya : geôles et prison",
+          "decision": "Arbitrages Q3 a et Q6 a (26/11/2026) : geôles voûtées au socle, adossées à la tour (T2 p.22) ; service prison ajouté avec son geôlier. LORE_BD §16.69.",
+          "version": "1.0.143"
+        },
+        {
+          "collection": "persons",
+          "id": "char_magister_magistrya",
+          "nom": "Le Magister survit",
+          "decision": "Arbitrage Q4 c du propriétaire (26/11/2026) : « dans l'histoire le Magister n'est pas mort, ce qui permet un morceau de l'histoire » ; il réside dans son palais (salle du trône, laboratoire actif) ; l'événement de sa mort (T2) est hors continuité ; rôle dans les quêtes à écrire (Q8 c : présence seule). LORE_BD §16.69.",
+          "version": "1.0.143"
+        },
+        {
+          "collection": "villes",
+          "id": "sauken_glude_of_magistrya_aiguille_v1143",
+          "nom": "Magistrya : aiguille de 600 m et cages d'escalier",
+          "decision": "Retour du test visuel du propriétaire (27/11/2026) : la spirale rappelait la tour de Babel. Arbitrages : 600 m, accès à pied jusqu'au sommet, cône étroit (120 m → 30 m), bâtiments distincts empilés séparés par des cages d'escalier praticables du socle au palais, sans palier circulaire ; bâtiments non visitables (portes décoratives, Q3 a) ; PNJ à altitude réelle dans les cages (graphe 3D, Q1 b). Remplace une première version en spirale de 250 m (Q1 b), jamais livrée. LORE_BD §16.69.",
+          "version": "1.0.143"
+        },
+        {
+          "collection": "villes",
+          "id": "sauken_glude_of_magistrya_couleur_v1143",
+          "nom": "Magistrya : pierre ocre doré",
+          "decision": "Retours du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange », « l'ensemble doit être plus clair », vérifiés dans la BD T2 p.19-20) : murs de grès doré clair et de brique ocre (assets n° 239, 240), un peu de brique rouge, tourelles de pierre ocre (n° 241), murs du palais en grès ; ni enduit blanc ni pierre grise. LORE_BD §16.69.",
+          "version": "1.0.143"
         }
       ]
     },
@@ -253746,6 +253807,10 @@
             "ecole_magie": [
               2,
               2
+            ],
+            "prison": [
+              1,
+              1
             ]
           },
           "city_dragon_palace": {
@@ -257882,6 +257947,98 @@
         "[DÉCISION] (v1.0.140) Lieu créé pour le palais de la capitale (demande du propriétaire du 25/11/2026) : sommet de la ville en gradins, posé à la main (position -3804, -2600 m depuis le centre de la case, 104 m à l'ouest de la grand-place) ; monde jouable : POI poi_palais_imperial_lhynn (genre « palais ») bâti par tools/world_gen (façade dédiée, corps et enceinte en pièces modulaires, quatre flèches, parvis, salle du trône, jardin) ; LORE_BD §16.66.",
         "[DÉCISION] (v1.0.140) Monument signature RÉINTERPRÉTÉ (pas de reproduction fidèle) : statues colossales à sujet neutre (encapuchonnées, sans visage), aucune héraldique de faction, bannières rouges unies (arbitrage Q2 a + b du propriétaire).",
         "[DÉCISION] (v1.0.140) Contenu rattaché (arbitrage Q4 a) : les étapes « palais de Lhynn » de 12 quêtes (conseil de guerre et Clefs de Northind T8, audience de Parsifal T10, T12 01, 02, 03, 07, T13 03, 06, 07, T14 secret de la divinité et préparation de l'exode) sont ancrées sur ce lieu ; le raid raid_assaut_palais_lhynn_t10 s'y déroule."
+      ]
+    },
+    {
+      "id": "lieu_palais_magister_magistrya",
+      "name": "Palais du Magister",
+      "alias": "",
+      "type": "palace_poi",
+      "importance": "majeure",
+      "cell": "N003_W003",
+      "position_x_m": 0,
+      "position_z_m": 0,
+      "region_id": "terres_de_lempereur",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "Ordre arcanique majeur de Magistrya",
+      "features": [
+        "palais au sommet de la ville-tour, portail gothique à rosace",
+        "salle du trône en longueur, colonnes torsadées colossales",
+        "trône sur estrade, fauteuil sculpté",
+        "laboratoire du Magister (charpente, table de pierre, étagères d'apothicaire, alambic, chaînes)",
+        "quatre tours rondes aux angles de la plateforme"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "salle du trône 19 m, tours 22 m ; sommet à 600 m au-dessus du socle",
+        "largeur": "salle du trône 31 × 16 m ; plateforme de 62 m",
+        "diametre": "",
+        "zone_visible": "visible de tout le lac et de la plaine"
+      },
+      "topographie": {
+        "forme_generale": "plateforme ronde au sommet de l'aiguille",
+        "relief": "sommet de la ville-tour",
+        "implantation": "au centre du lac, à 600 m au-dessus du socle",
+        "pentes": "arrivée des cages d'escalier tout autour de la plateforme, la principale devant le portail",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "monumentale",
+        "style": "gothique érudit (réinterprétation)",
+        "etat": "intact à l'époque du jeu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "pierre ocre orangé",
+        "vert de serpentine",
+        "or",
+        "bleu nuit"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "cages d'escalier depuis le socle (onze arrivent au sommet)",
+        "distance_visuelle": "plusieurs kilomètres",
+        "dominance_paysage": "domine le lac et la plaine"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T2] p.20 : « C'est tout en haut, impossible de vous tromper ! » ; portes du palais (portail gothique à rosace). p.23 : salle du trône en longueur aux colonnes torsadées géantes, vue depuis le trône ; laboratoire du Magister sous charpente. p.25 : porte de bois du laboratoire, chute du Magister par une fenêtre (hauteur de la ville).",
+        "[DÉCISION] (v1.0.143) Lieu créé pour le palais du sommet de Magistrya (demande du propriétaire du 26/11/2026) : au centre de la case, sur la plateforme du pic ; monde jouable : POI poi_palais_magister_magistrya (genre « palais ») bâti par tools/world_gen (salle du trône, laboratoire, tours) ; signatures de la BD non reproduites (pentagramme marqué « H », machine d'extraction) ; le Magister y réside (Q4 c) ; LORE_BD §16.69.",
+        "[DÉCISION] (v1.0.143) Sommet porté à 600 m ; on y arrive par les cages d'escalier entre les bâtiments (la principale débouche devant le portail) ; LORE_BD §16.69."
       ]
     },
     {
@@ -358457,7 +358614,7 @@
         "T1-P029-C5"
       ],
       "placement": "",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T1"
     },
     {
@@ -359660,7 +359817,7 @@
         "T2-P044-C3 (personnage)"
       ],
       "placement": "palais, temples, châteaux",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -359702,7 +359859,7 @@
         "T2-P012-C7 (soupirail à barreaux)"
       ],
       "placement": "sous-sols des villes, donjons",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -359757,7 +359914,7 @@
         "T2-P023-C6"
       ],
       "placement": "intérieurs de grands bâtiments",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -359774,7 +359931,7 @@
         "T2-P020-C7"
       ],
       "placement": "palais, demeures",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -359792,7 +359949,7 @@
         "T2-P025-C3,C5"
       ],
       "placement": "alchimistes, tours d'arcanes",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -359810,7 +359967,7 @@
         "T2-P025-C5"
       ],
       "placement": "cachots, forges",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -359845,7 +360002,7 @@
         "T2-P023-C6 (sans runes)"
       ],
       "placement": "laboratoires, cryptes",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T2"
     },
     {
@@ -361642,7 +361799,7 @@
         "T8-P033"
       ],
       "placement": "intérieurs et façades (catalogue) : temples, chapelles",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T8"
     },
     {
@@ -362210,6 +362367,85 @@
       "placement": "Kendrhir (apparence du master) : abords hors les murs, loin des routes (vestiges_siege)",
       "generated": true,
       "source": "[BD] T1"
+    },
+    {
+      "id": "decor_238",
+      "num": 238,
+      "name": "Colonne torsadée colossale",
+      "tome": 2,
+      "family": "monument",
+      "meshes": [
+        "Column_Twisted_Giant_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P023-C1, C2 (salle du trône du Magister, personnages à la base : colonnes ≈ 8 fois leur hauteur)",
+        "arbitrage Q5 b du propriétaire (26/11/2026)",
+        "générique, sans emblème"
+      ],
+      "placement": "Magistrya : salle du trône du palais du Magister (deux rangées)",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_239",
+      "num": 239,
+      "name": "Murs de grès ocre (kit)",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Wall_Sandstone_Straight",
+        "Wall_Sandstone_Window_Wide_Round",
+        "Wall_Sandstone_Window_Thin_Round",
+        "Wall_Sandstone_Door_Round"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise)",
+        "retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+      ],
+      "placement": "Magistrya : bâtiments de la ville-tour",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_240",
+      "num": 240,
+      "name": "Murs de brique ocre (kit)",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Wall_OchreBrick_Straight",
+        "Wall_OchreBrick_Window_Wide_Round",
+        "Wall_OchreBrick_Window_Thin_Round",
+        "Wall_OchreBrick_Door_Round"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P019-C1, T2-P020-C3, C4 (Magistrya : ville de pierre ocre orangé sous des toits d'ardoise)",
+        "retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+      ],
+      "placement": "Magistrya : bâtiments de la ville-tour",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_241",
+      "num": 241,
+      "name": "Tourelle d'angle de pierre ocre",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Turret_Corner_Ochre_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P020-C3, C4 (tours d'angle de Magistrya, pierre ocre)",
+        "retour du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange »)"
+      ],
+      "placement": "Magistrya : angles des bâtiments de la ville-tour",
+      "generated": true,
+      "source": "[BD] T2"
     }
   ]
 }

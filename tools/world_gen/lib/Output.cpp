@@ -1344,6 +1344,15 @@ namespace tools::world_gen
 							j += (q ? ", [" : "[") + Num(d.path[q].x) + ", " + Num(d.path[q].z) + "]";
 						j += "]";
 					}
+					// v1.0.143 — altitude réelle des points (graphe 3D de la ville-tour) : champs
+					// ADDITIFS (un shard plus ancien les ignore et garde l'altitude du spawner).
+					if (d.realHeight && !d.path.empty() && d.pathY.size() == d.path.size())
+					{
+						j += ", \"realHeight\": true, \"pathY\": [";
+						for (size_t q = 0; q < d.pathY.size(); ++q)
+							j += (q ? ", " : "") + Num(d.pathY[q]);
+						j += "]";
+					}
 					j += " }";
 				}
 				// ETAPE4.4 — agenda de métier (cf. src/shardd/gameplay/ambient/DailyAgenda.h).

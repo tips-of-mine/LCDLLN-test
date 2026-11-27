@@ -1350,6 +1350,30 @@
       "nom": "Restes de siège : tour de siège effondrée, mangonneau brûlé",
       "tome": 1,
       "placement_prevu": "Kendrhir (apparence du master) : abords hors les murs, loin des routes (vestiges_siege)"
+    },
+    {
+      "num": 238,
+      "nom": "Colonne torsadée colossale",
+      "tome": 2,
+      "placement_prevu": "Magistrya : salle du trône du palais du Magister (deux rangées)"
+    },
+    {
+      "num": 239,
+      "nom": "Murs de grès ocre (kit)",
+      "tome": 2,
+      "placement_prevu": "Magistrya : bâtiments de la ville-tour"
+    },
+    {
+      "num": 240,
+      "nom": "Murs de brique ocre (kit)",
+      "tome": 2,
+      "placement_prevu": "Magistrya : bâtiments de la ville-tour"
+    },
+    {
+      "num": 241,
+      "nom": "Tourelle d'angle de pierre ocre",
+      "tome": 2,
+      "placement_prevu": "Magistrya : angles des bâtiments de la ville-tour"
     }
   ]
 }

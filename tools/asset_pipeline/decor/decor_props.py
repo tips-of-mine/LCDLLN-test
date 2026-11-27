@@ -1930,8 +1930,10 @@ def p_turret_corner(spec, lod):
     flèche conique 5 m ; posée sur l'angle avant gauche des maisons hautes à ardoise."""
     m = M()
     n = S(lod, 18)
-    cyl(m.p("Stone_Wall"), (0, 0, -0.2), (0, 0, 1.0), 1.55, 1.55, n, cap=False)
-    cyl(m.p("Plaster"), (0, 0, 1.0), (0, 0, 9.0), 1.5, 1.5, n, cap=False)
+    # n° 241 (Magistrya, v1.0.143) : variante de pierre ocre (spec « stone » / « body »).
+    stone, body = spec.get("stone", "Stone_Wall"), spec.get("body", "Plaster")
+    cyl(m.p(stone), (0, 0, -0.2), (0, 0, 1.0), 1.55, 1.55, n, cap=False)
+    cyl(m.p(body), (0, 0, 1.0), (0, 0, 9.0), 1.5, 1.5, n, cap=False)
     cyl(m.p("Wood_Dark"), (0, 0, 8.85), (0, 0, 9.1), 1.6, 1.6, n)
     lathe(m.p("Shingle_Slate"), [(1.75, 9.0), (1.45, 10.0), (0.8, 12.0), (0.25, 13.6), (0.02, 14.0)], n)
     if lod < 2:
@@ -4835,6 +4837,35 @@ def p_ship_cog(spec, lod):
         for end in ((0, 11.8, H + 1.5), (0, -11.5, H + 3.2), (3.2, 0.5, H + 0.2), (-3.2, 0.5, H + 0.2)):
             API["tube"](rope, [top, Vector(end)], [0.04, 0.04], 4, 0.5)
         cyl(wood, (0, 11.0, H + 1.0), (0, 14.0, H + 3.4), 0.18, 0.1, S(lod, 6))   # beaupré
+    return m.out()
+
+
+def p_column_twisted_giant(spec, lod):
+    """Colonne torsadée colossale (n° 238, salle du trône du palais du Magister, T2-P023-C1,
+    C2) : socle mouluré carré, fût de quatre brins enroulés (une torsade et demie) autour
+    d'un noyau, renflé au milieu comme sur la planche, chapiteau massif ; pierre serpentine
+    verte veinée, socle et chapiteau de pierre taillée. Générique (aucun emblème) ; H 16 m."""
+    m = M()
+    c = m.p("Stone_Carved")
+    g = m.p("Stone_Serpentine")
+    box(c, (-1.8, -1.8, 0.0), (1.8, 1.8, 0.7))
+    box(c, (-1.55, -1.55, 0.7), (1.55, 1.55, 1.3))
+    z0, z1 = 1.3, 14.0
+    lathe(g, [(0.9, z0), (0.9, z1)], S(lod, 10))
+    seg = {0: 30, 1: 16, 2: 8}[lod]
+    sides = {0: 6, 1: 5, 2: 3}[lod]
+    for k in range(4):
+        pts, radii = [], []
+        for j in range(seg + 1):
+            t = j / seg
+            bulge = math.sin(math.pi * t)
+            a = k * math.pi / 2 + t * 3.0 * math.pi
+            rr = 0.8 + 0.42 * bulge
+            pts.append(Vector((rr * math.cos(a), rr * math.sin(a), z0 + (z1 - z0) * t)))
+            radii.append(0.5 + 0.22 * bulge)
+        API["tube"](g, pts, radii, sides, 0.5, False)
+    box(c, (-1.45, -1.45, z1), (1.45, 1.45, z1 + 0.8))
+    box(c, (-1.8, -1.8, z1 + 0.8), (1.8, 1.8, z1 + 1.8))
     return m.out()
 
 

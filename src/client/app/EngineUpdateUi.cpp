@@ -554,7 +554,7 @@ namespace engine
 						{
 							wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
 						}
-						wy = ResolveRemoteDisplayCenterY(false, wy, wx, wz);
+						wy = ResolveRemoteDisplayCenterY(false, wy, wx, wz, re.stateFlags);
 						float sxp = 0.0f, syp = 0.0f;
 						if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 0.2f, wz, ivw, ivh, sxp, syp))
 							continue;
@@ -2002,7 +2002,7 @@ namespace engine
 				// v1.0.125 — bateau : plaque au-dessus du pont (Y = flottaison répliquée).
 				wy = engine::server::IsBoatArchetype(re.archetypeId)
 					? wy + 6.0f
-					: ResolveRemoteDisplayCenterY(re.playerClientId != 0u, wy, wx, wz);
+					: ResolveRemoteDisplayCenterY(re.playerClientId != 0u, wy, wx, wz, re.stateFlags);
 				float sxp = 0.0f, syp = 0.0f;
 				if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 1.2f, wz, ivw, ivh, sxp, syp))
 					continue;
@@ -2901,7 +2901,7 @@ namespace engine
 							if (fxRe.entityId != fxEntityId)
 								continue;
 							fxY = ResolveRemoteDisplayCenterY(
-								fxRe.playerClientId != 0u, fxY, fxX, fxZ);
+								fxRe.playerClientId != 0u, fxY, fxX, fxZ, fxRe.stateFlags);
 							break;
 						}
 					}

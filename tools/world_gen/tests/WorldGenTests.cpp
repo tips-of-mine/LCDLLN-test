@@ -2805,7 +2805,8 @@ namespace
 		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
 			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes", "poi_temple_methraton", "poi_seuil_lhynn",
 			"poi_borne_monts_de_moork", // v1.0.128 : au bord de la route Moork - Ghrunke Dash (000242)
-			"poi_palais_imperial_lhynn" }; // v1.0.140 : sommet de Lhynn en gradins (LORE_BD §16.66)
+			"poi_palais_imperial_lhynn", // v1.0.140 : sommet de Lhynn en gradins (LORE_BD §16.66)
+			"poi_palais_magister_magistrya" }; // v1.0.143 : sommet de la ville-tour de Magistrya (LORE_BD §16.69)
 		size_t posees = 0;
 		for (const PoiDef& p : g0.master.pois)
 		{
@@ -2813,7 +2814,7 @@ namespace
 			none = none && balises.count(p.id);
 			++posees;
 		}
-		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140)");
+		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140), palais du Magister (v1.0.143)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
@@ -4407,6 +4408,240 @@ namespace
 			"acropole v1.0.140 : facade et fleche au catalogue de collision");
 	}
 
+	/// v1.0.143 — Magistrya, ville-tour (BD-T2 p.19-27, LORE_BD §16.69) : aiguille de
+	/// 600 m en cône étroit couverte de bâtiments distincts, cages d'escalier praticables du socle
+	/// au palais (volées continues, paliers, rocher toujours dessous, rien dans les cages), lac
+	/// centré et île hors de l'eau, ponton jusqu'à la rive, routes arrêtées sur la rive, geôles
+	/// (prison), palais du Magister posé à plat au sommet, graphe des PNJ en 3D et routines à
+	/// altitude réelle.
+	void TestVilleTourMagistryaV1143()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "ville-tour v1.0.143 : master royaumes charge");
+		if (!ok) return;
+		const CityDef* mc = nullptr;
+		int towers = 0;
+		for (const CityDef& c : g.master.cities)
+		{
+			if (c.id == "sauken_glude_of_magistrya") mc = &c;
+			towers += c.tower.enabled ? 1 : 0;
+		}
+		Check(mc && mc->tower.enabled && mc->layout == "ville_tour" && towers == 1, "ville-tour v1.0.143 : Magistrya seule ville-tour");
+		if (!mc || !mc->tower.enabled) return;
+		const TowerShape& t = mc->tower;
+		const int T = t.Tiers();
+		const double Ht = t.TierM(), halfG = t.shaftM * 0.5;
+		// Silhouette : 600 m, cône étroit (120 m au socle, 30 m au sommet), niveaux de 12,5 m.
+		Check(std::fabs(t.heightM - 600.0) < 1e-9 && std::fabs(t.EnvelopeR(0.0) - 120.0) < 1e-9 && std::fabs(t.EnvelopeR(600.0) - 30.0) < 1e-9
+				&& T == 48 && std::fabs(Ht - 12.5) < 1e-9 && t.SplitTier() == 24,
+			"ville-tour v1.0.143 : aiguille de 600 m, rayons 120 -> 30 m, 48 niveaux de 12,5 m");
+		Check(std::fabs(TowerOffset(t, t.center) - (600.0 - 0.5)) < 1e-9 && TowerOffset(t, t.center + Vec2{ t.SocleR() + 1.0, 0.0 }) < -1e8
+				&& std::fabs(TowerOffset(t, t.center + Vec2{ t.baseRadiusM + 5.0, 0.0 })) < 1e-9,
+			"ville-tour v1.0.143 : rocher sous le dallage du sommet, socle plat, rien au-dela du socle");
+		// Cages d'escalier (fonctions pures) : volées continues, paliers sous chaque arrivée et
+		// chaque départ, rocher toujours sous les volées et les paliers, cages dans l'enveloppe.
+		const double rise = Ht / 3.0;
+		int toSummit = 0, flightsTotal = 0;
+		bool continuous = true, rockBelow = true, inside = true, stepsOk = true;
+		for (int j = 0; j < t.shaftsLow; ++j)
+		{
+			const std::vector<TowerFlight> fl = TowerShaftFlights(t, j);
+			const std::vector<TowerLanding> la = TowerShaftLandings(t, j);
+			flightsTotal += static_cast<int>(fl.size());
+			if (TowerShaftTiers(t, j) == T) ++toSummit;
+			continuous = continuous && la.size() == fl.size() + 1 && !fl.empty();
+			const double a = TowerShaftAngle(t, j);
+			const Vec2 u{ std::cos(a), std::sin(a) }, v{ -u.z, u.x };
+			auto rockAt = [&](double r, double s) { return TowerOffset(t, t.center + u * r + v * s); };
+			for (size_t g2 = 0; g2 < fl.size(); ++g2)
+			{
+				const TowerFlight& f = fl[g2];
+				stepsOk = stepsOk && std::fabs(f.rise - rise) < 1e-9 && std::fabs(f.yBottom - g2 * rise) < 1e-6
+					&& std::fabs(std::fabs(f.rTop - f.rBottom) - (kTowerStairFrontM + kTowerStairBackM) * TowerStairScale(t)) < 1e-9;
+				const TowerLanding& lo = la[g2];
+				const TowerLanding& hi = la[g2 + 1];
+				continuous = continuous && f.rBottom >= lo.rIn - 1e-9 && f.rBottom <= lo.rOut + 1e-9 && std::fabs(lo.y - f.yBottom) < 1e-9
+					&& f.rTop >= hi.rIn - 1e-9 && f.rTop <= hi.rOut + 1e-9 && std::fabs(hi.y - (f.yBottom + f.rise)) < 1e-9
+					&& std::fabs(f.lane) + kTowerStairHalfWidthM * TowerStairScale(t) <= halfG;
+				if (f.level > 0)
+					for (double s : { -halfG, halfG })
+						rockBelow = rockBelow && rockAt(std::min(f.rBottom, f.rTop), s) <= f.yBottom + 1e-6 && rockAt(std::max(f.rBottom, f.rTop), s) <= f.yBottom + 1e-6;
+				inside = inside && std::max(f.rBottom, f.rTop) <= TowerShaftOuterR(t, f.tier) + 1e-9;
+			}
+			for (const TowerLanding& L0 : la)
+			{
+				if (L0.level > 0)
+					for (double s : { -halfG, halfG })
+						rockBelow = rockBelow && rockAt(L0.rIn, s) <= L0.y - 1.0 && rockAt(L0.rOut, s) <= L0.y - 1.0;
+				inside = inside && L0.rOut <= TowerShaftOuterR(t, std::max(0, (L0.level - 1) / 3)) + 1e-9 && L0.rOut - L0.rIn >= kTowerLandingM - 1e-9;
+			}
+			if (TowerShaftTiers(t, j) == T) continuous = continuous && std::fabs(la.back().y - t.heightM) < 1e-6;
+		}
+		Check(continuous && stepsOk, "ville-tour v1.0.143 : volees d'un tiers de niveau, paliers continus sous chaque arrivee et chaque depart");
+		Check(rockBelow, "ville-tour v1.0.143 : rocher toujours sous les volees et les paliers des cages");
+		Check(inside, "ville-tour v1.0.143 : cages en retrait des facades voisines");
+		Check(toSummit == 11, "ville-tour v1.0.143 : onze cages jusqu'au palais (la douzieme s'arrete sous le laboratoire)");
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		const Lake* lake = nullptr;
+		for (const Lake& l : g.lakes) if (l.name == "lac_sauken_glude_of_magistrya") lake = &l;
+		int caseLakes = 0;
+		for (const Lake& l : g.lakes)
+			caseLakes += (std::fabs(l.center.x - t.center.x) < 5000.0 && std::fabs(l.center.z - t.center.z) < 5000.0) ? 1 : 0;
+		Check(lake && std::hypot(lake->center.x - t.center.x, lake->center.z - t.center.z) < 1e-6 && lake->islandRadiusM > t.SocleR() && caseLakes == 1,
+			"ville-tour v1.0.143 : lac centre sur l'aiguille (seul lac de la case), ile du socle");
+		if (!lake) return;
+		auto w = std::make_unique<World>();
+		InitCell(*w, g, { mc->n, mc->e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildLandmarks(*w);
+		const CityDef* c = nullptr;
+		for (const CityDef& x : w->cities) if (x.id == "sauken_glude_of_magistrya") c = &x;
+		Check(c != nullptr, "ville-tour v1.0.143 : Magistrya dans la cellule");
+		if (c == nullptr) return;
+		const double socleY = c->plateauY, summitY = socleY + t.heightM;
+		Check(std::fabs(socleY - (lake->waterY + kTowerSocleAboveWaterM)) < 1e-6 && std::fabs(c->radiusM - t.SocleR()) < 1e-6,
+			"ville-tour v1.0.143 : socle au ras du lac, rayon de la ville = socle");
+		const Vec2 entry{ std::cos(t.entryRad), std::sin(t.entryRad) };
+		Check(std::fabs(w->HeightAt(t.center) - (summitY - 0.5)) < 1.5 && std::fabs(w->HeightAt(t.center + entry * (t.SocleR() - 6.0)) - socleY) < 1.0,
+			"ville-tour v1.0.143 : rocher du sommet sous le dallage, socle au pied du ponton");
+		Check(!w->IsWater(t.center + Vec2{ t.SocleR() - 3.0, 0.0 }) && w->IsWater(t.center + Vec2{ t.SocleR() + 60.0, 0.0 }),
+			"ville-tour v1.0.143 : le socle n'est pas de l'eau, le lac l'entoure");
+		auto count = [&](const char* mesh) {
+			int n = 0;
+			for (const ScatterDef& s : w->scatter) n += s.mesh.find(std::string("/") + mesh + ".gltf") != std::string::npos ? 1 : 0;
+			return n;
+		};
+		// Budget (mesuré) : pièces de la ville-tour dans le rayon du socle.
+		size_t towerPieces = 0;
+		for (const ScatterDef& s : w->scatter)
+			towerPieces += std::hypot(s.position.x - t.center.x, s.position.z - t.center.z) <= t.SocleR() ? 1 : 0;
+		std::printf("  Magistrya : %zu pieces dans le socle (volees %d, dalles %d, toits %d, portes %d)\n", towerPieces,
+			count("Stair_Interior_Rails"), count("Bridge_Stone_Deck_1"), count("Roof_Slate_4x4"), count("Door_1_Round"));
+		Check(count("Stair_Interior_Rails") == flightsTotal, "ville-tour v1.0.143 : une volee posee par volee des cages");
+		int walls = 0, families = 0;
+		for (const char* f : { "Wall_Sandstone_", "Wall_OchreBrick_", "Wall_RedBrick_" })
+		{
+			int n = 0;
+			for (const ScatterDef& s : w->scatter)
+				n += s.mesh.find(f) != std::string::npos && std::hypot(s.position.x - t.center.x, s.position.z - t.center.z) < t.baseRadiusM + 1.0 ? 1 : 0;
+			walls += n;
+			families += n > 300 ? 1 : 0;
+		}
+		int pale = 0; // ni enduit blanc ni pierre grise : la ville est ocre orangé (BD-T2 p.19-20)
+		for (const ScatterDef& s : w->scatter)
+			pale += (s.mesh.find("/Wall_Plaster_") != std::string::npos || s.mesh.find("/Wall_DryStone_") != std::string::npos
+				|| s.mesh.find("/Wall_UnevenBrick_") != std::string::npos) && std::hypot(s.position.x - t.center.x, s.position.z - t.center.z) <= t.SocleR() ? 1 : 0;
+		Check(walls >= 10000 && families == 3 && pale == 0 && count("Roof_Slate_4x4") >= 800 && count("Turret_Corner_Ochre_1") >= 20,
+			"ville-tour v1.0.143 : batiments distincts de pierre ocre (gres, brique ocre, brique rouge), toits a chaque retrait, tourelles d'angle");
+		Check(count("Door_1_Round") >= 1000 && count("Torch_Metal") >= 200 && towerPieces < 60000,
+			"ville-tour v1.0.143 : portes decoratives sur les paliers, torches, budget de pieces tenu");
+		// Façades et toits dans l'enveloppe, jamais dans le vide d'une cage ouverte.
+		bool envelopeOk = true, shaftsClear = true;
+		for (const ScatterDef& s : w->scatter)
+		{
+			const bool wall = s.mesh.find("/Wall_") != std::string::npos, roof = s.mesh.find("/Roof_Slate") != std::string::npos;
+			if (!wall && !roof) continue;
+			const Vec2 d = s.position - t.center;
+			const double r = std::hypot(d.x, d.z);
+			if (r >= t.baseRadiusM + 1.0) continue; // socle : geôles
+			const double y = w->HeightAt(s.position) + s.yOffset - socleY;
+			if (y >= t.heightM - 0.3) continue; // palais, sur la plateforme du sommet
+			envelopeOk = envelopeOk && r <= t.EnvelopeR(y) + 0.6;
+			const int k = std::clamp(static_cast<int>(std::floor((y + 0.2) / Ht)), 0, T - 1);
+			for (int j = 0; j < t.shaftsLow; ++j)
+			{
+				if (!TowerShaftOpenAt(t, j, k)) continue;
+				const double a = TowerShaftAngle(t, j);
+				const Vec2 u{ std::cos(a), std::sin(a) }, v{ -u.z, u.x };
+				const double along = d.x * u.x + d.z * u.z, side = d.x * v.x + d.z * v.z;
+				if (along > TowerShaftOuterR(t, k) - 12.0 && along < TowerShaftOuterR(t, k) && std::fabs(side) < halfG - 0.05)
+				{
+					shaftsClear = false;
+				}
+			}
+		}
+		Check(envelopeOk, "ville-tour v1.0.143 : facades et toits dans l'enveloppe en cone (aucune saillie circulaire)");
+		Check(shaftsClear, "ville-tour v1.0.143 : aucun mur ni toit dans le vide d'une cage ouverte");
+		int houses = 0, inns = 0;
+		for (const BuildingPlacementDef& b : w->buildings)
+			if (b.cityId == c->id) { ++houses; inns += b.isInn ? 1 : 0; }
+		Check(inns == 1, "ville-tour v1.0.143 : auberge au socle");
+		Check(count("Boardwalk_Deck_1") >= 600 && count("Gallows_1") == 2 && count("Signpost_1") >= 1,
+			"ville-tour v1.0.143 : long ponton de bois, gibets et poteau indicateur");
+		Check(count("Dungeon_Vault_1") == 5 && count("Dungeon_Grate_1") == 15 && count("Dungeon_Pillar_1") == 8 && count("Sign_Service_prison") == 1,
+			"ville-tour v1.0.143 : geoles voutees au socle (prison)");
+		Check(count("Column_Twisted_Giant_1") == 8 && count("Throne_Wood_1") == 1 && count("Table_Stone_1") == 1 && count("Portal_Gothic_1") == 1,
+			"ville-tour v1.0.143 : palais du Magister (colonnes torsadees, trone, laboratoire, portail)");
+		double throneY = -1e9;
+		for (const ScatterDef& s : w->scatter)
+			if (s.mesh.find("/Throne_Wood_1.gltf") != std::string::npos) throneY = w->HeightAt(s.position) + s.yOffset;
+		Check(std::fabs(throneY - (summitY + 0.37)) < 0.05, "ville-tour v1.0.143 : palais pose a plat a l'altitude du sommet");
+		bool roadsOut = true;
+		for (const Road& r : w->roads)
+			for (const Vec2& p : r.points)
+				roadsOut = roadsOut && (r.path || std::hypot(p.x - t.center.x, p.z - t.center.z) > lake->radiusM * 0.9);
+		Check(roadsOut, "ville-tour v1.0.143 : routes du monde arretees sur la rive (aucune dans le lac)");
+		// Graphe 3D : toutes les altitudes renseignées, connexe, du socle au sommet, arêtes
+		// praticables (pente <= celle d'une volée).
+		const SettlementLayout* lay = nullptr;
+		for (const SettlementLayout& x : w->layouts) if (x.cityId == c->id) lay = &x;
+		Check(lay && lay->hasGraveyard, "ville-tour v1.0.143 : cimetiere sur la rive");
+		if (lay)
+		{
+			bool allY = true, edgesOk = true;
+			double topNode = -1e9;
+			for (const StreetNode& n : lay->nodes)
+			{
+				allY = allY && n.HasY();
+				topNode = std::max(topNode, n.y - socleY);
+				for (int l : n.links)
+				{
+					const StreetNode& m = lay->nodes[static_cast<size_t>(l)];
+					const double dy = std::fabs(m.y - n.y), dxz = std::hypot(m.p.x - n.p.x, m.p.z - n.p.z);
+					edgesOk = edgesOk && (dy < 0.6 || (dy <= rise + 1e-6 && dy / std::max(0.1, dxz) <= 0.8));
+				}
+			}
+			std::vector<char> seen(lay->nodes.size(), 0);
+			std::vector<int> stack{ 0 };
+			seen[0] = 1;
+			size_t reached = 1;
+			while (!stack.empty())
+			{
+				const int n = stack.back(); stack.pop_back();
+				for (int l : lay->nodes[static_cast<size_t>(n)].links)
+					if (!seen[static_cast<size_t>(l)]) { seen[static_cast<size_t>(l)] = 1; ++reached; stack.push_back(l); }
+			}
+			Check(allY && reached == lay->nodes.size() && std::fabs(topNode - t.heightM) < 1e-6 && edgesOk,
+				"ville-tour v1.0.143 : graphe des PNJ en 3D, connexe, du socle au palais, aretes praticables");
+			Check(lay->homeDoors.size() == lay->homeDoorY.size() && lay->homeDoors.size() == lay->homeDoorNode.size() && lay->homeDoors.size() >= 1000,
+				"ville-tour v1.0.143 : logis sur les paliers (porte, altitude, noeud)");
+		}
+		// Routines : altitude réelle de chaque point, habitants dans les étages.
+		BuildPopulation(*w);
+		int real = 0, high = 0;
+		bool pathsOk = true;
+		for (const SpawnerDef& s : w->spawners)
+		{
+			if (s.id.find("amb_sauken_glude_of_magistrya_villageois_") != 0) continue;
+			pathsOk = pathsOk && s.realHeight && s.pathY.size() == s.path.size() && s.agendaProfession.empty()
+				&& std::fabs(s.y - s.pathY.front()) < 1e-9;
+			real += s.realHeight ? 1 : 0;
+			for (double y : s.pathY) if (y > socleY + 50.0) { ++high; break; }
+		}
+		Check(real >= 5 && pathsOk && high >= 1, "ville-tour v1.0.143 : habitants a altitude reelle (chemins 3D, sans agenda)");
+		std::ifstream cat(std::string(LCDLLN_CONTENT_DIR) + "/collision/building_pieces.json");
+		const std::string txt((std::istreambuf_iterator<char>(cat)), std::istreambuf_iterator<char>());
+		Check(txt.find("\"column_twisted_giant_1\"") != std::string::npos && txt.find("\"stair_interior_rails\"") != std::string::npos
+				&& txt.find("\"bridge_stone_deck_1\"") != std::string::npos && txt.find("\"wall_sandstone_straight\"") != std::string::npos
+				&& txt.find("\"wall_ochrebrick_door_round\"") != std::string::npos,
+			"ville-tour v1.0.143 : volees, dalles, murs et colonne au catalogue de collision");
+	}
+
 	/// v1.0.133 (remarque du 21/11/2026 : « je me suis collé à la muraille de Lhynn ») : sur terrain en
 	/// pente, chaque colonne du rempart part du point le plus bas du sol sous elle (pas de jour dessous) et
 	/// dépasse d'au moins 2,5 m le point le plus haut (on ne l'enjambe pas depuis l'amont). Forteresse
@@ -4968,6 +5203,7 @@ int main()
 	TestRemplissageV1135();
 	TestOracleV1136();
 	TestAcropoleLhynnV1140();
+	TestVilleTourMagistryaV1143();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

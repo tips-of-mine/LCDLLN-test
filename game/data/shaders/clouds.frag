@@ -239,7 +239,10 @@ void main()
 	for (int i = 0; i < steps; ++i)
 	{
 		vec3 p = ro + rd * t;
-		float dens = cloudDensity(p);
+		// v1.0.145 — fondu près de la caméra : un nuage traversé (vol, relief élevé) ne
+		// doit plus former un bloc blanc à bords nets plaqué devant le personnage ; la
+		// densité monte de 0 à 1 entre 20 et 120 m de la caméra.
+		float dens = cloudDensity(p) * smoothstep(20.0, 120.0, t);
 		if (dens > 0.001)
 		{
 			// Transmittance vers le soleil (marche courte). Perf 2026-07-18 :

@@ -112,13 +112,15 @@ namespace tools::world_gen
 		{
 			static const std::vector<Species> forest = {
 				{ "Bush_Common", 2, 0.8, 1.4, 0 }, { "Bush_Common_Flowers", 1, 0.8, 1.3, 0 },
-				{ "Fern_1", 2.5, 0.85, 1.2, 0 }, { "Fern_2", 1.2, 0.85, 1.15, 0 }, { "Plant_1", 1, 0.8, 1.3, 0 }, { "Plant_1_Big", 0.6, 0.55, 0.85, 0 },
-				{ "Plant_7_Big", 0.6, 0.7, 1.1, 0 } };
+				{ "Fern_1", 2.5, 0.85, 1.2, 0 }, { "Fern_2", 1.8, 0.85, 1.15, 0 },
+				// v1.0.145 (Q7 a) : Plant_1, Plant_1_Big et Plant_7_Big (low-poly, Plant_7_Big sans
+				// texture : rendu blanc) remplacés par les sous-bois peints de l'atelier décors.
+				{ "Bush_Common", 0.6, 0.6, 0.9, 0 }, { "Plant_Mullein_1", 0.4, 0.85, 1.15, 0 } };
 			static const std::vector<Species> open = {
-				{ "Bush_Common", 2, 0.7, 1.2, 0 }, { "Bush_Common_Flowers", 1.5, 0.7, 1.2, 0 }, { "Plant_1", 0.5, 0.7, 1.1, 0 } };
+				{ "Bush_Common", 2, 0.7, 1.2, 0 }, { "Bush_Common_Flowers", 1.5, 0.7, 1.2, 0 }, { "Fern_1", 0.5, 0.7, 1.1, 0 } };
 			// Atelier décors T2 (n° 80, 90) : sol craquelé et crâne de grande bête (désert, aride).
-			static const std::vector<Species> dry = { { "Bush_Common", 1, 0.5, 0.8, 0 }, { "Plant_7", 1, 0.8, 1.3, 0 } };
-			static const std::vector<Species> desert = { { "Bush_Common", 1, 0.5, 0.8, 0 }, { "Plant_7", 1, 0.8, 1.3, 0 },
+			static const std::vector<Species> dry = { { "Bush_Common", 1, 0.5, 0.8, 0 }, { "Grass_Wispy_Tall", 1, 0.6, 1.0, 0 } };
+			static const std::vector<Species> desert = { { "Bush_Common", 1, 0.5, 0.8, 0 }, { "Grass_Wispy_Short", 1, 0.6, 1.0, 0 },
 				{ "Ground_Cracked_1", 0.5, 0.8, 1.3, 0 }, { "Skull_Beast_1", 0.03, 0.8, 1.15, 1.0 },
 				{ "Termite_Mound_1", 0.04, 0.8, 1.2, 0.8 },   // T5 (n° 183, hypothèse)
 				// T7 (n° 203-204, pl.45-47) : vestiges de nécropole ensablée, très rares.
@@ -134,13 +136,13 @@ namespace tools::world_gen
 		{
 			static const std::vector<Species> forest = {
 				{ "Mushroom_Common", 1.5, 0.8, 1.5, 0 }, { "Mushroom_Laetiporus", 0.7, 0.8, 1.3, 0 },
-				{ "Clover_1", 1, 0.8, 1.4, 0 }, { "Clover_2", 1, 0.8, 1.4, 0 }, { "Flower_4_Group", 0.6, 0.8, 1.2, 0 },
+				// v1.0.145 (Q7 a) : trèfles et fleurs jaunes low-poly remplacés par des plantes peintes.
+				{ "Grass_Common_Short", 2, 0.8, 1.4, 0 }, { "Flower_3_Single", 0.4, 0.8, 1.2, 0 },
 				{ "Grass_Wispy_Short", 1, 0.8, 1.3, 0 } };
 			static const std::vector<Species> meadow = {
-				{ "Flower_3_Group", 1, 0.8, 1.3, 0 }, { "Flower_4_Group", 1, 0.8, 1.3, 0 },
-				{ "Plant_Mullein_1", 0.25, 0.85, 1.15, 0 },
+				{ "Flower_3_Group", 1.6, 0.8, 1.3, 0 }, { "Plant_Mullein_1", 0.35, 0.85, 1.15, 0 },
 				{ "Grass_Common_Tall", 2, 0.8, 1.3, 0 }, { "Grass_Common_Short", 2, 0.8, 1.4, 0 },
-				{ "Grass_Wispy_Tall", 1, 0.8, 1.3, 0 }, { "Clover_1", 0.7, 0.8, 1.3, 0 }, { "Flower_3_Single", 0.5, 0.9, 1.4, 0 } };
+				{ "Grass_Wispy_Tall", 1, 0.8, 1.3, 0 }, { "Grass_Wispy_Short", 0.7, 0.8, 1.3, 0 }, { "Flower_3_Single", 0.5, 0.9, 1.4, 0 } };
 			static const std::vector<Species> marsh = {
 				{ "Grass_Wispy_Tall", 3, 0.9, 1.5, 0 }, { "Grass_Common_Tall", 1, 0.9, 1.4, 0 }, { "Mushroom_Common", 0.6, 0.8, 1.3, 0 } };
 			if (c == '%' || c == '&') return marsh;

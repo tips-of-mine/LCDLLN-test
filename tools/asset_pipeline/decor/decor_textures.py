@@ -1333,6 +1333,15 @@ TEXTURES.update({
 })
 
 
+# v1.0.145 — palais de Lhynn (BD-T3 p.24 case 7, BD-T1 p.28 case 1) : vantaux peints en
+# rouge des portails latéraux, et dorure des médaillons et clous de la porte de la salle
+# du trône (or chaud, pas trop riche : direction artistique).
+TEXTURES.update({
+    "Wood_Red": lambda: planks("Wood_Red", 144, [(0, (86, 32, 26)), (0.5, (122, 46, 36)), (1, (150, 66, 50))], 0.24),
+    "Gold": lambda: metal("Gold", 145, (188, 150, 76), 0.38, 0.95),
+})
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

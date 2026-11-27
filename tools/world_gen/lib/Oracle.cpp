@@ -3,16 +3,19 @@
 // Remplace, pour une agglomération de mise en page `layout: "oracle"` du master (le Camp de
 // l'Oracle, N000_E000), le village générique (maisons européennes, palissade ronde) par la
 // disposition du « Plan de l'Oracle, extérieur » (vue de dessus, nord en haut) :
-//   1. le ROCHER (tumulus, « énorme aérolithe ») : masse octogonale à facettes d'environ 300 m de
-//      large, sculptée dans le terrain même (parois de ≈ 62 m à ≈ 74°, couronne à facettes jusqu'à
+//   1. le ROCHER (tumulus, « énorme aérolithe ») : v1.0.145, bloc ARRONDI et irrégulier d'environ
+//      300 m de large (grand axe SE-NO, ≈ 100-114 m de haut ; avant : masse octogonale à facettes,
+//      parois de ≈ 62 m à ≈ 74°, couronne à facettes jusqu'à
 //      ≈ 90 m), au centre d'une vaste plaine aride aplanie (650 m, raccord jusqu'à 1 100 m) ;
-//   7. HUIT ESCALIERS blancs (N, NE, E, SE, S, SO, O, NO), rampe de terrain sous des pièces
+//   7. ESCALIERS blancs (v1.0.145 : DEUX, SO et E ; avant : huit, N à NO), rampe de terrain sous des pièces
 //      Stairs_Exterior_Straight, jusqu'à un palier et une PORTE fermée (façade de pierre, porte
 //      ronde, rosace) ; la porte du SO, au bout du chemin des échoppes, est « la » porte de la BD ;
-//   5. cinq TENTES PYRAMIDALES au pied du rocher (l'une est le temple) ;
+//   5. cinq TENTES PYRAMIDALES au pied du rocher (l'une est le temple ; v1.0.145 : les deux qui
+//      encadrent la grande porte du SO sont grandes, ≈ 20 m, fanion à la pointe, BD-T2 p.44) ;
 //   4. l'« océan de tentes » : quinze rangs de tentes de pèlerins (Tent_Pilgrim_*) en anneaux
 //      concentriques, du chemin de ronde jusqu'à ≈ 425 m, fanions, feux et bagages ;
-//   6. une vingtaine de MENHIRS bleus sur un grand cercle (≈ 440-540 m) ;
+//   6. une vingtaine de MENHIRS bleus épars dans la plaine (v1.0.145 : 430-860 m, irréguliers ;
+//      avant : grand cercle de 440-540 m) ;
 //   3. au SUD-OUEST, le chemin d'arrivée (Passe des Dragons) bordé des échoppes des faux devins ;
 //   9. les services du camp, en tentes et en étals : auberge (grand pavillon), potions, armes,
 //      armures, temple, cimetière, cinq écuries (enclos).
@@ -53,10 +56,8 @@ namespace tools::world_gen
 		constexpr uint8_t kSolid = 1u, kPiece = 2u, kOccluder = 4u; ///< bits de ScatterInstance::flags
 
 		// --- Plan de l'Oracle (mètres, repère du rocher) ---------------------------------
-		constexpr double kApothem = 150.0;   ///< demi-largeur du rocher octogonal (plan : ≈ 300 m)
-		constexpr double kWallH = 62.0;      ///< hauteur des parois au-dessus de la plaine
-		constexpr double kWallRun = 18.0;    ///< emprise horizontale d'une paroi (≈ 74°)
-		constexpr double kCrownH = 28.0;     ///< couronne à facettes (sommet ≈ 90 m)
+		constexpr double kApothem = 150.0;   ///< rayon moyen du pied du rocher (plan : ≈ 300 m de large)
+		// (v1.0.145 : kWallH, kWallRun et kCrownH de l'octogone retirés, cf. BoulderH.)
 		constexpr double kDoorH = 22.0;      ///< palier des portes au-dessus de la plaine
 		constexpr double kLandOut = 4.0;     ///< bord extérieur du palier (s, m, depuis le pied)
 		constexpr double kLandIn = -10.0;    ///< fond de l'entaille du palier (s, m ; v1.0.141 : -16 -> -10, paroi
@@ -88,6 +89,20 @@ namespace tools::world_gen
 		constexpr double kBlendR = 1100.0;   ///< raccord avec le relief naturel
 		constexpr double kCampR = 600.0;     ///< emprise du camp (marque urbaine : pas de végétation)
 		constexpr int kMainFacet = 3;        ///< facette SO (angle 135° : ouest et sud) : « la » porte de la BD
+		// --- v1.0.145 (arbitrage Q6 b du propriétaire, 27/11/2026, BD-T2 p.44 case 1) : forme
+		// BD stricte. Le rocher devient un BLOC ARRONDI et irrégulier (aérolithe bleu), plus long
+		// que haut (grand axe SE-NO, vu en travers depuis le chemin du sud-ouest), plus haut côté
+		// SE ; seules DEUX portes restent visibles : la grande porte du SO (quête « L'Appel de
+		// l'Oracle ») et la porte de l'E (salle des Échos : quête et raid). Les six autres
+		// escaliers et portes sont retirés ; les dalles de cristal de la couronne aussi (rien sur
+		// le rocher dans la BD) ; les menhirs sont épars dans la plaine autour du camp.
+		constexpr int kDoorFacets[2] = { 0, 3 }; ///< facettes à porte : E (Échos) et SO (grande porte)
+		constexpr double kBoulderH = 100.0;  ///< hauteur moyenne du bloc au-dessus de la plaine
+		constexpr double kBoulderHVar = 14.0; ///< surélévation côté SE (BD : bosse de droite)
+		constexpr double kBoulderElong = 0.12; ///< allongement relatif du pied le long du grand axe
+		constexpr double kBoulderLongA = 0.7853981633974483; ///< grand axe : SE (et NO), radians
+		constexpr double kBoulderMaxR = kApothem * (1.0 + kBoulderElong) + 10.0; ///< pied le plus éloigné
+		inline bool IsDoorFacet(int k) { return k == kDoorFacets[0] || k == kDoorFacets[1]; }
 
 		double YawFacing(Vec2 f) { return std::atan2(-f.x, -f.z) * 180.0 / kPi; }   ///< axe -Z local vers f
 		double YawAlong(Vec2 d) { return std::atan2(-d.z, d.x) * 180.0 / kPi; }     ///< axe X local vers d
@@ -99,8 +114,9 @@ namespace tools::world_gen
 		/// Direction latérale de la facette k (normale tournée d'un quart de tour).
 		Vec2 FacetT(int k) { const Vec2 n = FacetN(k); return { -n.z, n.x }; }
 
-		/// Forme résolue du rocher : centre, altitude de la plaine, apothème de chaque facette
-		/// (± 7 m autour de kApothem : octogone « à peu près » régulier, comme sur le plan).
+		/// Forme résolue du rocher : centre, altitude de la plaine, distance du pied du rocher le
+		/// long de la normale de chaque facette (v1.0.145 : pied du bloc arrondi, BoulderFootR ;
+		/// seules les facettes à porte s'en servent pour leur palier et leur escalier).
 		struct OracleShape
 		{
 			Vec2 o;
@@ -108,27 +124,45 @@ namespace tools::world_gen
 			double r[8] = {};
 		};
 
+		/// v1.0.145 — distance du pied du bloc arrondi dans la direction \p a (radians, X = est,
+		/// Z = sud) : ellipse douce allongée le long de kBoulderLongA, bosselée de deux
+		/// harmoniques (contour irrégulier de la BD). Fonction pure, déterministe.
+		double BoulderFootR(double a)
+		{
+			return kApothem * (1.0 + kBoulderElong * std::cos(2.0 * (a - kBoulderLongA)))
+				+ 6.0 * std::sin(3.0 * a + 1.3) + 4.0 * std::sin(5.0 * a + 0.4);
+		}
+
+		/// v1.0.145 — hauteur du bloc arrondi en \p q (vecteur depuis le centre, m) au-dessus de
+		/// la plaine : profil en dôme à flancs raides (1 − t⁴)^0,32 (t = distance / pied), plus
+		/// haut côté SE, bosses douces sur le dessus (facettes et creux du dessin). Fonction pure.
+		double BoulderH(Vec2 q)
+		{
+			const double d = Len(q);
+			const double a = std::atan2(q.z, q.x);
+			const double t = d / BoulderFootR(a);
+			if (t >= 1.0) return 0.0;
+			const double t4 = t * t * t * t;
+			const double top = kBoulderH + kBoulderHVar * std::cos(a - kBoulderLongA) * Clamp(t * 1.6, 0.0, 1.0);
+			const double lumps = 5.0 * std::sin(q.x / 37.0 + 0.7) * std::sin(q.z / 29.0 - 1.1) + 3.0 * std::sin((q.x + q.z) / 17.0);
+			return std::max(0.0, top * std::pow(1.0 - t4, 0.32) + lumps * (1.0 - t4));
+		}
+
 		/// Relief du rocher en \p q (vecteur depuis le centre, m) : hauteur au-dessus de la plaine
-		/// (parois planes de l'octogone, couronne à huit facettes tournée de 22,5°, paliers entaillés
-		/// et rampes des huit escaliers). \p paint reçoit 0 (plaine), 1 (roche de l'Oracle) ou
-		/// 2 (escalier ou palier blanc). Fonction pure.
+		/// (bloc arrondi BoulderH depuis v1.0.145 — avant : octogone à parois planes et couronne à
+		/// facettes —, paliers entaillés et rampes des escaliers des DEUX facettes à porte).
+		/// \p paint reçoit 0 (plaine), 1 (roche de l'Oracle) ou 2 (escalier ou palier blanc).
+		/// Fonction pure.
 		double RockRelief(const OracleShape& S, Vec2 q, uint8_t& paint)
 		{
 			// v1.0.141 — salles creusées au niveau des paliers (cratères couverts par les
 			// voûtes maillées) : dallage (peinture 3), parois verticales du relief autour.
 			if (Len(q) < kHallR || Len(q - FacetN(kEchoFacet) * kEchoD) < kEchoR) { paint = 3; return kDoorH; }
-			double d8 = -1e18, d8r = -1e18;
-			for (int k = 0; k < 8; ++k)
-			{
-				d8 = std::max(d8, Dot(q, FacetN(k)) - (S.r[k] - kApothem));
-				d8r = std::max(d8r, Dot(q, Dir((k + 0.5) * kPi / 4.0)));
-			}
-			const double wall = Clamp((kApothem - d8) / kWallRun, 0.0, 1.0);
-			const double crown = kCrownH * Clamp(1.0 - d8r / (kApothem - kWallRun), 0.0, 1.0) * wall;
-			double h = kWallH * wall + crown;
+			double h = BoulderH(q);
 			paint = h > 0.3 ? 1 : 0;
 			for (int k = 0; k < 8; ++k)
 			{
+				if (!IsDoorFacet(k)) continue;
 				const double s = Dot(q, FacetN(k)) - S.r[k], l = std::fabs(Dot(q, FacetT(k)));
 				if (l < kLandHalfW && s >= kLandIn && s <= kLandOut) { paint = 2; return kDoorH; } // palier
 				if (s > kLandOut && s < kLandOut + kStairRun && l < kStairHalfW + 3.0)
@@ -375,7 +409,10 @@ namespace tools::world_gen
 		OracleShape S;
 		S.o = c.center;
 		S.plainY = c.plateauY;
-		for (int k = 0; k < 8; ++k) S.r[k] = kApothem + rng.Range(-7.0, 7.0);
+		// v1.0.145 : pied du bloc arrondi dans l'axe de chaque facette (paliers et escaliers des
+		// facettes à porte). Le tirage d'avant est conservé pour ne pas décaler la suite du
+		// générateur aléatoire (tentes, menhirs…).
+		for (int k = 0; k < 8; ++k) { (void)rng.Range(-7.0, 7.0); S.r[k] = BoulderFootR(k * kPi / 4.0); }
 		const double aMain = kMainFacet * kPi / 4.0;
 		const Vec2 o = S.o;
 
@@ -401,14 +438,17 @@ namespace tools::world_gen
 		w.roads.push_back(sw);
 		exits.push_back(aMain);
 		// Rocher et pied d'escaliers réservés (pas de végétation, pas de tente).
-		w.Occupy(o, kApothem / std::cos(kPi / 8.0) + 8.0);
+		w.Occupy(o, kBoulderMaxR + 8.0);
 		for (int k = 0; k < 8; ++k)
-			w.OccupyRect(o + FacetN(k) * (S.r[k] + 24.0), kLandHalfW + 1.0, 28.0, YawFacing(FacetN(k)));
+			if (IsDoorFacet(k))
+				w.OccupyRect(o + FacetN(k) * (S.r[k] + 24.0), kLandHalfW + 1.0, 28.0, YawFacing(FacetN(k)));
 
-		// --- 7. Huit escaliers blancs et leurs grandes portes (v1.0.141 : escaliers de 6 m,
-		//     socle de brique rouge sombre, grande porte peinte au fond de l'entaille ; T2-P046).
+		// --- 7. Escaliers blancs et grandes portes (v1.0.141 : escaliers de 6 m, socle de brique
+		//     rouge sombre, grande porte peinte au fond de l'entaille ; T2-P046). v1.0.145 : deux
+		//     seulement (SO et E, kDoorFacets).
 		for (int k = 0; k < 8; ++k)
 		{
+			if (!IsDoorFacet(k)) continue;
 			const Vec2 n = FacetN(k), t = FacetT(k);
 			const double stairYaw = YawFacing(n * -1.0); // l'escalier monte vers -Z local
 			for (int i = 0; i < 15; ++i)
@@ -436,60 +476,57 @@ namespace tools::world_gen
 			}
 			BlueLight(w, c.id + "_porte_" + std::to_string(k), o + n * (S.r[k] - 2.0), S.plainY + kDoorH + 6.0, 30.0, 4.0);
 		}
-		// Lueur bleue des flancs (entre les escaliers) et de la couronne : la muraille bleue de nuit.
+		// Lueur bleue des flancs et du sommet : la muraille bleue de nuit (pied du bloc arrondi).
 		for (int k = 0; k < 8; ++k)
 		{
 			const double a = (k + 0.5) * kPi / 4.0;
-			BlueLight(w, c.id + "_flanc_" + std::to_string(k), o + Dir(a) * (kApothem / std::cos(kPi / 8.0) + 22.0), S.plainY + 38.0, 130.0, 2.4);
+			BlueLight(w, c.id + "_flanc_" + std::to_string(k), o + Dir(a) * (BoulderFootR(a) + 22.0), S.plainY + 38.0, 130.0, 2.4);
 		}
-		BlueLight(w, c.id + "_couronne", o, S.plainY + kWallH + kCrownH + 25.0, 200.0, 3.0);
-		// Couronne (v1.0.141) : dalles de cristal géantes sur les arêtes (T2-P044, T3-P005) ;
-		// parois : dalles au pied, de part et d'autre des escaliers ; éboulis entre les escaliers.
-		static const char* kSlabs[3] = { "Oracle_Crystal_Slab_1", "Oracle_Crystal_Slab_2", "Oracle_Crystal_Slab_3" };
+		BlueLight(w, c.id + "_couronne", o, S.plainY + kBoulderH + kBoulderHVar + 25.0, 200.0, 3.0);
+		// v1.0.145 (BD-T2 p.44 case 1) : plus de dalles de cristal sur le rocher ni à son pied ;
+		// il reste les éboulis au pied (gros rochers). Les tirages aléatoires d'avant sont
+		// conservés (même ordre) pour ne pas déplacer le reste du camp.
+		static const char* kRocks[] = { "Rock_Medium_1", "Rock_Medium_2", "Rock_Medium_3" };
 		for (int k = 0; k < 8; ++k)
 		{
-			const double a = k * kPi / 4.0 + rng.Range(-0.15, 0.15);
-			const Vec2 p = o + Dir(a) * (kApothem - kWallRun - 10.0);
-			static const char* kRocks[] = { "Rock_Medium_1", "Rock_Medium_2", "Rock_Medium_3" };
-			Prop(w, kSlabs[k % 3], p, rng.Range(0.0, 360.0), rng.Range(0.8, 1.1), 0, 0, 0.0, -3.0);
-			// Arête suivante (entre deux portes) : deux dalles de plus sur la couronne.
-			for (int q = 0; q < 2; ++q)
-			{
-				const Vec2 pc = o + Dir((k + 0.5) * kPi / 4.0 + (q ? 0.1 : -0.1)) * rng.Range(95.0, 120.0);
-				Prop(w, kSlabs[(k + q + 1) % 3], pc, rng.Range(0.0, 360.0), rng.Range(0.7, 1.0), 0, 0, 0.0, -2.0);
-			}
-			// Pied des parois : deux dalles de chaque côté de l'escalier (hors des flancs de la rampe).
-			const Vec2 n = FacetN(k), t = FacetT(k);
+			(void)rng.Range(-0.15, 0.15); (void)rng.Range(0.0, 360.0); (void)rng.Range(0.8, 1.1);
+			for (int q = 0; q < 2; ++q) { (void)rng.Range(95.0, 120.0); (void)rng.Range(0.0, 360.0); (void)rng.Range(0.7, 1.0); }
 			for (int side = -1; side <= 1; side += 2)
 				for (int q = 0; q < 2; ++q)
 				{
-					const Vec2 pf = o + n * (S.r[k] + rng.Range(-1.0, 2.0)) + t * (side * (24.0 + 22.0 * q + rng.Range(-3.0, 3.0)));
-					Prop(w, kSlabs[(k + q) % 3], pf, rng.Range(0.0, 360.0), rng.Range(0.6, 0.95), kSolid, 0, 0.0, -1.5);
+					(void)rng.Range(-1.0, 2.0); (void)rng.Range(-3.0, 3.0); (void)rng.Range(0.0, 360.0); (void)rng.Range(0.6, 0.95);
 				}
 			for (int q = 0; q < 2; ++q)
 			{
 				const double b = (k + 0.5) * kPi / 4.0 + (q ? 0.12 : -0.12) + rng.Range(-0.04, 0.04);
-				const Vec2 f = o + Dir(b) * (kApothem / std::cos(kPi / 8.0) + rng.Range(4.0, 12.0));
+				const Vec2 f = o + Dir(b) * (BoulderFootR(b) + rng.Range(4.0, 12.0));
 				Prop(w, kRocks[(k + q) % 3], f, rng.Range(0.0, 360.0), rng.Range(2.2, 3.6), kSolid, 0, 3.0, -0.4);
 			}
 		}
 
 		// --- 5. Tentes pyramidales au pied du rocher (l'une, près de la grande porte, est le temple).
+		//     v1.0.145 (BD-T2 p.44 case 1) : les deux qui encadrent la grande porte du SO sont
+		//     GRANDES (≈ 17-21 m de haut, un quart de la hauteur du rocher, comme dans la BD) et
+		//     portent un fanion à la pointe ; les trois autres restent des tentes de 6-7 m.
 		{
-			static const int kGaps[5] = { 3, 0, 2, 5, 6 }; // sommets de l'octogone (k + 0,5)·45°
+			static const int kGaps[5] = { 3, 0, 2, 5, 6 }; // directions (k + 0,5)·45° entre les portes
 			for (int g = 0; g < 5; ++g)
 			{
 				const double a = (kGaps[g] + 0.5) * kPi / 4.0;
 				const Vec2 p = o + Dir(a) * 190.0;
-				PyramidTent(w, p, a + kPi / 4.0, g == 0 ? 4.2 : 3.4, true);
-				w.Occupy(p, g == 0 ? 6.5 : 5.5);
+				const bool big = kGaps[g] == 2 || kGaps[g] == 3; // de part et d'autre du SO (135°)
+				const double ts = big ? (g == 0 ? 12.0 : 10.0) : 3.4;
+				PyramidTent(w, p, a + kPi / 4.0, ts, true);
+				w.Occupy(p, big ? ts * 1.1 : 5.5);
+				if (big) // fanion blanc à la pointe (sommet à ≈ 1,73·s m)
+					Prop(w, "Pennant_Pole_1", p, rng.Range(0.0, 360.0), 1.0, 0, 0, 0.0, ts * 1.73 - 0.6);
 				if (g == 0) // temple : autel et cierges devant l'entrée (côté chemin de ronde)
 				{
 					const Vec2 out = Dir(a);
 					Prop(w, "Table_Large", p + out * 0.5, YawFacing(out), 1.0, kSolid, 1, 1.2);
 					Prop(w, "Chalice", p + out * 0.5, 0.0, 1.0, 0, 2, 0.0, 0.81);
 					for (int side = -1; side <= 1; side += 2)
-						Prop(w, "CandleStick_Stand", p + out * 5.6 + Vec2{ -out.z, out.x } * (side * 2.2), 0.0, 1.2, 0, 1);
+						Prop(w, "CandleStick_Stand", p + out * (ts * 0.5 + 1.6) + Vec2{ -out.z, out.x } * (side * 2.2), 0.0, 1.2, 0, 1);
 				}
 			}
 		}
@@ -511,6 +548,7 @@ namespace tools::world_gen
 		for (int id : L.plazaRing) Link(L, id, NearestOf(L, ringIds, L.nodes[static_cast<size_t>(id)].p));
 		for (int k = 0; k < 8; ++k) // pèlerins montant aux portes
 		{
+			if (!IsDoorFacet(k)) continue;
 			const Vec2 n = FacetN(k);
 			const int foot = NearestOf(L, ringIds, o + n * kRingR);
 			Chain(L, { L.nodes[static_cast<size_t>(foot)].p, o + n * (S.r[k] + kLandOut + kStairRun + 2.0), o + n * (S.r[k] + 1.0) }, foot);
@@ -852,13 +890,16 @@ namespace tools::world_gen
 			}
 		}
 
-		// --- 6. Menhirs bleus sur le grand cercle (pierres dressées, lueur bleue d'un sur deux).
+		// --- 6. Menhirs bleus épars dans la plaine (pierres dressées, lueur bleue d'un sur deux).
+		//     v1.0.145 (BD-T2 p.44 case 1) : plus de cercle régulier — angles et distances
+		//     irréguliers, deux tiers au bord du camp (430-600 m), un tiers loin dans la plaine
+		//     (620-860 m) ; aucun sur le rocher.
 		{
 			int stones = 0;
 			for (int k = 0; k < 22; ++k)
 			{
-				double a = k * 2.0 * kPi / 22.0 + rng.Range(-0.06, 0.06);
-				const double r = rng.Range(440.0, 540.0);
+				double a = k * 2.0 * kPi / 22.0 + rng.Range(-0.12, 0.12);
+				const double r = (k % 3 == 2) ? rng.Range(620.0, 860.0) : rng.Range(430.0, 600.0);
 				Vec2 p = o + Dir(a) * r;
 				for (int attempt = 0; attempt < 8 && (RoadGap(w, p) < 10.0 || w.IsOccupied(p, 4.0)); ++attempt)
 				{
@@ -873,6 +914,16 @@ namespace tools::world_gen
 				++stones;
 			}
 			if (stones < 18) w.Warn("camp de l'Oracle : seulement " + std::to_string(stones) + " menhirs");
+			// v1.0.145 (BD-T2 p.44 case 1, « ce qu'il y a autour ») : plaine de terre craquelée
+			// entre le camp et les menhirs (plaques de sol fendu, sans collision).
+			for (int k = 0; k < 70; ++k)
+			{
+				const double a = rng.Range(0.0, 2.0 * kPi), r = rng.Range(440.0, 640.0);
+				const Vec2 p = o + Dir(a) * r;
+				const double yaw = rng.Range(0.0, 360.0), sc = rng.Range(1.4, 2.6);
+				if (RoadGap(w, p) < 4.0 || w.IsOccupied(p, 3.0) || !w.InPlayableBounds(p, 20.0)) continue;
+				Prop(w, "Ground_Cracked_1", p, yaw, sc, 0, 1);
+			}
 		}
 
 		// --- 10. v1.0.141 — Salles intérieures, passages conditionnels, PNJ de quête, raid.

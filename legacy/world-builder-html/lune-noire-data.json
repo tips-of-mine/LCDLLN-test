@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.143",
+    "version": "1.0.145",
     "notes": [
+      "v1.0.145 : [DÉCISION] Lhynn et l'Oracle d'après les planches (retours du propriétaire du 27/11/2026, captures en jeu) : salle du trône du palais impérial en longue nef couverte (72 × 26 m) d'après BD-T1 p.28 (porte de bois sculptée à caissons dorés, rangées de statues colossales encapuchonnées, rosace, trône au sommet d'une pyramide à degrés couverte du tapis rouge), plateforme du palais élargie de 56 à 70 m (Q4 b), haute baie rectangulaire de la façade d'après BD-T3 p.24 (Q5 b : reproduction plus fidèle de la porte, soumise à Mediatoon) ; rocher de l'Oracle en forme BD stricte (bloc bleu arrondi et allongé, deux portes visibles seulement, SO et E, rien sur le rocher, menhirs épars dans la plaine, grandes tentes pyramidales devant la grande porte, plaine craquelée ; Q6 b, BD-T2 p.44) ; fleurs et plantes low-poly retirées du générateur (Q7 a). Rendu : silhouettes lointaines du bâti (une capitale se voit en entier), vues lointaines allongées, nuages tenus au-dessus du relief (taches blanches), plantes sans couleur corrigées. LORE_BD §16.71.",
       "v1.0.143 : [DÉCISION] Magistrya ville-tour : aiguille droite de 600 m en cône étroit au milieu d'un lac, bâtiments distincts empilés séparés par des cages d'escalier praticables du socle au palais (sans palier circulaire), long ponton, geôles au socle (service prison), palais du Magister au sommet (salle du trône, laboratoire) ; habitants à altitude réelle dans les cages ; le Magister est vivant dans la continuité du jeu.",
       "v1.0.142 : [DÉCISION] Kendrhir d'après le tome 1 (p.23 à 42 du PDF) : rempart de rondins de 20 m en reconstruction (pans neufs, calcinés, brèches), tours et portes de bois, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège ; références du tome 1 des décors réalignées sur le PDF.",
       "v1.0.141 : [DÉCISION] Camp de l'Oracle amélioré (T1 p.3-5, T2 p.44-46, T3 p.5-7) : rocher de cristal bleu, huit grandes portes réinterprétées sur socle de brique, escaliers de 6 m ; salle de l'Oracle creusée au cœur du rocher (porte SO, quête « L'Appel de l'Oracle ») et salle des Échos (porte E, raid « L'Épreuve des Échos », groupe d'au moins 3) ; tentes agrandies et de couleur, mâts à fanions, feux, bassins des pèlerins, menhirs bleus de 3 à 5 m.",
@@ -6902,9 +6903,10 @@
         "cimetiere"
       ],
       "features": [
-        "rocher central naturel bleu ciel",
-        "8 escaliers blanc tout autour",
-        "8 portes identiques",
+        "rocher central naturel bleu : bloc arrondi et allongé (grand axe SE-NO), plus haut côté SE [DÉCISION v1.0.145]",
+        "2 escaliers blancs et 2 grandes portes visibles (SO, grande porte ; E, salle des Échos) [DÉCISION v1.0.145]",
+        "grandes tentes pyramidales à fanion devant la grande porte [DÉCISION v1.0.145]",
+        "menhirs bleus épars dans la plaine craquelée [DÉCISION v1.0.145]",
         "campement de tentes autour",
         "puits interne",
         "[DÉCISION] (v1.0.141) salle de l'Oracle visitable (porte SO, sur appel de l'Oracle)",
@@ -6929,7 +6931,8 @@
         "[DÉCISION] (v1.0.141) Demande du propriétaire (25/11/2026) : visuel du camp encore amélioré d'après T1 p.3-5 (intérieur), T2 p.44 (camp), p.45 (escalier), p.46 (porte), T3 p.5 (camp de nuit), p.6-7 (intérieur). Le rocher est rendu en cristal bleu (couche de cristal du terrain et dalles de cristal), les huit portes sont des vantaux peints (phases de lune, rosace, croissant) réinterprétés sans le visage de la BD, posés sur un socle de brique rouge sombre ; escaliers de 6 m.",
         "[DÉCISION] (v1.0.141) Salle de l'Oracle creusée au cœur du rocher, au niveau des portes : parois sculptées à niches, seize colonnes, dais gravé à gradins, colonne de brume figée et de lumière (la figure de l'Oracle n'est pas représentée), chaînes, voûte de cristal. On y entre par la grande porte du sud-ouest une fois la quête « L'Appel de l'Oracle » acceptée (veilleur au pied de l'escalier) ; la prêtresse du dais y reçoit les appelés. Les autres portes restent closes, sauf celle de l'est.",
         "[DÉCISION] (v1.0.141) Salle des Échos sous la facette est : raid « L'Épreuve des Échos » (Gardien des Échos et quatre échos de cristal), porte de l'est ouverte à un groupe d'au moins trois compagnons engagés dans la quête. Choix du propriétaire, prioritaire sur la BD : la règle « pas de combat à l'Oracle » vaut pour le camp et la salle de l'Oracle, le combat est confiné à la salle des Échos ; la salle de l'Oracle reçoit plusieurs joueurs à la fois (jeu en ligne), contrairement à la BD (« un être à la fois »).",
-        "[DÉCISION] (v1.0.141) Camp extérieur : tentes de pèlerins agrandies (environ 2,7 à 3,3 m au faîte : les pèlerins s'y tiennent debout, retour du propriétaire), toiles de couleur (rouge sombre, bleu-gris) en plus des toiles écrues, mâts à longs fanions jaunes, feux de familles éclairés la nuit, quatre bassins des pèlerins dans la plaine et abreuvoirs le long de l'allée, menhirs bleus ramenés à 3-5 m (T2 p.44). LORE_BD §16.67."
+        "[DÉCISION] (v1.0.141) Camp extérieur : tentes de pèlerins agrandies (environ 2,7 à 3,3 m au faîte : les pèlerins s'y tiennent debout, retour du propriétaire), toiles de couleur (rouge sombre, bleu-gris) en plus des toiles écrues, mâts à longs fanions jaunes, feux de familles éclairés la nuit, quatre bassins des pèlerins dans la plaine et abreuvoirs le long de l'allée, menhirs bleus ramenés à 3-5 m (T2 p.44). LORE_BD §16.67.",
+        "[DÉCISION] (v1.0.145) Arbitrage Q6 b du propriétaire (27/11/2026, capture : « le camp de l'Oracle ne ressemble pas à cela par rapport à la forme du caillou central, la disposition des menhirs ne se trouve pas sur le grand caillou », BD-T2 p.44 case 1 ; « inclure ce qu'il y a autour ») : forme BD stricte. Le rocher n'est plus un octogone à parois planes et couronne à facettes mais un bloc arrondi et irrégulier d'environ 300 m (grand axe SE-NO, vu en travers depuis le chemin du sud-ouest, ≈ 100 à 114 m de haut, plus haut côté SE) ; rien n'est posé dessus (dalles de cristal retirées) ; seules deux portes restent visibles (grande porte du SO : quête « L'Appel de l'Oracle » ; porte de l'E : salle des Échos, quête et raid), les six autres escaliers et portes sont retirés ; les menhirs bleus sont épars dans la plaine (430 à 860 m, sans cercle) ; les deux tentes pyramidales qui encadrent la grande porte sont grandes (≈ 20 m) avec un fanion ; plaine de terre craquelée autour du camp ; cristal du rocher d'un bleu plus franc. Remplace, pour les portes, la note v1.0.113 sur les huit escaliers blancs du T3. LORE_BD §16.71."
       ],
       "dimensions_estimees": {
         "hauteur": "environ 300m pour le rocher central",
@@ -244624,7 +244627,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Lhynn en gradins, palais impérial, capitale dense et faubourgs, port et champs ; docs/world/LORE_BD.md §16.66). Ajout v1.0.141 : 4 entrées (Camp de l'Oracle : salle de l'Oracle, salle des Échos, rocher de cristal et portes, camp extérieur ; docs/world/LORE_BD.md §16.67). Ajout v1.0.142 : 3 entrées (Kendrhir d'après le tome 1 : enceinte, donjon, bâti et restes du siège ; références du tome 1 réalignées sur le PDF ; neige renvoyée au cycle des saisons ; docs/world/LORE_BD.md §16.68). Ajout v1.0.143 : 3 entrées (ponton unique, geôles et prison, Magister vivant ; docs/world/LORE_BD.md §16.69). Ajout v1.0.143 (suite) : 1 entrée (Magistrya, aiguille de 600 m et cages d'escalier ; docs/world/LORE_BD.md §16.69). Ajout v1.0.143 (suite) : 1 entrée (Magistrya orangée et claire).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Lhynn en gradins, palais impérial, capitale dense et faubourgs, port et champs ; docs/world/LORE_BD.md §16.66). Ajout v1.0.141 : 4 entrées (Camp de l'Oracle : salle de l'Oracle, salle des Échos, rocher de cristal et portes, camp extérieur ; docs/world/LORE_BD.md §16.67). Ajout v1.0.142 : 3 entrées (Kendrhir d'après le tome 1 : enceinte, donjon, bâti et restes du siège ; références du tome 1 réalignées sur le PDF ; neige renvoyée au cycle des saisons ; docs/world/LORE_BD.md §16.68). Ajout v1.0.143 : 3 entrées (ponton unique, geôles et prison, Magister vivant ; docs/world/LORE_BD.md §16.69). Ajout v1.0.143 (suite) : 1 entrée (Magistrya, aiguille de 600 m et cages d'escalier ; docs/world/LORE_BD.md §16.69). Ajout v1.0.143 (suite) : 1 entrée (Magistrya orangée et claire). Ajout v1.0.145 : 4 entrées (salle du trône de Lhynn en longue nef et plateforme élargie, portes plus fidèles, Oracle en forme BD stricte, plantes low-poly retirées ; docs/world/LORE_BD.md §16.71).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -248020,6 +248023,34 @@
           "nom": "Magistrya : pierre ocre doré",
           "decision": "Retours du propriétaire (27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange », « l'ensemble doit être plus clair », vérifiés dans la BD T2 p.19-20) : murs de grès doré clair et de brique ocre (assets n° 239, 240), un peu de brique rouge, tourelles de pierre ocre (n° 241), murs du palais en grès ; ni enduit blanc ni pierre grise. LORE_BD §16.69.",
           "version": "1.0.143"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_palais_imperial_lhynn",
+          "nom": "Palais de Lhynn : salle du trône en longue nef, plateforme élargie",
+          "decision": "Arbitrage Q4 b (27/11/2026) : nef couverte de 72 × 26 m d'après BD-T1 p.28 (statues colossales, rosace, trône sur une pyramide à degrés couverte du tapis rouge) ; plateforme du sommet élargie de 56 à 70 m de rayon. LORE_BD §16.71.",
+          "version": "1.0.145"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_palais_imperial_lhynn_portes_v1145",
+          "nom": "Palais de Lhynn : portes plus fidèles à la BD",
+          "decision": "Arbitrage Q5 b (27/11/2026) : haute baie rectangulaire de la façade (BD-T3 p.24) et porte de bois sculptée à caissons dorés de la salle du trône (BD-T1 p.28), à soumettre à Mediatoon ; statues neutres et bannières unies conservées. LORE_BD §16.71.",
+          "version": "1.0.145"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_oracle_camp_forme_bd_v1145",
+          "nom": "Oracle : forme BD stricte, deux portes, menhirs épars",
+          "decision": "Arbitrage Q6 b (27/11/2026, BD-T2 p.44) : bloc bleu arrondi et allongé, rien dessus, deux portes visibles (SO et E), six escaliers et portes retirés, menhirs épars dans la plaine, grandes tentes pyramidales devant la grande porte, plaine craquelée. LORE_BD §16.71.",
+          "version": "1.0.145"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_atelier_decors_lowpoly_v1145",
+          "nom": "Plantes low-poly retirées du générateur",
+          "decision": "Arbitrage Q7 a (27/11/2026) : fleurs jaunes, trèfles et plantes low-poly remplacés par les plantes peintes de l'atelier décors. LORE_BD §16.71.",
+          "version": "1.0.145"
         }
       ]
     },
@@ -252655,7 +252686,8 @@
         "[DÉCISION] Décision du propriétaire (21/11/2026) : théière de l'Empire du Jade reportée à l'extension ; gibet gardé (sans pendu) aux capitales et forteresses ; ponts remplacés par les modules de l'atelier ; chapeau de paille renvoyé aux tenues des PNJ ; poupée de chiffon en décor seulement. LORE_BD §16.63.",
         "[DÉCISION] Décision du propriétaire (22/11/2026) : l'atelier décors est étendu aux tomes 6 à 14 ; 19 nouveaux objets génériques (n° 195 à 213) sont modélisés et placés (places en fête, cimetières des grandes villes, désert, forges naines, chantiers, camps, champs de bataille) ou mis au catalogue ; les tomes 11 à 14 n'apportent aucun objet générique nouveau. LORE_BD §16.64.",
         "[DÉCISION] Décision du propriétaire (22/11/2026) : les éléments signature des tomes 6 à 14 (trônes, palais et cités, ordres et bannières, Négation, dragons, machine de guerre naine, Empire du Jade) restent retirés en attendant l'autorisation ; ceux de l'Empire du Jade sont réservés à l'extension. LORE_BD §16.64.",
-        "[DÉCISION] Décision du propriétaire (25/11/2026) : Kendrhir est refaite d'après le tome 1 (enceinte de rondins de 20 m en reconstruction, tours, portes, contreforts obliques, donjon à flèche générique en chantier, maisons de planches, restes du siège ; objets n° 231 à 237) ; les références du tome 1 des décors suivent la numérotation du PDF (ancienne numérotation moins 6). LORE_BD §16.68."
+        "[DÉCISION] Décision du propriétaire (25/11/2026) : Kendrhir est refaite d'après le tome 1 (enceinte de rondins de 20 m en reconstruction, tours, portes, contreforts obliques, donjon à flèche générique en chantier, maisons de planches, restes du siège ; objets n° 231 à 237) ; les références du tome 1 des décors suivent la numérotation du PDF (ancienne numérotation moins 6). LORE_BD §16.68.",
+        "[DÉCISION] (v1.0.145) Arbitrage Q7 a du propriétaire (27/11/2026) : les fleurs jaunes, trèfles et plantes de style low-poly (Flower_4, Clover, Plant_1, Plant_7) ne sont plus posés par le générateur, remplacés par les plantes peintes de l'atelier décors (marguerites, molènes, fougères, herbes) ; les plantes restées sans couleur (Plant_7_Big, Flower_4_Single, Petal_1 à 5, dalles de sentier) sont corrigées. LORE_BD §16.71."
       ]
     }
   ],
@@ -257869,14 +257901,15 @@
       "faction_control": "empire_humain",
       "features": [
         "palais impérial millénaire au sommet de la ville en gradins",
-        "façade gothique : très haute porte centrale, portails latéraux, statues colossales",
+        "façade gothique : très haute baie centrale rectangulaire (≈ 8,8 × 24,7 m), portails latéraux gothiques à vantaux rouges, statues colossales",
         "soubassement peint à chevrons rouges et bleus, bannières rouges",
-        "salle du trône (tapis rouge, trône), jardins intérieurs (cyprès, fontaine, statues)",
+        "salle du trône en longue nef couverte (72 × 26 m, voûte brisée, hautes baies) : porte de bois sculptée à caissons et médaillons dorés, deux rangées de statues colossales encapuchonnées, rosace, trône au sommet d'une pyramide à degrés couverte du tapis rouge",
+        "jardin à l'arrière (cyprès, fontaine, statues)",
         "escalier monumental direct depuis la grand-place"
       ],
       "dimensions_estimees": {
-        "hauteur": "façade 49 m, flèches 62 m ; sommet à 80 m au-dessus de la ville basse",
-        "largeur": "façade 65 m ; plateforme de 112 m",
+        "hauteur": "façade 49 m, flèches 62 m, nef 28 m sous sablière (faîtage ≈ 40 m) ; trône à 3,9 m au-dessus du sol de la nef ; sommet à 80 m au-dessus de la ville basse",
+        "largeur": "façade 65 m ; nef de 72 × 26 m ; plateforme de 140 m (rayon 70 m)",
         "diametre": "",
         "zone_visible": "visible de toute la baie"
       },
@@ -257946,7 +257979,9 @@
         "[BD-T10] p.37 : la ville en gradins sous le palais, bombardée depuis la mer par la flotte tharque.",
         "[DÉCISION] (v1.0.140) Lieu créé pour le palais de la capitale (demande du propriétaire du 25/11/2026) : sommet de la ville en gradins, posé à la main (position -3804, -2600 m depuis le centre de la case, 104 m à l'ouest de la grand-place) ; monde jouable : POI poi_palais_imperial_lhynn (genre « palais ») bâti par tools/world_gen (façade dédiée, corps et enceinte en pièces modulaires, quatre flèches, parvis, salle du trône, jardin) ; LORE_BD §16.66.",
         "[DÉCISION] (v1.0.140) Monument signature RÉINTERPRÉTÉ (pas de reproduction fidèle) : statues colossales à sujet neutre (encapuchonnées, sans visage), aucune héraldique de faction, bannières rouges unies (arbitrage Q2 a + b du propriétaire).",
-        "[DÉCISION] (v1.0.140) Contenu rattaché (arbitrage Q4 a) : les étapes « palais de Lhynn » de 12 quêtes (conseil de guerre et Clefs de Northind T8, audience de Parsifal T10, T12 01, 02, 03, 07, T13 03, 06, 07, T14 secret de la divinité et préparation de l'exode) sont ancrées sur ce lieu ; le raid raid_assaut_palais_lhynn_t10 s'y déroule."
+        "[DÉCISION] (v1.0.140) Contenu rattaché (arbitrage Q4 a) : les étapes « palais de Lhynn » de 12 quêtes (conseil de guerre et Clefs de Northind T8, audience de Parsifal T10, T12 01, 02, 03, 07, T13 03, 06, 07, T14 secret de la divinité et préparation de l'exode) sont ancrées sur ce lieu ; le raid raid_assaut_palais_lhynn_t10 s'y déroule.",
+        "[DÉCISION] (v1.0.145) Arbitrage Q4 b du propriétaire (27/11/2026, capture : « la salle du trône n'a pas la bonne longueur, le trône est en hauteur », BD-T1 p.28 cases 1, 2, 6, 8) : la salle du trône devient une longue nef couverte de 72 × 26 m (murs de 9 étages, hautes baies, toiture d'ardoise à voûte brisée), deux rangées de statues colossales encapuchonnées à sujet neutre, rosace au-dessus du trône, trône au sommet d'une pyramide à 14 degrés de 0,28 m (3,9 m) couverte du tapis rouge ; la plateforme du sommet passe de 56 à 70 m de rayon (relief acropole_lhynn du master, pied de l'escalier à 104 m) pour l'accueillir. LORE_BD §16.71.",
+        "[DÉCISION] (v1.0.145) Arbitrage Q5 b du propriétaire (27/11/2026 : « la porte ne ressemble pas du tout à cela ») : reproduction plus fidèle des portes, à soumettre à Mediatoon avec les visuels — haute baie rectangulaire de la façade (BD-T3 p.24 case 7, au lieu de l'ogive de 8 × 15,5 m) et porte de bois de la salle du trône à vantaux sculptés en caissons ornés de médaillons dorés (BD-T1 p.28 case 1). Les statues restent à sujet neutre et les bannières unies (pas d'héraldique). LORE_BD §16.71."
       ]
     },
     {
@@ -355999,8 +356034,8 @@
         "Nul ne combat à l'ombre de l'Oracle"
       ],
       "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
+        "hauteur": "≈ 100 à 114 m au-dessus de la plaine",
+        "largeur": "≈ 270 × 330 m (grand axe SE-NO)",
         "diametre": "",
         "zone_visible": ""
       },
@@ -356061,7 +356096,8 @@
       "footprint_tiles": [],
       "notes": [
         "[BD-T3] Structure cristalline colossale au centre de l'Empire ; on ne combat pas à son ombre.",
-        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_oracle du master (N000_E000), qui n'en avait pas. LORE_BD §16.54."
+        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_oracle du master (N000_E000), qui n'en avait pas. LORE_BD §16.54.",
+        "[DÉCISION] (v1.0.145) Forme BD stricte (arbitrage Q6 b du propriétaire, BD-T2 p.44 case 1) : bloc de cristal bleu arrondi et allongé, deux portes visibles (SO et E), rien sur le rocher, menhirs épars dans la plaine autour du camp. LORE_BD §16.71."
       ]
     },
     {
@@ -362034,7 +362070,7 @@
         "T3-P006-C1"
       ],
       "placement": "Camp de l'Oracle : parois et couronne du rocher",
-      "generated": true,
+      "generated": false,
       "source": "[BD] T2"
     },
     {
@@ -362446,6 +362482,81 @@
       "placement": "Magistrya : angles des bâtiments de la ville-tour",
       "generated": true,
       "source": "[BD] T2"
+    },
+    {
+      "id": "decor_250",
+      "num": 250,
+      "name": "Porte sculptée de la salle du trône impériale",
+      "tome": 1,
+      "family": "monument",
+      "meshes": [
+        "Door_Throne_Imperial_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P022-C1 (planche 20, PDF p.22 : porte de la salle du trône, vantaux sculptés en caissons à médaillons dorés)",
+        "arbitrage Q5 b du propriétaire (27/11/2026 : reproduction plus fidèle, à soumettre à Mediatoon)",
+        "vantaux ouverts (passage franchissable)"
+      ],
+      "placement": "Lhynn : entrée de la salle du trône du palais impérial (poi_palais_imperial_lhynn)",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_251",
+      "num": 251,
+      "name": "Estrade pyramidale du trône impérial",
+      "tome": 1,
+      "family": "monument",
+      "meshes": [
+        "Throne_Dais_Imperial_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P022-C2, C6, C8 (planche 20 : trône au sommet d'une pyramide à degrés couverte du tapis rouge)",
+        "T3-P024-C7 (tapis rouge)",
+        "demande du propriétaire (27/11/2026 : « le trône est en hauteur »)"
+      ],
+      "placement": "Lhynn : fond de la salle du trône du palais impérial",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_252",
+      "num": 252,
+      "name": "Statue colossale encapuchonnée de la nef",
+      "tome": 1,
+      "family": "monument",
+      "meshes": [
+        "Statue_Hall_Hooded_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P022-C2, C7, C8 (planche 20 : rangées de grandes figures encapuchonnées le long des murs de la salle du trône)",
+        "sujet neutre (sans visage ni héraldique)"
+      ],
+      "placement": "Lhynn : le long des murs de la salle du trône du palais impérial",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_253",
+      "num": 253,
+      "name": "Toiture et voûte de la nef du palais",
+      "tome": 1,
+      "family": "monument",
+      "meshes": [
+        "Palace_Hall_Roof_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P022-C2 (voûte de la salle du trône)",
+        "T3-P026-C1 (toits d'ardoise du palais sous la lune)",
+        "nef allongée de la salle du trône (demande du propriétaire, 27/11/2026)"
+      ],
+      "placement": "Lhynn : couverture de la salle du trône du palais impérial",
+      "generated": true,
+      "source": "[BD] T1"
     }
   ]
 }

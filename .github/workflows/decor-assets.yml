@@ -4,7 +4,8 @@
 # cotes (hauteur/largeur ±10 %), origine au sol, textures référencées présentes,
 # découpe alpha des feuillages (tools/asset_pipeline/decor/validate_decor.py), et
 # que le catalogue des props est à jour (generate_props_catalog.py régénéré = fichier
-# versionné). Rapide : déclenché uniquement quand les décors ou les props changent.
+# versionné), et que les silhouettes lointaines du bâti (meshes/proxies) sont à jour.
+# Rapide : déclenché uniquement quand les décors ou les props changent.
 name: decor-assets
 
 on:
@@ -14,6 +15,8 @@ on:
       - 'tools/asset_pipeline/decor/**'
       - 'tools/asset_pipeline/generate_props_catalog.py'
       - 'game/data/meshes/props/**'
+      - 'tools/asset_pipeline/proxies/**'
+      - 'game/data/meshes/proxies/**'
       - '.github/workflows/decor-assets.yml'
   pull_request:
     branches: [develop, main]
@@ -21,6 +24,8 @@ on:
       - 'tools/asset_pipeline/decor/**'
       - 'tools/asset_pipeline/generate_props_catalog.py'
       - 'game/data/meshes/props/**'
+      - 'tools/asset_pipeline/proxies/**'
+      - 'game/data/meshes/proxies/**'
       - '.github/workflows/decor-assets.yml'
 
 permissions:
@@ -39,6 +44,9 @@ jobs:
 
       - name: Contrôle des assets de décor (cotes, budgets, LOD, billboards)
         run: python tools/asset_pipeline/decor/validate_decor.py
+
+      - name: Silhouettes lointaines du bâti à jour (v1.0.145)
+        run: python tools/asset_pipeline/proxies/build_far_proxies.py --check
 
       - name: Catalogue des props à jour
         run: |

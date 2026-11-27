@@ -1079,6 +1079,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.67](#1667-camp-de-loracle--salles-intérieures-portes-de-cristal-et-camp-extérieur-v10141) | v1.0.141 | Camp de l'Oracle : salles intérieures, portes de cristal et camp extérieur | Rocher de cristal bleu, 8 grandes portes peintes sur socle de brique, escaliers de 6 m ; salle de l'Oracle (porte SO, quête) et salle des Échos (porte E, raid de 3+) ; passages conditionnels du shard ; tentes agrandies et de couleur, fanions, feux, bassins, menhirs de 3-5 m. |
 | [16.68](#1668-kendrhir-daprès-le-tome-1-v10142) | v1.0.142 | Kendrhir d'après le tome 1 | Rempart de rondins de 20 m en reconstruction (pans d'origine, neufs, calcinés, brèches), tours, portes, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège (decor_231 à decor_237) ; clé `apparence` ; références du tome 1 réalignées sur le PDF. |
 | [16.69](#1669-magistrya-ville-tour-v10143) | v1.0.143 | Magistrya, ville-tour | Aiguille de 600 m au milieu d'un lac, bâtiments distincts empilés et cages d'escalier du socle au palais du Magister (salle du trône, laboratoire) ; ponton, geôles ; habitants à altitude réelle. |
+| [16.71](#1671-lhynn-et-loracle-daprès-les-planches-rendu-lointain-v10145) | v1.0.145 | Lhynn et l'Oracle d'après les planches, rendu lointain | Salle du trône de Lhynn en longue nef (porte sculptée, statues, estrade pyramidale), plateforme de 70 m, haute baie de la façade ; Oracle en forme BD stricte (bloc arrondi, 2 portes, menhirs épars) ; silhouettes lointaines du bâti, nuages au-dessus du relief, plantes low-poly retirées. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4492,7 +4493,7 @@ Réponses du propriétaire aux questions ouvertes de la branche carte (CHANGELOG
 | Routes coupées | **ouvrir** les 2 routes coupées et les 43 routes arrêtées à une zone fermée |
 
 **Arbitrages de lore `[GD]`** (demandés au propriétaire, à relire) :
-- **Oracle** : la rampe et l'escalier de briques du T2 et les huit escaliers blancs du T3 coexistent (deux vues du
+- **Oracle** (v1.0.145 : deux escaliers seulement restent visibles, SO et E, forme BD stricte du T2 p.44 — 16.71) : la rampe et l'escalier de briques du T2 et les huit escaliers blancs du T3 coexistent (deux vues du
   même site) ; lacs du destin (T11), colline à sanctuaire (T12) et antre (T14) sont après l'époque du jeu.
 - **Heusgly** : aucune planche ne la dit « proche de Moork » ; elle reste en S006_E004.
 - **Palais du Maître des Dragons** : un seul palais ; « au-delà des sept régions » est une façon de parler.
@@ -5706,6 +5707,54 @@ dans le vide d'une cage, ponton, geôles, palais posé à plat, routes arrêtée
 au palais, habitants à altitude réelle, collision) ; `ambient_routine_tests`, `spawner_routine_format_tests`
 (aller-retour du format), `walkable_surface_probe_tests` ; `validate_decor.py` ; contrôles du lore.
 
+### 16.71 Lhynn et l'Oracle d'après les planches, rendu lointain (v1.0.145)
+
+**Demande du propriétaire** (27/11/2026, atelier « Correction », cinq captures en jeu, tomes 1 à 3 joints ; visuels
+attendus par Mediatoon) : (1) des plantes sans couleur ; (2) la salle du trône de l'Empereur n'a pas la bonne longueur,
+la porte ne ressemble pas du tout à cela, le trône est en hauteur (`[BD-T1]` p.22 du PDF = planche 20, cases 1 et 2 ;
+`[BD-T3]` p.24 case 7) ; (3) la distance de vue ne permet pas de voir Lhynn en entier (`[BD-T3]` p.26 case 1) et la
+ville n'est pas assez grande ; (4) le camp de l'Oracle ne ressemble pas à cela (forme du caillou central, menhirs posés
+sur le rocher ; `[BD-T2]` p.44 case 1) ; (5) des taches blanches. Arbitrages : **Q1 b** (une seule PR), **Q2 b**
+(silhouettes lointaines du bâti), **Q3 a** (taille de Lhynn jugée après le correctif d'affichage), **Q4 b** (plateforme
+élargie), **Q5 b** (porte plus fidèle, soumise à Mediatoon), **Q6 b** (forme BD stricte, abords compris), **Q7 a**
+(plantes low-poly retirées).
+
+**Lecture des planches.** T1 pl.20 : porte de bois monumentale à deux vantaux couverts de caissons sculptés à
+médaillons dorés (case 1) ; longue nef bordée de grandes figures encapuchonnées, rosace au fond, trône au sommet d'une
+pyramide à degrés couverte du tapis rouge (cases 2, 6, 8). T3 p.24 case 7 : façade du palais — très haute baie
+centrale rectangulaire et sombre, deux portails gothiques à vantaux rouges, statues colossales, soubassement à chevrons,
+bannières rouges, tapis rouge. T3 p.26 case 1 : la ville dense couvre toute la butte jusqu'à la mer. T2 p.44 case 1 :
+bloc bleu arrondi et irrégulier, plus long que haut, au centre d'une plaine ocre craquelée ; tentes pyramidales à
+fanion au pied ; menhirs bleus isolés dans la plaine, à des distances variées ; chemin droit vers le rocher.
+
+| Élément | Avant | Après |
+|---|---|---|
+| Salle du trône (Lhynn) | intérieur du corps carré de 39 m, à ciel ouvert, trône posé au sol | **nef couverte de 72 × 26 m** (murs de 9 étages ≈ 28 m, hautes baies, toiture d'ardoise à voûte brisée `Palace_Hall_Roof_1`), porte **`Door_Throne_Imperial_1`** (8 × 16 m, vantaux sculptés en caissons à médaillons dorés, ouverts vers l'intérieur), deux rangées de **`Statue_Hall_Hooded_1`** (12 m, sujet neutre), rosace ×2,6 au-dessus du trône, **`Throne_Dais_Imperial_1`** (pyramide de 14 degrés de 0,28 m, 3,92 m, tapis rouge à bordure dorée), trône à +3,92 m, braseros et lumières |
+| Plateforme du palais | rayon 56 m, pied de l'escalier à 92 m | **rayon 70 m** (relief `acropole_lhynn` du master), pied de l'escalier à 104 m (grand-place au centre de la ville) ; pied de la butte à 358 m |
+| Façade du palais | porte centrale ogivale de 8 × 15,5 m | **haute baie rectangulaire de 6,8 × 19 m** (8,8 × 24,7 m à l'échelle 1,3), ébrasement à deux ressauts, linteau droit ; portails latéraux à **vantaux rouges** (`Wood_Red`) ; rosace remontée |
+| Lhynn vue de loin | bâti coupé à `cull_large_m` × facteur (≈ 150 m en Moyenne), brouillard total à 280 m | **silhouettes lointaines du bâti** (client) : un bloc et un toit par maison, un bloc, un toit ou une flèche par pièce de rempart ou de tour, les monuments à billboard prolongés ; dessinées au-delà du culling du bâti jusqu'au plan lointain ; plans lointains 500 / 900 / 1 400 / 2 200 m ; brouillard total jusqu'à `world.fog.horizon_m` (1 100 m × facteur) |
+| Rocher de l'Oracle | octogone à parois planes (62 m) et couronne à facettes (90 m), 8 escaliers et 8 portes, dalles de cristal sur la couronne et au pied | **bloc arrondi** (≈ 300 m, grand axe SE-NO, 100 à 114 m, plus haut côté SE, flancs raides), **2 escaliers et 2 portes** (SO : grande porte ; E : salle des Échos), **rien sur le rocher** ; cristal d'un bleu plus franc, sans quadrillage |
+| Abords de l'Oracle | 5 tentes pyramidales de 6-7 m, 22 menhirs sur un cercle de 440-540 m | les deux tentes pyramidales qui encadrent la grande porte font **≈ 17-21 m** avec un fanion ; **menhirs épars** (430-860 m) ; **plaine craquelée** (plaques de sol fendu) |
+| Plantes | `Plant_7_Big`, `Flower_4_Single`, `Petal_1-5` sans couleur (blanc) ; fleurs jaunes, trèfles et plantes low-poly posés | couleurs rendues ; **plantes low-poly retirées du générateur** (Q7 a) au profit des plantes peintes ; contrôle `validate_decor.py` de tout matériau sans couleur |
+| Taches blanches | couche de nuages en altitude absolue (base 320 m) traversant plateaux et collines | base tenue à `render.clouds.min_ground_clearance_m` (250 m) au-dessus du sol sous la caméra (lissé) ; densité fondue à moins de 120 m de la caméra |
+
+**Juriste PI** : façade et porte de la salle du trône rendues plus fidèlement **à la demande du propriétaire** (Q5 b),
+pour présentation à Mediatoon ; aucune planche ni image de la BD dans le dépôt (géométrie et textures procédurales) ;
+statues à sujet neutre, bannières unies, aucune héraldique. Rocher de l'Oracle : forme générique (bloc rocheux).
+
+**Quêtes et raid** : inchangés — la grande porte du SO (quête « L'Appel de l'Oracle ») et la porte de l'E (salle des
+Échos, quête et raid) sont celles qui restent ; `passages.json` est régénéré à l'identique pour ces deux portes.
+
+**Lore** : v1.0.143 → v1.0.145 (v1.0.144 : Feyhin Lokcthat, PR #1182) ; fiches `lieu_palais_imperial_lhynn` (features,
+dimensions, 2 notes), `ville_oracle_camp` (features, note), `lieu_oracle` (note), `regle_atelier_decors` (note) ; 4
+entrées au registre des décisions ; décors `decor_250` à `decor_253` (`decor_219`, dalles de cristal, n'est plus posé
+par le générateur).
+
+**Contrôles** : `world_gen_tests` (`TestAcropoleLhynnV1140` : plateforme de 70 m, nef, porte, estrade, statues,
+toiture, trône en hauteur ; `TestOracleV1136` : 2 escaliers et 4 portes, menhirs épars, rocher nu et bloc arrondi
+allongé), `far_proxy_rules_tests` (nouveau), `view_distance_preset_tests`, `building_collision_catalog_tests` ;
+`validate_decor.py` ; `build_far_proxies.py --check` ; contrôles du lore.
+
 ## 17. Questions ouvertes
 
 - **Liste consolidée (v1.0.108)** de tous les points encore ouverts ou à valider, branche carte comprise : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) §4.
@@ -5724,7 +5773,7 @@ au palais, habitants à altitude réelle, collision) ; `ambient_routine_tests`, 
 - Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur tranché en v1.0.105 (16.34 : le générateur suit les routes du lore) ; sauvegarde complète vérifiée en v1.0.98 (16.27) : ~~références orphelines laissées par les suppressions~~ (0 en v1.0.115, 16.42) et noms vides de 159 fiches à traiter.
 - Fiches complètes (v1.0.100) : niveaux par faction à définir (`niveau_par_faction` vide), niveaux des 8 régions et 33 raids sans repère, étapes situées des 71 quêtes non pré-remplies (16.29).
 - Magistrya (v1.0.143) : rôle du Magister dans les quêtes (donneur de quêtes ou adversaire, Q8) ; intérieurs des bâtiments de la tour non construits (Q3 a : portes décoratives) ; ponts entre bâtiments (p.20) non posés : les cages d'escalier assurent la montée ; salles du palais autres que la salle du trône et le laboratoire non construites ; geôles bâties sur le socle (pas de souterrain) ; vue lointaine de la p.27 (la tour vue de la plaine) à vérifier en jeu (chargement des cellules, HLOD) (16.69).
-- Palais impérial de Lhynn (v1.0.140) : intérieur limité à la salle du trône ; salles du conseil, appartements, atelier de Shamballeau et salle cachée sous le trône (T11 p.12-13) non construits ; monument signature réinterprété en attente de la réponse de Mediatoon (16.66).
+- Palais impérial de Lhynn (v1.0.140, v1.0.145) : intérieur limité à la salle du trône (nef couverte depuis v1.0.145) ; salles du conseil, appartements, atelier de Shamballeau et salle cachée sous le trône (T11 p.12-13) non construits ; monument signature, portes rendues plus fidèlement (Q5 b) pour présentation à Mediatoon (16.66, 16.71).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

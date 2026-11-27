@@ -1374,6 +1374,30 @@
       "nom": "Tourelle d'angle de pierre ocre",
       "tome": 2,
       "placement_prevu": "Magistrya : angles des bâtiments de la ville-tour"
+    },
+    {
+      "num": 250,
+      "nom": "Porte sculptée de la salle du trône impériale",
+      "tome": 1,
+      "placement_prevu": "Lhynn : entrée de la salle du trône du palais impérial (poi_palais_imperial_lhynn)"
+    },
+    {
+      "num": 251,
+      "nom": "Estrade pyramidale du trône impérial",
+      "tome": 1,
+      "placement_prevu": "Lhynn : fond de la salle du trône du palais impérial"
+    },
+    {
+      "num": 252,
+      "nom": "Statue colossale encapuchonnée de la nef",
+      "tome": 1,
+      "placement_prevu": "Lhynn : le long des murs de la salle du trône du palais impérial"
+    },
+    {
+      "num": 253,
+      "nom": "Toiture et voûte de la nef du palais",
+      "tome": 1,
+      "placement_prevu": "Lhynn : couverture de la salle du trône du palais impérial"
     }
   ]
 }

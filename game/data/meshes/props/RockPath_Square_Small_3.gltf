@@ -23,7 +23,14 @@
 			"doubleSided":true,
 			"name":"PathRocks",
 			"pbrMetallicRoughness":{
-				"metallicFactor":0
+				"metallicFactor":0,
+				"baseColorFactor":[
+					0.56,
+					0.53,
+					0.49,
+					1.0
+				],
+				"roughnessFactor":0.9
 			}
 		}
 	],

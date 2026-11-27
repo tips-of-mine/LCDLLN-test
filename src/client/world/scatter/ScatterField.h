@@ -15,6 +15,7 @@
 #include "src/shared/math/Math.h"
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -31,8 +32,17 @@ namespace engine::world::scatter
 		float radius = 1.0f;                                       ///< rayon englobant (m)
 		uint32_t meshId = 0;                                       ///< index dans la table de meshes du champ
 		uint8_t cullClass = 0;                                     ///< 0 grand, 1 moyen, 2 petit
-		uint8_t flags = 0;                                         ///< bits ScatterFlags (scatter.bin)
+		uint8_t flags = 0;                                         ///< bits ScatterFlags (scatter.bin) + kScatterItemFlagFarProxy
 	};
+
+	/// v1.0.145 — bit CLIENT d'une silhouette lointaine (FarProxyRules.h) : l'instance n'est
+	/// dessinée qu'au-delà de la distance de culling du bâti, là où les vraies pièces ne le
+	/// sont plus. Bit haut, jamais écrit dans scatter.bin (les bits 0-2 sont ceux du fichier).
+	inline constexpr uint8_t kScatterItemFlagFarProxy = 1u << 7;
+	/// v1.0.145 — bit CLIENT : copie lointaine d'un monument du bâti DOTÉ d'un billboard
+	/// (façade, flèche, tour de l'atelier décors) dans le champ des silhouettes : dessinée en
+	/// billboard au-delà de world.scatter.cull_billboard_m et jusqu'au plan lointain.
+	inline constexpr uint8_t kScatterItemFlagFarBillboard = 1u << 6;
 
 	/// Distances de culling (m) par classe.
 	struct CullDistances
@@ -58,8 +68,16 @@ namespace engine::world::scatter
 	class ScatterField final
 	{
 	public:
-		/// Taille des cases de la grille de visibilité (m).
+		/// Taille par défaut des cases de la grille de visibilité (m).
 		static constexpr float kCellM = 32.0f;
+
+		/// \param cellM taille des cases de la grille (m, > 0) : 32 m pour le décor dense ;
+		/// plus grande pour un champ vu de loin (silhouettes lointaines : 256 m), afin de
+		/// ne pas visiter des milliers de cases vides à chaque Gather.
+		explicit ScatterField(float cellM = kCellM) : m_cellM(cellM > 0.0f ? cellM : kCellM) {}
+
+		/// Taille des cases de la grille de ce champ (m).
+		float CellSizeM() const { return m_cellM; }
 
 		/// Vide le champ (instances + table de meshes).
 		void Clear();
@@ -93,6 +111,9 @@ namespace engine::world::scatter
 			return (static_cast<int64_t>(cx) << 32) ^ static_cast<int64_t>(static_cast<uint32_t>(cz));
 		}
 
+		int32_t CellOf(float v) const { return static_cast<int32_t>(std::floor(v / m_cellM)); }
+
+		float m_cellM = kCellM;
 		std::vector<ScatterItem> m_items;
 		std::vector<std::string> m_meshPaths;
 		std::unordered_map<std::string, uint32_t> m_meshIndex;

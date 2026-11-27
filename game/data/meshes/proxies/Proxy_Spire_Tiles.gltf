@@ -1,0 +1,115 @@
+{
+ "asset": {
+  "generator": "LCDLLN build_far_proxies.py",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Spire_Tiles"
+  }
+ ],
+ "materials": [
+  {
+   "name": "Proxy_Spire_Tiles",
+   "doubleSided": false,
+   "pbrMetallicRoughness": {
+    "metallicFactor": 0.0,
+    "roughnessFactor": 0.9
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Spire_Tiles",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "COLOR_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC3",
+   "min": [
+    -0.5,
+    0.0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    1.0,
+    0.5
+   ]
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC4"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 24,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteOffset": 0,
+   "byteLength": 288,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 288,
+   "byteLength": 288,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 576,
+   "byteLength": 384,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 960,
+   "byteLength": 48,
+   "target": 34963
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 1008,
+   "uri": "data:application/octet-stream;base64,8wS1PgAAAADzBLU+AAAAPwAAAAAAAAAAAAAAAAAAgD8AAAAAMjENJAAAAAAAAAA/8wS1PgAAAADzBLU+AAAAAAAAgD8AAAAA8wS1vgAAAADzBLU+MjENJAAAAAAAAAA/AAAAAAAAgD8AAAAAAAAAvwAAAAAyMY0k8wS1vgAAAADzBLU+AAAAAAAAgD8AAAAA8wS1vgAAAADzBLW+AAAAvwAAAAAyMY0kAAAAAAAAgD8AAAAAysnTpAAAAAAAAAC/8wS1vgAAAADzBLW+AAAAAAAAgD8AAAAA8wS1PgAAAADzBLW+ysnTpAAAAAAAAAC/AAAAAAAAgD8AAAAAAAAAPwAAAAAyMQ2l8wS1PgAAAADzBLW+AAAAAAAAgD8AAAAAKLZWPxe21j5237E+KLZWPxe21j5237E+KLZWPxe21j5237E+dt+xPhe21j4otlY/dt+xPhe21j4otlY/dt+xPhe21j4otlY/dt+xvhe21j4otlY/dt+xvhe21j4otlY/dt+xvhe21j4otlY/KLZWvxe21j5237E+KLZWvxe21j5237E+KLZWvxe21j5237E+KLZWvxe21j5237G+KLZWvxe21j5237G+KLZWvxe21j5237G+dt+xvhe21j4otla/dt+xvhe21j4otla/dt+xvhe21j4otla/dt+xPhe21j4otla/dt+xPhe21j4otla/dt+xPhe21j4otla/KLZWPxe21j5237G+KLZWPxe21j5237G+KLZWPxe21j5237G+Bi96PpGbYT3eH+88AACAPwYvej6Rm2E93h/vPAAAgD9WK5M+3bWEPRqoDD0AAIA/Bi96PpGbYT3eH+88AACAPwYvej6Rm2E93h/vPAAAgD9WK5M+3bWEPRqoDD0AAIA/Bi96PpGbYT3eH+88AACAPwYvej6Rm2E93h/vPAAAgD9WK5M+3bWEPRqoDD0AAIA/Bi96PpGbYT3eH+88AACAPwYvej6Rm2E93h/vPAAAgD9WK5M+3bWEPRqoDD0AAIA/Bi96PpGbYT3eH+88AACAPwYvej6Rm2E93h/vPAAAgD9WK5M+3bWEPRqoDD0AAIA/Bi96PpGbYT3eH+88AACAPwYvej6Rm2E93h/vPAAAgD9WK5M+3bWEPRqoDD0AAIA/Bi96PpGbYT3eH+88AACAPwYvej6Rm2E93h/vPAAAgD9WK5M+3bWEPRqoDD0AAIA/Bi96PpGbYT3eH+88AACAPwYvej6Rm2E93h/vPAAAgD9WK5M+3bWEPRqoDD0AAIA/AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"
+  }
+ ]
+}

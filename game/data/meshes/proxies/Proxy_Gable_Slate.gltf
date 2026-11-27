@@ -1,0 +1,115 @@
+{
+ "asset": {
+  "generator": "LCDLLN build_far_proxies.py",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Gable_Slate"
+  }
+ ],
+ "materials": [
+  {
+   "name": "Proxy_Gable_Slate",
+   "doubleSided": false,
+   "pbrMetallicRoughness": {
+    "metallicFactor": 0.0,
+    "roughnessFactor": 0.9
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Gable_Slate",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "COLOR_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 14,
+   "type": "VEC3",
+   "min": [
+    -0.5,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    1,
+    0.5
+   ]
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 14,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 14,
+   "type": "VEC4"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 18,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteOffset": 0,
+   "byteLength": 168,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 168,
+   "byteLength": 168,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 336,
+   "byteLength": 224,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 560,
+   "byteLength": 36,
+   "target": 34963
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 596,
+   "uri": "data:application/octet-stream;base64,AAAAvwAAAAAAAAA/AAAAPwAAAAAAAAA/AAAAPwAAgD8AAAAAAAAAvwAAgD8AAAAAAAAAPwAAAAAAAAC/AAAAvwAAAAAAAAC/AAAAvwAAgD8AAAAAAAAAPwAAgD8AAAAAAAAAPwAAAAAAAAA/AAAAPwAAAAAAAAC/AAAAPwAAgD8AAAAAAAAAvwAAAAAAAAC/AAAAvwAAAAAAAAA/AAAAvwAAgD8AAAAAAAAAgDz55D4r+WQ/AAAAgDz55D4r+WQ/AAAAgDz55D4r+WQ/AAAAgDz55D4r+WQ/AAAAADz55D4r+WS/AAAAADz55D4r+WS/AAAAADz55D4r+WS/AAAAADz55D4r+WS/AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAA7+GSPTOniz0u/6E9AACAP+/hkj0zp4s9Lv+hPQAAgD9sz6w9YkqkPT6Wvj0AAIA/bM+sPWJKpD0+lr49AACAP+/hkj0zp4s9Lv+hPQAAgD/v4ZI9M6eLPS7/oT0AAIA/bM+sPWJKpD0+lr49AACAP2zPrD1iSqQ9Ppa+PQAAgD/m6HE9i/1lPR9ohT0AAIA/5uhxPYv9ZT0faIU9AACAP+bocT2L/WU9H2iFPQAAgD/m6HE9i/1lPR9ohT0AAIA/5uhxPYv9ZT0faIU9AACAP+bocT2L/WU9H2iFPQAAgD8AAAEAAgAAAAIAAwAEAAUABgAEAAYABwAIAAkACgALAAwADQA="
+  }
+ ]
+}

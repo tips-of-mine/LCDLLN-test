@@ -33,11 +33,13 @@ namespace engine::client
 	inline ViewDistanceSettings ResolveViewDistancePreset(int64_t preset)
 	{
 		static constexpr ViewDistanceSettings kTable[4] = {
+			// v1.0.145 : vues lointaines allongées (une capitale se voit en entier ; le bâti
+			// au-delà de cull_large_m est rendu en silhouettes, FarProxyRules.h).
 			//  far      terrain  rendu    décor
-			{  300.0f,  300.0f,   500.0f, 0.6f },  // Basse
-			{  500.0f,  500.0f,   800.0f, 0.8f },  // Moyenne
-			{  800.0f,  800.0f,  1200.0f, 1.0f },  // Haute
-			{ 1300.0f, 1300.0f,  2000.0f, 1.25f }, // Ultra
+			{  500.0f,  500.0f,   700.0f, 0.6f },  // Basse
+			{  900.0f,  900.0f,  1100.0f, 0.8f },  // Moyenne
+			{ 1400.0f, 1400.0f,  1600.0f, 1.0f },  // Haute
+			{ 2200.0f, 2200.0f,  2600.0f, 1.25f }, // Ultra
 		};
 		return kTable[std::clamp<int64_t>(preset, 0, 3)];
 	}

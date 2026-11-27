@@ -3512,6 +3512,34 @@ namespace engine
 		float cloudBaseAlt = baseAltCfg > 0.0 ? static_cast<float>(baseAltCfg) : cp.baseAltMeters;
 		float cloudTopAlt  = thickCfg   > 0.0 ? (cloudBaseAlt + static_cast<float>(thickCfg)) : cp.topAltMeters;
 		if (cloudTopAlt <= cloudBaseAlt) cloudTopAlt = cloudBaseAlt + 100.0f;
+		// v1.0.145 — taches blanches : la couche est en altitude ABSOLUE (base 320 m) alors
+		// que le relief du monde monte à 3 400 m ; sur les plateaux et collines, la couche
+		// touchait le sol et entourait la caméra (gros blocs blancs à bords nets). La base
+		// est désormais tenue au moins à render.clouds.min_ground_clearance_m au-dessus du
+		// SOL sous la caméra (lissé, pas la caméra elle-même : une créature volante traverse
+		// encore la couche). 0 = comportement d'avant (altitude absolue).
+		const float clearance = static_cast<float>(m_cfg.GetDouble("render.clouds.min_ground_clearance_m", 250.0));
+		if (clearance > 0.0f && m_cellWorld && m_cellHeights)
+		{
+			const uint32_t ri = m_renderReadIndex.load(std::memory_order_acquire);
+			const engine::math::Vec3 camR = m_renderStates[ri].camera.position;
+			float ground = 0.0f;
+			if (m_cellHeights->SampleGlobal(m_renderFrame.ToGlobalX(camR.x), m_renderFrame.ToGlobalZ(camR.z), ground))
+			{
+				// Lissage (≈ 2 s à 60 i/s) ; saut direct après une téléportation ou au premier appel.
+				if (std::isnan(m_cloudGroundSmoothedM) || std::fabs(ground - m_cloudGroundSmoothedM) > 1500.0f)
+					m_cloudGroundSmoothedM = ground;
+				else
+					m_cloudGroundSmoothedM += (ground - m_cloudGroundSmoothedM) * 0.01f;
+				const float minBase = m_cloudGroundSmoothedM + clearance;
+				if (cloudBaseAlt < minBase)
+				{
+					const float lift = minBase - cloudBaseAlt;
+					cloudBaseAlt += lift;
+					cloudTopAlt += lift;
+				}
+			}
+		}
 
 		engine::render::CloudPass::CloudPushConstants pc{};
 		// invViewProj + cameraPos. On utilise la matrice NON-jitterée
@@ -3813,7 +3841,11 @@ namespace engine
 			const float scale = m_viewDistance.scatterScale;
 			const float trees = std::max(static_cast<float>(m_cfg.GetDouble("world.scatter.cull_large_m", 150.0)),
 				static_cast<float>(m_cfg.GetDouble("world.scatter.cull_billboard_m", 0.0))) * scale;
-			const float limit = std::min(trees, m_viewDistance.terrainDrawM);
+			// v1.0.145 — horizon des villes : world.fog.horizon_m (× facteur du préréglage)
+			// repousse le fondu total au-delà des arbres pour qu'une capitale (silhouettes
+			// lointaines du bâti) reste lisible de loin ; 0 / absent = comportement d'avant.
+			const float horizon = static_cast<float>(m_cfg.GetDouble("world.fog.horizon_m", 0.0)) * scale;
+			const float limit = std::min(std::max(trees, horizon), m_viewDistance.terrainDrawM);
 			if (limit > 0.0f && fogEnd > limit)
 			{
 				fogEnd = limit;

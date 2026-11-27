@@ -4597,35 +4597,47 @@ def _colossus(m, x, y, H, lod):
 
 
 def p_palace_facade(spec, lod):
-    """Façade du palais impérial (Lhynn, réinterprétation) : 48 m de large, mur de
-    24 m, porte centrale ogivale de 8 x 15,5 m traversante (passable), deux portails
-    latéraux à vantaux clos, quatre statues colossales de 15 m devant les contreforts,
-    tours d'angle à flèches, rosace et pignon au-dessus de la porte, soubassement peint à
-    chevrons, bannières rouges unies. Face (côté parvis) vers -Y ; origine au pied, au
-    centre de la porte."""
+    """Façade du palais impérial (Lhynn) : 48 m de large, mur de 24 m. v1.0.145 (arbitrage
+    Q5 b du propriétaire, BD-T3 p.24 case 7 « les portes du palais s'ouvrirent ») : la porte
+    centrale est une HAUTE BAIE RECTANGULAIRE de 6,8 x 19 m (8,8 x 24,7 m à l'échelle 1,3 du
+    générateur), à linteau droit et ébrasement profond à deux ressauts, vantaux ouverts
+    plaqués dans le passage (traversante, passable) — elle remplace l'ogive de 8 x 15,5 m.
+    Deux portails latéraux gothiques à vantaux rouges clos, quatre statues colossales de 15 m
+    devant les contreforts (sujet neutre, sans héraldique), tours d'angle à flèches, rosace
+    et pignon au-dessus de la porte, soubassement peint à chevrons, bannières rouges unies.
+    Face (côté parvis) vers -Y ; origine au pied, au centre de la porte."""
     m = M()
     s = m.p("Stone_Carved")
     wall = m.p("Stone_Wall")
     loz = m.p("Stone_Lozenge")
     W, HW, T = 24.0, 24.0, 2.0          # demi-largeur, hauteur du mur, demi-épaisseur
-    GW, GS = 4.0, 11.0                   # demi-largeur et naissance de l'ogive de la porte
+    GW, GS = 3.4, 19.0                   # demi-largeur et hauteur de la baie centrale
+    J = 1.8                              # largeur des jambages (deux ressauts)
     # Soubassement peint et murs pleins de part et d'autre de la porte.
     for sx in (-1, 1):
-        a, b = sorted((sx * (GW + 1.2), sx * W))
+        a, b = sorted((sx * (GW + J), sx * W))
         box(loz, (a, -T - 0.4, 0.0), (b, T, 3.2), uv=0.28)
         box(wall, (a, -T, 3.2), (b, T, HW), uv=0.3)
-    # Jambages de la porte (traversent toute l'épaisseur) et ogive.
+    # Jambages à ressauts (traversent toute l'épaisseur) : ressaut extérieur avancé de
+    # 0,6 m, ressaut intérieur en retrait ; soubassement à chevrons jusqu'à 3,2 m.
     for sx in (-1, 1):
-        a, b = sorted((sx * GW, sx * (GW + 1.2)))
+        a, b = sorted((sx * (GW + 0.8), sx * (GW + J)))
         box(loz, (a, -T - 0.6, 0.0), (b, T, 3.2), uv=0.28)
-        box(s, (a, -T - 0.6, 3.2), (b, T, GS))
-    top = _gothic_arch(s, -GW, GW, GS, -T - 0.6, T, lod, top=17.5)
-    # Massif au-dessus de la porte : rosace et pignon jusqu'à 31 m.
-    box(wall, (-GW - 1.2, -T, 17.5), (GW + 1.2, T, HW + 1.0), uv=0.3)
+        box(s, (a, -T - 0.6, 3.2), (b, T, GS + 1.4))
+        a, b = sorted((sx * GW, sx * (GW + 0.8)))
+        box(loz, (a, -T + 0.2, 0.0), (b, T, 3.2), uv=0.28)
+        box(s, (a, -T + 0.2, 3.2), (b, T, GS))
+        if lod == 0:
+            # Colonnettes engagées dans l'angle des ressauts.
+            cyl(s, (sx * (GW + 0.8), -T - 0.1, 0.0), (sx * (GW + 0.8), -T - 0.1, GS + 1.0), 0.28, 0.28, 8)
+    # Linteau droit (deux ressauts) et massif au-dessus de la baie : rosace et pignon.
+    box(s, (-GW - 0.8, -T + 0.2, GS), (GW + 0.8, T, GS + 1.4))
+    box(s, (-GW - J, -T - 0.6, GS + 1.4), (GW + J, T, GS + 2.2))
+    box(wall, (-GW - J, -T, GS + 2.2), (GW + J, T, HW + 1.0), uv=0.3)
     if lod < 2:
         g = m.p("Glass_Rose")
         n = S(lod, 24)
-        R, zc, yv = 2.6, 21.0, -T - 0.02
+        R, zc, yv = 1.7, 23.2, -T - 0.02
         i = len(g.v)
         g.v.append(Vector((0, yv, zc)))
         for k in range(n):
@@ -4639,7 +4651,7 @@ def p_palace_facade(spec, lod):
             g.cn.append(None)
         cyl(s, (0, -T - 0.3, zc), (0, -T + 0.05, zc), R + 0.35, R + 0.35, n, cap=False)
     # Pignon triangulaire (au-dessus du mur) sur la travée centrale.
-    gz0, gz1, gw = HW + 1.0, 31.0, GW + 1.2
+    gz0, gz1, gw = HW + 1.0, 31.0, GW + J
     for y in (-T, T):
         i = len(wall.v)
         wall.v += [Vector((-gw, y, gz0)), Vector((gw, y, gz0)), Vector((0, y, gz1))]
@@ -4653,8 +4665,10 @@ def p_palace_facade(spec, lod):
         wall.uv.append([(0, 0), (1, 0), (1, 1), (0, 1)])
         wall.cn.append(None)
     _pinnacle(s, 0, 0, gz1 - 0.6, 0.5, 4.0, lod)
-    # Passage de la porte : voûte et vantaux ouverts, plaqués contre les jambages.
+    # Passage de la porte : plafond du passage et vantaux ouverts, plaqués contre les
+    # jambages (la baie reste sombre et profonde, comme dans la BD).
     d = m.p("Wood_Dark")
+    box(s, (-GW, -T + 0.2, GS - 0.3), (GW, T, GS))
     for sx in (-1, 1):
         a, b = sorted((sx * (GW - 0.25), sx * (GW - 0.05)))
         box(d, (a, -T + 0.3, 0.0), (b, T - 0.2, GS - 0.5))
@@ -4665,7 +4679,8 @@ def p_palace_facade(spec, lod):
             a, b = sorted((cx + jx * 2.0, cx + jx * 2.9))
             box(s, (a, -T - 0.8, 3.2), (b, -T + 0.2, 8.5))
         _gothic_arch(s, cx - 2.0, cx + 2.0, 8.5, -T - 0.8, -T + 0.2, lod, top=12.2)
-        box(d, (cx - 2.0, -T - 0.12, 3.2), (cx + 2.0, -T + 0.05, 8.5))
+        # v1.0.145 : vantaux rouges (BD-T3 p.24 case 7).
+        box(m.p("Wood_Red"), (cx - 2.0, -T - 0.12, 3.2), (cx + 2.0, -T + 0.05, 8.5))
         if lod == 0:
             for z in (4.4, 6.0, 7.6):
                 box(m.p("Iron"), (cx - 1.9, -T - 0.16, z), (cx + 1.9, -T - 0.12, z + 0.1))
@@ -4695,7 +4710,7 @@ def p_palace_facade(spec, lod):
     # Parapet crénelé (LOD0) sur les deux murs.
     if lod == 0:
         for sx in (-1, 1):
-            x = GW + 1.6
+            x = GW + J + 0.4
             while x < W - 3.0:
                 box(s, (sx * x - 0.45, -T - 0.1, HW), (sx * x + 0.45, -T + 0.5, HW + 1.2))
                 x += 1.8
@@ -4740,6 +4755,189 @@ def p_palace_spire(spec, lod):
                 box(s, (y0, k * 1.05 - 0.35, 28.6), (y0 + 0.5, k * 1.05 + 0.35, 29.6))
     lathe(m.p("Shingle_Slate"), [(3.1, 28.6), (2.4, 33.0), (0.05, 46.5)], S(lod, 8))
     cyl(m.p("Brass"), (0, 0, 46.3), (0, 0, 48.0), 0.12, 0.03, S(lod, 6))
+    return m.out()
+
+
+def _quad(part, a, b, c, d, uvs=((0, 0), (1, 0), (1, 1), (0, 1))):
+    """Quadrilatère a-b-c-d (ordre CCW vu de l'extérieur), UV fournies."""
+    i = len(part.v)
+    part.v += [Vector(a), Vector(b), Vector(c), Vector(d)]
+    part.f.append((i, i + 1, i + 2, i + 3))
+    part.uv.append(list(uvs))
+    part.cn.append(None)
+
+
+def _tri(part, a, b, c, uvs=((0, 0), (1, 0), (0.5, 1))):
+    i = len(part.v)
+    part.v += [Vector(a), Vector(b), Vector(c)]
+    part.f.append((i, i + 1, i + 2))
+    part.uv.append(list(uvs))
+    part.cn.append(None)
+
+
+def p_door_throne_imperial(spec, lod):
+    """Porte de la salle du trône du palais impérial (Lhynn) — v1.0.145, arbitrage Q5 b du
+    propriétaire (reproduction plus fidèle, soumise à Mediatoon) d'après BD-T1 p.28 case 1
+    (planche 20) : porte de bois monumentale à DEUX VANTAUX couverts de panneaux sculptés en
+    caissons, chaque caisson orné d'un médaillon doré, cloutée d'or, dans un encadrement de
+    pierre sculptée à piédroits ouvragés et linteau. Baie de 8 x 16 m ; vantaux de 4 x 16 m
+    OUVERTS à 90° vers l'intérieur (+Y), plaqués le long des piédroits : la porte reste
+    franchissable (collision : piédroits et vantaux, building_pieces.json). Face (côté
+    arrivée) vers -Y ; origine au pied, au centre de la baie. Signature : aucune héraldique."""
+    m = M()
+    st = m.p("Stone_Carved")
+    wd = m.p("Wood_Dark")
+    au = m.p("Gold")
+    GW, GH, F, T = 4.0, 16.0, 1.3, 0.9   # demi-baie, hauteur, piédroit, demi-épaisseur du cadre
+    # Encadrement : piédroits, linteau, tympan à corniche.
+    for sx in (-1, 1):
+        a, b = sorted((sx * GW, sx * (GW + F)))
+        box(st, (a, -T, 0.0), (b, T, GH))
+        if lod < 2:
+            # Ressaut sculpté (bandes verticales) et base moulurée.
+            a2, b2 = sorted((sx * (GW + 0.15), sx * (GW + 0.55)))
+            box(st, (a2, -T - 0.25, 0.0), (b2, -T, GH - 0.2))
+            box(st, (a, -T - 0.35, 0.0), (b, -T, 1.2))
+    box(st, (-GW - F, -T, GH), (GW + F, T, GH + 1.6))
+    box(st, (-GW - F - 0.3, -T - 0.4, GH + 1.6), (GW + F + 0.3, T, GH + 2.2))
+    if lod == 0:
+        # Frise de rosettes dorées sur le linteau.
+        for k in range(9):
+            x = -GW + k * (2 * GW) / 8
+            cyl(au, (x, -T - 0.12, GH + 0.8), (x, -T + 0.02, GH + 0.8), 0.28, 0.28, 10)
+    # Vantaux ouverts : plans verticaux du bord de la baie vers +Y (gonds à x = ±GW).
+    th = 0.32
+    cols, rows = 2, 6
+    for sx in (-1, 1):
+        x_in, x_out = sorted((sx * (GW - th), sx * GW))
+        y0, y1 = T, T + 2 * GW / 2 * 1.0 + 0.0   # vantail de 4 m de large, ouvert à 90°
+        y1 = T + GW
+        box(wd, (x_in, y0, 0.02), (x_out, y1, GH - 0.05))
+        if lod < 2:
+            # Caissons en relief et médaillons dorés, face intérieure du vantail (vers le centre).
+            face_x = x_in if sx > 0 else x_out
+            off = -1 if sx > 0 else 1   # relief vers le centre de la baie
+            for r in range(rows):
+                for c in range(cols):
+                    py0 = y0 + 0.3 + c * (GW - 0.6) / cols
+                    py1 = py0 + (GW - 0.6) / cols - 0.25
+                    pz0 = 0.6 + r * (GH - 1.2) / rows
+                    pz1 = pz0 + (GH - 1.2) / rows - 0.35
+                    xa, xb = sorted((face_x, face_x + off * 0.12))
+                    box(wd, (xa, py0, pz0), (xb, py1, pz1))
+                    if lod == 0:
+                        cy, cz = (py0 + py1) / 2, (pz0 + pz1) / 2
+                        xc = face_x + off * 0.12
+                        cyl(au, (xc, cy, cz), (xc + off * 0.1, cy, cz), 0.42, 0.34, 12)
+                        for dy in (-0.7, 0.7):
+                            for dz in (-0.9, 0.9):
+                                cyl(au, (xc, cy + dy, cz + dz), (xc + off * 0.06, cy + dy, cz + dz), 0.07, 0.05, 6)
+            # Pentures de fer.
+            if lod == 0:
+                for z in (2.0, GH / 2, GH - 2.0):
+                    xa, xb = sorted((face_x, face_x + off * 0.05))
+                    box(m.p("Iron"), (xa, y0, z - 0.12), (xb, y1 - 0.4, z + 0.12))
+    return m.out()
+
+
+def p_throne_dais_imperial(spec, lod):
+    """Estrade pyramidale du trône impérial (Lhynn) — v1.0.145 d'après BD-T1 p.28 cases 2,
+    6 et 8 : pyramide à degrés de pierre (14 marches de 0,28 m sur les quatre faces, 3,92 m
+    de haut), base 16 x 14 m, palier de 6,2 x 4,2 m ; le tapis rouge à bordure dorée monte
+    par la face avant jusqu'au palier. Marches de 0,28 m (franchissables par le contrôleur,
+    maxStep 0,3) ; collision : pavés concentriques marchables (building_pieces.json). Face
+    (escalier) vers -Y ; origine au pied, au centre de la base."""
+    m = M()
+    st = m.p("Stone_Carved")
+    red = m.p("Cloth_Red")
+    au = m.p("Gold")
+    n, rise, inset = 14, 0.28, 0.35
+    HX, HY = 8.0, 7.0
+    for k in range(n):
+        x, y = HX - k * inset, HY - k * inset
+        box(st, (-x, -y, k * rise), (x, y, (k + 1) * rise), uv=0.5)
+    # Tapis : marche par marche sur la face avant (contremarche + giron), 3,2 m de large.
+    cw = 1.6
+    for k in range(n):
+        yf = -(HY - k * inset)           # nez de la marche k (face avant)
+        z0, z1 = k * rise, (k + 1) * rise
+        box(red, (-cw, yf - 0.02, z0 + 0.01), (cw, yf + inset + 0.002, z1 + 0.012))
+        if lod < 2:
+            for sx in (-1, 1):
+                a, b = sorted((sx * cw, sx * (cw + 0.12)))
+                box(au, (a, yf - 0.025, z0 + 0.01), (b, yf + inset + 0.002, z1 + 0.014))
+    top = HY - (n - 1) * inset
+    box(red, (-cw, -top - 0.02, n * rise), (cw, top * 0.4, n * rise + 0.012))
+    # Dés d'angle du palier (vasques de bronze au LOD0).
+    if lod < 2:
+        tx = HX - (n - 1) * inset
+        for sx in (-1, 1):
+            box(st, (sx * tx - 0.35 * sx - 0.35, -top, n * rise), (sx * tx - 0.35 * sx + 0.35, -top + 0.7, n * rise + 1.0))
+    return m.out()
+
+
+def p_statue_hall_hooded(spec, lod):
+    """Statue colossale de la nef du palais impérial (Lhynn) — v1.0.145 d'après BD-T1 p.28
+    cases 2, 7 et 8 (rangées de grandes figures encapuchonnées le long des murs de la salle
+    du trône) : figure debout encapuchonnée, sans visage (sujet neutre), mains sur le pommeau
+    d'une épée pointe en bas, sur socle à chevrons ; 12 m. Face vers -Y ; origine au pied."""
+    m = M()
+    _colossus(m, 0.0, 0.0, 12.0, lod)
+    return m.out()
+
+
+def p_palace_hall_roof(spec, lod):
+    """Toiture de la nef de la salle du trône (Lhynn) — v1.0.145 : toit à deux pans d'ardoise
+    de 28 x 72 m (faîtage à +12 m de la sablière, le long de Y), voûte intérieure en
+    berceau brisé de pierre sculptée vue d'en bas, pignons de pierre aux deux bouts, crête
+    de faîtage de laiton. Posé sur le haut des murs de la nef (origine à la sablière, au
+    centre). Aucune collision (hors de portée)."""
+    m = M()
+    sl = m.p("Shingle_Slate")
+    st = m.p("Stone_Carved")
+    wl = m.p("Stone_Wall")
+    HX, HY, H = 14.0, 36.0, 12.0
+    # Pans extérieurs (débord de 0,8 m).
+    ox = HX + 0.8
+    _quad(sl, (0, -HY, H), (0, HY, H), (-ox, HY, -0.3), (-ox, -HY, -0.3), ((0, 4), (HY / 2, 4), (HY / 2, 0), (0, 0)))
+    _quad(sl, (0, HY, H), (0, -HY, H), (ox, -HY, -0.3), (ox, HY, -0.3), ((0, 4), (HY / 2, 4), (HY / 2, 0), (0, 0)))
+    # Voûte intérieure : berceau brisé (segments), faces tournées vers le bas.
+    n = {0: 10, 1: 6, 2: 3}[lod]
+    Hv = H - 1.2
+    prof = []
+    for k in range(n + 1):
+        t = k / n
+        a = t * math.pi / 2
+        prof.append((HX - 0.6 - (HX - 0.6) * math.sin(a), Hv * (1 - math.cos(a)) ** 0.8))
+    for sx in (-1, 1):
+        for k in range(n):
+            (x0, z0), (x1, z1) = prof[k], prof[k + 1]
+            a, b = (sx * x0, z0), (sx * x1, z1)
+            # Faces tournées vers l'intérieur de la nef (vers le bas et l'axe).
+            if sx > 0:
+                _quad(st, (a[0], HY, a[1]), (a[0], -HY, a[1]), (b[0], -HY, b[1]), (b[0], HY, b[1]))
+            else:
+                _quad(st, (a[0], -HY, a[1]), (a[0], HY, a[1]), (b[0], HY, b[1]), (b[0], -HY, b[1]))
+        if lod == 0:
+            # Arcs doubleaux tous les 6 m (nervures).
+            for y in range(-33, 34, 6):
+                for k in range(n):
+                    (x0, z0), (x1, z1) = prof[k], prof[k + 1]
+                    box(st, (min(sx * x0, sx * x1) - 0.25, y - 0.3, min(z0, z1) - 0.35),
+                        (max(sx * x0, sx * x1) + 0.25, y + 0.3, max(z0, z1) - 0.05))
+    # Pignons (deux faces : extérieure et intérieure).
+    for y, s_ in ((-HY, -1), (HY, 1)):
+        if s_ < 0:
+            _tri(wl, (-HX, y, 0), (HX, y, 0), (0, y, H))
+            _tri(wl, (HX, y + 0.4, 0), (-HX, y + 0.4, 0), (0, y + 0.4, H))
+        else:
+            _tri(wl, (HX, y, 0), (-HX, y, 0), (0, y, H))
+            _tri(wl, (-HX, y - 0.4, 0), (HX, y - 0.4, 0), (0, y - 0.4, H))
+    # Crête de faîtage.
+    box(m.p("Brass"), (-0.2, -HY - 0.4, H - 0.1), (0.2, HY + 0.4, H + 0.35))
+    if lod < 2:
+        for y in (-HY - 0.2, HY + 0.2):
+            cyl(m.p("Brass"), (0, y, H + 0.3), (0, y, H + 2.6), 0.14, 0.03, S(lod, 6))
     return m.out()
 
 

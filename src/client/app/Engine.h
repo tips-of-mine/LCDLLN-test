@@ -71,6 +71,7 @@
 #include "src/client/render/AssetRegistry.h"
 #include "src/client/render/CameraOcclusionFade.h"
 #include "src/client/world/scatter/ScatterField.h"
+#include "src/client/world/scatter/FarProxyRules.h"
 #include "src/client/render/ImpostorAsset.h"
 #include "src/client/render/DecalSystem.h"
 #include "src/client/render/FrameGraph.h"
@@ -1546,6 +1547,9 @@ namespace engine
 		{
 			engine::world::scatter::ScatterField* field = nullptr;
 			engine::gameplay::CompositeWorldCollider* collider = nullptr;
+			/// v1.0.145 — champ des silhouettes lointaines du bâti (FarProxyRules.h) ;
+			/// nullptr = pas de silhouettes (zones historiques).
+			engine::world::scatter::ScatterField* farProxy = nullptr;
 			double originX = 0.0;
 			double originZ = 0.0;
 			std::function<float(float, float)> ground;
@@ -1578,6 +1582,19 @@ namespace engine
 		/// 0 = auto) dans le collisionneur de la cible.
 		void AddScatterInstance(uint32_t meshId, const engine::math::Mat4& model, uint8_t cullClass,
 			uint8_t flags, bool solid, bool buildingPiece, float collisionRadius, const InstanceTarget& target);
+		/// v1.0.145 — ajoute au champ des silhouettes de \p target (si présent) la silhouette
+		/// \p shape / \p family couvrant la boîte [\p lo, \p hi] exprimée dans le repère
+		/// \p frame (repère de la cible × repère local). Rien si la boîte est trop petite
+		/// (kFarProxyMinExtentM) ou si le mesh de silhouette est introuvable. Main thread.
+		void AddFarProxyBox(engine::world::scatter::FarProxyShape shape, const char* family,
+			const engine::math::Mat4& frame, const engine::math::Vec3& lo, const engine::math::Vec3& hi,
+			const InstanceTarget& target);
+		/// v1.0.145 — silhouette lointaine d'une pièce posée par PlaceScatterFile (rempart, tour,
+		/// palais…) : copie en billboard si son mesh en a un, sinon bloc / toit / flèche selon
+		/// ClassifyFarProxy. Grande classe seulement ; billboard réservé aux pièces de bâti
+		/// (flag kScatterFlagBuildingPiece), formes pour les murs, tours et toitures. Main thread.
+		void AddFarProxyForPiece(uint32_t meshId, const engine::math::Mat4& model, uint8_t cullClass,
+			uint8_t flags, const InstanceTarget& target);
 		/// Enregistre les draws instanciés du décor visible (distance par classe +
 		/// frustum) dans le GBuffer (render pass LOAD de GeometryPass). Main thread,
 		/// pendant l'enregistrement de la passe Geometry (après RecordPropsGeometry).
@@ -1598,10 +1615,15 @@ namespace engine
 			/// 0 pour le décor stocké, kScatterFillerItemBase pour la forêt de
 			/// remplissage de la même cellule (même \ref id, plages disjointes).
 			std::uint32_t itemBase = 0;
+			/// v1.0.145 — champ des silhouettes lointaines (règle FarProxyVisible).
+			bool farProxy = false;
 		};
 		/// Base des index d'instance de la forêt de remplissage (identifiants
 		/// d'occulteurs) : le décor stocké d'une cellule reste sous 8 M d'instances.
 		static constexpr std::uint32_t kScatterFillerItemBase = 0x800000u;
+		/// Base des index d'instance des silhouettes lointaines (plage disjointe ; elles
+		/// ne sont jamais des occulteurs).
+		static constexpr std::uint32_t kScatterFarProxyItemBase = 0x400000u;
 		/// Liste les champs de décor à dessiner cette frame (non vides) : décor stocké
 		/// puis forêt de remplissage de chaque cellule.
 		void GatherScatterLayers(std::vector<ScatterLayer>& out) const;
@@ -1666,6 +1688,9 @@ namespace engine
 			engine::world::cells::CellCoord cell{};
 			std::unique_ptr<engine::render::terrain::TerrainRenderer> terrain;
 			std::unique_ptr<engine::world::scatter::ScatterField> scatter;
+			/// v1.0.145 — silhouettes lointaines du bâti de la cellule (même repère local),
+			/// dessinées au-delà de la distance de culling du bâti (FarProxyRules.h).
+			std::unique_ptr<engine::world::scatter::ScatterField> farProxy;
 			std::unique_ptr<engine::gameplay::CompositeWorldCollider> collider;
 			/// Décor et bâtiments décodés restant à poser (nullptr = tout est posé),
 			/// avec l'avancement de la pose par tranches (cf. ContinueCellPlacement).
@@ -1849,6 +1874,9 @@ namespace engine
 		engine::world::cells::RenderFrame m_renderFrame;
 		engine::world::cells::GeneratedCellSet m_generatedCells;
 		std::unique_ptr<engine::world::cells::CellHeightFields> m_cellHeights;
+		/// v1.0.145 — altitude du sol sous la caméra, lissée, pour tenir la couche de nuages
+		/// au-dessus du relief (render.clouds.min_ground_clearance_m) ; NaN = pas encore lue.
+		float m_cloudGroundSmoothedM = std::numeric_limits<float>::quiet_NaN();
 		engine::gameplay::CellWorldCollider m_cellCollider;
 		std::vector<CellRenderTile> m_cellTiles;
 		std::vector<RetiredCellTile> m_retiredCellTiles;

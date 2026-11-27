@@ -5,11 +5,6 @@
 
 namespace engine::world::scatter
 {
-	namespace
-	{
-		int32_t CellOf(float v) { return static_cast<int32_t>(std::floor(v / ScatterField::kCellM)); }
-	}
-
 	Frustum Frustum::FromViewProj(const float* m)
 	{
 		// m column-major : élément (ligne r, colonne c) = m[c*4 + r].

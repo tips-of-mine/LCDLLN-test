@@ -318,6 +318,8 @@ namespace tools::world_gen
 	// colossales à sujet neutre), corps du palais et enceinte en pièces modulaires, quatre
 	// flèches (Palace_Imperial_Spire_1), parvis à braseros et cyprès, salle du trône
 	// (tapis, trône, braseros), jardin à l'arrière (fontaine, haies, statues, cyprès).
+	// v1.0.145 : la salle du trône devient une longue NEF de 72 × 26 m couverte (BD-T1 p.28),
+	// porte à vantaux sculptés, statues colossales, trône sur une pyramide à degrés.
 	// ---------------------------------------------------------------------------------
 	namespace
 	{
@@ -340,8 +342,9 @@ namespace tools::world_gen
 
 		/// Construit le palais impérial centré sur \p c (centre de la plateforme). \p u :
 		/// direction unitaire vers l'escalier (porte, façade) ; \p topR : rayon de la
-		/// plateforme (m). Repère local : u (avant), v (gauche). Effet de bord : w.scatter,
-		/// w.pointLights, occupation de w.
+		/// plateforme (m, 70 m pour Lhynn depuis v1.0.145 : la nef de 72 m, la façade, le parvis
+		/// et le jardin y tiennent). Repère local : u (avant), v (gauche). Effet de bord :
+		/// w.scatter, w.pointLights, occupation de w.
 		void BuildImperialPalace(World& w, const PoiDef& p, Vec2 c, Vec2 u, double topR, LandmarkRng& rng)
 		{
 			const Vec2 v{ -u.z, u.x };
@@ -375,58 +378,151 @@ namespace tools::world_gen
 			for (int k = 2; k <= 6; k += 2)
 				BuildTower(w, corner[static_cast<size_t>(k)], 2.6, 4, true, Vec2{ 0.0, 0.0 } - u, false, rng);
 			// Retour du propriétaire (25/11/2026 : « le palais n'est pas assez volumineux ») :
-			// monuments dédiés à l'échelle kScale (façade ≈ 65 × 49 m, flèches ≈ 62 m) et corps
-			// du palais agrandi d'autant.
+			// monuments dédiés à l'échelle kScale (façade ≈ 65 × 49 m, flèches ≈ 62 m).
 			const double kScale = 1.3;
-			// Façade dédiée : origine à 20 m en avant du centre ; parement arrière (Z local −5 m)
-			// contre le corps (u = 13,5 m), statues jusqu'à u ≈ 27,3 m ; parvis jusqu'à la porte.
-			PalaceMonument(w, "Palace_Imperial_Facade_1", at(20.0, 0.0), u, kScale);
-			// Corps du palais : carré de 39 m, 9 étages de murs (≈ 28 m), porte face à la porte
-			// centrale de la façade ; sol de dalles (salle du trône).
-			BuildTower(w, at(-6.0, 0.0), 19.5, 9, false, u, false, rng, 0.0, false);
-			// Flèches : deux aux angles arrière, deux au milieu des côtés.
+			auto yawTo = [](Vec2 d) { return std::atan2(d.x, d.z) * 180.0 / kPi; }; // +Z local vers d
+			// Pièce du catalogue de collision (boîtes orientées de building_pieces.json), grande
+			// distance de vue ; \p occluder : fondu d'occlusion caméra.
+			auto catalogPiece = [&](const char* mesh, Vec2 q, double y, double yaw, double scale, bool occluder) {
+				ScatterDef sd;
+				sd.mesh = std::string("meshes/props/") + mesh + ".gltf";
+				sd.position = q; sd.yOffset = y; sd.yawDeg = yaw; sd.scale = scale;
+				sd.flags = static_cast<uint8_t>(kSolid | kPiece | (occluder ? kOccluder : 0u));
+				sd.cullClass = 0;
+				w.scatter.push_back(std::move(sd));
+			};
+			auto light = [&](const std::string& id, Vec2 q, double y, double radius, double intensity) {
+				PointLightDef L;
+				L.id = p.id + "_" + id; L.position = q; L.y = w.HeightAt(q) + y;
+				L.radiusM = radius; L.intensity = intensity; L.r = 1.0; L.g = 0.62; L.b = 0.3;
+				w.pointLights.push_back(L);
+			};
+			// v1.0.145 (demande du propriétaire du 27/11/2026, BD-T1 p.28 cases 1, 2, 6 et 8 ;
+			// BD-T3 p.24 case 7) — SALLE DU TRÔNE en longue NEF : 72 × 26 m, murs de 9 étages
+			// (≈ 28 m) à hautes baies, toiture d'ardoise à voûte brisée (Palace_Hall_Roof_1),
+			// entrée par la porte monumentale à vantaux sculptés (Door_Throne_Imperial_1) juste
+			// derrière la haute baie de la façade, deux rangées de statues colossales
+			// encapuchonnées (Statue_Hall_Hooded_1), rosace au-dessus du trône, trône au sommet
+			// d'une pyramide à degrés (Throne_Dais_Imperial_1) couverte du tapis rouge. La
+			// plateforme de l'acropole passe de 56 à 70 m de rayon (arbitrage Q4 b, master).
+			// Repère : la nef va de hallFront (porte) à hallBack (fond, côté mer).
+			const double hallHalf = 13.0;
+			const double hallFront = std::min(34.0, topR - 36.0);
+			const double hallBack = hallFront - 72.0;
+			const int hallLevels = 9;
+			const double hallH = hallLevels * kWallH;
+			// Façade dédiée : son parement arrière (Z local −2 m × 1,3) contre le mur avant de la nef.
+			PalaceMonument(w, "Palace_Imperial_Facade_1", at(hallFront + 3.0, 0.0), u, kScale);
+			// Murs de la nef : modules de 2 m, hautes baies (fenêtres en lancette) aux étages 5 à 7
+			// une travée sur trois ; mur avant ouvert sur la porte (10,4 m), mur du fond plein.
+			auto naveWall = [&](Vec2 a, Vec2 b, bool windows) {
+				const double len = std::hypot(b.x - a.x, b.z - a.z);
+				const int n = std::max(1, static_cast<int>(std::lround(len / 2.0)));
+				const double sc = len / n / 2.0;
+				const Vec2 d = (b - a) * (1.0 / len);
+				for (int k = 0; k < n; ++k)
+				{
+					const Vec2 q = a + d * ((k + 0.5) * 2.0 * sc);
+					for (int lv = 0; lv < hallLevels; ++lv)
+					{
+						const bool win = windows && lv >= 5 && lv <= 7 && k % 3 == 1;
+						Piece(w, win ? "Wall_UnevenBrick_Window_Thin_Round" : "Wall_UnevenBrick_Straight", q, lv * kWallH * sc, YawAlong(d), sc, true);
+					}
+				}
+			};
 			for (int sg = -1; sg <= 1; sg += 2)
 			{
-				PalaceMonument(w, "Palace_Imperial_Spire_1", at(-25.5, sg * 19.5), u, kScale);
-				PalaceMonument(w, "Palace_Imperial_Spire_1", at(-6.0, sg * 22.5), u, kScale);
+				naveWall(at(hallBack, sg * hallHalf), at(hallFront, sg * hallHalf), true);
+				naveWall(at(hallFront, sg * hallHalf), at(hallFront, sg * 5.6), false);
 			}
-			// Salle du trône : tapis rouge de la porte au trône, trône tourné vers la porte,
-			// braseros de part et d'autre du tapis.
-			for (int k = 0; k < 3; ++k)
-				Piece(w, "Carpet_Runner_1", at(7.0 - 12.0 * k, 0.0), 0.04, yawU, 1.0, false);
-			Piece(w, "Throne_Wood_1", at(-22.5, 0.0), 0.05, yawU, 1.4, true);
-			for (int k = 0; k < 4; ++k)
+			naveWall(at(hallBack, -hallHalf), at(hallBack, hallHalf), false);
+			// Mur au-dessus de la porte : de son linteau (18,2 m) au haut des murs, 6 modules.
+			{
+				const int nLin = 6;
+				const double scL = 2.0 * 5.6 / nLin / 2.0;
+				for (int k = 0; k < nLin; ++k)
+					for (double y = 18.2; y < hallH - 0.1; y += kWallH * scL)
+						Piece(w, "Wall_UnevenBrick_Straight", at(hallFront, -5.6 + (k + 0.5) * 2.0 * scL), y, YawAlong(v), scL, true);
+			}
+			// Porte de la salle du trône (vantaux ouverts vers l'intérieur) : le plan du cadre est
+			// à +1,8 m du pivot du mesh (Z local), aligné sur le mur avant.
+			catalogPiece("Door_Throne_Imperial_1", at(hallFront - 1.8, 0.0), 0.0, yawTo(u), 1.0, false);
+			// Sol de dalles de la nef.
+			for (double du = hallBack + 1.0; du < hallFront; du += 2.0)
+				for (double dv = -hallHalf + 1.0; dv < hallHalf; dv += 2.0)
+					Piece(w, "Floor_Brick", at(du, dv), 0.02, yawU, 1.0, true);
+			// Toiture (voûte brisée vue de l'intérieur), posée sur le haut des murs ; pas de collision.
+			{
+				ScatterDef roof;
+				roof.mesh = "meshes/props/Palace_Hall_Roof_1.gltf";
+				roof.position = at(0.5 * (hallFront + hallBack), 0.0);
+				roof.yOffset = hallH;
+				roof.yawDeg = yawTo(u);
+				roof.cullClass = 0;
+				w.scatter.push_back(std::move(roof));
+			}
+			// Estrade pyramidale et trône au fond ; rosace au-dessus (mur du fond).
+			const double daisU = hallBack + 9.0;
+			catalogPiece("Throne_Dais_Imperial_1", at(daisU, 0.0), 0.0, yawU, 1.0, false);
+			Piece(w, "Throne_Wood_1", at(daisU - 0.6, 0.0), 3.92, yawU, 1.6, true);
+			Piece(w, "Window_Rose_1", at(hallBack + 0.4, 0.0), 15.0, YawAlong(v), 2.6, false);
+			// Tapis rouge de la porte au pied de l'estrade (3 m de large).
+			for (double du = hallFront - 9.0; du > daisU + 7.0 + 4.0; du -= 18.0)
+				Piece(w, "Carpet_Runner_1", at(du, 0.0), 0.04, yawU, 1.5, false);
+			Piece(w, "Carpet_Runner_1", at(daisU + 7.0 + 9.0, 0.0), 0.05, yawU, 1.5, false);
+			// Statues colossales le long des murs, tournées vers l'axe ; braseros entre elles.
+			int nStat = 0;
+			for (double du = hallFront - 10.0; du > daisU + 9.0; du -= 12.0)
 				for (int sg = -1; sg <= 1; sg += 2)
-					Piece(w, "Brazier_Column_1", at(8.0 - 8.0 * k, sg * 3.4), 0.0, 0.0, 1.0, true);
-			// Parvis : braseros allumés, cyprès en pots, statues à sujet neutre.
+				{
+					catalogPiece("Statue_Hall_Hooded_1", at(du, sg * (hallHalf - 2.8)), 0.0, yawTo(v * static_cast<double>(-sg)), 1.0, false);
+					const Vec2 b = at(du - 6.0, sg * (hallHalf - 3.2));
+					Piece(w, "Brazier_Column_1", b, 0.0, 0.0, 1.2, true);
+					if (sg > 0 && nStat % 2 == 0) light("nef_" + std::to_string(nStat), b, 2.8, 16.0, 2.0);
+					if (sg > 0) ++nStat;
+				}
+			for (int sg = -1; sg <= 1; sg += 2)
+			{
+				const Vec2 b = at(daisU + 2.0, sg * 9.0);
+				Piece(w, "Brazier_Column_1", b, 0.0, 0.0, 1.5, true);
+				light(std::string("trone_") + (sg > 0 ? "1" : "0"), b, 3.4, 18.0, 2.4);
+			}
+			// Flèches : deux aux angles du fond, deux au droit du milieu de la nef (hors des murs).
+			for (int sg = -1; sg <= 1; sg += 2)
+			{
+				PalaceMonument(w, "Palace_Imperial_Spire_1", at(hallBack - 4.0, sg * (hallHalf + 6.0)), u, kScale);
+				PalaceMonument(w, "Palace_Imperial_Spire_1", at(0.5 * (hallFront + hallBack), sg * (hallHalf + 6.0)), u, kScale);
+			}
+			// Parvis : braseros allumés, cyprès en pots, statues à sujet neutre (entre la façade
+			// et le bord de la plateforme, où part l'escalier).
+			const double parvis = hallFront + 15.0;
 			for (int k = 0; k < 2; ++k)
 				for (int sg = -1; sg <= 1; sg += 2)
 				{
-					const Vec2 b = at(31.0 + 11.0 * k, sg * 7.0);
+					const Vec2 b = at(parvis + 3.0 + 9.0 * k, sg * 7.0);
 					Piece(w, "Brazier_Column_1", b, 0.0, 0.0, 1.4, true);
-					PointLightDef L;
-					L.id = p.id + "_brasero_" + std::to_string(k * 2 + (sg > 0 ? 1 : 0));
-					L.position = b; L.y = w.HeightAt(b) + 3.2;
-					L.radiusM = 14.0; L.intensity = 2.2; L.r = 1.0; L.g = 0.62; L.b = 0.3;
-					w.pointLights.push_back(L);
+					light("brasero_" + std::to_string(k * 2 + (sg > 0 ? 1 : 0)), b, 3.2, 14.0, 2.2);
 				}
-			for (double du = 30.0; du <= 46.0; du += 4.0)
+			for (double du = parvis + 1.0; du <= topR - 6.0; du += 4.0)
 				for (int sg = -1; sg <= 1; sg += 2)
 					Piece(w, "Tree_Cypress_Potted_1", at(du, sg * 15.0), 0.0, rng.Next() * 360.0, 1.0, true);
 			for (int sg = -1; sg <= 1; sg += 2)
-				Piece(w, "Statue_Garden_1", at(38.0, sg * 22.0), 0.0, yawU + (sg > 0 ? -90.0 : 90.0), 1.0, true);
-			// Jardin à l'arrière (T4 pl.7) : fontaine, haies taillées, cyprès, statues.
-			Piece(w, "Fountain_Basin_1", at(-40.0, 0.0), 0.0, rng.Next() * 45.0, 1.2, true);
+				Piece(w, "Statue_Garden_1", at(parvis + 7.0, sg * 22.0), 0.0, yawU + (sg > 0 ? -90.0 : 90.0), 1.0, true);
+			// Jardin à l'arrière (T4 pl.7), entre le fond de la nef et l'enceinte : fontaine, haies
+			// taillées, cyprès, statues.
+			const double garden = hallBack - 14.0;
+			if (garden - 6.0 < -(topR - 4.0)) { w.Occupy(c, topR); return; } // plateforme trop petite
+			Piece(w, "Fountain_Basin_1", at(garden, 0.0), 0.0, rng.Next() * 45.0, 1.2, true);
 			for (int k = 0; k < 8; ++k)
 			{
 				const double a = k * kPi / 4.0;
-				Piece(w, "Hedge_Trimmed_1", at(-40.0 + 5.0 * std::cos(a), 5.0 * std::sin(a)), 0.0, 0.0, 1.0, true);
+				Piece(w, "Hedge_Trimmed_1", at(garden + 5.0 * std::cos(a), 5.0 * std::sin(a)), 0.0, 0.0, 1.0, true);
 			}
 			for (int sg = -1; sg <= 1; sg += 2)
 			{
 				for (int k = 0; k < 3; ++k)
-					Piece(w, k % 2 ? "Tree_Cypress_2" : "Tree_Cypress_1", at(-32.0 - 6.0 * k, sg * 13.0), 0.0, rng.Next() * 360.0, 0.8, true);
-				Piece(w, "Statue_Garden_2", at(-40.0, sg * 8.5), 0.0, yawU + (sg > 0 ? -90.0 : 90.0), 1.0, true);
+					Piece(w, k % 2 ? "Tree_Cypress_2" : "Tree_Cypress_1", at(hallBack - 6.0 - 6.0 * k, sg * 10.0), 0.0, rng.Next() * 360.0, 0.8, true);
+				Piece(w, "Statue_Garden_2", at(garden, sg * 8.5), 0.0, yawU + (sg > 0 ? -90.0 : 90.0), 1.0, true);
 			}
 			w.Occupy(c, topR);
 		}

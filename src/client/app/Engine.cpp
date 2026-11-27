@@ -1992,7 +1992,15 @@ namespace engine
 			const engine::math::Vec3 lightDirTowardLight(0.5774f, 0.5774f, 0.5774f);
 			const float lambda = 0.7f;
 			const uint32_t shadowMapResolution = static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
-			engine::render::ComputeCascades(out.camera, lightDirTowardLight, lambda, shadowMapResolution, out.cascades);
+			// v1.0.145 — les cascades couvrent au plus shadows.max_distance_m (défaut 500 m,
+			// l'ancien plan lointain du préréglage Moyenne) : allonger la vue lointaine ne doit
+			// pas étirer les cascades et flouter les ombres proches. Au-delà : soleil sans ombre
+			// portée (lighting.frag), invisible sous la perspective aérienne.
+			engine::render::Camera shadowCam = out.camera;
+			const float shadowMaxM = static_cast<float>(m_cfg.GetDouble("shadows.max_distance_m", 500.0));
+			if (shadowMaxM > shadowCam.nearZ + 1.0f)
+				shadowCam.farZ = std::min(shadowCam.farZ, shadowMaxM);
+			engine::render::ComputeCascades(shadowCam, lightDirTowardLight, lambda, shadowMapResolution, out.cascades);
 		}
 
 		// Snapshot des point lights actives dans le RenderState (anti data-race).
@@ -3125,6 +3133,12 @@ namespace engine
 				engine::math::Mat4::RotateY(pl.worldYawDeg * kDeg2Rad) *
 				scaleMat(pl.worldScale);
 
+			// v1.0.145 — silhouette lointaine du bâtiment : boîtes (repère du bâtiment) des murs
+			// et de la toiture, teinte majoritaire de chacune (FarProxyRules.h).
+			namespace sc = engine::world::scatter;
+			engine::math::Vec3 wallLo{ 1e30f, 1e30f, 1e30f }, wallHi{ -1e30f, -1e30f, -1e30f };
+			engine::math::Vec3 roofLo = wallLo, roofHi = wallHi;
+			std::unordered_map<std::string, int> wallFam, roofFam;
 			for (const auto& pt : variant->parts)
 			{
 				if (pt.gltfRelativePath.empty()) continue;
@@ -3145,6 +3159,43 @@ namespace engine
 						| engine::world::instances::kScatterFlagOccluder),
 					pt.solid, /*buildingPiece*/ true, pt.collisionRadius, target);
 				++partCount;
+				if (target.farProxy != nullptr && meshId < m_scatterMeshes.size() && m_scatterMeshes[meshId].valid)
+				{
+					const sc::FarProxyShape shape = sc::ClassifyFarProxy(pt.gltfRelativePath);
+					if (shape == sc::FarProxyShape::None) continue;
+					// Boîte de la pièce dans le repère du bâtiment (localM × AABB du mesh).
+					engine::math::Vec3 c{}, lo{}, hi{};
+					float r = 0.0f;
+					const ScatterMeshGpu& pm = m_scatterMeshes[meshId];
+					engine::world::scatter::TransformBounds(localM, pm.localMin, pm.localMax, c, r, lo, hi);
+					const bool roof = shape != sc::FarProxyShape::Block;
+					engine::math::Vec3& bLo = roof ? roofLo : wallLo;
+					engine::math::Vec3& bHi = roof ? roofHi : wallHi;
+					bLo = { std::min(bLo.x, lo.x), std::min(bLo.y, lo.y), std::min(bLo.z, lo.z) };
+					bHi = { std::max(bHi.x, hi.x), std::max(bHi.y, hi.y), std::max(bHi.z, hi.z) };
+					++(roof ? roofFam : wallFam)[sc::FarProxyFamily(pt.gltfRelativePath, shape)];
+				}
+			}
+			if (target.farProxy != nullptr)
+			{
+				auto major = [](const std::unordered_map<std::string, int>& m, const char* def) {
+					const char* best = def; int n = -1;
+					for (const auto& [k, v] : m) if (v > n || (v == n && k < best)) { best = k.c_str(); n = v; }
+					return std::string(best);
+				};
+				if (wallHi.x > wallLo.x)
+				{
+					// Les murs montent jusqu'à la naissance du toit (pas de vide sous le toit au loin).
+					engine::math::Vec3 hi = wallHi;
+					if (roofHi.x > roofLo.x) hi.y = std::max(hi.y, roofLo.y);
+					const std::string fam = major(wallFam, "Stone");
+					AddFarProxyBox(sc::FarProxyShape::Block, fam.c_str(), groupM, wallLo, hi, target);
+				}
+				if (roofHi.x > roofLo.x)
+				{
+					const std::string fam = major(roofFam, "Tiles");
+					AddFarProxyBox(sc::FarProxyShape::Gable, fam.c_str(), groupM, roofLo, roofHi, target);
+				}
 			}
 		}
 		LOG_DEBUG(Render, "[Buildings] '{}' : {} placement(s) [{}..{}[, {} resolu(s), {} piece(s) rendue(s)",

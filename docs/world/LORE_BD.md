@@ -5623,7 +5623,7 @@ décoratives). La spirale est remplacée ; le tableau ci-dessous décrit l'état
 
 **Couleur** (retour du propriétaire du 27/11/2026 : « Magistrya n'est pas blanche mais plutôt orange », vérifié dans
 la BD : T2 p.19, 20, 25, 27) : toute la ville est de pierre **ocre orangé** sous des toits d'ardoise bleue ; bâtiments
-en grès ocre (≈ 55 %), brique ocre (≈ 30 %) et brique rouge (≈ 15 %), tourelles de pierre ocre, murs du palais en grès ;
+en grès ocre clair (≈ 60 %), brique ocre (≈ 30 %) et brique rouge (≈ 10 %), teintes claires (« l'ensemble doit être plus clair »), tourelles de pierre ocre, murs du palais en grès ;
 ni enduit blanc ni pierre grise (contrôlé par le test). Assets n° 232 (`Wall_Sandstone_*`, texture `Stone_Sandstone`),
 n° 233 (`Wall_OchreBrick_*`, texture `Brick_Ochre`), dérivés du kit (même géométrie, collision du catalogue), et
 n° 234 (`Turret_Corner_Ochre_1`, variante de la tourelle n° 92).

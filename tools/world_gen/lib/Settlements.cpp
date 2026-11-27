@@ -970,7 +970,7 @@ namespace tools::world_gen
 		/// « Magistrya n'est pas blanche mais plutôt orange ») — grès dominant, brique ocre,
 		/// un peu de brique rouge ; ni enduit blanc ni pierre grise.
 		constexpr const char* kTowerWallFamilies[] = { "Sandstone", "OchreBrick", "RedBrick" };
-		constexpr double kTowerWallWeights[] = { 0.55, 0.3, 0.15 };
+		constexpr double kTowerWallWeights[] = { 0.6, 0.3, 0.1 };
 		constexpr int kTowerWallFamilyCount = 3;
 
 		/// Un bâtiment de la ville-tour : niveaux [tier0, tier0 + tiers) d'une colonne.

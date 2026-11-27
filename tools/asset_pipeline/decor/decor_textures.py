@@ -1141,8 +1141,10 @@ TEXTURES.update({
 # des toits d'ardoise. Deux appareils : grès en moellons (dominant) et brique ocre ; teintes
 # naturelles nuancées (pas d'orange saturé ni de monochrome).
 TEXTURES.update({
-    "Stone_Sandstone": lambda: stonewall("Stone_Sandstone", 142, [(0, (128, 78, 42)), (0.5, (178, 116, 64)), (1, (214, 160, 102))]),
-    "Brick_Ochre": lambda: bricks("Brick_Ochre", 143, (184, 112, 58), (172, 148, 112)),
+    # Teintes claires (retour du propriétaire : « l'ensemble doit être plus clair ») : grès doré
+    # lumineux de la planche p.19, joints peu marqués.
+    "Stone_Sandstone": lambda: stonewall("Stone_Sandstone", 142, [(0, (196, 134, 76)), (0.5, (230, 172, 108)), (1, (248, 210, 150))]),
+    "Brick_Ochre": lambda: bricks("Brick_Ochre", 143, (222, 150, 84), (226, 204, 164)),
 })
 
 

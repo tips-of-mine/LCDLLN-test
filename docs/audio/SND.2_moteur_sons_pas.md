@@ -89,6 +89,15 @@ Les rues et places des villes sont rendues en terre (splat) : elles sonnent en
 terre battue comme les routes ; un son de pavés n'a de sens qu'avec un rendu
 pavé.
 
+### Niveaux (SND.2c)
+
+Les WAV sont normalisés en crête, pas en sonie : à volume égal, un pas sonnait
+aussi fort que l'ambiance d'une ville (≈ -30 LUFS). Les volumes du catalogue
+(`zone_audio.json`, `step_*`) visent désormais une sonie de **-42 LUFS**
+(maximum sur 400 ms, avant atténuation de distance et `FootstepVolume`), soit
+environ 12 dB sous l'ambiance de ville ; l'eau, -38 LUFS. Chaque sol a son propre
+volume (0,12 à 0,29) pour que tous les sols sonnent au même niveau.
+
 ## Tests
 
 - `sound_tests` : lecture réelle en mode sans périphérique (son audible dans le mixage,

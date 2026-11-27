@@ -44,7 +44,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.19,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -62,7 +62,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.23,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -80,7 +80,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.23,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -98,7 +98,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.14,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -116,7 +116,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.29,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -134,7 +134,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.2,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -152,7 +152,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.7,
+      "volume": 0.12,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -170,7 +170,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.12,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -188,7 +188,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.12,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -206,7 +206,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.14,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -224,7 +224,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.9,
+      "volume": 0.14,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -256,7 +256,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.13,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -272,7 +272,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.13,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -290,7 +290,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.8,
+      "volume": 0.24,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -308,7 +308,7 @@
       "minDistance": 1.0,
       "maxDistance": 18.0,
       "loop": false,
-      "volume": 0.75,
+      "volume": 0.25,
       "pitchJitter": 0.06,
       "volumeJitter": 0.12
     },
@@ -655,6 +655,22 @@
       "volume": 0.9,
       "pitchJitter": 0.08,
       "volumeJitter": 0.2
+    },
+    {
+      "id": "amb_surf",
+      "path": "audio/ambience/amb_surf_1.ogg",
+      "variants": [
+        "audio/ambience/amb_surf_2.ogg",
+        "audio/ambience/amb_surf_3.ogg"
+      ],
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": false,
+      "stream": true,
+      "volume": 0.85,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.15
     },
     {
       "id": "combat_hit_blade",

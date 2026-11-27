@@ -1,9 +1,11 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.140",
+    "version": "1.0.142",
     "notes": [
-      "v1.0.140 : [DÉCISION] Kendrhir d'après le tome 1 (p.23 à 42 du PDF) : rempart de rondins de 20 m en reconstruction (pans neufs, calcinés, brèches), tours et portes de bois, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège ; références du tome 1 des décors réalignées sur le PDF.",
+      "v1.0.142 : [DÉCISION] Kendrhir d'après le tome 1 (p.23 à 42 du PDF) : rempart de rondins de 20 m en reconstruction (pans neufs, calcinés, brèches), tours et portes de bois, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège ; références du tome 1 des décors réalignées sur le PDF.",
+      "v1.0.141 : [DÉCISION] Camp de l'Oracle amélioré (T1 p.3-5, T2 p.44-46, T3 p.5-7) : rocher de cristal bleu, huit grandes portes réinterprétées sur socle de brique, escaliers de 6 m ; salle de l'Oracle creusée au cœur du rocher (porte SO, quête « L'Appel de l'Oracle ») et salle des Échos (porte E, raid « L'Épreuve des Échos », groupe d'au moins 3) ; tentes agrandies et de couleur, mâts à fanions, feux, bassins des pèlerins, menhirs bleus de 3 à 5 m.",
+      "v1.0.140 : [DÉCISION] Lhynn en gradins : palais impérial au sommet (ville haute avancée vers la mer, ville basse vers l'est), escalier monumental depuis la grand-place ; façade, flèches et escalier modélisés (réinterprétation).",
       "v1.0.139 : [DÉCISION] Camp de l'Oracle : océan de tentes de pèlerins (quinze rangs) ; rendu lointain corrigé (arbres, champs, horizon).",
       "v1.0.138 : [DÉCISION] Atelier décors étendu aux tomes 6 à 14 : 19 objets génériques (n° 195 à 213) modélisés et placés (clé decors), éléments signature retirés.",
       "v1.0.137 : [DÉCISION] Atelier décors (BD tomes 1 à 5) : 182 objets génériques modélisés et placés (clé decors), éléments signature retirés en attente d'autorisation, enseignes à pictogramme, tombes anciennes, grands champs.",
@@ -6232,7 +6234,10 @@
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
         "[GD] (v1.0.82) PNJ des peuples lointains présents : Sigvhard Ulfrekk (Les Nordiques, ambassadeur) ; Ghaldaï Mönkhur (L'Empire Minghol, ambassadeur) ; Tshao Yunkhai (L'Empire de Tsin, ambassadeur) ; Ozhmeran Tchavhul (Le Kharzhad, marchand) ; Haremkhet Sobhaïr (Le royaume de Nebkhara, ambassadeur) ; Ixtlamhoc Tecuhal (Azteca, ambassadeur) (fiches persons, LORE_BD §16.11).",
         "[GD] (v1.0.85) Balisage (LORE_BD §16.14) — avertisseur : les dragonnières de Lhynn sont une enceinte de la garde impériale, interdite et gardée ; gardes rouges et hérauts en refusent l'entrée (dragons d'or 50-65, dragon de l'Empereur 42-50, golems des mages 35-50).",
-        "[DÉCISION] (v1.0.127) Ville déplacée de N001_W010 vers N001_W011, au bord de la mer (position -3700, -2600 m depuis le centre de la case ; site [GD] : terrain plat, pleine mer à moins de 800 m) : avant, le rivage était à 6-10 km et la mer ne se voyait pas depuis la ville ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
+        "[DÉCISION] (v1.0.127) Ville déplacée de N001_W010 vers N001_W011, au bord de la mer (position -3700, -2600 m depuis le centre de la case ; site [GD] : terrain plat, pleine mer à moins de 800 m) : avant, le rivage était à 6-10 km et la mer ne se voyait pas depuis la ville ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53.",
+        "[DÉCISION] (v1.0.140) Ville en gradins, le palais impérial au sommet (demande du propriétaire du 25/11/2026, captures en jeu : « le palais de l'empereur est sur une montagne ») : butte de quatre gradins de 20 m (talus de 24 m praticables, replats de 48 m), plateforme du palais de 56 m de rayon à 80 m au-dessus de la ville basse, sommet décalé de 104 m vers l'ouest (vers la mer, revers en falaise), grand-place sur le premier gradin sous le palais, ville basse vers l'est ; escalier monumental direct de la grand-place au palais (arbitrages Q1 a, Q3 b). [BD-T3] p.23 (vue de la ville au loin), p.26 (ville, lune sur la mer) ; [BD-T10] p.37 (ville en gradins sous le palais) ; [BD-T7] p.3-4 (port). Monde jouable : relief `acropole_lhynn` du master, POI poi_palais_imperial_lhynn ; LORE_BD §16.66.",
+        "[DÉCISION] (v1.0.140) Retours du propriétaire du 25/11/2026 (« c'est la capitale ») : ville dense — rues en arc sur chaque gradin, faubourgs hors les murs à la place des champs (sauf côté mer), champs repoussés au-delà ; palais agrandi (monuments à l'échelle 1,3, plateforme de 56 m). LORE_BD §16.66.",
+        "[DÉCISION] (v1.0.140) Retours du propriétaire du 25/11/2026 : port visible (« on ne voit pas le port ! ») — quai, jetées, navires à quai et au mouillage, grues, entrepôts sur la baie la plus proche reliée à la pleine mer ; trois fois plus de champs (« beaucoup de gens à nourrir »). LORE_BD §16.66."
       ],
       "dimensions_estimees": {
         "hauteur": "colline centrale dominant la baie, élévation marquée",
@@ -6241,10 +6246,10 @@
         "zone_visible": "ville entière visible depuis les hauteurs environnantes et depuis la mer"
       },
       "topographie": {
-        "forme_generale": "ville en éventail adossée à une colline côtière",
-        "relief": "colline centrale escarpée, plaines côtières en contrebas, montagnes à l’horizon",
-        "implantation": "implantée en bord de mer, organisée autour d’un noyau surélevé",
-        "pentes": "pentes descendantes depuis la citadelle vers les quartiers bas et le port",
+        "forme_generale": "ville en gradins (quatre terrasses) couronnée par le palais impérial",
+        "relief": "butte en gradins de 80 m au-dessus de la ville basse, revers en falaise sur la mer de l'ouest",
+        "implantation": "au bord de la mer de l'ouest ; sommet et palais avancés vers la mer, ville basse vers l'est",
+        "pentes": "talus praticables entre les terrasses ; escalier monumental direct de la grand-place au palais",
         "gorge": ""
       },
       "elements_principaux": [
@@ -6900,7 +6905,10 @@
         "8 escaliers blanc tout autour",
         "8 portes identiques",
         "campement de tentes autour",
-        "puits interne"
+        "puits interne",
+        "[DÉCISION] (v1.0.141) salle de l'Oracle visitable (porte SO, sur appel de l'Oracle)",
+        "[DÉCISION] (v1.0.141) salle des Échos (porte E, raid)",
+        "[DÉCISION] (v1.0.141) bassins des pèlerins et abreuvoirs"
       ],
       "notes": [
         "[BD-T3] 'La nuit répandait ses ténèbres sur l'océan de tentes qui venait se briser au pied de l'Oracle.'",
@@ -6916,7 +6924,11 @@
         "[GD] (v1.0.58) Économie : économie de pèlerinage : devins à 5 pièces d'argent, faux voyants, charlatans [BD-T2 p.47], marchands de boules de cristal (loot_boule_cristal) ; carrefour de la Via Magna et de la route du métal nain.",
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
         "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : au Camp de l'Oracle, caravaniers et devins mettent en garde contre « les falaises de grès du nord-est » et leur feu doré (premier-né de Xygga, 66-70, N002_E004) ; ils ignorent où le dragon gîte.",
-        "[GD] (v1.0.113) Escaliers de l'Oracle : la rampe et l'escalier de briques du T2 (approche par le chemin des échoppes) et les huit escaliers blancs du T3 (tour du rocher) coexistent — deux vues du même site. Les « lacs du destin » (T11), la colline à sanctuaire (T12) et l'antre où il est enchaîné (T14) sont postérieurs à l'époque du jeu : hors de l'état du lieu (arbitrage demandé par le propriétaire, 13/11/2026)."
+        "[GD] (v1.0.113) Escaliers de l'Oracle : la rampe et l'escalier de briques du T2 (approche par le chemin des échoppes) et les huit escaliers blancs du T3 (tour du rocher) coexistent — deux vues du même site. Les « lacs du destin » (T11), la colline à sanctuaire (T12) et l'antre où il est enchaîné (T14) sont postérieurs à l'époque du jeu : hors de l'état du lieu (arbitrage demandé par le propriétaire, 13/11/2026).",
+        "[DÉCISION] (v1.0.141) Demande du propriétaire (25/11/2026) : visuel du camp encore amélioré d'après T1 p.3-5 (intérieur), T2 p.44 (camp), p.45 (escalier), p.46 (porte), T3 p.5 (camp de nuit), p.6-7 (intérieur). Le rocher est rendu en cristal bleu (couche de cristal du terrain et dalles de cristal), les huit portes sont des vantaux peints (phases de lune, rosace, croissant) réinterprétés sans le visage de la BD, posés sur un socle de brique rouge sombre ; escaliers de 6 m.",
+        "[DÉCISION] (v1.0.141) Salle de l'Oracle creusée au cœur du rocher, au niveau des portes : parois sculptées à niches, seize colonnes, dais gravé à gradins, colonne de brume figée et de lumière (la figure de l'Oracle n'est pas représentée), chaînes, voûte de cristal. On y entre par la grande porte du sud-ouest une fois la quête « L'Appel de l'Oracle » acceptée (veilleur au pied de l'escalier) ; la prêtresse du dais y reçoit les appelés. Les autres portes restent closes, sauf celle de l'est.",
+        "[DÉCISION] (v1.0.141) Salle des Échos sous la facette est : raid « L'Épreuve des Échos » (Gardien des Échos et quatre échos de cristal), porte de l'est ouverte à un groupe d'au moins trois compagnons engagés dans la quête. Choix du propriétaire, prioritaire sur la BD : la règle « pas de combat à l'Oracle » vaut pour le camp et la salle de l'Oracle, le combat est confiné à la salle des Échos ; la salle de l'Oracle reçoit plusieurs joueurs à la fois (jeu en ligne), contrairement à la BD (« un être à la fois »).",
+        "[DÉCISION] (v1.0.141) Camp extérieur : tentes de pèlerins agrandies (environ 2,7 à 3,3 m au faîte : les pèlerins s'y tiennent debout, retour du propriétaire), toiles de couleur (rouge sombre, bleu-gris) en plus des toiles écrues, mâts à longs fanions jaunes, feux de familles éclairés la nuit, quatre bassins des pèlerins dans la plaine et abreuvoirs le long de l'allée, menhirs bleus ramenés à 3-5 m (T2 p.44). LORE_BD §16.67."
       ],
       "dimensions_estimees": {
         "hauteur": "environ 300m pour le rocher central",
@@ -7926,8 +7938,8 @@
         "[GD] v1.0.47 : Kendrhir passe à l'état « reconstruction » (après le T1) — ruines, brèches et chantiers générés par tools/world_gen ; les quartiers et services décrits dans elements_principaux sont ceux de la cité relevée.",
         "[GD] (v1.0.58) Économie : reconstruction : achète bois, pierre et vivres, emploie maçons et charpentiers [GD] ; la horde a écumé les fermes alentour [BD-T1].",
         "[DÉCISION] (v1.0.94) Nom affiché « Kendrhir » (décision du propriétaire du 12/11/2026, lot 22 : la BD dit Kendrhir [BD-T1], « Vale » était un ajout anglais ; c'est bien la cité des Grands Mages du T1, en reconstruction, aucune autre fiche Kendrhir) ; l'ancien nom « Kendrhir Vale » est gardé en alias. Identifiant inchangé (kendrhir_vale) (LORE_BD §16.23).",
-        "[DÉCISION] (v1.0.140) Décision du propriétaire (25/11/2026), d'après le tome 1 (p.23, 26, 32, 35, 37, 39 et 42 du PDF) : Kendrhir, détruite puis en reconstruction, reçoit un rempart de rondins de 20 m (comme le dit la fiche) au lieu d'une clôture : tours carrées de bois, porte entre deux tours à chaque route, contreforts obliques ; pans d'origine, pans reconstruits en bois neuf avec échafaudages, pans calcinés et trois brèches ; tours étêtées ; portes remises en état. Au point haut (nord), un donjon à flèche, réinterprétation générique (aucune reproduction de la citadelle des planches), flèche en chantier. Maisons de planches majoritaires, ruines de planches. Restes du siège hors les murs. Clé apparence (recopiée au master par tools/lore/sync_apparence.py). LORE_BD §16.66.",
-        "[À PRÉVOIR] (v1.0.140) Les p.35 à 42 du tome 1 montrent Kendrhir sous la neige : ignorée tant que le jeu n'a qu'une saison (décision v1.0.137) ; à reprendre avec le cycle des saisons (neige sur la ville, le rempart et les abords en hiver). LORE_BD §16.66."
+        "[DÉCISION] (v1.0.142) Décision du propriétaire (25/11/2026), d'après le tome 1 (p.23, 26, 32, 35, 37, 39 et 42 du PDF) : Kendrhir, détruite puis en reconstruction, reçoit un rempart de rondins de 20 m (comme le dit la fiche) au lieu d'une clôture : tours carrées de bois, porte entre deux tours à chaque route, contreforts obliques ; pans d'origine, pans reconstruits en bois neuf avec échafaudages, pans calcinés et trois brèches ; tours étêtées ; portes remises en état. Au point haut (nord), un donjon à flèche, réinterprétation générique (aucune reproduction de la citadelle des planches), flèche en chantier. Maisons de planches majoritaires, ruines de planches. Restes du siège hors les murs. Clé apparence (recopiée au master par tools/lore/sync_apparence.py). LORE_BD §16.68.",
+        "[À PRÉVOIR] (v1.0.142) Les p.35 à 42 du tome 1 montrent Kendrhir sous la neige : ignorée tant que le jeu n'a qu'une saison (décision v1.0.137) ; à reprendre avec le cycle des saisons (neige sur la ville, le rempart et les abords en hiver). LORE_BD §16.68."
       ],
       "dimensions_estimees": {
         "hauteur": "40m",
@@ -35993,7 +36005,7 @@
       "etapes_struct": [
         {
           "texte": "Assister au conseil de guerre de l'Empereur au palais de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -36019,7 +36031,8 @@
       "notes": [
         "[BD-T8] 'Le plan de Fratus est simple, il espère avec la citadelle de Northind verrouiller la province et faire sécession de l'Empire.' — informateur.",
         "[BD-T8] 'Faites préparez mon dragon !' — Haghendorf.",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -36207,7 +36220,7 @@
       "etapes_struct": [
         {
           "texte": "Accompagner Parsifal au palais de Lhynn pour remettre les Clefs de Northind. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -36240,7 +36253,8 @@
       "notes": [
         "[BD-T8] 'Voici les clefs de Northind, Sire !' — Parsifal.",
         "[BD-T8] 'Je ne sers que Dieu, Majesté. Dieu, et les hommes justes.' — Parsifal.",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -36961,7 +36975,7 @@
       "etapes_struct": [
         {
           "texte": "Escorter Parsifal jusqu'au palais de Lhynn",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         },
         {
           "texte": "Assister à l'audience avec l'Empereur"
@@ -36983,7 +36997,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -37729,7 +37745,7 @@
       "etapes_struct": [
         {
           "texte": "Se rendre au palais impérial de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -37747,7 +37763,8 @@
       "notes": [
         "[BD-T12] Declenche quest_t12_02_vengeance_urmacht.",
         "[BD-T12] Revele char_hellaynnea_t12 comme personnage officiel.",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37775,7 +37792,7 @@
       "etapes_struct": [
         {
           "texte": "Se rendre au palais impérial de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -37793,7 +37810,8 @@
       "notes": [
         "[BD-T12] Boss: creature_urmacht (niveau 35-45, difficulte boss).",
         "[BD-T12] Cette vengeance est consommee, cette haine est eteinte!",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37821,7 +37839,7 @@
       "etapes_struct": [
         {
           "texte": "Se rendre au palais impérial de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -37839,7 +37857,8 @@
       "notes": [
         "[BD-T12] Inspire de l arc de Murata dans son fief.",
         "[BD-T12] Declenche un avertissement de Haazheel si trop de pretres expulses.",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -38006,7 +38025,7 @@
       "etapes_struct": [
         {
           "texte": "Siéger au conseil impérial, au palais de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -38024,7 +38043,8 @@
       "notes": [
         "[BD-T12] Je veux que vous m etablissiez un rapport sur la maniere dont les demons affectent le bon fonctionnement de l Empire.",
         "[BD-T12] Ne me cachez surtout rien! Ne tirez aucune conclusion.",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -38144,7 +38164,7 @@
       "etapes_struct": [
         {
           "texte": "Rejoindre Shamballeau dans son atelier du palais de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -38169,7 +38189,8 @@
         "[BD-T13] 'Shamballeau, peux-tu fabriquer des anneaux qui permettront d annuler le sort de controle des Seigneurs de la Negation?'",
         "[BD-T13] 'Heuuuu oui... ca devrait etre possible!'",
         "[BD-T13] 'Parfait, tu as douze heures devant toi!' -- 'Hein! Douze heures mais...' -- 'Fais-le! Fais-le!'",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -38300,7 +38321,7 @@
       "etapes_struct": [
         {
           "texte": "Rencontrer les Seigneurs de la Négation dans leurs appartements du palais de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -38323,7 +38344,8 @@
         "[BD-T13] 'Seigneurs, il se peut que la Lune Noire dans les heures qui viennent se dresse contre moi -- puis-je etre sur de votre fidelite?'",
         "[BD-T13] 'Nous sommes avec vous, Haut Seigneur! Et nous vous defendrons!'",
         "[BD-T13] 'Nous te servirons o Prince de la Negation!' -- apres reception des anneaux de liberation.",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -38351,7 +38373,7 @@
       "etapes_struct": [
         {
           "texte": "Passer la dernière nuit au palais de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -38374,7 +38396,8 @@
         "[BD-T13] 'C est peut-etre notre derniere nuit! Profitez-en. Demain la journee sera longue, tres longue, mes amis!'",
         "[BD-T13] Pile-ou-face avec son dragon, Ghorghor et compagnons aux cartes, Murata meditant.",
         "[BD-T13] 'Demain vous les descendrez dans les appartements fortifies!' (Wismerhill aux demons gardes -- pour proteger les compagnons).",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -38444,7 +38467,7 @@
       "etapes_struct": [
         {
           "texte": "Recevoir l'Écho d'Haazheel Thorn au palais de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -38463,7 +38486,8 @@
         "[BD-T14] 'L'Écho d'Haazheel Thorn murmura longuement à l'oreille de Wismerhill, dont les yeux s'écarquillaient démesurément au fur et à mesure de la transmission du terrible secret.'",
         "[BD-T14] Secret directement lié à l'Opus II -- Wismerhill est le seul dépositaire.",
         "[BD-T14] 'Tout est consommé...' -- dernières paroles de l'Écho avant de disparaître.",
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -38538,7 +38562,7 @@
       "etapes_struct": [
         {
           "texte": "Organiser l'exode depuis le palais de Lhynn. [GD]",
-          "ville_id": "ville_lhynn"
+          "lieu_id": "lieu_palais_imperial_lhynn"
         }
       ],
       "source_lore": [],
@@ -38554,7 +38578,8 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43).",
+        "[DÉCISION] (v1.0.140) Étape ancrée sur le palais impérial (lieu_palais_imperial_lhynn, sommet de Lhynn) au lieu de la ville (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -44669,6 +44694,117 @@
       ],
       "quest_kind": "group",
       "has_counter_quest": true
+    },
+    {
+      "id": "quest_oracle_appel",
+      "name": "L'Appel de l'Oracle",
+      "description": "Le veilleur de la grande porte reconnaît un appelé : la grande porte du sud-ouest s'ouvre devant lui, la prêtresse du dais le reçoit dans la salle de l'Oracle.",
+      "category": "histoire",
+      "tags": [
+        "[GD]",
+        "oracle",
+        "camp_de_l_oracle"
+      ],
+      "difficulty": 1,
+      "repeatable": false,
+      "type": "[GD] Quête du Camp de l'Oracle (v1.0.141)",
+      "steps": [
+        "Parler au veilleur de la grande porte, au pied de l'escalier du sud-ouest.",
+        "Monter l'escalier : la grande porte s'ouvre devant l'appelé.",
+        "Parler à la prêtresse du dais, dans la salle de l'Oracle."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Parler au veilleur de la grande porte, au pied de l'escalier du sud-ouest.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Monter l'escalier : la grande porte s'ouvre devant l'appelé.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Parler à la prêtresse du dais, dans la salle de l'Oracle.",
+          "ville_id": "ville_oracle_camp"
+        }
+      ],
+      "source_lore": [
+        "ville_oracle_camp"
+      ],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "via_magna",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[DÉCISION] (v1.0.141) Accès à la salle de l'Oracle par la porte SO (passage conditionnel du shard). Jeu : quest_definitions.json, id oracle_appel."
+      ],
+      "quest_kind": "",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_oracle_echos",
+      "name": "L'Épreuve des Échos",
+      "description": "Derrière la porte de l'est, la salle des Échos garde ce que l'Oracle tait : un groupe d'au moins trois compagnons y affronte le Gardien des Échos.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "oracle",
+        "camp_de_l_oracle"
+      ],
+      "difficulty": 4,
+      "repeatable": true,
+      "type": "[GD] Quête du Camp de l'Oracle (v1.0.141)",
+      "steps": [
+        "Recevoir l'épreuve de la prêtresse du dais.",
+        "Réunir un groupe d'au moins trois compagnons et se présenter ensemble à la porte de l'est.",
+        "Abattre le Gardien des Échos.",
+        "Revenir auprès de la prêtresse du dais."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir l'épreuve de la prêtresse du dais.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Réunir un groupe d'au moins trois compagnons et se présenter ensemble à la porte de l'est.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Abattre le Gardien des Échos.",
+          "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Revenir auprès de la prêtresse du dais.",
+          "ville_id": "ville_oracle_camp"
+        }
+      ],
+      "source_lore": [
+        "ville_oracle_camp"
+      ],
+      "rewards": {},
+      "min_players": 3,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        "quest_oracle_appel"
+      ],
+      "region_id": "via_magna",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[DÉCISION] (v1.0.141) Raid de la salle des Échos, renouvelable chaque semaine, crédit partagé dans le groupe. Jeu : quest_definitions.json, id oracle_echos ; créatures 170 et 171."
+      ],
+      "quest_kind": "",
+      "has_counter_quest": false
     }
   ],
   "mounts": [
@@ -45636,7 +45772,8 @@
       ],
       "notes": [
         "[INFÉRÉ] (v1.0.103) Rattaché à ville_lhynn : palais impérial de Lhynn cité dans la description (N001_W010) (lot 28 ; LORE_BD §16.32).",
-        "[GD] (v1.0.103) Niveau conseillé 50-55 proposé : zone Terres de l'empereur 10-30, difficulté 'Légendaire', 2 équipe(s) ; plancher 50 des raids « Légendaire » (contenu fort balisé, décision v1.0.78) (lot 28 ; LORE_BD §16.32)."
+        "[GD] (v1.0.103) Niveau conseillé 50-55 proposé : zone Terres de l'empereur 10-30, difficulté 'Légendaire', 2 équipe(s) ; plancher 50 des raids « Légendaire » (contenu fort balisé, décision v1.0.78) (lot 28 ; LORE_BD §16.32).",
+        "[DÉCISION] (v1.0.140) Lieu en jeu : palais impérial de Lhynn (lieu_palais_imperial_lhynn, POI poi_palais_imperial_lhynn), au sommet de la ville en gradins ; la ville (location_ville_id) est inchangée (arbitrage Q4 a ; LORE_BD §16.66)."
       ],
       "niveau_ref": {
         "min": 50,
@@ -46197,6 +46334,31 @@
       "niveau_ref": {
         "min": 60,
         "max": 60
+      }
+    },
+    {
+      "id": "raid_salle_des_echos",
+      "name": "La Salle des Échos",
+      "description": "Sous la facette est du rocher de l'Oracle, la salle des Échos : un gardien de cristal et quatre échos veillent sur ce que l'Oracle tait. On y entre par la porte de l'est, en groupe d'au moins trois, engagé dans « L'Épreuve des Échos ».",
+      "min_teams": 1,
+      "min_players_per_team": 3,
+      "min_players_total": 3,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "difficulty": 4,
+      "location_ville_id": "ville_oracle_camp",
+      "rewards": {
+        "title": "",
+        "reward": "Expérience et or (quête oracle_echos : 2 500 XP, 150 or).",
+        "power": ""
+      },
+      "notes": [
+        "[DÉCISION] (v1.0.141) Demande du propriétaire (25/11/2026) : la porte E du rocher de l'Oracle donne accès à une quête et à un raid. Gardien des Échos (niveau 20) et quatre échos de cristal (niveau 18), salle sombre éclairée par les cristaux. LORE_BD §16.67."
+      ],
+      "niveau_ref": {
+        "min": 18,
+        "max": 25
       }
     }
   ],
@@ -244436,7 +244598,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 3 entrées (Kendrhir d'après le tome 1 : enceinte, donjon, bâti et restes du siège ; références du tome 1 réalignées sur le PDF ; neige renvoyée au cycle des saisons ; docs/world/LORE_BD.md §16.66).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63). Ajout v1.0.138 : 2 entrées (atelier décors, tomes 6 à 14 ; docs/world/LORE_BD.md §16.64). Ajout v1.0.139 : 2 entrées (Camp de l'Oracle, rendu lointain ; docs/world/LORE_BD.md §16.65). Ajout v1.0.140 : 4 entrées (Lhynn en gradins, palais impérial, capitale dense et faubourgs, port et champs ; docs/world/LORE_BD.md §16.66). Ajout v1.0.141 : 4 entrées (Camp de l'Oracle : salle de l'Oracle, salle des Échos, rocher de cristal et portes, camp extérieur ; docs/world/LORE_BD.md §16.67). Ajout v1.0.142 : 3 entrées (Kendrhir d'après le tome 1 : enceinte, donjon, bâti et restes du siège ; références du tome 1 réalignées sur le PDF ; neige renvoyée au cycle des saisons ; docs/world/LORE_BD.md §16.68).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -247722,24 +247884,80 @@
           "version": "1.0.139"
         },
         {
+          "collection": "villes",
+          "id": "ville_lhynn",
+          "nom": "Lhynn, ville en gradins",
+          "decision": "Demande du propriétaire (25/11/2026) : la représentation de Lhynn doit suivre la BD, le palais de l'empereur est sur une montagne. Arbitrage Q1 a : éperon côté mer — ville en quatre gradins de 20 m (talus praticables), palais au sommet à 80 m au-dessus de la ville basse, sommet avancé vers la mer (revers en falaise), ville basse vers l'est. LORE_BD §16.66.",
+          "version": "1.0.140"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_palais_imperial_lhynn",
+          "nom": "Palais impérial de Lhynn",
+          "decision": "Arbitrages du 25/11/2026 : Q2 a + b — palais en pièces modulaires (corps, enceinte) et assets dédiés réinterprétés (façade à statues colossales à sujet neutre, flèches, escalier) ; Q3 b — escalier monumental direct de la grand-place au palais ; Q4 a — 12 étapes de quêtes et le raid de l'assaut du palais (T10) rattachés au lieu. LORE_BD §16.66.",
+          "version": "1.0.140"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_lhynn_densite_v1140",
+          "nom": "Lhynn, capitale dense et faubourgs",
+          "decision": "Retours du propriétaire (25/11/2026) sur les rendus : trop peu de maisons pour la capitale, champs à remplacer par des maisons et à repousser plus loin, palais pas assez volumineux. Rues en arc sur les gradins, faubourgs hors les murs (sauf côté mer), champs au-delà des faubourgs, palais à l'échelle 1,3 sur une plateforme de 56 m. LORE_BD §16.66.",
+          "version": "1.0.140"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_lhynn_port_champs_v1140",
+          "nom": "Lhynn : port visible et champs",
+          "decision": "Retours du propriétaire (25/11/2026) : « on ne voit pas le port ! » — port bâti (quai, jetées, navires amarrés, grues, entrepôts) ; « rajoute plus de champs, il y a beaucoup de gens à nourrir » — 18 grands champs au-delà des faubourgs. LORE_BD §16.66.",
+          "version": "1.0.140"
+        },
+        {
+          "collection": "villes",
+          "id": "oracle_salle_v1140",
+          "nom": "Camp de l'Oracle : salle de l'Oracle",
+          "decision": "Salle creusée au cœur du rocher, au niveau des portes (parois sculptées, colonnes, dais gravé, colonne de brume figée et de lumière, chaînes, voûte de cristal) ; entrée par la porte SO une fois « L'Appel de l'Oracle » acceptée ; figure de l'Oracle non représentée. LORE_BD §16.67.",
+          "version": "1.0.141"
+        },
+        {
+          "collection": "raids",
+          "id": "raid_salle_des_echos",
+          "nom": "Camp de l'Oracle : salle des Échos (raid)",
+          "decision": "Porte E : quête « L'Épreuve des Échos » et groupe d'au moins 3 ; combat confiné à la salle des Échos (choix du propriétaire prioritaire sur la règle de la BD « pas de combat à l'Oracle »). LORE_BD §16.67.",
+          "version": "1.0.141"
+        },
+        {
           "collection": "decors",
-          "id": "references_t1_pdf_v1140",
+          "id": "oracle_cristal_portes_v1140",
+          "nom": "Camp de l'Oracle : rocher de cristal et grandes portes",
+          "decision": "Rocher rendu en cristal bleu (couche de cristal du terrain, dalles de cristal), grandes portes peintes réinterprétées (emblème abstrait, sans visage) sur socle de brique, escaliers de 6 m. LORE_BD §16.67.",
+          "version": "1.0.141"
+        },
+        {
+          "collection": "decors",
+          "id": "oracle_camp_exterieur_v1140",
+          "nom": "Camp de l'Oracle : tentes agrandies, couleurs, eau",
+          "decision": "Tentes de pèlerins agrandies (×1,5, la longue ×1,4 : on s'y tient debout), toiles rouge sombre et bleu-gris, mâts à fanions jaunes, feux éclairés la nuit, quatre bassins des pèlerins et abreuvoirs, menhirs bleus de 3 à 5 m. LORE_BD §16.67.",
+          "version": "1.0.141"
+        },
+        {
+          "collection": "decors",
+          "id": "references_t1_pdf_v1142",
           "nom": "Références du tome 1 réalignées sur le PDF",
-          "decision": "Décision du propriétaire (25/11/2026) : les pages du tome 1 citées par l'atelier décors sont celles du PDF de l'album (p.39 du PDF = page imprimée 37) ; les références [T1-Pxxx] des décors, faites sur un autre scan, sont réalignées (ancienne numérotation moins 6). LORE_BD §16.66.",
+          "decision": "Décision du propriétaire (25/11/2026) : les pages du tome 1 citées par l'atelier décors sont celles du PDF de l'album (p.39 du PDF = page imprimée 37) ; les références [T1-Pxxx] des décors, faites sur un autre scan, sont réalignées (ancienne numérotation moins 6). LORE_BD §16.68.",
           "version": "1.0.140"
         },
         {
           "collection": "villes",
-          "id": "kendrhir_apparence_v1140",
+          "id": "kendrhir_apparence_v1142",
           "nom": "Kendrhir d'après le tome 1 : enceinte, donjon, bâti, restes du siège",
-          "decision": "Décision du propriétaire (25/11/2026) : Kendrhir (détruite, en reconstruction) reçoit un rempart de rondins de 20 m avec tours de bois, portes entre deux tours et contreforts obliques ; pans d'origine, reconstruits et calcinés, trois brèches, tours étêtées, portes remises en état ; donjon à flèche générique au point haut, flèche en chantier ; maisons de planches majoritaires ; restes du siège hors les murs ; grande baie grillagée au catalogue. Déclaré dans la clé apparence, recopiée au master. LORE_BD §16.66.",
+          "decision": "Décision du propriétaire (25/11/2026) : Kendrhir (détruite, en reconstruction) reçoit un rempart de rondins de 20 m avec tours de bois, portes entre deux tours et contreforts obliques ; pans d'origine, reconstruits et calcinés, trois brèches, tours étêtées, portes remises en état ; donjon à flèche générique au point haut, flèche en chantier ; maisons de planches majoritaires ; restes du siège hors les murs ; grande baie grillagée au catalogue. Déclaré dans la clé apparence, recopiée au master. LORE_BD §16.68.",
           "version": "1.0.140"
         },
         {
           "collection": "villes",
-          "id": "kendrhir_neige_saisons_v1140",
+          "id": "kendrhir_neige_saisons_v1142",
           "nom": "Neige de Kendrhir renvoyée au cycle des saisons",
-          "decision": "Décision du propriétaire (25/11/2026) : la neige des p.35 à 42 du tome 1 n'est pas rendue tant que le jeu n'a qu'une saison ; à prévoir avec le cycle des saisons. LORE_BD §16.66.",
+          "decision": "Décision du propriétaire (25/11/2026) : la neige des p.35 à 42 du tome 1 n'est pas rendue tant que le jeu n'a qu'une saison ; à prévoir avec le cycle des saisons. LORE_BD §16.68.",
           "version": "1.0.140"
         }
       ]
@@ -252376,7 +252594,7 @@
         "[DÉCISION] Décision du propriétaire (21/11/2026) : théière de l'Empire du Jade reportée à l'extension ; gibet gardé (sans pendu) aux capitales et forteresses ; ponts remplacés par les modules de l'atelier ; chapeau de paille renvoyé aux tenues des PNJ ; poupée de chiffon en décor seulement. LORE_BD §16.63.",
         "[DÉCISION] Décision du propriétaire (22/11/2026) : l'atelier décors est étendu aux tomes 6 à 14 ; 19 nouveaux objets génériques (n° 195 à 213) sont modélisés et placés (places en fête, cimetières des grandes villes, désert, forges naines, chantiers, camps, champs de bataille) ou mis au catalogue ; les tomes 11 à 14 n'apportent aucun objet générique nouveau. LORE_BD §16.64.",
         "[DÉCISION] Décision du propriétaire (22/11/2026) : les éléments signature des tomes 6 à 14 (trônes, palais et cités, ordres et bannières, Négation, dragons, machine de guerre naine, Empire du Jade) restent retirés en attendant l'autorisation ; ceux de l'Empire du Jade sont réservés à l'extension. LORE_BD §16.64.",
-        "[DÉCISION] Décision du propriétaire (25/11/2026) : Kendrhir est refaite d'après le tome 1 (enceinte de rondins de 20 m en reconstruction, tours, portes, contreforts obliques, donjon à flèche générique en chantier, maisons de planches, restes du siège ; objets n° 215 à 221) ; les références du tome 1 des décors suivent la numérotation du PDF (ancienne numérotation moins 6). LORE_BD §16.66."
+        "[DÉCISION] Décision du propriétaire (25/11/2026) : Kendrhir est refaite d'après le tome 1 (enceinte de rondins de 20 m en reconstruction, tours, portes, contreforts obliques, donjon à flèche générique en chantier, maisons de planches, restes du siège ; objets n° 231 à 237) ; les références du tome 1 des décors suivent la numérotation du PDF (ancienne numérotation moins 6). LORE_BD §16.68."
       ]
     }
   ],
@@ -257569,6 +257787,101 @@
         "[BD-T14] p.18 : Methraton crée les Seuils (« Que les portes soient ! ») ; p.26 : le Seuil de Lhynn s'ouvre, les Gardes noires canalisent le flot ; p.27-35 : les Vents puis tous les dragons du monde le franchissent. Cellule : près du palais de Lhynn [INFÉRÉ].",
         "[DÉCISION] (v1.0.55) Cellule N001_W010, celle de Lhynn (ville_lhynn), près du palais ; monde jouable : POI poi_seuil_lhynn (portail décoratif, sans liaison).",
         "[DÉCISION] (v1.0.127) Suit Lhynn dans sa nouvelle case N001_W011, posé à la main au nord de la ville (position -3350, -3150 m, terrain sec, site [GD]) ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
+      ]
+    },
+    {
+      "id": "lieu_palais_imperial_lhynn",
+      "name": "Palais impérial de Lhynn",
+      "alias": "",
+      "type": "palace_poi",
+      "importance": "majeure",
+      "cell": "N001_W011",
+      "position_x_m": -3804,
+      "position_z_m": -2600,
+      "region_id": "terres_de_lempereur",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "empire_humain",
+      "features": [
+        "palais impérial millénaire au sommet de la ville en gradins",
+        "façade gothique : très haute porte centrale, portails latéraux, statues colossales",
+        "soubassement peint à chevrons rouges et bleus, bannières rouges",
+        "salle du trône (tapis rouge, trône), jardins intérieurs (cyprès, fontaine, statues)",
+        "escalier monumental direct depuis la grand-place"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "façade 49 m, flèches 62 m ; sommet à 80 m au-dessus de la ville basse",
+        "largeur": "façade 65 m ; plateforme de 112 m",
+        "diametre": "",
+        "zone_visible": "visible de toute la baie"
+      },
+      "topographie": {
+        "forme_generale": "plateforme ronde au sommet de la butte de Lhynn",
+        "relief": "sommet de la ville en gradins, revers en falaise sur la mer",
+        "implantation": "avancé vers la mer de l'ouest",
+        "pentes": "escalier monumental vers la grand-place (est)",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "monumentale",
+        "style": "gothique impérial (réinterprétation)",
+        "etat": "intact à l'époque du jeu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "pierre claire",
+        "rouge impérial",
+        "bleu sombre",
+        "ardoise"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "escalier monumental depuis la grand-place",
+        "distance_visuelle": "plusieurs kilomètres",
+        "dominance_paysage": "domine la ville et la baie"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T3] p.23 : « Lhynn, toute-puissante capitale de l'Empire », ville sur sa butte au-dessus de l'eau, palais au sommet ; p.24 : portes du palais (façade gothique, statues colossales, soubassement peint) ; p.26 : la ville sous la lune, la mer au fond.",
+        "[BD-T4] p.6-7 : salles et jardin du palais (cyprès, statues, fontaine) ; p.42 : salle du trône vue du trône. [BD-T1] p.28 : salle du trône. [BD-T11] p.12-13 : salle cachée sous le trône (escalier vers une crypte) — intérieur non construit à ce jour.",
+        "[BD-T10] p.37 : la ville en gradins sous le palais, bombardée depuis la mer par la flotte tharque.",
+        "[DÉCISION] (v1.0.140) Lieu créé pour le palais de la capitale (demande du propriétaire du 25/11/2026) : sommet de la ville en gradins, posé à la main (position -3804, -2600 m depuis le centre de la case, 104 m à l'ouest de la grand-place) ; monde jouable : POI poi_palais_imperial_lhynn (genre « palais ») bâti par tools/world_gen (façade dédiée, corps et enceinte en pièces modulaires, quatre flèches, parvis, salle du trône, jardin) ; LORE_BD §16.66.",
+        "[DÉCISION] (v1.0.140) Monument signature RÉINTERPRÉTÉ (pas de reproduction fidèle) : statues colossales à sujet neutre (encapuchonnées, sans visage), aucune héraldique de faction, bannières rouges unies (arbitrage Q2 a + b du propriétaire).",
+        "[DÉCISION] (v1.0.140) Contenu rattaché (arbitrage Q4 a) : les étapes « palais de Lhynn » de 12 quêtes (conseil de guerre et Clefs de Northind T8, audience de Parsifal T10, T12 01, 02, 03, 07, T13 03, 06, 07, T14 secret de la divinité et préparation de l'exode) sont ancrées sur ce lieu ; le raid raid_assaut_palais_lhynn_t10 s'y déroule."
       ]
     },
     {
@@ -356608,6 +356921,14 @@
       "categorie": "lieu"
     },
     {
+      "id": "palace_poi",
+      "label": "Palais",
+      "color": "#c9a04e",
+      "shape": "star",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
       "id": "lighthouse_poi",
       "label": "Phare",
       "color": "#e0c060",
@@ -358136,7 +358457,7 @@
         "T1-P029-C5"
       ],
       "placement": "",
-      "generated": true,
+      "generated": false,
       "source": "[BD] T1"
     },
     {
@@ -358453,7 +358774,7 @@
         "T1-P014-C5"
       ],
       "placement": "",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T1"
     },
     {
@@ -358701,7 +359022,7 @@
         "T1-P022-C5,C6"
       ],
       "placement": "",
-      "generated": false,
+      "generated": true,
       "source": "[BD] T1"
     },
     {
@@ -361440,13 +361761,20 @@
         "Tent_Pilgrim_1",
         "Tent_Pilgrim_2",
         "Tent_Pilgrim_3",
-        "Tent_Pilgrim_Long_1"
+        "Tent_Pilgrim_Long_1",
+        "Tent_Pilgrim_4",
+        "Tent_Pilgrim_5"
       ],
       "replaces": [],
       "references_bd": [
         "T2-P012",
         "T5-P021",
-        "demande du propriétaire (23/11/2026)"
+        "demande du propriétaire (23/11/2026)",
+        "agrandie ×1,5 (retour du propriétaire du 25/11/2026)",
+        "agrandie ×1,4 (retour du propriétaire du 25/11/2026)",
+        "T2-P045-C1",
+        "T3-P005-C1 (toiles de couleur)",
+        "demande du propriétaire (25/11/2026)"
       ],
       "placement": "Camp de l'Oracle : océan de tentes (quinze rangs)",
       "generated": true,
@@ -361455,6 +361783,302 @@
     {
       "id": "decor_215",
       "num": 215,
+      "name": "Façade du palais impérial (réinterprétation)",
+      "tome": 3,
+      "family": "monument",
+      "meshes": [
+        "Palace_Imperial_Facade_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P023-C1 (vue de la ville)",
+        "T3-P024-C5 (portes du palais, escorte)",
+        "T3-P026",
+        "T4-P006, P007",
+        "T10-P037-C1",
+        "demande du propriétaire (25/11/2026)",
+        "signature réinterprétée (statues à sujet neutre, sans héraldique)"
+      ],
+      "placement": "Lhynn : sommet de la ville en gradins (poi_palais_imperial_lhynn)",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_216",
+      "num": 216,
+      "name": "Tour à flèche du palais impérial",
+      "tome": 3,
+      "family": "monument",
+      "meshes": [
+        "Palace_Imperial_Spire_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P026 (flèches du palais)",
+        "T10-P037-C1",
+        "demande du propriétaire (25/11/2026)"
+      ],
+      "placement": "Lhynn : angles du palais impérial",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_217",
+      "num": 217,
+      "name": "Escalier monumental",
+      "tome": 10,
+      "family": "monument",
+      "meshes": [
+        "Stairs_Monumental_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T10-P037-C1 (ville en gradins)",
+        "escalier monumental direct (arbitrage Q3 b du propriétaire, 25/11/2026)"
+      ],
+      "placement": "Lhynn : de la grand-place au palais impérial",
+      "generated": true,
+      "source": "[BD] T10"
+    },
+    {
+      "id": "decor_218",
+      "num": 218,
+      "name": "Navire marchand à quai (cogue)",
+      "tome": 7,
+      "family": "objets",
+      "meshes": [
+        "Ship_Cog_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T7-P004-C1 (port de guerre de Lhynn, navires à quai)",
+        "T10-P037-C1 (flotte)",
+        "demande du propriétaire (25/11/2026 : « on ne voit pas le port »)"
+      ],
+      "placement": "Lhynn : port (navires amarrés aux jetées)",
+      "generated": true,
+      "source": "[BD] T7"
+    },
+    {
+      "id": "decor_219",
+      "num": 219,
+      "name": "Dalle de cristal géante du rocher de l'Oracle",
+      "tome": 2,
+      "family": "mineral",
+      "meshes": [
+        "Oracle_Crystal_Slab_1",
+        "Oracle_Crystal_Slab_2",
+        "Oracle_Crystal_Slab_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P044-C1 (tumulus bleu)",
+        "T3-P005-C1",
+        "T3-P006-C1"
+      ],
+      "placement": "Camp de l'Oracle : parois et couronne du rocher",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_220",
+      "num": 220,
+      "name": "Amas de cristaux lumineux",
+      "tome": 3,
+      "family": "magique",
+      "meshes": [
+        "Oracle_Crystal_Cluster_1",
+        "Oracle_Crystal_Cluster_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P006-C1",
+        "T3-P007-C1"
+      ],
+      "placement": "Camp de l'Oracle : salle de l'Oracle et salle des Échos",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_221",
+      "num": 221,
+      "name": "Grande porte de l'Oracle (vantaux peints, croissant)",
+      "tome": 2,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Door_Grand"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P046-C1 (réinterprétation : emblème abstrait, sans visage",
+        "décision du propriétaire du 25/11/2026)"
+      ],
+      "placement": "Camp de l'Oracle : huit portes du rocher",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_222",
+      "num": 222,
+      "name": "Socle de brique de la grande porte",
+      "tome": 2,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Door_Podium"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P046-C1 (socle de brique)"
+      ],
+      "placement": "Camp de l'Oracle : paliers des huit portes",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_223",
+      "num": 223,
+      "name": "Colonne sculptée de la salle de l'Oracle",
+      "tome": 1,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Hall_Column"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P003-C1",
+        "T3-P007-C1"
+      ],
+      "placement": "Camp de l'Oracle : salle de l'Oracle et salle des Échos",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_224",
+      "num": 224,
+      "name": "Paroi sculptée à niches de la salle",
+      "tome": 1,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Hall_Wall"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P003-C1"
+      ],
+      "placement": "Camp de l'Oracle : salle de l'Oracle et salle des Échos",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_225",
+      "num": 225,
+      "name": "Dais circulaire gravé à gradins",
+      "tome": 1,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Hall_Dais"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P003-C1",
+        "T1-P004-C3",
+        "T3-P007-C1"
+      ],
+      "placement": "Camp de l'Oracle : centre de la salle de l'Oracle",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_226",
+      "num": 226,
+      "name": "Voûte de cristal de la salle",
+      "tome": 1,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Vault"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P005-C1",
+        "T3-P006-C1"
+      ],
+      "placement": "Camp de l'Oracle : couvre la salle de l'Oracle et la salle des Échos",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_227",
+      "num": 227,
+      "name": "Colonne de brume figée et de lumière",
+      "tome": 1,
+      "family": "magique",
+      "meshes": [
+        "Oracle_Light_Pillar"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P003-C1",
+        "T3-P007-C1 (brume figée, sans figure)"
+      ],
+      "placement": "Camp de l'Oracle : sur le dais de la salle de l'Oracle",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_228",
+      "num": 228,
+      "name": "Chaîne suspendue",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Oracle_Chain_Hanging"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P005-C1"
+      ],
+      "placement": "Camp de l'Oracle : voûte de la salle de l'Oracle",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_229",
+      "num": 229,
+      "name": "Menhir bleu",
+      "tome": 2,
+      "family": "religieux",
+      "meshes": [
+        "Oracle_Menhir_1",
+        "Oracle_Menhir_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P044-C1 (menhirs bleus)"
+      ],
+      "placement": "Camp de l'Oracle : grand cercle de la plaine",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_230",
+      "num": 230,
+      "name": "Mât à long fanion des pèlerins",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Pennant_Pole_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P045-C1 (fanions jaunes du camp)"
+      ],
+      "placement": "Camp de l'Oracle : océan de tentes",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_231",
+      "num": 231,
       "name": "Rempart de rondins de 20 m (bois d'origine grisé, bois neuf des pans reconstruits)",
       "tome": 1,
       "family": "objets",
@@ -361473,8 +362097,8 @@
       "source": "[BD] T1"
     },
     {
-      "id": "decor_216",
-      "num": 216,
+      "id": "decor_232",
+      "num": 232,
       "name": "Pan de rempart incendié aux têtes rompues, brèche de souches calcinées",
       "tome": 1,
       "family": "objets",
@@ -361493,8 +362117,8 @@
       "source": "[BD] T1"
     },
     {
-      "id": "decor_217",
-      "num": 217,
+      "id": "decor_233",
+      "num": 233,
       "name": "Tour carrée de rempart en bois à hourd (intacte ou étêtée par l'incendie)",
       "tome": 1,
       "family": "objets",
@@ -361513,8 +362137,8 @@
       "source": "[BD] T1"
     },
     {
-      "id": "decor_218",
-      "num": 218,
+      "id": "decor_234",
+      "num": 234,
       "name": "Porte de rempart en bois, vantaux ouverts, bretèche",
       "tome": 1,
       "family": "objets",
@@ -361530,8 +362154,8 @@
       "source": "[BD] T1"
     },
     {
-      "id": "decor_219",
-      "num": 219,
+      "id": "decor_235",
+      "num": 235,
       "name": "Contrefort oblique en caisson de rondins",
       "tome": 1,
       "family": "objets",
@@ -361547,8 +362171,8 @@
       "source": "[BD] T1"
     },
     {
-      "id": "decor_220",
-      "num": 220,
+      "id": "decor_236",
+      "num": 236,
       "name": "Donjon à flèche à pans de bois et galerie en encorbellement (réinterprétation générique ; flèche en chantier)",
       "tome": 1,
       "family": "objets",
@@ -361568,8 +362192,8 @@
       "source": "[BD] T1"
     },
     {
-      "id": "decor_221",
-      "num": 221,
+      "id": "decor_237",
+      "num": 237,
       "name": "Restes de siège : tour de siège effondrée, mangonneau brûlé",
       "tome": 1,
       "family": "objets",

@@ -51,6 +51,37 @@ namespace tools::world_gen
 	};
 
 	/// Ville / village / camp (section `cities`).
+	/// v1.0.140 — VILLE EN GRADINS (relief `acropole` du master, Lhynn) : butte en
+	/// terrasses concentriques autour d'un SOMMET (plateforme du palais), décalé du centre
+	/// de la ville, et escalier monumental direct du sommet jusqu'à la grand-place.
+	/// Profil (distance d au sommet) : plateforme plate de rayon topRadiusM à heightM ;
+	/// puis, pour chaque gradin k = 1..terraces, un talus de bankM (pente ≤ 40°, praticable)
+	/// et un replat de terraceM, chacun heightM / terraces plus bas ; au-delà du dernier
+	/// talus (FootRadiusM), plus rien. L'escalier suit l'axe sommet → centre de la ville
+	/// (stairDir), pente 0,6 (marche 0,18 × 0,30 m) depuis le bord de la plateforme jusqu'au
+	/// niveau de la grand-place, puis à plat jusqu'à stairBottomM. Revers (côté opposé à la
+	/// ville) raidi par backFactor. Copié dans la ville
+	/// (CityDef::acropole) et dans son relief (ReliefDef::acropole) au chargement du master.
+	struct AcropoleShape
+	{
+		bool   enabled = false;
+		Vec2   summit;               ///< centre de la plateforme du sommet (m, global)
+		double heightM = 0.0;        ///< hauteur du sommet au-dessus du plateau de la ville (m)
+		double topRadiusM = 0.0;     ///< rayon de la plateforme du sommet (m)
+		double terraceM = 0.0;       ///< largeur horizontale d'un replat (m)
+		double bankM = 0.0;          ///< largeur horizontale d'un talus (m)
+		int    terraces = 0;         ///< nombre de gradins sous le sommet
+		Vec2   stairDir{ 1.0, 0.0 }; ///< direction unitaire sommet → centre de la ville
+		double stairHalfWidthM = 0.0;///< demi-largeur de la rampe de l'escalier (m)
+		double stairBottomM = 0.0;   ///< distance (m) du sommet au pied de l'escalier (bord de la grand-place)
+		/// Raideur du revers (côté opposé à la ville : la mer pour Lhynn) : au-delà de la
+		/// plateforme, les distances y sont multipliées par backFactor (1 = butte ronde) ; la
+		/// butte s'arrête donc plus tôt et ses talus y sont plus raides (falaise, non praticable).
+		double backFactor = 1.0;
+		/// Rayon (m) du pied de la butte (fin du dernier talus).
+		double FootRadiusM() const { return topRadiusM + terraces * bankM + (terraces - 1) * terraceM; }
+	};
+
 	struct CityDef
 	{
 		std::string id;
@@ -100,7 +131,11 @@ namespace tools::world_gen
 		/// générique de BuildSettlements) : « oracle » = Camp de l'Oracle bâti selon le plan
 		/// (rocher, escaliers, océan de tentes, menhirs ; Oracle.cpp, LORE_BD §16.62).
 		std::string layout;
-		/// Apparence propre à la ville (v1.0.140, clé `apparence` du master, objet recopié
+		/// v1.0.140 — ville en gradins (relief `acropole` du master) : vide si la ville n'en
+		/// a pas. Le plateau de la ville (plateauY) reste celui de la ville basse ; le sol
+		/// d'un point de la ville vaut plateauY + AcropoleOffset(acropole, point).
+		AcropoleShape acropole;
+		/// Apparence propre à la ville (v1.0.142, clé `apparence` du master, objet recopié
 		/// du lore par tools/lore/sync_apparence.py ; absente = règles génériques par
 		/// type, race et état). Ex. Kendrhir (BD T1) :
 		/// `{ "enceinte": "rempart_bois", "donjon": "tour_fleche", "bati": "planches",
@@ -129,7 +164,7 @@ namespace tools::world_gen
 		std::string id;
 		std::string name;
 		std::string cell;
-		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre|temple|sanctuaire|port|cite|defile|salle ; v1.0.132 : tour|chateau|phare|cascade|pont (forme bâtie, Landmarks.cpp)
+		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre|temple|sanctuaire|port|cite|defile|salle ; v1.0.132 : tour|chateau|phare|cascade|pont (forme bâtie, Landmarks.cpp) ; v1.0.140 : palais (sommet d'une acropole)
 		/// v1.0.132 — état bâti (clé `state` : "" = intact, "ruine") et échelle (clé `scale`, défaut 1,
 		/// 0,5 à 2) des formes générées (tour, château, phare, pont).
 		std::string state;
@@ -222,7 +257,7 @@ namespace tools::world_gen
 	struct ReliefDef
 	{
 		std::string id;
-		std::string type;          ///< colline|crevasse|massif|gouffre|falaise
+		std::string type;          ///< colline|crevasse|massif|gouffre|falaise|acropole (v1.0.140)
 		std::string cityId;        ///< ville ancrée (posée au centre de sa case) ; vide pour un massif
 		std::string cell;          ///< massif : case d'ancrage (identifiant N019_W013)
 		double offsetXM = 0.0;     ///< massif : décalage du centre vers l'est (m)
@@ -257,6 +292,7 @@ namespace tools::world_gen
 		double entranceY = 0.0;    ///< gouffre : altitude du terrain à l'entrée de la galerie (m)
 		std::vector<double> galleryAlong; ///< gouffre : abscisse curviligne (m) de chaque point de la galerie
 		double galleryExitM = 0.0; ///< gouffre : abscisse (m) où la galerie sort du fond et de ses parois (le sol y quitte floorY)
+		AcropoleShape acropole;    ///< acropole (v1.0.140) : forme résolue (sommet, gradins, escalier)
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).

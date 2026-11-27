@@ -119,6 +119,15 @@ def card(part, center, size_w, size_h, normal, up_hint, outward, anchor="center"
 # ======================================================================= matériaux
 _MATS = {}
 
+# Matériaux émissifs (Camp de l'Oracle, 25/11/2026) : texture -> intensité [0, 1], écrite
+# dans le glTF (emissiveFactor gris) au post-traitement d'export. Le client la lit
+# (StaticMeshLoader, champ emissive) et l'envoie au G-buffer (gbuffer_geometry.frag :
+# GBufferC.a = 1 - émission) ; lighting.frag ajoute albedo × émission × 6.
+EMISSIVE = {
+    "Crystal_Glow": 0.55,
+    "Mist_Frozen": 0.35,
+}
+
 
 def _img(name, non_color):
     path = os.path.join(PROPS, name)
@@ -608,15 +617,16 @@ def b_crop(spec, lod):
                 x = -L / 2 + 0.2 + q * (L - 0.4) / 2
                 tube(posts, [Vector((x, y, -0.1)), Vector((x, y, H))], [0.04, 0.035], 4)
     parts = [posts, part] if spec["crop"] == "vine" else [part]
-    if lod >= 1:
-        # Couvert vu de loin (retour propriétaire du 23/11/2026 : champs lus comme des
-        # rectangles) : plan horizontal texturé (rangs, sillons, fleurs) à mi-hauteur,
-        # pour que la parcelle se lise comme une culture continue au-delà du LOD0.
-        top = Part(material("Crop_Top_" + spec["crop"].capitalize(), False))
-        z = min(H * hfac * 0.45, 0.5)   # bas : pas de « plateau » visible en bordure de champ
-        top.quad(Vector((-L / 2, -W / 2, z)), Vector((L / 2, -W / 2, z)), Vector((L / 2, W / 2, z)),
-                 Vector((-L / 2, W / 2, z)), [(0, 0), (1, 0), (1, 1), (0, 1)], Vector((0, 0, 1)))
-        parts.append(top)
+    # Couvert (retour propriétaire du 23/11/2026 : champs lus comme des rectangles) :
+    # plan horizontal bas texturé (rangs, sillons, fleurs) pour que la parcelle se
+    # lise comme une culture continue. Présent aussi au LOD0 (retour du 25/11/2026 :
+    # sans lui, les parcelles proches, encore au LOD0, formaient un « carré vide »
+    # au milieu du champ).
+    top = Part(material("Crop_Top_" + spec["crop"].capitalize(), False))
+    z = min(H * hfac * 0.45, 0.5)   # bas : pas de « plateau » visible en bordure de champ
+    top.quad(Vector((-L / 2, -W / 2, z)), Vector((L / 2, -W / 2, z)), Vector((L / 2, W / 2, z)),
+             Vector((-L / 2, W / 2, z)), [(0, 0), (1, 0), (1, 1), (0, 1)], Vector((0, 0, 1)))
+    parts.append(top)
     return parts
 
 
@@ -889,6 +899,10 @@ def export(ob, path, alpha_mats):
             m["alphaMode"] = "MASK"
             m["alphaCutoff"] = 0.5
         m["doubleSided"] = True
+        tex = m.get("name", "").replace("MI_Decor_", "")
+        if tex in EMISSIVE:
+            k = EMISSIVE[tex]
+            m["emissiveFactor"] = [k, k, k]
     for im in g.get("images", []):
         if "uri" in im:
             im["uri"] = os.path.basename(im["uri"].replace("\\", "/"))

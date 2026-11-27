@@ -246,6 +246,19 @@ voisines raccord au mètre près :
    au-dessus ; extinction sur `fade_m` hors des cases. Paroi blanche : couche « neige » du
    splat (la seule couche claire du client) et liseré blanc sur la carte du monde
    (LORE_BD §16.47).
+   Depuis la v1.0.140, `acropole` dresse une **ville en gradins** sous sa ville `city`
+   (position manuelle admise : la butte suit la ville ; sans position, la ville est ancrée
+   au centre de sa case) : sommet décalé de `offset_x_m` / `offset_z_m`, plateforme de
+   `top_radius_m` à `height_m` au-dessus du plateau de la ville basse, puis `terraces`
+   gradins (talus linéaires de `bank_m`, pente ≤ 40°, praticables ; replats de
+   `terrace_m`), revers raidi par `back_factor` (falaise côté opposé à la ville) ; rampe
+   de l'escalier monumental (pente 0,6, demi-largeur `stair_half_width_m`) du bord de la
+   plateforme jusqu'à `stair_bottom_m` (grand-place). Même masque des terres émergées que
+   les massifs ; plateau de la ville relevé SANS la butte ; `FlattenSettlements` pose les
+   gradins dans la ville ; les routes ne creusent pas la butte ; rues et anneau coupés au
+   pied de la plateforme, rues en arc sur chaque replat, volées `Stairs_Monumental_1` posées sur la rampe ; faubourgs hors les murs (quatre rues en anneau, sauf côté revers) et champs repoussés au-delà ; port (`BuildHarbour` : esplanade, quai, jetées, navires `Ship_Cog_1`, grues, entrepôts) si la ville a le service `port` ; un POI de
+   genre `palais` sur le sommet est bâti par `Landmarks.cpp`. Ex. : Lhynn et son palais
+   impérial (LORE_BD §16.66).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
    départ ou ancrée sur un relief ; **position manuelle** `position`
@@ -322,7 +335,7 @@ voisines raccord au mètre près :
    chantiers entourés d'étais et de matériaux, trois brèches avec gravats dans
    le rempart ou la palissade ; auberge, marché, forge, pavage et PNJ comme une
    ville intacte — ex. Kendrhir après le tome 1).
-   **Apparence propre** (v1.0.140, clé `apparence` des `cities`, recopiée du lore par
+   **Apparence propre** (v1.0.142, clé `apparence` des `cities`, recopiée du lore par
    `tools/lore/sync_apparence.py`) : `enceinte: rempart_bois` remplace rempart ou palissade
    par un rempart de rondins de 20 m (modules de 4 m sur le cercle R + 3 m, tour carrée
    de bois tous les ~44 m, une porte entre deux tours par route qui arrive, contrefort
@@ -334,7 +347,7 @@ voisines raccord au mètre près :
    hautes de 3 niveaux) et des ruines de planches ; `vestiges_siege` sème hors les murs une
    tour de siège effondrée, des mangonneaux brûlés, des mantelets, des échelles, des lignes
    de pieux et des roues brisées, à plus de 12 m des routes. Seule Kendrhir en porte une
-   (LORE_BD §16.66).
+   (LORE_BD §16.68).
 9. `Vegetation.cpp` : treillis **global** jitterisé (aucun motif répété),
    couverture nuancée (bois dans les plaines, clairières dans les forêts).
    **Forêts et lisières (FORET.1)** : leurs arbres ne sont plus stockés dans

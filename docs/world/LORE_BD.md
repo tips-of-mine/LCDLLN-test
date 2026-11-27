@@ -51,7 +51,7 @@ Tout ce qui fait foi est inscrit dans le JSON (`regles_transverses`, catégorie 
 | 1.0.48 | Marches étendues au nord de la Faille ; itinéraire complet de la horde (carte p.25) : Tbarak → Klindor → Hazol → **Mhorgad** → **Dhunfal** → Faille → Kendrhir. |
 | 1.0.49 | Lieux mineurs : Forêt de la Rencontre (N012_E008), **Hayvekh** (N018_E013, ruine), Camp de l'Étang (N018_E012), Champ de la Première Bataille (N018_E011), **Askhrof** (N017_E012, ruine). |
 | 1.0.50 | Restes du T1 : 10 butins orphelins des créatures du T1 créés ; extrémités des routes 000003, 000020, 000058 resynchronisées sur la nouvelle cellule de Kendrhir ; `companion_pilou_ou_face` → `companion_pilou`. |
-| 1.0.140 | Kendrhir d'après les p.23 à 42 du PDF : enceinte, donjon, bâti et restes du siège (§16.66) ; références [T1-Pxxx] des décors réalignées sur le PDF. |
+| 1.0.142 | Kendrhir d'après les p.23 à 42 du PDF : enceinte, donjon, bâti et restes du siège (§16.68) ; références [T1-Pxxx] des décors réalignées sur le PDF. |
 
 ## 3. Tome 2 — « Le Vent des Dragons » (v1.0.50)
 
@@ -1076,7 +1076,8 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.63](#1663-atelier-décors--de-la-bd-au-jeu-v10137) | v1.0.137 | Atelier décors : de la BD au jeu | 182 objets génériques des tomes 1 à 5 modélisés (3 LOD, billboard), placés par le générateur ou au catalogue ; collection `decors` du lore ; signatures retirées ; enseignes à pictogramme ; tombes anciennes ; grands champs. |
 | [16.64](#1664-atelier-décors--tomes-6-à-14-v10138) | v1.0.138 | Atelier décors : tomes 6 à 14 | 19 objets génériques (n° 195 à 213) modélisés et placés ; tomes 11 à 14 sans objet générique nouveau ; signatures retirées, Empire du Jade réservé à l'extension. |
 | [16.65](#1665-rendu-lointain-et-océan-de-tentes-de-loracle-v10139) | v1.0.139 | Rendu lointain et océan de tentes de l'Oracle | Réserve matériaux 64 → 2048, LOD et billboards des arbres sombres, couvert des cultures, teinte aérienne au soleil réel ; quinze rangs de tentes de pèlerins (decor_214). |
-| [16.66](#1666-kendrhir-daprès-le-tome-1-v10140) | v1.0.140 | Kendrhir d'après le tome 1 | Rempart de rondins de 20 m en reconstruction (pans d'origine, neufs, calcinés, brèches), tours, portes, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège (decor_215 à decor_221) ; clé `apparence` ; références du tome 1 réalignées sur le PDF. |
+| [16.67](#1667-camp-de-loracle--salles-intérieures-portes-de-cristal-et-camp-extérieur-v10141) | v1.0.141 | Camp de l'Oracle : salles intérieures, portes de cristal et camp extérieur | Rocher de cristal bleu, 8 grandes portes peintes sur socle de brique, escaliers de 6 m ; salle de l'Oracle (porte SO, quête) et salle des Échos (porte E, raid de 3+) ; passages conditionnels du shard ; tentes agrandies et de couleur, fanions, feux, bassins, menhirs de 3-5 m. |
+| [16.68](#1668-kendrhir-daprès-le-tome-1-v10142) | v1.0.142 | Kendrhir d'après le tome 1 | Rempart de rondins de 20 m en reconstruction (pans d'origine, neufs, calcinés, brèches), tours, portes, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège (decor_231 à decor_237) ; clé `apparence` ; références du tome 1 réalignées sur le PDF. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5405,6 +5406,7 @@ village par :
   une teinte côté client (shader du terrain).
 - Non fait : puits intérieur (8, invisible de l'extérieur), visage blanc, phases de lune et brume de la porte (pas de
   mesh ni de particules).
+- **Mis à jour en v1.0.141** (16.67) : rocher de cristal, grandes portes, escaliers de 6 m, salles intérieures, menhirs de 3-5 m.
 
 **Contrôles** : `world_gen_tests` (`TestOracleV1136` : aucune maison dans le camp, ≥ 40 tentes, 8 escaliers et 8 portes,
 ≥ 18 menhirs et leurs lueurs bleues, rocher ≥ 50 m au-dessus de la plaine à parois > 45°, aucune route sur le rocher,
@@ -5511,7 +5513,85 @@ l'Oracle, il n'y a pas assez de tentes autour du rocher.
 | Relief lointain blanc la nuit | Teinte de la perspective aérienne calculée avec la lune comme soleil | Teinte calculée avec le soleil réel, comme le ciel |
 | Camp de l'Oracle clairsemé | Six rangs de tentes en panneaux de toit | Quinze rangs (≈ 3 000 tentes) de tentes de pèlerins modélisées (`decor_214`), tentes longues de familles avec leur feu |
 
-### 16.66 Kendrhir d'après le tome 1 (v1.0.140)
+### 16.66 Lhynn en gradins et palais impérial (v1.0.140)
+
+**Demande du propriétaire** (25/11/2026, capture en jeu) : Lhynn ne ressemble pas à la BD, le palais de l'empereur
+est sur une montagne. Arbitrages : **Q1 a** (éperon côté mer, ville haute dessus, ville basse vers l'est), **Q2 a + b**
+(palais en pièces modulaires et assets dédiés), **Q3 b** (escalier monumental direct), **Q4 a** (quêtes et raid
+rattachés au palais). Références : `[BD-T3]` p.23 (vue de la ville au loin), p.24 (portes du palais), p.26 (la ville sous
+la lune, la mer au fond) ; `[BD-T4]` p.6-7 (salles et jardin du palais), p.42 (salle du trône) ; `[BD-T1]` p.28 (salle du
+trône) ; `[BD-T7]` p.3-4 (port) ; `[BD-T10]` p.37 (ville en gradins sous le palais) ; `[BD-T11]` p.12-13 (salle cachée
+sous le trône). Époque du jeu : palais millénaire **intact** (il tombe au T10 et est détruit au T11).
+
+| Élément | Avant | Après |
+|---|---|---|
+| Relief de Lhynn | plateau plat à mer + 5 m (§16.53) | relief `acropole_lhynn` du master : butte de **4 gradins de 20 m** (talus de 24 m, ≤ 40°, praticables ; replats de 48 m), plateforme du sommet de 56 m de rayon à **+80 m**, sommet décalé de 104 m vers l'ouest (vers la mer), **revers en falaise** (`back_factor` 2,2 : la butte reste sur la terre ferme) |
+| Ville | rues rayonnantes et anneau sur un disque plat | mêmes règles, posées sur les gradins : grand-place sur le premier gradin sous le palais (+60 m), ville basse vers l'est ; rues et anneau coupés au pied de la plateforme ; **rues en arc sur chaque replat** (deux par replat de 48 m) bordées de maisons, lots plus serrés ; **faubourgs** hors les murs à la place des champs (quatre rues en anneau de R + 20 à R + 95 m, sauf côté mer), champs repoussés au-delà (retours du propriétaire, « c'est la capitale » : 121 → environ 600 bâtiments, 293 dans les murs et 306 dans les faubourgs) ; maisons sur les replats (contrôle de pente existant) ; routes du monde sans déblai sur la butte |
+| Port | aucun (pas de ligne maritime : pas de ponton) | **port** (retour du propriétaire, « on ne voit pas le port ! ») sur le rivage le plus proche relié à la pleine mer (baie au sud-ouest) : esplanade à quai, quai de pierre de 110 m, quatre jetées de bois, cinq navires `Ship_Cog_1` (n° 218, générique) dont un au mouillage, deux grues, marchandises, entrepôts, chemin pavé jusqu'à la ville |
+| Champs | 6 grands champs autour des murs | 18 grands champs, au-delà des faubourgs (« beaucoup de gens à nourrir ») |
+| Escalier | — | **escalier monumental direct** (rampe de pente 0,6, 14 m de large) du bord de la plateforme à la grand-place ; 11 volées `Stairs_Monumental_1` (10 marches de 0,18 × 0,30 m) ; graphe des PNJ prolongé jusqu'au sommet ; étals et statues de la place écartés du pied |
+| Palais | aucun lieu (quêtes ancrées sur la ville) | POI `poi_palais_imperial_lhynn` (genre **`palais`**, fiche `lieu_palais_imperial_lhynn`, type de lieu `palace_poi`) bâti par `Landmarks.cpp` (retour du propriétaire, « pas assez volumineux » : monuments à l'échelle 1,3) : façade dédiée (≈ 65 × 49 m), corps de 39 m (9 étages de murs, ≈ 28 m, porte face à la porte centrale), enceinte octogonale ouverte sur l'escalier entre deux tours, trois tours d'angle, **quatre flèches** (≈ 62 m), parvis (braseros allumés, cyprès en pots, statues), **salle du trône** (tapis rouge, trône, braseros), **jardin** (fontaine, haies, cyprès, statues) |
+
+**Assets dédiés** (atelier décors, `decor_specs.json` n° 215 à 217, budget nouveau `monument` 12 000 / 4 000 / 1 200
+triangles, additif) : `Palace_Imperial_Facade_1` (50 × 38 m : porte centrale ogivale traversante de 8 × 15,5 m,
+portails latéraux clos, **quatre statues colossales de 15 m à sujet neutre** — encapuchonnées, sans visage, mains sur
+une épée pointe en bas —, tours d'angle à flèche, rosace, pignon, soubassement peint à chevrons `Stone_Lozenge`,
+bannières rouges unies), `Palace_Imperial_Spire_1` (8,4 × 48 m), `Stairs_Monumental_1` (9 × 3,6 m) ; 3 LOD,
+billboard pour la façade et la flèche ; collision par boîtes orientées (`building_pieces.json` : murs pleins, porte
+centrale libre, socles des statues). Juriste PI : monument **signature réinterprété**, sans reproduction fidèle ni
+héraldique ; le propriétaire l'a demandé malgré le retrait des signatures en attente d'autorisation (§16.64).
+
+**Quêtes** (Q4 a) : les étapes « palais de Lhynn » de 12 quêtes passent de `ville_id` `ville_lhynn` à `lieu_id`
+`lieu_palais_imperial_lhynn` ; le raid `raid_assaut_palais_lhynn_t10` garde sa ville et reçoit une note.
+
+**Inchangé** : position de Lhynn (−3700, −2600), sa case, ses services et PNJ, temple de Methraton et Seuil (à
+500 m au nord, hors de la butte), routes du lore, Grotte des contrebandiers.
+
+**Outils** : `sync_positions.py` admet la position manuelle d'une ville d'acropole (comme un gouffre).
+
+**Contrôles** : `world_gen_tests` (`TestAcropoleLhynnV1140` : gradins, plateforme, rampe, palais bâti, collision du
+catalogue) ; `world_places_tests` (libellé « Palais ») ; `validate_decor.py` ; contrôles du lore.
+
+### 16.67 Camp de l'Oracle : salles intérieures, portes de cristal et camp extérieur (v1.0.141)
+
+**Demande du propriétaire** (25/11/2026) : « le camp de l'Oracle, le visuel doit être encore amélioré » d'après
+T1 p.3-5 (intérieur), T2 p.44 (camp), p.45 (escalier), p.46 (porte), T3 p.5 (camp de nuit), p.6-7 (intérieur) —
+numéros de page des PDF fournis (T1 p.3-5 = album p.9-11 ; T2 p.46 = illustration finale, « T2 p.48 » en 16.62) ;
+puis, pendant le chantier : ajuster aussi l'extérieur (tentes, eau, autres éléments) et agrandir les tentes, trop
+petites par rapport au joueur. **Arbitrages** (validés par numéros) : salle creusée dans le relief et couverte d'une
+voûte (pas d'instance) ; porte SO ouverte sur quête ; porte E vers une quête et un raid ; éclairage intérieur par zone
+d'ambiance ; rocher de cristal (maillage de près, couche de cristal du terrain de loin) ; porte réinterprétée
+(emblème abstrait, sans visage) ; brume figée lumineuse et émissif des décors ; échelles d'escalier et de menhirs
+ramenées à la BD.
+
+| Élément | Avant (16.62, 16.65) | v1.0.140 |
+|---|---|---|
+| Rocher | Roche pâle du splat, bleu des seules lumières | Canal A du splat rendu en **cristal bleu** sous la roche peinte (zone.json `render.terrain.crystal_layer`, `terrain.frag`) ; 56 dalles de cristal (`decor_219`) au pied des parois et sur la couronne |
+| Portes | Façade de murs de brique, porte ronde | 8 **grandes portes** peintes 10 × 14,5 m (`decor_221` : phases de lune, rosace, croissant lumineux, glyphes inventés) sur **socle de brique** rouge sombre (`decor_222`) ; amas de cristaux de part et d'autre |
+| Escaliers | 12 m de large (33 pièces) | **6 m** (15 rangs de 2 pièces de 3 m), palier entaillé de 10 m au lieu de 16 |
+| Intérieur | Aucun (porte fermée sur la roche) | **Salle de l'Oracle** : cratère de 50 m de rayon au niveau des paliers, 16 parois sculptées à niches (`decor_224`), 16 colonnes (`decor_223`), dais gravé à gradins (`decor_225`), colonne de brume figée et de lumière (`decor_227`, sans figure), chaînes (`decor_228`), amas de cristaux (`decor_220`), voûte de cristal (`decor_226`) ; zone d'ambiance sombre, lumière froide |
+| Raid | — | **Salle des Échos** sous la facette est (94 m du centre, rayon 28 m) : Gardien des Échos (créature 170, niveau 20) et 4 échos de cristal (171, niveau 18) |
+| Accès | — | **Passages conditionnels** (`world/<monde>/passages.json`, généré ; shard `DoorPassages`) : porte SO → salle de l'Oracle si « L'Appel de l'Oracle » est acceptée ; porte E → salle des Échos si « L'Épreuve des Échos » est acceptée et le groupe compte au moins 3 membres ; sorties sans condition ; refus signalé une fois par message système |
+| PNJ de quête | — | Veilleur de la grande porte (pied de l'escalier SO, donne `oracle_appel`), prêtresse du dais (salle de l'Oracle, reçoit `oracle_appel`, donne et reçoit `oracle_echos`, hebdomadaire, crédit partagé) |
+| Tentes | Faîte de 1,6 à 2,3 m | **Agrandies ×1,5** (×1,4 la tente longue) : 2,7 à 3,3 m au faîte ; toiles **rouge sombre** et **bleu-gris** (`Tent_Pilgrim_4`, `_5`) ; pavillon de l'auberge et tentes des échoppes agrandis |
+| Plaine | — | Mâts à longs fanions jaunes (`decor_230`), feux de familles éclairés la nuit (au plus 90), **4 bassins des pèlerins** (eau, `water.bin`) à 618 m du centre avec abreuvoirs, abreuvoirs le long de l'allée |
+| Menhirs | Dalles de 6 à 10 m | **Menhirs bleus de 3 à 5 m** (`decor_229`, T2 p.44) |
+
+- **Émissif des décors** (client) : `emissiveFactor` du glTF (atelier décors : `Crystal_Glow` 0,55, `Mist_Frozen` 0,35)
+  → bit `Emissive` du matériau → `GBufferC.a` (comme la lave) ; les cristaux et la brume brillent de jour comme de nuit.
+- **Collision** : parois de salle par boîte de catalogue (`building_pieces.json`, `oracle_hall_wall`) ; salles fermées par le
+  relief (parois d'au moins 30 m) : on n'y entre que par les passages du shard.
+- **BD et jeu** : la règle « pas de combat à l'Oracle » vaut pour le camp et la salle de l'Oracle ; le combat est confiné à
+  la salle des Échos (choix du propriétaire). La salle de l'Oracle reçoit plusieurs joueurs à la fois (la BD : « un être à la fois »).
+- **Modèles provisoires** : Gardien et échos sur le modèle `nains` agrandi, en attendant un modèle de golem de cristal.
+- **Économie** : `oracle_appel` 400 XP et 20 or (une fois) ; `oracle_echos` 2 500 XP et 150 or par semaine et par joueur
+  du groupe (crédit partagé) ; aucun objet.
+
+**Contrôles** : `world_gen_tests` (`TestOracleV1136` étendu : salles creusées et fermées, 32 parois, 2 voûtes, dais et
+colonne de brume, dalles et couche de cristal, tentes de couleur et fanions, bassins et abreuvoirs, 4 passages et leurs
+conditions, 2 PNJ, raid, zones d'ambiance) ; `door_passages_tests` (shard) ; `validate_decor.py`.
+
+### 16.68 Kendrhir d'après le tome 1 (v1.0.142)
 
 **Demande du propriétaire** (25/11/2026) : améliorer les éléments de décor de Kendrhir d'après les pages 23, 26, 32,
 35, 37, 39 et 42 du tome 1 (pages du **PDF** : la p.39 du PDF porte le numéro imprimé 37). Critère : test visuel en jeu.
@@ -5541,13 +5621,13 @@ p.39 c.2 et p.42 c.2, la ville sur sa falaise, tours carrées, édifice à flèc
 
 | N° | Objet | Assets | Placement |
 |---|---|---|---|
-| 215 | Rempart de rondins de 20 m (module de 4 m) | `Rampart_Wood_1` (bois grisé), `Rampart_Wood_New_1` (bois neuf) | enceinte, cercle R + 3 m |
-| 216 | Pan incendié, brèche de souches calcinées | `Rampart_Wood_Burnt_1`, `Rampart_Wood_Breach_1` (sans collision) | pans calcinés, trois brèches |
-| 217 | Tour carrée de rempart en bois à hourd (28 m) | `Tower_Rampart_Wood_1`, `Tower_Rampart_Wood_Ruined_1` | tous les ~44 m, de part et d'autre des portes |
-| 218 | Porte de rempart (passage 8,4 × 6,6 m, vantaux ouverts, bretèche) | `Gate_Rampart_Wood_1` (sans collision) | une porte par route qui arrive |
-| 219 | Contrefort oblique en caisson de rondins (13 m) | `Rampart_Buttress_Wood_1` | côté extérieur |
-| 220 | Donjon à flèche (socle de moellons, pans de bois, galerie en encorbellement, 38 m) | `Keep_Timber_Spire_1`, `Keep_Timber_Spire_Site_1` | au nord, entre la rue circulaire et le rempart |
-| 221 | Restes de siège | `SiegeTower_Wreck_1`, `Catapult_Burnt_1` (avec mantelets, échelles, pieux et roues existants) | 30 à 110 m hors les murs, à plus de 12 m des routes |
+| 231 | Rempart de rondins de 20 m (module de 4 m) | `Rampart_Wood_1` (bois grisé), `Rampart_Wood_New_1` (bois neuf) | enceinte, cercle R + 3 m |
+| 232 | Pan incendié, brèche de souches calcinées | `Rampart_Wood_Burnt_1`, `Rampart_Wood_Breach_1` (sans collision) | pans calcinés, trois brèches |
+| 233 | Tour carrée de rempart en bois à hourd (28 m) | `Tower_Rampart_Wood_1`, `Tower_Rampart_Wood_Ruined_1` | tous les ~44 m, de part et d'autre des portes |
+| 234 | Porte de rempart (passage 8,4 × 6,6 m, vantaux ouverts, bretèche) | `Gate_Rampart_Wood_1` (sans collision) | une porte par route qui arrive |
+| 235 | Contrefort oblique en caisson de rondins (13 m) | `Rampart_Buttress_Wood_1` | côté extérieur |
+| 236 | Donjon à flèche (socle de moellons, pans de bois, galerie en encorbellement, 38 m) | `Keep_Timber_Spire_1`, `Keep_Timber_Spire_Site_1` | au nord, entre la rue circulaire et le rempart |
+| 237 | Restes de siège | `SiegeTower_Wreck_1`, `Catapult_Burnt_1` (avec mantelets, échelles, pieux et roues existants) | 30 à 110 m hors les murs, à plus de 12 m des routes |
 
 Textures générées ajoutées : `Wood_Charred` (brun-gris chaud, jamais noir), `Wood_Fresh`. Maisons ajoutées au catalogue
 paramétrique : `maison_haute_planches_6x8` (3 niveaux) et `ruine_planches_6x8`. Collisions : boîtes des pièces
@@ -5582,6 +5662,7 @@ inconnue), `sync_apparence.py --check`, `sync_decors.py --check`, contrôles hab
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
 - Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur tranché en v1.0.105 (16.34 : le générateur suit les routes du lore) ; sauvegarde complète vérifiée en v1.0.98 (16.27) : ~~références orphelines laissées par les suppressions~~ (0 en v1.0.115, 16.42) et noms vides de 159 fiches à traiter.
 - Fiches complètes (v1.0.100) : niveaux par faction à définir (`niveau_par_faction` vide), niveaux des 8 régions et 33 raids sans repère, étapes situées des 71 quêtes non pré-remplies (16.29).
+- Palais impérial de Lhynn (v1.0.140) : intérieur limité à la salle du trône ; salles du conseil, appartements, atelier de Shamballeau et salle cachée sous le trône (T11 p.12-13) non construits ; monument signature réinterprété en attente de la réponse de Mediatoon (16.66).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer
@@ -5617,5 +5698,5 @@ inconnue), `sync_apparence.py --check`, `sync_decors.py --check`, contrôles hab
 - Routes manquantes (v1.0.106) : tracés [GD] des 11 routes créées, noms et niveaux des 64 lieux, baie de l'Île de la Trêve sans route, Piste des Morts en double de 000074 (16.35).
 - Gouffre de Deathtrap Canyon (v1.0.107) : noms [GD] (Gouffre des Revenus, Thurvhal, Ghaurdes, PNJ, quêtes), lumières des torches et fond sombre à rendre côté client, mécanisme de lieu découvert, part de S008_E011 renvoyée au gouffre (16.36).
 - Lieux secrets (v1.0.110) : mécanisme de « lieu découvert » (révéler au joueur un secret qu'il a trouvé) à concevoir côté client et serveur ; Entrée des Abysses (`entree_cachee`) laissée publique (16.37).
-- Kendrhir sous la neige (v1.0.140) : les p.35 à 42 du tome 1 montrent la ville en hiver ; à rendre avec le cycle des saisons (16.66).
-- Kendrhir (v1.0.140) : maisons à étages en encorbellement (p.26) non rendues, le kit modulaire des maisons ne sait pas faire déborder un étage ; « pp. » des notes du lore du tome 1 encore dans l'ancienne numérotation (16.66).
+- Kendrhir sous la neige (v1.0.142) : les p.35 à 42 du tome 1 montrent la ville en hiver ; à rendre avec le cycle des saisons (16.68).
+- Kendrhir (v1.0.142) : maisons à étages en encorbellement (p.26) non rendues, le kit modulaire des maisons ne sait pas faire déborder un étage ; « pp. » des notes du lore du tome 1 encore dans l'ancienne numérotation (16.68).

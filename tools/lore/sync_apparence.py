@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # tools/lore/sync_apparence.py — recopie l'apparence propre des villes du lore vers le
-# master du monde jouable (v1.0.140, atelier Kendrhir : enceinte, donjon, bâti, vestiges).
+# master du monde jouable (v1.0.142, atelier Kendrhir : enceinte, donjon, bâti, vestiges).
 #
 # Chaîne : lore legacy/world-builder-html/lune-noire-data.json, champ `apparence` (objet)
 #   des fiches `villes` → ce script → game/data/world/royaumes/world_master.json, clé

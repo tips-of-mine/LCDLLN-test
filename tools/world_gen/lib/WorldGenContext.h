@@ -159,6 +159,9 @@ namespace tools::world_gen
 		double radiusM = 7.0;         ///< portée (m)
 		double intensity = 1.6;
 		double r = 1.0, g = 0.55, b = 0.18; ///< couleur (flamme orangée)
+		/// v1.0.141 — vrai : allumée la nuit seulement (client, `auto_night_light`) ; faux :
+		/// jour et nuit (fond du gouffre, salles de l'Oracle, lueurs du rocher).
+		bool autoNight = false;
 	};
 
 	/// Zone d'ambiance locale (v1.0.107 : « sombre » au fond du gouffre), écrite dans
@@ -173,6 +176,25 @@ namespace tools::world_gen
 		double floorY = 0.0;          ///< altitude du fond (m)
 		double topY = 0.0;            ///< altitude au-dessus de laquelle la zone cesse (m)
 		double darkness = 0.0;        ///< 0 = lumière du jour, 1 = nuit noire
+	};
+
+	/// Lore v1.0.141 — passage conditionnel d'une même carte (portes du rocher de
+	/// l'Oracle), écrit dans world/<w>/passages.json et lu par le shard seul
+	/// (src/shardd/world/DoorPassages.h) : un joueur vivant dans le rayon est replacé au
+	/// point d'arrivée si ses quêtes et son groupe remplissent les conditions.
+	struct PassageDef
+	{
+		std::string id;                       ///< identifiant stable
+		std::string name;                     ///< nom (journaux du shard)
+		Vec2   position;                      ///< centre du déclencheur (GLOBAL, m)
+		double y = 0.0;                       ///< altitude du déclencheur (m)
+		double radiusM = 2.5;                 ///< rayon de déclenchement (m)
+		Vec2   destination;                   ///< point d'arrivée (GLOBAL, m)
+		double destY = 0.0;                   ///< altitude d'arrivée (m)
+		double destYawDeg = 0.0;              ///< orientation à l'arrivée (informatif)
+		std::vector<std::string> requiredQuests; ///< quêtes exigées (acceptée, prête ou terminée)
+		uint32_t minGroup = 0;                ///< taille de groupe minimale (0 = aucune)
+		std::string deniedMessage;            ///< message système en cas de refus
 	};
 
 	/// Noeud du graphe de rues d'une agglomération (déplacements des PNJ).
@@ -356,6 +378,19 @@ namespace tools::world_gen
 	bool InAnyGouffre(const WorldMaster& m, Vec2 p, double marginM);
 	/// Relief local ancré sur la ville \p cityId (nullptr si aucun). Terrain.cpp
 	const ReliefDef* ReliefOfCity(const WorldMaster& m, const std::string& cityId);
+	/// v1.0.140 — acropole : altitude (m, au-dessus du plateau de la ville) des gradins à la
+	/// distance \p d (m) du sommet, SANS l'escalier : heightM sur la plateforme, puis un palier
+	/// plus bas par gradin (talus linéaires de bankM, replats de terraceM), 0 au-delà du pied.
+	/// Fonction pure. Terrain.cpp
+	double AcropoleTerrace(const AcropoleShape& a, double d);
+	/// v1.0.140 — acropole : altitude (m, au-dessus du plateau de la ville) en \p p (global) :
+	/// gradins (AcropoleTerrace) et, dans l'axe sommet → ville, rampe de l'escalier monumental
+	/// (pente 0,6 depuis le bord de la plateforme jusqu'au niveau de la grand-place, raccord de
+	/// 4 m sur les côtés). 0 si la forme est désactivée. Fonction pure. Terrain.cpp
+	double AcropoleOffset(const AcropoleShape& a, Vec2 p);
+	/// v1.0.140 — vrai si \p p est sur la plateforme du sommet d'une acropole du master
+	/// (rayon topRadiusM + \p marginM). Terrain.cpp
+	bool OnAcropoleSummit(const WorldMaster& m, Vec2 p, double marginM);
 
 	struct GlobalWorld
 	{
@@ -447,8 +482,9 @@ namespace tools::world_gen
 		Grid<float>  riverDist;     ///< distance au lit de rivière le plus proche (m)
 		Grid<uint8_t> urban;        ///< 1 = emprise urbaine, 2 = place/rue
 		/// v1.0.136 — peinture du splat (vide sauf besoin) : 1 = roche de l'Oracle (roche +
-		/// neige pâle), 2 = pierre blanche (escaliers, paliers) ; prioritaire sur le reste du
-		/// splat (Output.cpp, ComputeSplat). Grille vide = aucune peinture.
+		/// neige pâle ; cristal bleu au rendu depuis v1.0.141), 2 = pierre blanche (escaliers,
+		/// paliers), 3 = dallage des salles intérieures (v1.0.141) ; prioritaire sur le reste
+		/// du splat (Output.cpp, ComputeSplat). Grille vide = aucune peinture.
 		Grid<uint8_t> paint;
 		/// FORET.1 — densité forestière (0..255) de la cellule, kForestMaskResolution²
 		/// texels sur terrainSizeM (BuildForestMask) ; écrite dans terrain_forest.frms.
@@ -484,6 +520,11 @@ namespace tools::world_gen
 		std::vector<InteractableDef> interactables; ///< résolus (positions absolues)
 		std::vector<PointLightDef> pointLights;     ///< lumières ponctuelles (v1.0.107, données)
 		std::vector<AmbianceZoneDef> ambianceZones; ///< zones d'ambiance locales (v1.0.107, données)
+		std::vector<PassageDef> passages;           ///< passages conditionnels (v1.0.141, shard)
+		/// v1.0.141 — le canal A (neige) du splat de la cellule est rendu en cristal bleu
+		/// là où la roche domine aussi (rocher de l'Oracle) : zone.json
+		/// `render.terrain.crystal_layer` (terrain.frag, client).
+		bool crystalLayer = false;
 		bool hasSea = false;          ///< une partie de la cellule est sous la mer
 		/// PORTAL.2 — vignette publiée pour le portail web (une par ville du lore ou
 		/// lieu remarquable de la cellule, sans secrets) ; lue par WriteGlobalOutputs
@@ -663,6 +704,9 @@ namespace tools::world_gen
 	/// plaine, 650 m) ; \param L mise en page à remplir (graphe PNJ, étals, auberge, cimetière,
 	/// entrées des tentes). Effet de bord : w.height, w.paint, w.urban, w.roads, w.roadDist,
 	/// w.scatter, w.pointLights, occupation. Oracle.cpp
+	/// v1.0.141 : salles intérieures (salle de l'Oracle, salle des Échos) creusées dans le
+	/// rocher, coque de cristal, grandes portes, passages conditionnels (w.passages), PNJ de
+	/// quête (w.interactables), raid (w.spawners), zones d'ambiance, couche de cristal.
 	void BuildOracleCamp(World& w, CityDef& c, SettlementLayout& L);
 	/// Rayon (m) du chemin de ronde du Camp de l'Oracle : les routes s'y arrêtent, sur le
 	/// terrain (BuildOracleCamp) comme sur la carte (BuildMapFeatures). v1.0.136.

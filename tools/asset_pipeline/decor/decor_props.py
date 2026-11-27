@@ -4068,12 +4068,17 @@ def p_tent_pilgrim(spec, lod):
     tentes » du Camp de l'Oracle). Faîtage selon X, entrée à l'extrémité -X (rabat
     relevé), pignon arrière fermé, mâts aux deux bouts, haubans et piquets au LOD0.
     Variantes : _1 toile écrue, _2 toile rapiécée (pièces ocre), _3 peaux tannées,
-    Tent_Pilgrim_Long_1 tente longue de famille."""
+    _4 toile rouge sombre, _5 toile bleu-gris (25/11/2026), Tent_Pilgrim_Long_1 tente
+    longue de famille."""
     m = M()
     sid = spec["id"]
     long_ = "Long" in sid
-    L, W, H = (5.0, 2.8, 2.3) if long_ else {"1": (3.0, 2.2, 1.8), "2": (3.2, 2.3, 1.85), "3": (2.6, 2.0, 1.6)}[sid[-1]]
-    mat = "Leather" if sid.endswith("_3") and not long_ else "Canvas"
+    L, W, H = (5.0, 2.8, 2.3) if long_ else {"1": (3.0, 2.2, 1.8), "2": (3.2, 2.3, 1.85), "3": (2.6, 2.0, 1.6),
+                                             "4": (3.0, 2.2, 1.8), "5": (3.4, 2.4, 1.9)}[sid[-1]]
+    # 25/11/2026 : toiles de couleur (T2-P045-C1, T3-P005-C1) : _4 rouge sombre, _5 bleu-gris.
+    mat = "Canvas"
+    if not long_:
+        mat = {"3": "Leather", "4": "Cloth_Red", "5": "Cloth_Blue"}.get(sid[-1], "Canvas")
     c = m.p(mat)
     hx, hw = L / 2, W / 2
     # deux pans (légèrement débordants)
@@ -4128,11 +4133,713 @@ def p_tent_pilgrim(spec, lod):
         for x in (-hx * 0.6, hx * 0.6):
             for side in (-1, 1):
                 cyl(w, (x, side * (hw + 0.25), 0), (x, side * (hw + 0.25), 0.2), 0.02, 0.015, 4)
+    # Retour du propriétaire du 25/11/2026 (« les tentes sont trop petites par rapport au
+    # joueur », 1,78 m) : agrandissement uniforme ×1,5 (×1,4 pour la tente longue), comme
+    # les tentes de T2-P045 où les pèlerins se tiennent debout à l'entrée.
+    k = 1.4 if long_ else 1.5
+    for part in m.parts.values():
+        part.v = [v * k for v in part.v]
+    return m.out()
+
+
+# ================================================ Camp de l'Oracle, amélioration (25/11/2026)
+# Lecture : T1-P003..005 et T3-P005..007 (salle de l'Oracle), T2-P044..046 (tumulus,
+# escalier, grande porte). Décisions du propriétaire (25/11/2026) : rocher en cristal
+# bleu, porte réinterprétée (emblème abstrait, pas de visage), brume figée lumineuse
+# sans figure de l'Oracle.
+def _prism(part, base, sides_xy, h, tip, lean, uv=0.15):
+    """Prisme de cristal : polygone de base (liste de (x, y) relatifs à base), pointe
+    oblique au sommet (tip : décalage (x, y) de la pointe), inclinaison lean (x, y) par
+    mètre de hauteur. Faces planes (rendu à facettes)."""
+    b = Vector(base)
+    n = len(sides_xy)
+    lo = [b + Vector((x, y, 0)) for x, y in sides_xy]
+    mid = [b + Vector((x * 0.92 + lean[0] * h * 0.7, y * 0.92 + lean[1] * h * 0.7, h * 0.72)) for x, y in sides_xy]
+    top = b + Vector((tip[0] + lean[0] * h, tip[1] + lean[1] * h, h))
+    for k in range(n):
+        k2 = (k + 1) % n
+        e = (lo[k2] - lo[k]).length
+        _quad(part, lo[k], lo[k2], mid[k2], mid[k], ((0, 0), (e * uv, 0), (e * uv, h * 0.72 * uv), (0, h * 0.72 * uv)))
+        i = len(part.v)
+        part.v += [mid[k], mid[k2], top]
+        part.f.append((i, i + 1, i + 2))
+        part.uv.append([(0, 0), (e * uv, 0), (e * uv * 0.5, h * 0.28 * uv)])
+        part.cn.append(None)
+    part.smooth = False
+
+
+def _poly(rng, r, n):
+    """Polygone irrégulier convexe de n côtés, rayon moyen r."""
+    a0 = rng.uniform(0, 2 * math.pi)
+    return [(r * rng.uniform(0.75, 1.1) * math.cos(a0 + 2 * math.pi * k / n),
+             r * rng.uniform(0.75, 1.1) * math.sin(a0 + 2 * math.pi * k / n)) for k in range(n)]
+
+
+def p_oracle_crystal_slab(spec, lod):
+    """Dalle de cristal géante du rocher de l'Oracle (T2-P044-C1, T3-P006-C1) : un grand
+    prisme penché et deux à quatre prismes plus petits accolés ; quelques veines
+    lumineuses (Crystal_Glow, émissif) sur le grand prisme au LOD0/LOD1. Mis à la cote
+    par normalize_dims (hauteur et largeur du registre)."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    c = m.p("Crystal_Blue")
+    sides = 6 if lod < 2 else 5
+    _prism(c, (0, 0, 0), _poly(rng, 1.0, sides), 6.0, (rng.uniform(-0.3, 0.3), rng.uniform(-0.3, 0.3)),
+           (rng.uniform(-0.05, 0.05), rng.uniform(-0.05, 0.05)), 0.4)
+    extra = {0: 4, 1: 3, 2: 2}[lod]
+    for k in range(extra):
+        a = rng.uniform(0, 2 * math.pi)
+        d = rng.uniform(0.8, 1.3)
+        _prism(c, (d * math.cos(a), d * math.sin(a), 0), _poly(rng, rng.uniform(0.35, 0.6), 5),
+               rng.uniform(2.0, 4.0), (0, 0), (math.cos(a) * rng.uniform(0.05, 0.15), math.sin(a) * rng.uniform(0.05, 0.15)), 0.4)
+    if lod < 2:
+        g = m.p("Crystal_Glow")
+        for k in range(3 if lod == 0 else 1):
+            z0, z1 = rng.uniform(0.5, 2.0), rng.uniform(3.5, 5.0)
+            a = rng.uniform(0, 2 * math.pi)
+            r0 = 1.02
+            p0 = Vector((r0 * math.cos(a), r0 * math.sin(a), z0))
+            p1 = Vector((r0 * 0.93 * math.cos(a + 0.2), r0 * 0.93 * math.sin(a + 0.2), z1))
+            t = Vector((-math.sin(a), math.cos(a), 0)) * 0.06
+            _quad(g, p0 - t, p0 + t, p1 + t, p1 - t)
+    return m.out()
+
+
+def p_oracle_crystal_cluster(spec, lod):
+    """Amas de cristaux de la salle de l'Oracle (T3-P006-C1, T3-P007-C1) : 7 à 11
+    prismes rayonnants depuis la base, pointes lumineuses (Crystal_Glow, émissif)."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    c, g = m.p("Crystal_Blue"), m.p("Crystal_Glow")
+    n = {0: 11, 1: 7, 2: 4}[lod]
+    for k in range(n):
+        a = 2 * math.pi * k / n + rng.uniform(-0.2, 0.2)
+        tilt = rng.uniform(0.05, 0.45) if k else 0.0
+        h = rng.uniform(1.6, 3.0) if k else 3.4
+        r = rng.uniform(0.22, 0.4) if k else 0.5
+        base = (math.cos(a) * 0.35 * (k > 0), math.sin(a) * 0.35 * (k > 0), 0)
+        pts = _poly(rng, r, 6 if lod == 0 else 5)
+        _prism(c, base, pts, h * 0.85, (0, 0), (math.cos(a) * tilt, math.sin(a) * tilt), 0.6)
+        # pointe lumineuse
+        b = Vector(base) + Vector((math.cos(a) * tilt * h * 0.85, math.sin(a) * tilt * h * 0.85, h * 0.85))
+        _prism(g, tuple(b), [(x * 0.45, y * 0.45) for x, y in pts], h * 0.18, (0, 0),
+               (math.cos(a) * tilt, math.sin(a) * tilt), 0.6)
+    return m.out()
+
+
+def p_oracle_door_grand(spec, lod):
+    """Grande porte de l'Oracle (T2-P046-C1, réinterprétée) : encadrement de pierre
+    sculptée, deux vantaux peints (Door_Oracle : phases de lune, rosace, croissant,
+    glyphes inventés), croissant en relief lumineux. Face avant vers +Y.
+    Cote : 10 x 14,5 x 1,2 m."""
+    m = M()
+    st, dr = m.p("Stone_Oracle"), m.p("Door_Oracle")
+    W, H, D = 10.0, 14.5, 1.2
+    # jambages et linteau (pierre)
+    box(st, (-W / 2, -D / 2, 0), (-W / 2 + 1.0, D / 2, H - 1.4), 0.25)
+    box(st, (W / 2 - 1.0, -D / 2, 0), (W / 2, D / 2, H - 1.4), 0.25)
+    box(st, (-W / 2 - 0.3, -D / 2 - 0.1, H - 1.4), (W / 2 + 0.3, D / 2 + 0.1, H), 0.25)
+    if lod < 2:
+        box(st, (-W / 2 - 0.4, -D / 2 - 0.15, 0), (W / 2 + 0.4, D / 2 + 0.15, 0.5), 0.25)   # seuil
+        box(st, (-1.2, D / 2, H - 1.2), (1.2, D / 2 + 0.25, H - 0.2), 0.25)                   # clé
+    # vantaux (recul de 0,3 m), joint central
+    x0, x1, z0, z1, y = -W / 2 + 1.0, W / 2 - 1.0, 0.5 if lod < 2 else 0.0, H - 1.4, D / 2 - 0.3
+    gap = 0.03
+    _quad(dr, (x0, y, z0), (-gap, y, z0), (-gap, y, z1), (x0, y, z1), ((0, 0), (0.5, 0), (0.5, 1), (0, 1)))
+    _quad(dr, (gap, y, z0), (x1, y, z0), (x1, y, z1), (gap, y, z1), ((0.5, 0), (1, 0), (1, 1), (0.5, 1)))
+    box(st, (x0, -D / 2, z0), (x1, y - 0.02, z1), 0.25)   # âme des vantaux (dos)
+    # croissant en relief au centre de la rosace (v = 0,45 de la texture)
+    if lod < 2:
+        g = m.p("Crystal_Glow")
+        cz = z0 + (z1 - z0) * 0.45
+        R = (x1 - x0) * 0.17
+        n = S(lod, 14)
+        for k in range(n):
+            a0 = math.radians(60 + 240 * k / n)
+            a1 = math.radians(60 + 240 * (k + 1) / n)
+            ro = R
+            ri = R * 0.55
+            def pt(a, r, dx):
+                return Vector((r * math.cos(a) - dx, y + 0.08, cz + r * math.sin(a)))
+            _quad(g, pt(a0, ri, -R * 0.25), pt(a0, ro, 0), pt(a1, ro, 0), pt(a1, ri, -R * 0.25))
+    return m.out()
+
+
+def p_oracle_door_podium(spec, lod):
+    """Socle de brique rouge sombre de la grande porte (T2-P046-C1) : plateau de
+    18 x 12 m, 1,2 m de haut, dalle de pierre sculptée, trois marches à l'avant (+Y)."""
+    m = M()
+    br, st = m.p("Brick_Oracle"), m.p("Stone_Oracle")
+    W, Dp, H = 18.0, 12.0, 1.2
+    box(br, (-W / 2, -Dp / 2, 0), (W / 2, Dp / 2 - 1.5, H - 0.15), 0.3)
+    box(st, (-W / 2 - 0.1, -Dp / 2 - 0.1, H - 0.15), (W / 2 + 0.1, Dp / 2 - 1.4, H), 0.2)
+    steps = 3 if lod < 2 else 1
+    for k in range(steps):
+        z = H * (steps - k) / (steps + 1) if steps > 1 else H * 0.5
+        y0 = Dp / 2 - 1.5 + k * 0.5 if steps > 1 else Dp / 2 - 1.5
+        box(br, (-W / 2 + 2.0, y0, 0), (W / 2 - 2.0, y0 + 0.5 if steps > 1 else Dp / 2, z), 0.3)
+    return m.out()
+
+
+def p_oracle_hall_column(spec, lod):
+    """Colonne sculptée de la salle de l'Oracle (T1-P003-C1, T3-P007-C1) : base
+    carrée, fût annelé (bagues tous les 5 m), chapiteau évasé. Cote : 3,6 x 40 m."""
+    m = M()
+    st = m.p("Stone_Oracle")
+    H = 40.0
+    sides = S(lod, 16)
+    box(st, (-1.8, -1.8, 0), (1.8, 1.8, 1.2), 0.3)
+    cyl(st, (0, 0, 1.2), (0, 0, H - 3.0), 1.3, 1.15, sides, True, 0.08)
+    cyl(st, (0, 0, H - 3.0), (0, 0, H - 0.8), 1.15, 1.75, sides, False, 0.08)
+    box(st, (-1.8, -1.8, H - 0.8), (1.8, 1.8, H), 0.3)
+    if lod < 2:
+        for k in range(1, 8):
+            z = 1.2 + k * 5.0
+            if z > H - 3.5:
+                break
+            cyl(st, (0, 0, z - 0.25), (0, 0, z + 0.25), 1.42, 1.42, sides, False, 0.1)
+    return m.out()
+
+
+def p_oracle_hall_wall(spec, lod):
+    """Panneau de paroi sculpté de la salle (T1-P003-C1) : arc de 18 m (rayon 44,5 m,
+    face concave vers +Y = vers le centre), 40 m de haut, trois rangs de niches en
+    plein cintre au LOD0/LOD1. Dos rocheux (Crystal_Blue)."""
+    m = M()
+    st, back = m.p("Stone_Oracle"), m.p("Crystal_Blue")
+    W, H, R, T = 18.0, 40.0, 44.5, 2.5
+    n = {0: 8, 1: 5, 2: 3}[lod]
+    half = math.asin(W / 2 / R)
+    def at(a, r, z):
+        # centre de l'arc en (0, R) : le panneau est concave vers +Y
+        return Vector((r * math.sin(a), R - r * math.cos(a), z))
+    for k in range(n):
+        a0 = -half + 2 * half * k / n
+        a1 = -half + 2 * half * (k + 1) / n
+        u0, u1 = k / n * W * 0.1, (k + 1) / n * W * 0.1
+        _quad(st, at(a0, R, 0), at(a1, R, 0), at(a1, R, H), at(a0, R, H), ((u0, 0), (u1, 0), (u1, H * 0.1), (u0, H * 0.1)))
+        _quad(back, at(a1, R + T, 0), at(a0, R + T, 0), at(a0, R + T, H), at(a1, R + T, H))
+        _quad(st, at(a0, R, H), at(a1, R, H), at(a1, R + T, H), at(a0, R + T, H))
+    for a in (-half, half):
+        sgn = 1 if a > 0 else -1
+        q = [at(a, R, 0), at(a, R + T, 0), at(a, R + T, H), at(a, R, H)]
+        _quad(st, *(q if sgn > 0 else [q[1], q[0], q[3], q[2]]))
+    if lod < 2:
+        # niches : cadres en saillie (montants, arc) sur la face avant
+        for row in range(3):
+            zb = 4.0 + row * 12.0
+            for col in (-1, 0, 1):
+                a = col * half * 0.62
+                c = at(a, R - 0.3, 0)
+                tang = Vector((math.cos(a), math.sin(a), 0))
+                for side in (-1, 1):
+                    p0 = c + tang * (side * 1.8)
+                    box(st, (p0.x - 0.3, p0.y - 0.3, zb), (p0.x + 0.3, p0.y + 0.3, zb + 7.0), 0.3)
+                segs = S(lod, 8)
+                for s in range(segs):
+                    t0 = math.pi * s / segs
+                    t1 = math.pi * (s + 1) / segs
+                    pa = c + tang * (-1.8 * math.cos(t0)) + Vector((0, 0, zb + 7.0 + 1.8 * math.sin(t0)))
+                    pb = c + tang * (-1.8 * math.cos(t1)) + Vector((0, 0, zb + 7.0 + 1.8 * math.sin(t1)))
+                    cyl(st, tuple(pa), tuple(pb), 0.3, 0.3, 4, False)
+    return m.out()
+
+
+def p_oracle_hall_dais(spec, lod):
+    """Dais circulaire gravé de la salle (T1-P003-C1, T1-P004-C3, T3-P007-C1) : trois
+    gradins (rayons 13, 11 et 9 m, 0,5 m chacun), dessus en Floor_Oracle (anneaux et
+    rayons), gradins en pierre sculptée. Cote : 26 x 1,5 m."""
+    m = M()
+    st, fl = m.p("Stone_Oracle"), m.p("Floor_Oracle")
+    sides = S(lod, 48)
+    tiers = ((13.0, 0.5), (11.0, 1.0), (9.0, 1.5))
+    zprev = 0.0
+    for r, z in tiers:
+        cyl(st, (0, 0, zprev), (0, 0, z), r, r, sides, False, 0.2)
+        if r != 9.0:
+            # couronne horizontale du gradin
+            nr = 11.0 if r == 13.0 else 9.0
+            for k in range(sides):
+                a0, a1 = 2 * math.pi * k / sides, 2 * math.pi * (k + 1) / sides
+                _quad(st, (r * math.cos(a0), r * math.sin(a0), z), (r * math.cos(a1), r * math.sin(a1), z),
+                      (nr * math.cos(a1), nr * math.sin(a1), z), (nr * math.cos(a0), nr * math.sin(a0), z))
+        zprev = z
+    # dessus gravé (UV : disque entier)
+    ci = len(fl.v)
+    fl.v.append(Vector((0, 0, 1.5)))
+    for k in range(sides):
+        a0, a1 = 2 * math.pi * k / sides, 2 * math.pi * (k + 1) / sides
+        fl.v += [Vector((9.0 * math.cos(a0), 9.0 * math.sin(a0), 1.5)), Vector((9.0 * math.cos(a1), 9.0 * math.sin(a1), 1.5))]
+        fl.f.append((ci, len(fl.v) - 2, len(fl.v) - 1))
+        fl.uv.append([(0.5, 0.5), (0.5 + 0.5 * math.cos(a0), 0.5 + 0.5 * math.sin(a0)),
+                      (0.5 + 0.5 * math.cos(a1), 0.5 + 0.5 * math.sin(a1))])
+        fl.cn.append(None)
+    fl.smooth = False
+    return m.out()
+
+
+def p_oracle_vault(spec, lod):
+    """Voûte de la salle de l'Oracle (T1-P005-C1, T3-P006-C1) : calotte de 104 m de
+    diamètre et 22 m de flèche, intrados en pierre sculptée nervurée (vers le bas),
+    extrados en cristal bleu. Posée par le générateur avec un décalage vertical (base
+    de la calotte = naissance de la voûte)."""
+    m = M()
+    st, cr = m.p("Stone_Oracle"), m.p("Crystal_Blue")
+    R, Hc = 52.0, 22.0
+    seg = S(lod, 32)
+    rings = {0: 8, 1: 5, 2: 3}[lod]
+    def pt(i, j, off):
+        t = j / rings
+        r = R * math.cos(t * math.pi / 2)
+        z = Hc * math.sin(t * math.pi / 2) + off
+        a = 2 * math.pi * i / seg
+        return Vector((r * math.cos(a), r * math.sin(a), z))
+    for j in range(rings):
+        for i in range(seg):
+            # intrados (normale vers le bas/l'intérieur)
+            _quad(st, pt(i, j, 0), pt(i, j + 1, 0), pt(i + 1, j + 1, 0), pt(i + 1, j, 0),
+                  ((i * 0.5, j * 0.5), (i * 0.5, (j + 1) * 0.5), ((i + 1) * 0.5, (j + 1) * 0.5), ((i + 1) * 0.5, j * 0.5)))
+            # extrados
+            _quad(cr, pt(i, j, 1.5), pt(i + 1, j, 1.5), pt(i + 1, j + 1, 1.5), pt(i, j + 1, 1.5),
+                  ((i * 0.6, j * 0.6), ((i + 1) * 0.6, j * 0.6), ((i + 1) * 0.6, (j + 1) * 0.6), (i * 0.6, (j + 1) * 0.6)))
+    if lod == 0:
+        for i in range(0, seg, 2):
+            prev = None
+            for j in range(1, rings + 1):  # nervures au-dessus de la naissance (base au sol)
+                p = pt(i, j, -0.6)
+                if prev is not None:
+                    cyl(st, tuple(prev), tuple(p), 0.6, 0.6, 4, False, 0.2)
+                prev = p
+    return m.out()
+
+
+def p_oracle_light_pillar(spec, lod):
+    """Colonne de brume figée et de lumière de l'Oracle (T1-P003-C1, T3-P007-C1) :
+    torsade de brume (Mist_Frozen, émissif) qui s'évase en volutes au sommet, cœur de
+    cristal lumineux (Crystal_Glow). Aucune figure. Mise à la cote par normalize_dims."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    mi, g = m.p("Mist_Frozen"), m.p("Crystal_Glow")
+    H = 30.0
+    steps = {0: 16, 1: 10, 2: 6}[lod]
+    for strand in range({0: 3, 1: 2, 2: 1}[lod]):
+        ph = 2 * math.pi * strand / 3
+        pts, radii = [], []
+        for k in range(steps + 1):
+            t = k / steps
+            r = 1.2 + 1.0 * math.sin(t * 9 + ph) * 0.3 + (2.6 * t ** 3)
+            off = 0.8 * (1 - t) + 2.2 * t ** 2
+            a = ph + t * 4.0
+            pts.append(Vector((off * math.cos(a), off * math.sin(a), H * t)))
+            radii.append(r * (1.0 - 0.25 * strand))
+        API["tube"](mi, pts, radii, S(lod, 10), 0.08)
+    # volutes du sommet
+    for k in range({0: 6, 1: 4, 2: 2}[lod]):
+        a = 2 * math.pi * k / 6 + rng.uniform(-0.3, 0.3)
+        c = Vector((3.2 * math.cos(a), 3.2 * math.sin(a), H * rng.uniform(0.86, 0.96)))
+        cyl(mi, tuple(c - Vector((0, 0, 1.4))), tuple(c + Vector((0, 0, 1.4))), 2.2, 1.0, S(lod, 8), True, 0.1)
+    _prism(g, (0, 0, 0), _poly(rng, 0.7, 6 if lod == 0 else 5), H * 0.85, (0, 0), (0, 0), 0.3)
+    return m.out()
+
+
+def p_oracle_chain(spec, lod):
+    """Chaîne suspendue de la voûte (T1-P005-C1) : maillons alternés de 0,6 m, 20 m de
+    long, crochet en haut. Base de l'objet = bout bas de la chaîne (posé en hauteur par
+    le générateur)."""
+    m = M()
+    fe = m.p("Iron")
+    L, link = 20.0, 0.6
+    n = int(L / (link * 0.8))
+    for k in range(n):
+        z = k * link * 0.8
+        if lod == 2 and k % 2:
+            continue
+        if k % 2 == 0:
+            box(fe, (-0.2, -0.04, z), (0.2, 0.04, z + link), 2.0)
+        else:
+            box(fe, (-0.04, -0.2, z), (0.04, 0.2, z + link), 2.0)
+    if lod < 2:
+        cyl(fe, (0, 0, n * link * 0.8), (0, 0, L), 0.12, 0.08, 6)
+    return m.out()
+
+
+def p_oracle_menhir(spec, lod):
+    """Menhir bleu du grand cercle de l'Oracle (T2-P044-C1) : pierre dressée à pans,
+    sommet arrondi biais. Mise à la cote par normalize_dims."""
+    m = M()
+    rng = random.Random(spec["seed"])
+    s = m.p("Stone_Menhir")
+    n = S(lod, 8)
+    base = _poly(rng, 0.7, n)
+    rings = [(0.0, 1.0), (0.45, 0.92), (0.8, 0.75), (0.95, 0.45)]
+    lvl = []
+    for z, k in rings:
+        lvl.append([Vector((x * k * (1.0 + 0.4 * (z > 0) * rng.uniform(-0.05, 0.05)), y * k * 0.55, z * 4.0)) for x, y in base])
+    for a, b in zip(lvl[:-1], lvl[1:]):
+        for k in range(n):
+            k2 = (k + 1) % n
+            _quad(s, a[k], a[k2], b[k2], b[k], ((k / n, 0), ((k + 1) / n, 0), ((k + 1) / n, 0.5), (k / n, 0.5)))
+    top = Vector((0.1, 0, 4.0 * 1.03))
+    for k in range(n):
+        k2 = (k + 1) % n
+        i = len(s.v)
+        s.v += [lvl[-1][k], lvl[-1][k2], top]
+        s.f.append((i, i + 1, i + 2))
+        s.uv.append([(k / n, 0.5), ((k + 1) / n, 0.5), ((k + 0.5) / n, 0.6)])
+        s.cn.append(None)
+    s.smooth = False
+    return m.out()
+
+
+def p_pennant_pole(spec, lod):
+    """Mât à long fanion des pèlerins (T2-P045-C1, fanions jaunes au-dessus des tentes) :
+    mât de 7 m, fanion triangulaire de 2,6 m (Cloth_Yellow) légèrement ondulé, pied
+    calé de pierres au LOD0."""
+    m = M()
+    w, c = m.p("Wood_Dark"), m.p("Cloth_Yellow")
+    H = 7.0
+    cyl(w, (0, 0, 0), (0, 0, H), 0.06, 0.045, S(lod, 6))
+    n = {0: 6, 1: 3, 2: 1}[lod]
+    top, bot = H - 0.15, H - 1.0
+    for k in range(n):
+        x0, x1 = 2.6 * k / n, 2.6 * (k + 1) / n
+        t0, t1 = 1 - k / n, 1 - (k + 1) / n
+        y0 = 0.12 * math.sin(k * 1.3)
+        y1 = 0.12 * math.sin((k + 1) * 1.3)
+        mid0, mid1 = (top + bot) / 2, (top + bot) / 2 - 0.05 * (k + 1)
+        _quad(c, (x0 + 0.05, y0, mid0 - (mid0 - bot) * t0), (x1 + 0.05, y1, mid1 - (mid1 - bot) * t1),
+              (x1 + 0.05, y1, mid1 + (top - mid1) * t1), (x0 + 0.05, y0, mid0 + (top - mid0) * t0),
+              ((x0 / 2.6, 0), (x1 / 2.6, 0), (x1 / 2.6, 1), (x0 / 2.6, 1)))
+    if lod == 0:
+        for k in range(4):
+            a = k * math.pi / 2
+            box(m.p("Stone_Wall"), (0.18 * math.cos(a) - 0.1, 0.18 * math.sin(a) - 0.1, 0),
+                (0.18 * math.cos(a) + 0.1, 0.18 * math.sin(a) + 0.1, 0.16))
+    return m.out()
+
+
+# ======================================================= palais impérial (Lhynn)
+# Demande du propriétaire du 25/11/2026 (lore v1.0.140) : palais impérial de Lhynn au
+# sommet de la ville en gradins. Monument « signature » : RÉINTERPRÉTATION (pas de
+# reproduction fidèle) — façade gothique à porte centrale très haute, portails latéraux,
+# statues colossales encapuchonnées à sujet neutre (sans visage ni attribut identifiable),
+# soubassement peint à chevrons, flèches à toit d'ardoise. Aucune héraldique de faction.
+def _gothic_arch(part, x0, x1, z_spring, y0, y1, lod, top=None):
+    """Arc brisé (ogive) de x0 à x1 naissant à z_spring, profondeur Y [y0, y1] ;
+    extrados prolongé jusqu'au rectangle [x0-0.8, x1+0.8] x z <= top (écoinçons)."""
+    n = {0: 8, 1: 5, 2: 3}[lod]
+    w = (x1 - x0) / 2
+    R = 2 * w * 0.86   # ogive tiers-point
+    zt = top if top is not None else z_spring + R * math.sin(math.acos((R - w) / R)) + 0.8
+    for side in (-1, 1):
+        cx = (x0 + x1) / 2 - side * (R - w)
+        a_end = math.acos((R - w) / R)
+        for k in range(n):
+            a0, a1 = a_end * k / n, a_end * (k + 1) / n
+            pts = []
+            for a in (a0, a1):
+                xi = cx + side * R * math.cos(a)
+                zi = z_spring + R * math.sin(a)
+                xo, zo = _ray_rect(cx, z_spring, side * math.cos(a), math.sin(a), x0 - 0.8, x1 + 0.8, zt)
+                pts.append((xi, zi, xo, zo))
+            (xi0, zi0, xo0, zo0), (xi1, zi1, xo1, zo1) = pts
+            if side < 0:   # garde l'ordre des sommets cohérent (normales sortantes)
+                xi0, zi0, xo0, zo0, xi1, zi1, xo1, zo1 = xi1, zi1, xo1, zo1, xi0, zi0, xo0, zo0
+            for qq in ([(xi0, y0, zi0), (xi1, y0, zi1), (xo1, y0, zo1), (xo0, y0, zo0)],
+                       [(xo0, y1, zo0), (xo1, y1, zo1), (xi1, y1, zi1), (xi0, y1, zi0)],
+                       [(xi1, y0, zi1), (xi0, y0, zi0), (xi0, y1, zi0), (xi1, y1, zi1)]):
+                i = len(part.v)
+                part.v += [Vector(v) for v in qq]
+                part.f.append((i, i + 1, i + 2, i + 3))
+                part.uv.append([(0, 0), (1, 0), (1, 1), (0, 1)])
+                part.cn.append(None)
+    return zt
+
+
+def _pinnacle(part, x, y, z, r, h, lod):
+    """Pinacle : dé carré puis aiguille pyramidale (4 pans)."""
+    box(part, (x - r, y - r, z), (x + r, y + r, z + h * 0.3))
+    lathe_at(part, x, y, [(r * 1.15, z + h * 0.3), (0.02, z + h)], 4)
+
+
+def _colossus(m, x, y, H, lod):
+    """Statue colossale encapuchonnée (sujet neutre) : socle à chevrons, robe en
+    révolution, capuche sans visage, mains jointes sur le pommeau d'une épée pointe en
+    bas. \p H : hauteur totale (socle compris), pied du socle en z = 0."""
+    s = m.p("Stone_Carved")
+    ped = H * 0.16
+    box(m.p("Stone_Lozenge"), (x - 2.0, y - 2.0, 0.0), (x + 2.0, y + 2.0, ped), uv=0.28)
+    box(s, (x - 2.2, y - 2.2, ped), (x + 2.2, y + 2.2, ped + 0.4))
+    z0 = ped + 0.4
+    hb = H - z0   # hauteur de la figure
+    sides = S(lod, 14)
+    prof = [(1.75, 0.0), (1.55, 0.18), (1.2, 0.45), (1.15, 0.6), (1.4, 0.76), (1.3, 0.82), (0.75, 0.86)]
+    if lod == 2:
+        prof = [(1.7, 0.0), (1.2, 0.5), (1.35, 0.78), (0.7, 0.86)]
+    lathe_at(s, x, y, [(r, z0 + hb * t) for r, t in prof], sides)
+    # Capuche (sans visage) : cône arrondi légèrement avancé.
+    hood = [(0.78, 0.84), (0.86, 0.9), (0.74, 0.96), (0.35, 0.995), (0.02, 1.0)]
+    if lod == 2:
+        hood = [(0.8, 0.84), (0.6, 0.96), (0.02, 1.0)]
+    lathe_at(s, x, y - 0.12, [(r, z0 + hb * t) for r, t in hood], sides)
+    if lod < 2:
+        # Avant-bras vers les mains jointes, devant la poitrine (côté -Y = face).
+        hz = z0 + hb * 0.58
+        for sx in (-1, 1):
+            cyl(s, (x + sx * 1.1, y - 0.6, z0 + hb * 0.66), (x + sx * 0.25, y - 1.45, hz), 0.34, 0.28, S(lod, 6))
+        cyl(s, (x, y - 1.5, hz - 0.25), (x, y - 1.5, hz + 0.35), 0.42, 0.42, S(lod, 8))
+    # Épée pointe en bas, posée devant la robe.
+    blade_top = z0 + hb * 0.55
+    box(m.p("Iron"), (x - 0.22, y - 1.62, z0 + 0.2), (x + 0.22, y - 1.48, blade_top))
+    box(s, (x - 1.1, y - 1.7, blade_top), (x + 1.1, y - 1.4, blade_top + 0.3))
+
+
+def p_palace_facade(spec, lod):
+    """Façade du palais impérial (Lhynn, réinterprétation) : 48 m de large, mur de
+    24 m, porte centrale ogivale de 8 x 15,5 m traversante (passable), deux portails
+    latéraux à vantaux clos, quatre statues colossales de 15 m devant les contreforts,
+    tours d'angle à flèches, rosace et pignon au-dessus de la porte, soubassement peint à
+    chevrons, bannières rouges unies. Face (côté parvis) vers -Y ; origine au pied, au
+    centre de la porte."""
+    m = M()
+    s = m.p("Stone_Carved")
+    wall = m.p("Stone_Wall")
+    loz = m.p("Stone_Lozenge")
+    W, HW, T = 24.0, 24.0, 2.0          # demi-largeur, hauteur du mur, demi-épaisseur
+    GW, GS = 4.0, 11.0                   # demi-largeur et naissance de l'ogive de la porte
+    # Soubassement peint et murs pleins de part et d'autre de la porte.
+    for sx in (-1, 1):
+        a, b = sorted((sx * (GW + 1.2), sx * W))
+        box(loz, (a, -T - 0.4, 0.0), (b, T, 3.2), uv=0.28)
+        box(wall, (a, -T, 3.2), (b, T, HW), uv=0.3)
+    # Jambages de la porte (traversent toute l'épaisseur) et ogive.
+    for sx in (-1, 1):
+        a, b = sorted((sx * GW, sx * (GW + 1.2)))
+        box(loz, (a, -T - 0.6, 0.0), (b, T, 3.2), uv=0.28)
+        box(s, (a, -T - 0.6, 3.2), (b, T, GS))
+    top = _gothic_arch(s, -GW, GW, GS, -T - 0.6, T, lod, top=17.5)
+    # Massif au-dessus de la porte : rosace et pignon jusqu'à 31 m.
+    box(wall, (-GW - 1.2, -T, 17.5), (GW + 1.2, T, HW + 1.0), uv=0.3)
+    if lod < 2:
+        g = m.p("Glass_Rose")
+        n = S(lod, 24)
+        R, zc, yv = 2.6, 21.0, -T - 0.02
+        i = len(g.v)
+        g.v.append(Vector((0, yv, zc)))
+        for k in range(n):
+            a = 2 * math.pi * k / n
+            g.v.append(Vector((R * math.cos(a), yv, zc + R * math.sin(a))))
+        for k in range(n):
+            a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1) / n
+            g.f.append((i, i + 1 + k, i + 1 + (k + 1) % n))
+            g.uv.append([(0.5, 0.5), (0.5 + 0.48 * math.cos(a0), 0.5 + 0.48 * math.sin(a0)),
+                         (0.5 + 0.48 * math.cos(a1), 0.5 + 0.48 * math.sin(a1))])
+            g.cn.append(None)
+        cyl(s, (0, -T - 0.3, zc), (0, -T + 0.05, zc), R + 0.35, R + 0.35, n, cap=False)
+    # Pignon triangulaire (au-dessus du mur) sur la travée centrale.
+    gz0, gz1, gw = HW + 1.0, 31.0, GW + 1.2
+    for y in (-T, T):
+        i = len(wall.v)
+        wall.v += [Vector((-gw, y, gz0)), Vector((gw, y, gz0)), Vector((0, y, gz1))]
+        wall.f.append((i, i + 1, i + 2) if y < 0 else (i, i + 2, i + 1))
+        wall.uv.append([(0, 0), (1, 0), (0.5, 1)])
+        wall.cn.append(None)
+    for sx in (-1, 1):
+        i = len(wall.v)
+        wall.v += [Vector((sx * gw, -T, gz0)), Vector((0, -T, gz1)), Vector((0, T, gz1)), Vector((sx * gw, T, gz0))]
+        wall.f.append((i, i + 1, i + 2, i + 3) if sx > 0 else (i, i + 3, i + 2, i + 1))
+        wall.uv.append([(0, 0), (1, 0), (1, 1), (0, 1)])
+        wall.cn.append(None)
+    _pinnacle(s, 0, 0, gz1 - 0.6, 0.5, 4.0, lod)
+    # Passage de la porte : voûte et vantaux ouverts, plaqués contre les jambages.
+    d = m.p("Wood_Dark")
+    for sx in (-1, 1):
+        a, b = sorted((sx * (GW - 0.25), sx * (GW - 0.05)))
+        box(d, (a, -T + 0.3, 0.0), (b, T - 0.2, GS - 0.5))
+    # Portails latéraux (vantaux clos) à x = ±14.
+    for sx in (-1, 1):
+        cx = sx * 14.0
+        for jx in (-1, 1):
+            a, b = sorted((cx + jx * 2.0, cx + jx * 2.9))
+            box(s, (a, -T - 0.8, 3.2), (b, -T + 0.2, 8.5))
+        _gothic_arch(s, cx - 2.0, cx + 2.0, 8.5, -T - 0.8, -T + 0.2, lod, top=12.2)
+        box(d, (cx - 2.0, -T - 0.12, 3.2), (cx + 2.0, -T + 0.05, 8.5))
+        if lod == 0:
+            for z in (4.4, 6.0, 7.6):
+                box(m.p("Iron"), (cx - 1.9, -T - 0.16, z), (cx + 1.9, -T - 0.12, z + 0.1))
+        # Bannière rouge unie (sans emblème) sous la corniche.
+        if lod < 2:
+            c = m.p("Cloth_Red")
+            for yy, flip in ((-T - 0.25, False), (-T - 0.22, True)):
+                i = len(c.v)
+                c.v += [Vector((cx - 2.2, yy, 22.6)), Vector((cx + 2.2, yy, 22.6)), Vector((cx + 2.2, yy, 15.2)), Vector((cx - 2.2, yy, 15.2))]
+                c.f.append((i, i + 3, i + 2, i + 1) if not flip else (i, i + 1, i + 2, i + 3))
+                c.uv.append([(0, 1), (0, 0), (1, 0), (1, 1)] if not flip else [(0, 1), (1, 1), (1, 0), (0, 0)])
+                c.cn.append(None)
+    # Contreforts (à x = ±8,5 et ±19,5) coiffés de pinacles ; statues devant.
+    for x in (-19.5, -8.5, 8.5, 19.5):
+        box(s, (x - 1.1, -T - 1.2, 3.2), (x + 1.1, -T, HW))
+        if lod < 2:
+            _pinnacle(s, x, -T - 0.6, HW, 0.9, 6.0, lod)
+        _colossus(m, x, -T - 4.4, 15.0, lod)
+    # Tours d'angle et leurs flèches.
+    for sx in (-1, 1):
+        a, b = sorted((sx * (W - 2.6), sx * (W + 0.6)))
+        box(wall, (a, -T - 0.6, 0.0), (b, T + 0.6, HW + 5.0), uv=0.3)
+        cxa = (a + b) / 2
+        lathe_at(m.p("Shingle_Slate"), cxa, 0, [(2.2, HW + 5.0), (0.05, HW + 13.0)], S(lod, 8))
+        if lod < 2:
+            cyl(m.p("Brass"), (cxa, 0, HW + 13.0), (cxa, 0, HW + 14.2), 0.08, 0.03, 4)
+    # Parapet crénelé (LOD0) sur les deux murs.
+    if lod == 0:
+        for sx in (-1, 1):
+            x = GW + 1.6
+            while x < W - 3.0:
+                box(s, (sx * x - 0.45, -T - 0.1, HW), (sx * x + 0.45, -T + 0.5, HW + 1.2))
+                x += 1.8
+    return m.out()
+
+
+def p_palace_spire(spec, lod):
+    """Tour à flèche du palais impérial (réinterprétation) : fût carré de 7 m jusqu'à
+    28 m, contreforts d'angle à pinacles, deux étages de lancettes, galerie crénelée,
+    flèche octogonale d'ardoise et épi de laiton ; H ≈ 48 m, origine au pied, au centre."""
+    m = M()
+    s = m.p("Stone_Carved")
+    wall = m.p("Stone_Wall")
+    box(m.p("Stone_Lozenge"), (-3.6, -3.6, 0.0), (3.6, 3.6, 2.6), uv=0.28)
+    box(wall, (-3.5, -3.5, 2.6), (3.5, 3.5, 28.0), uv=0.3)
+    for cx in (-3.5, 3.5):
+        for cy in (-3.5, 3.5):
+            box(s, (cx - 0.7, cy - 0.7, 0.0), (cx + 0.7, cy + 0.7, 29.0))
+            if lod < 2:
+                _pinnacle(s, cx, cy, 29.0, 0.6, 4.0, lod)
+    if lod < 2:
+        gl = m.p("Glass_Clear")
+        for z0, z1 in ((9.0, 14.5), (18.0, 24.0)):
+            for k in range(4):
+                a = k * math.pi / 2
+                ux, uy = math.cos(a), math.sin(a)
+                # verre en retrait sur chaque face (plan à 3,52 m du centre)
+                c = Vector((ux * 3.52, uy * 3.52, 0))
+                t = Vector((-uy, ux, 0))
+                i = len(gl.v)
+                gl.v += [c - t * 0.9 + Vector((0, 0, z0)), c + t * 0.9 + Vector((0, 0, z0)),
+                         c + t * 0.9 + Vector((0, 0, z1)), c - t * 0.9 + Vector((0, 0, z1))]
+                gl.f.append((i, i + 1, i + 2, i + 3))
+                gl.uv.append([(0, 0), (1, 0), (1, 1), (0, 1)])
+                gl.cn.append(None)
+    # Galerie : corniche et merlons.
+    box(s, (-4.0, -4.0, 28.0), (4.0, 4.0, 28.6))
+    if lod == 0:
+        for k in range(-3, 4):
+            for y0 in (-4.0, 3.5):
+                box(s, (k * 1.05 - 0.35, y0, 28.6), (k * 1.05 + 0.35, y0 + 0.5, 29.6))
+                box(s, (y0, k * 1.05 - 0.35, 28.6), (y0 + 0.5, k * 1.05 + 0.35, 29.6))
+    lathe(m.p("Shingle_Slate"), [(3.1, 28.6), (2.4, 33.0), (0.05, 46.5)], S(lod, 8))
+    cyl(m.p("Brass"), (0, 0, 46.3), (0, 0, 48.0), 0.12, 0.03, S(lod, 6))
+    return m.out()
+
+
+def p_stairs_monumental(spec, lod):
+    """Volée d'escalier monumental (palais impérial, réinterprétation) : 8 m de
+    passage, 10 marches de 0,18 x 0,30 m (pente 0,6 : une volée = 3 m de long et 1,8 m
+    de haut), parapets pleins de 0,5 m à dés et vasques ; départ en y = 0, montée vers
+    +Y. Posée bout à bout sur la rampe du générateur (Settlements.cpp)."""
+    m = M()
+    s = m.p("Stone_Wall")
+    c = m.p("Stone_Carved")
+    for k in range(10):
+        box(s, (-4.0, k * 0.3, -0.35), (4.0, (k + 1) * 0.3 + 0.02, (k + 1) * 0.18))
+        if lod == 0:   # nez de marche mouluré
+            box(c, (-4.0, k * 0.3 - 0.03, (k + 1) * 0.18 - 0.05), (4.0, k * 0.3 + 0.02, (k + 1) * 0.18))
+    for x in (-4.5, 4.0):
+        steps = 10 if lod == 0 else (5 if lod == 1 else 2)
+        for k in range(steps):
+            y0, y1 = 3.0 * k / steps, 3.0 * (k + 1) / steps
+            box(c, (x, y0, -0.35), (x + 0.5, y1, 1.8 * (k + 1) / steps + 1.0))
+        if lod < 2:
+            box(c, (x - 0.1, 2.4, 1.8), (x + 0.6, 3.0, 3.1))
+            lathe_at(m.p("Stone_Carved"), x + 0.25, 2.7, [(0.22, 3.1), (0.38, 3.35), (0.3, 3.6)], S(lod, 8))
+    return m.out()
+
+
+def p_ship_cog(spec, lod):
+    """Navire marchand à quai (cogue ; port de Lhynn, T7 pl.4 ; objet générique) : coque
+    bordée de 24 m sur 7 m, tonture relevée aux extrémités, quille à z = 0 (flottaison vers
+    1,6 m), pont, châteaux avant et arrière, mât de 20 m, vergue et voile ferlée, haubans.
+    Étrave vers +Y ; origine sous la quille, au milieu."""
+    m = M()
+    hull = m.p("Wood_Dark")
+    strake = m.p("Wood_Painted")
+    L, B, H = 24.0, 7.0, 4.2
+    ns = {0: 14, 1: 9, 2: 6}[lod]
+    npt = {0: 9, 1: 7, 2: 5}[lod]
+
+    def section(t):
+        hw = max(0.25, B / 2 * (1.0 - abs(t) ** 2.4) ** 0.5)
+        bottom = 1.4 * abs(t) ** 3
+        gun = H + 1.3 * t * t
+        pts = []
+        for k in range(npt):
+            u = -1.0 + 2.0 * k / (npt - 1)
+            pts.append(Vector((hw * u, t * L / 2, bottom + (gun - bottom) * abs(u) ** 1.7)))
+        return pts, gun, hw
+
+    secs = [section(-1.0 + 2.0 * j / (ns - 1)) for j in range(ns)]
+    for j in range(ns - 1):
+        a, b = secs[j][0], secs[j + 1][0]
+        for k in range(npt - 1):
+            part = strake if k in (0, npt - 2) else hull
+            i = len(part.v)
+            part.v += [a[k], a[k + 1], b[k + 1], b[k]]
+            part.f.append((i, i + 1, i + 2, i + 3))
+            part.uv.append([(0, 0), (0.25, 0), (0.25, 1), (0, 1)])
+            part.cn.append(None)
+    # Étrave et étambot : éventails fermant les extrémités.
+    for j in (0, ns - 1):
+        pts = secs[j][0]
+        c = sum(pts, Vector()) / len(pts)
+        for k in range(npt - 1):
+            i = len(hull.v)
+            hull.v += [c, pts[k], pts[k + 1]]
+            hull.f.append((i, i + 1, i + 2) if j else (i, i + 2, i + 1))
+            hull.uv.append([(0.5, 0.5), (0, 0), (1, 0)])
+            hull.cn.append(None)
+    # Pont (bordé), châteaux.
+    deck = m.p("Wood_Plank")
+    for j in range(ns - 1):
+        g0, w0 = secs[j][1], secs[j][2]
+        g1, w1 = secs[j + 1][1], secs[j + 1][2]
+        y0, y1 = (-1.0 + 2.0 * j / (ns - 1)) * L / 2, (-1.0 + 2.0 * (j + 1) / (ns - 1)) * L / 2
+        z0, z1 = g0 - 0.45, g1 - 0.45
+        i = len(deck.v)
+        deck.v += [Vector((-w0 * 0.93, y0, z0)), Vector((w0 * 0.93, y0, z0)), Vector((w1 * 0.93, y1, z1)), Vector((-w1 * 0.93, y1, z1))]
+        deck.f.append((i, i + 1, i + 2, i + 3))
+        deck.uv.append([(0, 0), (1, 0), (1, 1), (0, 1)])
+        deck.cn.append(None)
+    box(deck, (-2.6, -11.6, H + 0.9), (2.6, -6.5, H + 3.0))      # château arrière
+    box(strake, (-2.7, -11.7, H + 3.0), (2.7, -6.4, H + 3.4))
+    if lod < 2:
+        box(deck, (-1.9, 7.2, H + 1.0), (1.9, 10.8, H + 2.6))     # château avant
+    # Mât, hune, vergue, voile ferlée, haubans.
+    wood = m.p("Wood_Weathered")
+    cyl(wood, (0, 0.5, H - 0.4), (0, 0.5, H + 16.0), 0.32, 0.2, S(lod, 8))
+    if lod < 2:
+        cyl(wood, (0, 0.5, H + 12.8), (0, 0.5, H + 13.6), 0.9, 0.9, S(lod, 8))
+    cyl(wood, (-6.5, 0.5, H + 12.0), (6.5, 0.5, H + 12.0), 0.16, 0.16, S(lod, 6), False)
+    cyl(m.p("Canvas"), (-6.0, 0.62, H + 11.75), (6.0, 0.62, H + 11.75), 0.42, 0.42, S(lod, 8))
+    if lod < 2:
+        rope = m.p("Rope")
+        top = Vector((0, 0.5, H + 15.6))
+        for end in ((0, 11.8, H + 1.5), (0, -11.5, H + 3.2), (3.2, 0.5, H + 0.2), (-3.2, 0.5, H + 0.2)):
+            API["tube"](rope, [top, Vector(end)], [0.04, 0.04], 4, 0.5)
+        cyl(wood, (0, 11.0, H + 1.0), (0, 14.0, H + 3.4), 0.18, 0.1, S(lod, 6))   # beaupré
     return m.out()
 
 
 # ============================================================== Kendrhir (BD T1)
-# n° 215-221 : enceinte de rondins de 20 m de Kendrhir (lore : « remparts en bois 20 m »),
+# n° 231-237 : enceinte de rondins de 20 m de Kendrhir (lore : « remparts en bois 20 m »),
 # tours, porte, contreforts obliques, donjon à flèche (réinterprétation générique, sans
 # reproduction de la citadelle des planches) et restes du siège. Références : pages du PDF
 # du tome 1 (p.23, 26, 37, 39, 42). Repère des pièces d'enceinte : X le long du mur (module
@@ -4212,17 +4919,17 @@ def _rampart(spec, lod, tex):
 
 
 def p_rampart_wood(spec, lod):
-    """Rempart de rondins de 20 m, bois grisé d'origine (module 4 m, n° 215)."""
+    """Rempart de rondins de 20 m, bois grisé d'origine (module 4 m, n° 231)."""
     return _rampart(spec, lod, "Wood_Weathered")
 
 
 def p_rampart_wood_new(spec, lod):
-    """Rempart de rondins de 20 m reconstruit, bois neuf (module 4 m, n° 215)."""
+    """Rempart de rondins de 20 m reconstruit, bois neuf (module 4 m, n° 231)."""
     return _rampart(spec, lod, "Wood_Fresh")
 
 
 def p_rampart_wood_burnt(spec, lod):
-    """Pan de rempart incendié (n° 216) : fûts calcinés aux têtes rompues (9 à 16 m), sans
+    """Pan de rempart incendié (n° 232) : fûts calcinés aux têtes rompues (9 à 16 m), sans
     chemin de ronde ; une poutre effondrée appuyée côté intérieur."""
     m = M()
     rng = random.Random(spec["seed"])
@@ -4241,7 +4948,7 @@ def p_rampart_wood_burnt(spec, lod):
 
 
 def p_rampart_wood_breach(spec, lod):
-    """Brèche du rempart (n° 216) : souches calcinées (0,3 à 2,2 m) et deux fûts abattus en
+    """Brèche du rempart (n° 232) : souches calcinées (0,3 à 2,2 m) et deux fûts abattus en
     travers (franchissable : posé sans collision par le générateur)."""
     m = M()
     rng = random.Random(spec["seed"])
@@ -4282,7 +4989,7 @@ def _tower_shaft(m, lod, tex, half, z_top, rng, broken=False):
 
 
 def p_tower_rampart_wood(spec, lod):
-    """Tour carrée de rempart en bois (n° 217) : 6 x 6 m, fût de planches à poteaux d'angle,
+    """Tour carrée de rempart en bois (n° 233) : 6 x 6 m, fût de planches à poteaux d'angle,
     hourd en encorbellement (21-23,5 m) percé d'archères, toit pyramidal de bardeaux (28 m)."""
     m = M()
     rng = random.Random(spec["seed"])
@@ -4309,7 +5016,7 @@ def p_tower_rampart_wood(spec, lod):
 
 
 def p_tower_rampart_wood_ruined(spec, lod):
-    """Tour de rempart étêtée par l'incendie (n° 217) : fût calciné rompu vers 13-16 m, sans
+    """Tour de rempart étêtée par l'incendie (n° 233) : fût calciné rompu vers 13-16 m, sans
     toit, échafaudage de bois neuf côté intérieur (-Y), éboulis de planches côté extérieur."""
     m = M()
     rng = random.Random(spec["seed"])
@@ -4334,7 +5041,7 @@ def p_tower_rampart_wood_ruined(spec, lod):
 
 
 def p_gate_rampart_wood(spec, lod):
-    """Porte du rempart de bois (n° 218), entre deux tours : passage de 8 m (sous linteau à
+    """Porte du rempart de bois (n° 234), entre deux tours : passage de 8 m (sous linteau à
     6,6 m, praticable par un nain comme par un démon ailé), mur de planches et chemin de
     ronde au-dessus, vantaux ouverts vers l'intérieur (-Y), seuil de planches à l'extérieur
     (+Y). Posée sans collision : le passage reste libre."""
@@ -4376,7 +5083,7 @@ def p_gate_rampart_wood(spec, lod):
 
 
 def p_rampart_buttress_wood(spec, lod):
-    """Contrefort oblique massif (n° 219) : caisson de rondins incliné contre la face
+    """Contrefort oblique massif (n° 235) : caisson de rondins incliné contre la face
     extérieure du rempart (BD T1 p.37). Emprise 3,6 x 6 m, appui au mur en y = -3 (13 m de
     haut), pied en y = +3 ; le générateur le pose devant chaque pan sain."""
     m = M()
@@ -4403,7 +5110,7 @@ def p_rampart_buttress_wood(spec, lod):
 
 
 def _keep(spec, lod, site):
-    """Donjon à flèche (n° 220), réinterprétation générique du point haut de la ville :
+    """Donjon à flèche (n° 236), réinterprétation générique du point haut de la ville :
     socle de moellons 14 x 14 m (9 m), deux niveaux de pans de bois, galerie en
     encorbellement (15-19 m), toit pyramidal de bardeaux, flèche octogonale (38 m).
     `site` : flèche en reconstruction (charpente nue, bas seulement couvert, échafaudage)."""
@@ -4490,7 +5197,7 @@ def _recolor(src_parts, m, xf, mapping):
 
 
 def p_siege_tower_wreck(spec, lod):
-    """Tour de siège effondrée et calcinée (n° 221), couchée au sol (~16 x 5,5 m)."""
+    """Tour de siège effondrée et calcinée (n° 237), couchée au sol (~16 x 5,5 m)."""
     m = M()
     burnt = {"Wood_Plank": "Wood_Charred", "Wood_Dark": "Wood_Charred", "Iron": "Iron"}
     tower = p_siege_tower(spec, lod)
@@ -4506,7 +5213,7 @@ def p_siege_tower_wreck(spec, lod):
 
 
 def p_catapult_burnt(spec, lod):
-    """Mangonneau brûlé et affaissé sur un flanc (n° 221)."""
+    """Mangonneau brûlé et affaissé sur un flanc (n° 237)."""
     m = M()
     burnt = {"Wood_Dark": "Wood_Charred", "Wood_Plank": "Wood_Charred", "Wood_Weathered": "Wood_Charred"}
     cat = p_catapult(spec, lod)

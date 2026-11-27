@@ -125,19 +125,20 @@ class AmbienceTests(unittest.TestCase):
     """SND.4 — boucles d'ambiance : longueur exacte, pas de saturation, niveau discret."""
 
     def test_loops_and_thunder(self):
-        for sid in ("amb_river", "amb_forest_night", "amb_thunder_1"):
+        for sid in ("amb_river", "amb_forest_night", "amb_thunder_1", "amb_surf_1"):
             x = sfx_ambience.make(sid)
             self.assertTrue(np.all(np.isfinite(x)), sid)
             self.assertLess(float(np.max(np.abs(x))), 0.9, sid)
-            if sid.startswith("amb_thunder"):
-                self.assertLess(len(x) / dsp.SR, 15.0, sid)
+            if sid.startswith("amb_thunder") or sid.startswith("amb_surf"):
+                # Sons ponctuels ; EAU.6 : une vague tient dans sa période (9 s).
+                self.assertLess(len(x) / dsp.SR, 15.0 if sid.startswith("amb_thunder") else 9.0, sid)
             else:
                 self.assertEqual(len(x), dsp.samples(sfx_ambience.LOOP), sid)
                 # Une ambiance reste sous le jeu : pas plus fort que −18 LUFS.
                 self.assertLess(dsp.loudness_lufs(x.astype(np.float64)), -18.0, sid)
 
     def test_catalog_lists_every_layer(self):
-        self.assertEqual(len(sfx_ambience.SOUNDS), 16)
+        self.assertEqual(len(sfx_ambience.SOUNDS), 19)
 
 
 class CombatSoundTests(unittest.TestCase):

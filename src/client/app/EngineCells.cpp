@@ -396,6 +396,8 @@ namespace engine
 				RebuildCellWater();
 		}
 		ContinueCellPlacement(synchronous);
+		// EAU.6 — mer en vagues autour du joueur.
+		UpdateSeaGrid(p);
 		UpdateForestFiller(gx, gz);
 		DestroyRetiredCellTiles(false);
 	}
@@ -1109,6 +1111,50 @@ namespace engine
 			LOG_DEBUG(Render, "[Cells] Mer de repli : {} cellule(s) manquante(s) autour de {} (niveau {:.1f} m)",
 				fallbackCount, cells::LoreCellId(m_cellFallbackSeaCenter), seaLevelY);
 		m_waterClientSceneDirty = true;
+		// EAU.6 — la grille de mer dépend de la scène et du repère de rendu.
+		m_seaGridDirty = true;
+	}
+
+	void Engine::UpdateSeaGrid(const engine::math::Vec3& playerRenderPos)
+	{
+		if (!m_clientWaterScene)
+			return;
+		const engine::world::water::SeaGridSettings settings{};
+		const float cx = engine::world::water::SnapToStep(playerRenderPos.x, settings.snapM);
+		const float cz = engine::world::water::SnapToStep(playerRenderPos.z, settings.snapM);
+		const bool moved = cx != m_seaGrid.centerX || cz != m_seaGrid.centerZ;
+		// Bord échantillonné avant le chargement du sol : nouvel essai toutes les ~0,5 s.
+		bool retry = false;
+		if (!m_seaGridDirty && !moved && m_seaGrid.Valid() && m_seaGrid.unknownSamples > 0)
+		{
+			if (m_seaGridRetryFrames > 0)
+				--m_seaGridRetryFrames;
+			else
+				retry = true;
+		}
+		if (!m_seaGridDirty && !moved && !retry)
+			return;
+
+		const bool hadGrid = m_seaGrid.Valid();
+		const uint32_t previousUnknown = m_seaGrid.unknownSamples;
+		const engine::world::cells::CellHeightFields* heights = m_cellHeights.get();
+		const engine::world::water::SeaGroundSampler ground =
+			[heights](float x, float z, bool& known) -> float {
+				known = heights != nullptr && heights->IsLoadedAt(x, z);
+				return known ? heights->HeightAt(x, z) : 0.0f;
+			};
+		engine::world::water::BuildSeaGrid(m_clientWaterScene->lakes, cx, cz, settings, ground, m_seaGrid);
+		m_seaGridDirty = false;
+		// La nage ne suit la houle que là où la mer est rendue en relief.
+		m_terrainCollider.SetSeaWavesActive(m_seaGrid.Valid());
+		m_seaGridRetryFrames = 30;
+		// Nouvel essai qui n'a rien appris de plus sur le sol : rien à renvoyer.
+		if (retry && m_seaGrid.unknownSamples == previousUnknown)
+			return;
+		// Ni mer avant ni mer après : le mesh d'eau n'a pas changé.
+		if (!hadGrid && !m_seaGrid.Valid())
+			return;
+		m_waterClientSceneDirty = true;
 	}
 
 	bool Engine::IsCellMissingForSea(cells::CellCoord cell) const
@@ -1148,6 +1194,13 @@ namespace engine
 		{
 			if (!tile.terrain || !tile.terrain->IsValid())
 				continue;
+			// EAU.6 — sable sec / mouillé seulement dans une cellule qui a la mer.
+			{
+				float seaLevelY = 0.0f;
+				const auto water = m_cellWaterGlobal.find(cells::CellZoneId(tile.cell, m_activeCellMap));
+				const bool hasSea = water != m_cellWaterGlobal.end() && cells::FindSeaLevel(water->second.lakes, seaLevelY);
+				tile.terrain->SetCoast(hasSea, seaLevelY, engine::world::water::kSeaRunUpM);
+			}
 			// Le premier terrain efface le GBuffer, les suivants dessinent par-dessus.
 			tile.terrain->SetClearAttachments(first);
 			tile.terrain->Record(

@@ -311,11 +311,132 @@ namespace tools::world_gen
 		}
 	}
 
+	// ---------------------------------------------------------------------------------
+	// v1.0.140 — PALAIS IMPÉRIAL (POI de genre « palais », Lhynn) sur la plateforme du
+	// sommet d'une acropole. Monument signature RÉINTERPRÉTÉ (LORE_BD §16.66) : façade
+	// gothique dédiée (Palace_Imperial_Facade_1 : porte centrale traversante, statues
+	// colossales à sujet neutre), corps du palais et enceinte en pièces modulaires, quatre
+	// flèches (Palace_Imperial_Spire_1), parvis à braseros et cyprès, salle du trône
+	// (tapis, trône, braseros), jardin à l'arrière (fontaine, haies, statues, cyprès).
+	// ---------------------------------------------------------------------------------
+	namespace
+	{
+		/// Pose un monument dédié du palais (meshes/props/<mesh>.gltf) : solide, collision par
+		/// le catalogue de pièces (game/data/collision/building_pieces.json : boîtes orientées),
+		/// occulteur caméra, grande distance de vue. \p frontDir : direction (unitaire, XZ) vers
+		/// laquelle le côté +Z local du mesh est tourné ; \p scale : échelle uniforme (la collision
+		/// du catalogue suit la matrice monde). Effet de bord : w.scatter.
+		void PalaceMonument(World& w, const char* mesh, Vec2 p, Vec2 frontDir, double scale)
+		{
+			ScatterDef s;
+			s.mesh = std::string("meshes/props/") + mesh + ".gltf";
+			s.position = p;
+			s.yawDeg = std::atan2(frontDir.x, frontDir.z) * 180.0 / kPi;
+			s.scale = scale;
+			s.flags = static_cast<uint8_t>(kSolid | kPiece | kOccluder);
+			s.cullClass = 0;
+			w.scatter.push_back(std::move(s));
+		}
+
+		/// Construit le palais impérial centré sur \p c (centre de la plateforme). \p u :
+		/// direction unitaire vers l'escalier (porte, façade) ; \p topR : rayon de la
+		/// plateforme (m). Repère local : u (avant), v (gauche). Effet de bord : w.scatter,
+		/// w.pointLights, occupation de w.
+		void BuildImperialPalace(World& w, const PoiDef& p, Vec2 c, Vec2 u, double topR, LandmarkRng& rng)
+		{
+			const Vec2 v{ -u.z, u.x };
+			auto at = [&](double du, double dv) { return c + u * du + v * dv; };
+			const double yawU = std::atan2(u.x, u.z) * 180.0 / kPi; // +Z local vers u
+			// Enceinte octogonale (2 étages de murs), ouverte de 10 m vers l'escalier entre deux
+			// tours ; tours rondes à trois angles arrière.
+			const double Re = topR - 3.0;
+			const double au = std::atan2(u.z, u.x);
+			std::vector<Vec2> corner(8);
+			for (int k = 0; k < 8; ++k)
+			{
+				const double a = au + kPi / 8.0 + k * kPi / 4.0;
+				corner[static_cast<size_t>(k)] = c + Vec2{ std::cos(a), std::sin(a) } * Re;
+			}
+			for (int k = 0; k < 8; ++k)
+			{
+				const Vec2 a = corner[static_cast<size_t>((k + 7) % 8)], b = corner[static_cast<size_t>(k)];
+				if (k == 0)
+				{
+					// Côté de l'escalier : deux pans et un passage de 10 m au milieu.
+					const Vec2 mid = (a + b) * 0.5, d = (b - a) * (1.0 / std::hypot(b.x - a.x, b.z - a.z));
+					BuildWall(w, a, mid - d * 5.0, 2, false, false, rng);
+					BuildWall(w, mid + d * 5.0, b, 2, false, false, rng);
+					for (int sg = -1; sg <= 1; sg += 2)
+						BuildTower(w, mid + d * (sg * 7.6), 2.6, 4, true, u, false, rng);
+				}
+				else
+					BuildWall(w, a, b, 2, false, false, rng);
+			}
+			for (int k = 2; k <= 6; k += 2)
+				BuildTower(w, corner[static_cast<size_t>(k)], 2.6, 4, true, Vec2{ 0.0, 0.0 } - u, false, rng);
+			// Retour du propriétaire (25/11/2026 : « le palais n'est pas assez volumineux ») :
+			// monuments dédiés à l'échelle kScale (façade ≈ 65 × 49 m, flèches ≈ 62 m) et corps
+			// du palais agrandi d'autant.
+			const double kScale = 1.3;
+			// Façade dédiée : origine à 20 m en avant du centre ; parement arrière (Z local −5 m)
+			// contre le corps (u = 13,5 m), statues jusqu'à u ≈ 27,3 m ; parvis jusqu'à la porte.
+			PalaceMonument(w, "Palace_Imperial_Facade_1", at(20.0, 0.0), u, kScale);
+			// Corps du palais : carré de 39 m, 9 étages de murs (≈ 28 m), porte face à la porte
+			// centrale de la façade ; sol de dalles (salle du trône).
+			BuildTower(w, at(-6.0, 0.0), 19.5, 9, false, u, false, rng, 0.0, false);
+			// Flèches : deux aux angles arrière, deux au milieu des côtés.
+			for (int sg = -1; sg <= 1; sg += 2)
+			{
+				PalaceMonument(w, "Palace_Imperial_Spire_1", at(-25.5, sg * 19.5), u, kScale);
+				PalaceMonument(w, "Palace_Imperial_Spire_1", at(-6.0, sg * 22.5), u, kScale);
+			}
+			// Salle du trône : tapis rouge de la porte au trône, trône tourné vers la porte,
+			// braseros de part et d'autre du tapis.
+			for (int k = 0; k < 3; ++k)
+				Piece(w, "Carpet_Runner_1", at(7.0 - 12.0 * k, 0.0), 0.04, yawU, 1.0, false);
+			Piece(w, "Throne_Wood_1", at(-22.5, 0.0), 0.05, yawU, 1.4, true);
+			for (int k = 0; k < 4; ++k)
+				for (int sg = -1; sg <= 1; sg += 2)
+					Piece(w, "Brazier_Column_1", at(8.0 - 8.0 * k, sg * 3.4), 0.0, 0.0, 1.0, true);
+			// Parvis : braseros allumés, cyprès en pots, statues à sujet neutre.
+			for (int k = 0; k < 2; ++k)
+				for (int sg = -1; sg <= 1; sg += 2)
+				{
+					const Vec2 b = at(31.0 + 11.0 * k, sg * 7.0);
+					Piece(w, "Brazier_Column_1", b, 0.0, 0.0, 1.4, true);
+					PointLightDef L;
+					L.id = p.id + "_brasero_" + std::to_string(k * 2 + (sg > 0 ? 1 : 0));
+					L.position = b; L.y = w.HeightAt(b) + 3.2;
+					L.radiusM = 14.0; L.intensity = 2.2; L.r = 1.0; L.g = 0.62; L.b = 0.3;
+					w.pointLights.push_back(L);
+				}
+			for (double du = 30.0; du <= 46.0; du += 4.0)
+				for (int sg = -1; sg <= 1; sg += 2)
+					Piece(w, "Tree_Cypress_Potted_1", at(du, sg * 15.0), 0.0, rng.Next() * 360.0, 1.0, true);
+			for (int sg = -1; sg <= 1; sg += 2)
+				Piece(w, "Statue_Garden_1", at(38.0, sg * 22.0), 0.0, yawU + (sg > 0 ? -90.0 : 90.0), 1.0, true);
+			// Jardin à l'arrière (T4 pl.7) : fontaine, haies taillées, cyprès, statues.
+			Piece(w, "Fountain_Basin_1", at(-40.0, 0.0), 0.0, rng.Next() * 45.0, 1.2, true);
+			for (int k = 0; k < 8; ++k)
+			{
+				const double a = k * kPi / 4.0;
+				Piece(w, "Hedge_Trimmed_1", at(-40.0 + 5.0 * std::cos(a), 5.0 * std::sin(a)), 0.0, 0.0, 1.0, true);
+			}
+			for (int sg = -1; sg <= 1; sg += 2)
+			{
+				for (int k = 0; k < 3; ++k)
+					Piece(w, k % 2 ? "Tree_Cypress_2" : "Tree_Cypress_1", at(-32.0 - 6.0 * k, sg * 13.0), 0.0, rng.Next() * 360.0, 0.8, true);
+				Piece(w, "Statue_Garden_2", at(-40.0, sg * 8.5), 0.0, yawU + (sg > 0 ? -90.0 : 90.0), 1.0, true);
+			}
+			w.Occupy(c, topR);
+		}
+	}
+
 	void BuildLandmarks(World& w)
 	{
 		for (const PoiDef& p : w.pois)
 		{
-			if (p.kind != "tour" && p.kind != "chateau" && p.kind != "phare" && p.kind != "cascade" && p.kind != "pont") continue;
+			if (p.kind != "tour" && p.kind != "chateau" && p.kind != "phare" && p.kind != "cascade" && p.kind != "pont" && p.kind != "palais") continue;
 			if (!w.OwnsPoint(p.center)) continue;
 			LandmarkRng rng{ Hash(w.master.seed, HashString(p.id.c_str()), 7131) };
 			const bool ruin = p.state == "ruine";
@@ -364,6 +485,16 @@ namespace tools::world_gen
 			{
 				BuildCastle(w, p.center, p.scale, toward, ruin, rng);
 				w.Occupy(p.center, 40.0 * p.scale);
+			}
+			else if (p.kind == "palais")
+			{
+				// v1.0.140 : sur la plateforme de l'acropole la plus proche (porte vers son
+				// escalier) ; sans acropole, plateforme de 56 m tournée vers la route.
+				const AcropoleShape* ac = nullptr;
+				for (const CityDef& c : w.cities)
+					if (c.acropole.enabled && std::hypot(c.acropole.summit.x - p.center.x, c.acropole.summit.z - p.center.z) < c.acropole.topRadiusM)
+						ac = &c.acropole;
+				BuildImperialPalace(w, p, ac ? ac->summit : p.center, ac ? ac->stairDir : toward, ac ? ac->topRadiusM : 56.0, rng);
 			}
 			else if (p.kind == "cascade")
 				BuildCascade(w, p, roadDir, rng);

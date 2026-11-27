@@ -214,7 +214,7 @@ namespace tools::world_gen
 			double roadK = 0.0;      ///< route (0..1)
 			double riverK = 0.0;     ///< berge de rivière (0..1)
 			uint8_t urban = 0;       ///< 1 = emprise urbaine, 2 = rue / place
-			uint8_t paint = 0;       ///< 1 = roche de l'Oracle, 2 = pierre blanche (marbre)
+			uint8_t paint = 0;       ///< 1 = roche de l'Oracle, 2 = pierre blanche (marbre), 3 = dallage (salles)
 		};
 
 		/// Base de splat (herbe, terre, roche, neige, masque d'herbe) d'un code de
@@ -479,6 +479,9 @@ namespace tools::world_gen
 			{
 				const uint8_t pv = w.paint.At(pi, pj);
 				if (trace) trace->paint = pv;
+				// v1.0.141 : 3 = dallage des salles intérieures (roche, sans neige : jamais
+				// rendu en cristal par la couche crystal_layer).
+				if (pv == 3) return SplatTexel{ 0.0, 0.15, 0.85, 0.0, 0.0 };
 				return pv == 2 ? SplatTexel{ 0.0, 0.0, 0.05, 0.95, 0.0 } : SplatTexel{ 0.0, 0.0, 0.45, 0.55, 0.0 };
 			}
 			// Berges de rivière.
@@ -510,7 +513,7 @@ namespace tools::world_gen
 				return dom == 1 ? GroundClass::Dirt : GroundClass::Rock;
 			}
 			if (tr.paint == 2) return GroundClass::Marble;
-			if (tr.paint == 1) return GroundClass::Rock;
+			if (tr.paint == 1 || tr.paint == 3) return GroundClass::Rock;
 			if (tr.urban == 2 || tr.roadK >= 0.5) return GroundClass::PackedEarth;
 			if (dom == 3) return tr.chalk >= 0.5 ? GroundClass::Rock : GroundClass::Snow;
 			if (dom == 2) return GroundClass::Rock;
@@ -1196,6 +1199,9 @@ namespace tools::world_gen
 			rt.objectValue["grass_mask_visual_strength"] = JNum(0.35);
 			// v1.0.123 — Enfers : le canal A du splat est la lave (rendu lumineux, client).
 			if (IsInfernalMap(w.master)) rt.objectValue["lava_layer"] = JBool(true);
+			// v1.0.141 — rocher de l'Oracle : canal A rendu en cristal bleu là où la roche
+			// domine aussi (peinture 1), neige ailleurs (client, terrain.frag).
+			if (w.crystalLayer) rt.objectValue["crystal_layer"] = JBool(true);
 			JsonValue& tr = Child(root, "terrain");
 			tr.objectValue["_comment"] = JStr("Cadrage de la cellule : world_size (m) couvert par la heightmap, origine = coin min (x, z) GLOBAL, altitude max encodee, resolution de la heightmap.");
 			tr.objectValue["world_size"] = JNum(w.terrainSizeM);
@@ -1284,7 +1290,7 @@ namespace tools::world_gen
 					e.objectValue["radius"] = JNum(d.radiusM);
 					e.objectValue["intensity"] = JNum(d.intensity);
 					e.objectValue["color_r"] = JNum(d.r); e.objectValue["color_g"] = JNum(d.g); e.objectValue["color_b"] = JNum(d.b);
-					e.objectValue["auto_night_light"] = JBool(false); // allumees jour et nuit (fond sans soleil)
+					e.objectValue["auto_night_light"] = JBool(d.autoNight); // faux : allumees jour et nuit (fond sans soleil)
 					pl.objectValue[std::to_string(k)] = e;
 				}
 			}
@@ -1627,8 +1633,9 @@ namespace tools::world_gen
 			for (const PoiDef& p : g.pois)
 			{
 				if (p.secret) continue;
-				// v1.0.132 : les châteaux (Palais des Maîtres des Dragons, Garundel…) ont aussi leur étiquette.
-				if (p.kind != "volcan" && p.kind != "cite" && p.kind != "chateau" && !(infernal && p.kind == "temple")) continue;
+				// v1.0.132 : les châteaux (Palais des Maîtres des Dragons, Garundel…) ont aussi leur étiquette ;
+				// v1.0.140 : le palais impérial de Lhynn aussi.
+				if (p.kind != "volcan" && p.kind != "cite" && p.kind != "chateau" && p.kind != "palais" && !(infernal && p.kind == "temple")) continue;
 				const double u = (p.center.x - originX) / side, v = (p.center.z - originZ) / side;
 				if (!inside(u, v)) continue;
 				poiLines.push_back("    { \"name\": " + Q(p.name) + ", \"kind\": " + Q(p.kind) + ", \"u\": " + Num(u) + ", \"v\": " + Num(v) + " }");
@@ -2209,6 +2216,34 @@ namespace tools::world_gen
 			j += "  ]\n}\n";
 			if (!WriteFile(g.outputRoot, g.report, dir + "portals.json", j, err)) return false;
 			g.report.portals = portals.size();
+		}
+
+		// ---- passages.json (v1.0.141) : passages conditionnels d'une MÊME carte (portes du
+		//      rocher de l'Oracle), lus par le shard seul (src/shardd/world/DoorPassages.h).
+		//      Fichier toujours écrit (liste vide sans passage) : pas de reste d'une
+		//      génération précédente.
+		{
+			std::vector<const PassageDef*> passages;
+			for (const World* w : cells)
+				for (const PassageDef& p : w->passages) passages.push_back(&p);
+			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — passages conditionnels de la carte '" + wid + "' (positions GLOBALES) : un joueur vivant dans radius_m est replace en (to_x, to_y, to_z) si chaque quete de requires_quests est acceptee, prete a rendre ou terminee et si son groupe compte au moins min_group membres (docs/world/LORE_BD.md, Camp de l'Oracle).\",\n";
+			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"passage_count\": " + std::to_string(passages.size()) + ",\n  \"passages\": [\n";
+			for (size_t k = 0; k < passages.size(); ++k)
+			{
+				const PassageDef& p = *passages[k];
+				std::string quests = "[";
+				for (size_t q = 0; q < p.requiredQuests.size(); ++q) quests += (q ? ", " : "") + Q(p.requiredQuests[q]);
+				quests += "]";
+				j += "    { \"id\": " + Q(p.id) + ", \"name\": " + Q(p.name) +
+					", \"x\": " + Num(p.position.x) + ", \"y\": " + Num(p.y) + ", \"z\": " + Num(p.position.z) +
+					", \"radius_m\": " + Num(p.radiusM) +
+					", \"to_x\": " + Num(p.destination.x) + ", \"to_y\": " + Num(p.destY) + ", \"to_z\": " + Num(p.destination.z) +
+					", \"to_yaw_deg\": " + Num(p.destYawDeg) +
+					", \"requires_quests\": " + quests + ", \"min_group\": " + std::to_string(p.minGroup) +
+					", \"denied_message\": " + Q(p.deniedMessage) + " }" + (k + 1 < passages.size() ? ",\n" : "\n");
+			}
+			j += "  ]\n}\n";
+			if (!WriteFile(g.outputRoot, g.report, dir + "passages.json", j, err)) return false;
 		}
 
 		// ---- quest_poi.json (positions GLOBALES) : POI historiques translatés sur la

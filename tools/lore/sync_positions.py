@@ -20,7 +20,8 @@
 #     dans la même case, sinon table EXPLICITES ci-dessous. Lieux d'une autre carte (`carte`,
 #     ex. les Enfers) ignorés.
 #   - Refus (code 2) : position hors de la case, ville ancrée sur un relief (`reliefs`) ;
-#     sauf un gouffre (v1.0.107, type `gouffre`) : il suit la ville posée au fond.
+#     sauf un gouffre (v1.0.107, type `gouffre`) : il suit la ville posée au fond ; et une
+#     acropole (v1.0.140, type `acropole`) : la butte en gradins suit la ville.
 #   - Avertissement : position posée sur une fiche sans entrée au master (ignorée).
 #   - Édition CHIRURGICALE du texte du master (une ligne par position) : la mise en forme
 #     écrite à la main est conservée ; rien d'autre ne change (vérifié avant écriture).
@@ -146,8 +147,9 @@ def main():
         texte = f.read()
     master = json.loads(texte)
     # Villes non déplaçables : ancrées sur une colline ou une crevasse (relief dessiné au
-    # centre de la case). Un gouffre (v1.0.107) suit sa ville : position admise.
-    ancrees = {r.get("city") for r in master.get("reliefs", []) if r.get("city") and r.get("type") != "gouffre"}
+    # centre de la case). Un gouffre (v1.0.107) suit sa ville : position admise ; une
+    # acropole (v1.0.140, ville en gradins : Lhynn) aussi.
+    ancrees = {r.get("city") for r in master.get("reliefs", []) if r.get("city") and r.get("type") not in ("gouffre", "acropole")}
     entrees = {("cities", c["id"]): c for c in master["cities"]}
     entrees.update({("pois", p["id"]): p for p in master["pois"]})
 

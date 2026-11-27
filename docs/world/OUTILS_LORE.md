@@ -115,13 +115,13 @@ Python standard (~2 s), sur des **copies** : master du dépôt à jour (`--check
 ignorée ; extrémités (ville, lieu → POI, jonction, `EXTREMITES`) ; route sans case refusée
 (code 2) sans écriture. Lancement : `python3 tools/lore/test_sync_routes.py`.
 
-### `sync_apparence.py` — apparence propre des villes (lore → master, v1.0.140)
+### `sync_apparence.py` — apparence propre des villes (lore → master, v1.0.142)
 
 | | |
 |---|---|
 | Rôle | recopie le champ `apparence` (objet) des fiches `villes` du lore vers la clé `apparence` des `cities` du master royaumes (une ligne après `"services"`, sinon `"faction"`). |
 | Valeurs | `enceinte` : `rempart_bois` ; `donjon` : `tour_fleche` ; `bati` : `planches` ; `vestiges_siege` : `true`. Toute autre clé ou valeur arrête le script ; le générateur refuse aussi une valeur inconnue. |
-| Effet en jeu | `tools/world_gen` (Settlements.cpp) : rempart de rondins de 20 m (tours, portes, contreforts ; pans neufs, calcinés et brèches si la ville est en reconstruction), donjon à flèche au nord, maisons de planches majoritaires, restes de siège hors les murs. Seule Kendrhir en porte une (LORE_BD §16.66). |
+| Effet en jeu | `tools/world_gen` (Settlements.cpp) : rempart de rondins de 20 m (tours, portes, contreforts ; pans neufs, calcinés et brèches si la ville est en reconstruction), donjon à flèche au nord, maisons de planches majoritaires, restes de siège hors les murs. Seule Kendrhir en porte une (LORE_BD §16.68). |
 | Sortie | `[sync_apparence] N ville(s) mise(s) à jour`, ou avec `--check` : `master à jour` / `master pas à jour` (code 1). |
 
 Lancement : `python3 tools/lore/sync_apparence.py [--check]` (Python standard).
@@ -192,7 +192,7 @@ vers `develop` et `main` quand changent `legacy/world-builder-html/lune-noire-da
 | Routes du lore recopiées au master | `python tools/lore/sync_routes.py --check` | oui |
 | Test du script de recopie des routes | `python tools/lore/test_sync_routes.py` | oui |
 | Services des villes recopiés au master | `python tools/lore/sync_services.py --check` | oui |
-| Apparence des villes recopiée au master (v1.0.140) | `python tools/lore/sync_apparence.py --check` | oui |
+| Apparence des villes recopiée au master (v1.0.142) | `python tools/lore/sync_apparence.py --check` | oui |
 | Registre des décors recopié dans le lore | `python tools/lore/sync_decors.py --check` | oui |
 | Lieux secrets concordants (lore ↔ master) | `python tools/lore/check_secrets.py` | oui |
 | Aucune référence orpheline | `python tools/lore/check_references.py --strict` | oui (depuis v1.0.115) |

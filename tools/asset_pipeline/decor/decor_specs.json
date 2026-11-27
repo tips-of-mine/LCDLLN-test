@@ -1,5 +1,5 @@
 {
-  "_comment": "Atelier décors — registre des assets produits depuis la BD. Une entrée par asset livré. dims_m = [largeur X min,max] / [hauteur min,max] (cote prévue d'après la case étalon citée dans ref ; tolérance de contrôle ±10 %). budget = classe de budget (budgets). lods = niveaux livrés en plus du LOD0 (<id>_LOD1.gltf, <id>_LOD2.gltf). billboard = <id>_BB.gltf (2 plans croisés + texture T_Decor_BB_<id>.png). replaces = id existant conservé (§9 bis) ou null pour un nouvel asset. Lu par build_decor.py (production) et validate_decor.py (CI). Références ref [Tn-Pxxx-Cz] : page du PDF de l'album (v1.0.140 : celles du tome 1, prises sur un autre scan, réalignées — ancienne numérotation moins 6).",
+  "_comment": "Atelier décors — registre des assets produits depuis la BD. Une entrée par asset livré. dims_m = [largeur X min,max] / [hauteur min,max] (cote prévue d'après la case étalon citée dans ref ; tolérance de contrôle ±10 %). budget = classe de budget (budgets). lods = niveaux livrés en plus du LOD0 (<id>_LOD1.gltf, <id>_LOD2.gltf). billboard = <id>_BB.gltf (2 plans croisés + texture T_Decor_BB_<id>.png). replaces = id existant conservé (§9 bis) ou null pour un nouvel asset. Lu par build_decor.py (production) et validate_decor.py (CI). Références ref [Tn-Pxxx-Cz] : page du PDF de l'album (v1.0.142 : celles du tome 1, prises sur un autre scan, réalignées — ancienne numérotation moins 6).",
   "budgets": {
     "tree": [
       6000,
@@ -20,6 +20,11 @@
       3000,
       1000,
       300
+    ],
+    "monument": [
+      12000,
+      4000,
+      1200
     ]
   },
   "assets": [
@@ -9621,16 +9626,16 @@
       "budget": "prop",
       "exact": true,
       "width_m": [
-        4.8,
-        5.0
+        7.2,
+        7.5
       ],
       "height_m": [
-        2.05,
-        2.1
+        3.07,
+        3.15
       ],
       "billboard": false,
       "replaces": null,
-      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026)"
+      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026) ; agrandie ×1,5 (retour du propriétaire du 25/11/2026)"
     },
     {
       "id": "Tent_Pilgrim_2",
@@ -9641,16 +9646,16 @@
       "budget": "prop",
       "exact": true,
       "width_m": [
-        5.0,
-        5.2
+        7.5,
+        7.8
       ],
       "height_m": [
-        2.1,
-        2.15
+        3.15,
+        3.22
       ],
       "billboard": false,
       "replaces": null,
-      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026)"
+      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026) ; agrandie ×1,5 (retour du propriétaire du 25/11/2026)"
     },
     {
       "id": "Tent_Pilgrim_3",
@@ -9661,16 +9666,16 @@
       "budget": "prop",
       "exact": true,
       "width_m": [
-        4.4,
-        4.6
+        6.6,
+        6.9
       ],
       "height_m": [
-        1.85,
-        1.9
+        2.78,
+        2.85
       ],
       "billboard": false,
       "replaces": null,
-      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026)"
+      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026) ; agrandie ×1,5 (retour du propriétaire du 25/11/2026)"
     },
     {
       "id": "Tent_Pilgrim_Long_1",
@@ -9681,23 +9686,455 @@
       "budget": "prop",
       "exact": true,
       "width_m": [
-        6.8,
-        7.0
+        9.52,
+        9.8
       ],
       "height_m": [
-        2.55,
-        2.6
+        3.57,
+        3.64
       ],
       "billboard": false,
       "replaces": null,
-      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026)"
+      "ref": "T2-P012 ; T5-P021 ; demande du propriétaire (23/11/2026) ; agrandie ×1,4 (retour du propriétaire du 25/11/2026)"
+    },
+    {
+      "id": "Palace_Imperial_Facade_1",
+      "num": 215,
+      "family": "monument",
+      "builder": "palace_facade",
+      "seed": 21501,
+      "budget": "monument",
+      "exact": true,
+      "width_m": [
+        50.2,
+        50.6
+      ],
+      "height_m": [
+        38.0,
+        38.4
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T3-P023-C1 (vue de la ville) ; T3-P024-C5 (portes du palais, escorte) ; T3-P026 ; T4-P006, P007 ; T10-P037-C1 ; demande du propriétaire (25/11/2026) ; signature réinterprétée (statues à sujet neutre, sans héraldique)"
+    },
+    {
+      "id": "Palace_Imperial_Spire_1",
+      "num": 216,
+      "family": "monument",
+      "builder": "palace_spire",
+      "seed": 21601,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        8.3,
+        8.5
+      ],
+      "height_m": [
+        47.8,
+        48.2
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T3-P026 (flèches du palais) ; T10-P037-C1 ; demande du propriétaire (25/11/2026)"
+    },
+    {
+      "id": "Stairs_Monumental_1",
+      "num": 217,
+      "family": "monument",
+      "builder": "stairs_monumental",
+      "seed": 21701,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        9.0,
+        9.0
+      ],
+      "height_m": [
+        3.55,
+        3.65
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T10-P037-C1 (ville en gradins) ; escalier monumental direct (arbitrage Q3 b du propriétaire, 25/11/2026)"
+    },
+    {
+      "id": "Ship_Cog_1",
+      "num": 218,
+      "family": "objets",
+      "builder": "ship_cog",
+      "seed": 21801,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        12.9,
+        13.1
+      ],
+      "height_m": [
+        20.1,
+        20.3
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T7-P004-C1 (port de guerre de Lhynn, navires à quai) ; T10-P037-C1 (flotte) ; demande du propriétaire (25/11/2026 : « on ne voit pas le port »)"
+    },
+    {
+      "id": "Oracle_Crystal_Slab_1",
+      "num": 219,
+      "family": "mineral",
+      "builder": "oracle_crystal_slab",
+      "seed": 21501,
+      "budget": "rock_big",
+      "width_m": [
+        10,
+        16
+      ],
+      "height_m": [
+        22,
+        30
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T2-P044-C1 (tumulus bleu) ; T3-P005-C1 ; T3-P006-C1"
+    },
+    {
+      "id": "Oracle_Crystal_Slab_2",
+      "num": 219,
+      "family": "mineral",
+      "builder": "oracle_crystal_slab",
+      "seed": 21502,
+      "budget": "rock_big",
+      "width_m": [
+        12,
+        20
+      ],
+      "height_m": [
+        30,
+        40
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T2-P044-C1 (tumulus bleu) ; T3-P005-C1 ; T3-P006-C1"
+    },
+    {
+      "id": "Oracle_Crystal_Slab_3",
+      "num": 219,
+      "family": "mineral",
+      "builder": "oracle_crystal_slab",
+      "seed": 21503,
+      "budget": "rock_big",
+      "width_m": [
+        8,
+        12
+      ],
+      "height_m": [
+        14,
+        20
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T2-P044-C1 (tumulus bleu) ; T3-P005-C1 ; T3-P006-C1"
+    },
+    {
+      "id": "Oracle_Crystal_Cluster_1",
+      "num": 220,
+      "family": "magique",
+      "builder": "oracle_crystal_cluster",
+      "seed": 21601,
+      "budget": "prop",
+      "width_m": [
+        3,
+        5
+      ],
+      "height_m": [
+        3.5,
+        5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P006-C1 ; T3-P007-C1"
+    },
+    {
+      "id": "Oracle_Crystal_Cluster_2",
+      "num": 220,
+      "family": "magique",
+      "builder": "oracle_crystal_cluster",
+      "seed": 21602,
+      "budget": "prop",
+      "width_m": [
+        5,
+        8
+      ],
+      "height_m": [
+        6,
+        8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P006-C1 ; T3-P007-C1"
+    },
+    {
+      "id": "Oracle_Door_Grand",
+      "num": 221,
+      "family": "religieux",
+      "builder": "oracle_door_grand",
+      "seed": 21701,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        10.4,
+        11.0
+      ],
+      "height_m": [
+        14.3,
+        14.7
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P046-C1 (réinterprétation : emblème abstrait, sans visage ; décision du propriétaire du 25/11/2026)"
+    },
+    {
+      "id": "Oracle_Door_Podium",
+      "num": 222,
+      "family": "religieux",
+      "builder": "oracle_door_podium",
+      "seed": 21801,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        18.0,
+        18.4
+      ],
+      "height_m": [
+        1.15,
+        1.25
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P046-C1 (socle de brique)"
+    },
+    {
+      "id": "Oracle_Hall_Column",
+      "num": 223,
+      "family": "religieux",
+      "builder": "oracle_hall_column",
+      "seed": 21901,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        3.5,
+        3.7
+      ],
+      "height_m": [
+        39.5,
+        40.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P003-C1 ; T3-P007-C1"
+    },
+    {
+      "id": "Oracle_Hall_Wall",
+      "num": 224,
+      "family": "religieux",
+      "builder": "oracle_hall_wall",
+      "seed": 22001,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        18.5,
+        19.8
+      ],
+      "height_m": [
+        39.5,
+        40.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P003-C1"
+    },
+    {
+      "id": "Oracle_Hall_Dais",
+      "num": 225,
+      "family": "religieux",
+      "builder": "oracle_hall_dais",
+      "seed": 22101,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        25.6,
+        26.2
+      ],
+      "height_m": [
+        1.45,
+        1.55
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P003-C1 ; T1-P004-C3 ; T3-P007-C1"
+    },
+    {
+      "id": "Oracle_Vault",
+      "num": 226,
+      "family": "religieux",
+      "builder": "oracle_vault",
+      "seed": 22201,
+      "budget": "rock_big",
+      "exact": true,
+      "width_m": [
+        103,
+        105.5
+      ],
+      "height_m": [
+        23,
+        24
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P005-C1 ; T3-P006-C1"
+    },
+    {
+      "id": "Oracle_Light_Pillar",
+      "num": 227,
+      "family": "magique",
+      "builder": "oracle_light_pillar",
+      "seed": 22301,
+      "budget": "building",
+      "width_m": [
+        7,
+        10
+      ],
+      "height_m": [
+        30,
+        34
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P003-C1 ; T3-P007-C1 (brume figée, sans figure)"
+    },
+    {
+      "id": "Oracle_Chain_Hanging",
+      "num": 228,
+      "family": "objets",
+      "builder": "oracle_chain",
+      "seed": 22401,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.35,
+        0.45
+      ],
+      "height_m": [
+        19.8,
+        20.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P005-C1"
+    },
+    {
+      "id": "Oracle_Menhir_1",
+      "num": 229,
+      "family": "religieux",
+      "builder": "oracle_menhir",
+      "seed": 22501,
+      "budget": "prop",
+      "width_m": [
+        1.2,
+        1.8
+      ],
+      "height_m": [
+        3.0,
+        3.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P044-C1 (menhirs bleus)"
+    },
+    {
+      "id": "Oracle_Menhir_2",
+      "num": 229,
+      "family": "religieux",
+      "builder": "oracle_menhir",
+      "seed": 22502,
+      "budget": "prop",
+      "width_m": [
+        1.4,
+        2.0
+      ],
+      "height_m": [
+        4.0,
+        5.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P044-C1 (menhirs bleus)"
+    },
+    {
+      "id": "Tent_Pilgrim_4",
+      "num": 214,
+      "family": "objets",
+      "builder": "tent_pilgrim",
+      "seed": 21404,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        7.2,
+        7.5
+      ],
+      "height_m": [
+        3.07,
+        3.15
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P045-C1 ; T3-P005-C1 (toiles de couleur) ; demande du propriétaire (25/11/2026) ; agrandie ×1,5 (retour du propriétaire du 25/11/2026)"
+    },
+    {
+      "id": "Tent_Pilgrim_5",
+      "num": 214,
+      "family": "objets",
+      "builder": "tent_pilgrim",
+      "seed": 21405,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        7.8,
+        8.1
+      ],
+      "height_m": [
+        3.15,
+        3.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P045-C1 ; T3-P005-C1 (toiles de couleur) ; demande du propriétaire (25/11/2026) ; agrandie ×1,5 (retour du propriétaire du 25/11/2026)"
+    },
+    {
+      "id": "Pennant_Pole_1",
+      "num": 230,
+      "family": "objets",
+      "builder": "pennant_pole",
+      "seed": 22601,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.6,
+        2.9
+      ],
+      "height_m": [
+        6.9,
+        7.1
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P045-C1 (fanions jaunes du camp)"
     },
     {
       "id": "Rampart_Wood_1",
-      "num": 215,
+      "num": 231,
       "family": "objets",
       "builder": "rampart_wood",
-      "seed": 21501,
+      "seed": 23101,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9714,10 +10151,10 @@
     },
     {
       "id": "Rampart_Wood_New_1",
-      "num": 215,
+      "num": 231,
       "family": "objets",
       "builder": "rampart_wood_new",
-      "seed": 21502,
+      "seed": 23102,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9734,10 +10171,10 @@
     },
     {
       "id": "Rampart_Wood_Burnt_1",
-      "num": 216,
+      "num": 232,
       "family": "objets",
       "builder": "rampart_wood_burnt",
-      "seed": 21601,
+      "seed": 23201,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9745,8 +10182,8 @@
         4.1
       ],
       "height_m": [
-        13.8,
-        14.6
+        16.2,
+        16.6
       ],
       "billboard": false,
       "replaces": null,
@@ -9754,10 +10191,10 @@
     },
     {
       "id": "Rampart_Wood_Breach_1",
-      "num": 216,
+      "num": 232,
       "family": "objets",
       "builder": "rampart_wood_breach",
-      "seed": 21602,
+      "seed": 23202,
       "budget": "prop",
       "exact": true,
       "width_m": [
@@ -9774,10 +10211,10 @@
     },
     {
       "id": "Tower_Rampart_Wood_1",
-      "num": 217,
+      "num": 233,
       "family": "objets",
       "builder": "tower_rampart_wood",
-      "seed": 21701,
+      "seed": 23301,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9794,10 +10231,10 @@
     },
     {
       "id": "Tower_Rampart_Wood_Ruined_1",
-      "num": 217,
+      "num": 233,
       "family": "objets",
       "builder": "tower_rampart_wood_ruined",
-      "seed": 21702,
+      "seed": 23302,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9814,10 +10251,10 @@
     },
     {
       "id": "Gate_Rampart_Wood_1",
-      "num": 218,
+      "num": 234,
       "family": "objets",
       "builder": "gate_rampart_wood",
-      "seed": 21801,
+      "seed": 23401,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9834,10 +10271,10 @@
     },
     {
       "id": "Rampart_Buttress_Wood_1",
-      "num": 219,
+      "num": 235,
       "family": "objets",
       "builder": "rampart_buttress_wood",
-      "seed": 21901,
+      "seed": 23501,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9854,10 +10291,10 @@
     },
     {
       "id": "Keep_Timber_Spire_1",
-      "num": 220,
+      "num": 236,
       "family": "objets",
       "builder": "keep_timber_spire",
-      "seed": 22001,
+      "seed": 23601,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9874,10 +10311,10 @@
     },
     {
       "id": "Keep_Timber_Spire_Site_1",
-      "num": 220,
+      "num": 236,
       "family": "objets",
       "builder": "keep_timber_spire_site",
-      "seed": 22002,
+      "seed": 23602,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9894,10 +10331,10 @@
     },
     {
       "id": "SiegeTower_Wreck_1",
-      "num": 221,
+      "num": 237,
       "family": "objets",
       "builder": "siege_tower_wreck",
-      "seed": 22101,
+      "seed": 23701,
       "budget": "building",
       "exact": true,
       "width_m": [
@@ -9914,10 +10351,10 @@
     },
     {
       "id": "Catapult_Burnt_1",
-      "num": 221,
+      "num": 237,
       "family": "objets",
       "builder": "catapult_burnt",
-      "seed": 22102,
+      "seed": 23702,
       "budget": "building",
       "exact": true,
       "width_m": [

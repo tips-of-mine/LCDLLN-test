@@ -189,6 +189,17 @@ namespace engine::render::terrain
         /// l'origine des patches (CPU uniquement, ~16 k patches pour 2049²).
         void SetTerrainOrigin(float originX, float originZ);
 
+        /// EAU.6 — côte maritime : sable sec et sable mouillé près de la mer
+        /// (terrain.frag, coastSand). \p hasSea = false (défaut, lacs, éditeur,
+        /// Enfers) : rendu inchangé. \p seaLevelY : niveau de la mer (m) ;
+        /// \p runUpM : montée maximale des vagues sur la plage (m).
+        void SetCoast(bool hasSea, float seaLevelY, float runUpM)
+        {
+            m_coastHasSea = hasSea;
+            m_coastSeaLevelY = seaLevelY;
+            m_coastRunUpM = runUpM;
+        }
+
         /// Monde en cellules : vrai (défaut) = ce terrain efface le GBuffer au début
         /// de son render pass ; faux = il dessine PAR-DESSUS (terrains suivants de
         /// la même frame). Pris en compte au prochain Record().
@@ -291,7 +302,10 @@ namespace engine::render::terrain
             float layerTiling[4];    // offset 176  (x=grass, y=dirt, z=rock, w=snow tiling)
             float texOffsetX[4];     // offset 192  (décalage X du pavage par couche, m, < tiling)
             float texOffsetZ[4];     // offset 208  (décalage Z du pavage par couche, m, < tiling)
-        };                           //         224
+            float coastParams[4];    // offset 224  (EAU.6 : x=niveau de la mer, y=1 si cellule maritime,
+                                     //              z=montée max des vagues m, w=0)
+        };                           //         240
+        static_assert(sizeof(FrameUbo) == 240, "FrameUbo doit suivre le bloc std140 TerrainFrameUbo (terrain.vert/.frag)");
 
         // ── Cliff per-frame UBO (cliff pipeline, set=0, binding=0) ───────────
         // Minimal UBO for cliff pipeline: only view-proj matrices.
@@ -328,6 +342,10 @@ namespace engine::render::terrain
         float                 m_maxDrawDistance  = 0.0f;
         /// Origine GLOBALE du repère de rendu pour le pavage des textures (cf. SetTextureWorldOrigin).
         double                m_texWorldOriginX  = 0.0;
+        /// EAU.6 — côte maritime (cf. SetCoast).
+        bool                  m_coastHasSea      = false;
+        float                 m_coastSeaLevelY   = 0.0f;
+        float                 m_coastRunUpM      = 0.0f;
         double                m_texWorldOriginZ  = 0.0;
         VkDescriptorSetLayout m_descSetLayout = VK_NULL_HANDLE;
         VkDescriptorPool      m_descPool      = VK_NULL_HANDLE;
@@ -354,6 +372,7 @@ namespace engine::render::terrain
 
         float                 m_grassMaskVisualStrength = 0.0f; ///< `render.terrain.grass_mask_visual_strength` (0 = off)
         bool                  m_lavaLayer = false;              ///< `render.terrain.lava_layer` : canal A = lave (Enfers)
+        bool                  m_crystalLayer = false;           ///< `render.terrain.crystal_layer` : canal A = cristal bleu là où la roche domine aussi (rocher de l'Oracle, v1.0.141)
 
         // ── M34.3: Cliff pipeline ─────────────────────────────────────────────────
         VkDescriptorSetLayout m_cliffDescSetLayout = VK_NULL_HANDLE;

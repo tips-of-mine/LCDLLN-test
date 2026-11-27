@@ -316,6 +316,8 @@ namespace engine::client
 		if (kind == "phare") return "Phare";
 		if (kind == "cascade") return "Cascade";
 		if (kind == "pont") return "Pont";
+		// v1.0.140 : palais impérial de Lhynn (sommet de la ville en gradins, Landmarks.cpp).
+		if (kind == "palais") return "Palais";
 		return std::string(kind);
 	}
 }

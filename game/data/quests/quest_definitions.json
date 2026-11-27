@@ -171,6 +171,24 @@
       "prereqs": ["demons_chasse"],
       "steps": [{"type": "kill", "target": "mob:151", "requiredCount": 2}],
       "rewards": {"xp": 380, "gold": 110, "items": [{"itemId": 2003, "quantity": 3}]}
+    },
+    {
+      "id": "oracle_appel",
+      "giver": "npc:oracle_veilleur",
+      "turnIn": "npc:oracle_pretresse",
+      "prereqs": [],
+      "steps": [{"type": "talk", "target": "npc:oracle_pretresse", "requiredCount": 1}],
+      "rewards": {"xp": 400, "gold": 20, "items": []}
+    },
+    {
+      "id": "oracle_echos",
+      "giver": "npc:oracle_pretresse",
+      "turnIn": "npc:oracle_pretresse",
+      "prereqs": ["oracle_appel"],
+      "steps": [{"type": "kill", "target": "mob:170", "requiredCount": 1}],
+      "rewards": {"xp": 2500, "gold": 150, "items": []},
+      "repeat": "weekly",
+      "partyShared": true
     }
   ]
 }

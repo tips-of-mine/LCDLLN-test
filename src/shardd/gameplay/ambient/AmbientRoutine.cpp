@@ -44,7 +44,7 @@ namespace engine::server::ambient
 		float homeX, float homeZ, float (*roll01)(void*), void* ctx)
 	{
 		const size_t n = def.path.size();
-		// v1.0.142 : le segment qui commence part de la cible atteinte (ou du logis).
+		// v1.0.143 : le segment qui commence part de la cible atteinte (ou du logis).
 		state.origin = state.hasTarget ? state.target : HomePoint(def, homeX, homeZ);
 		switch (def.kind)
 		{

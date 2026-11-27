@@ -146,7 +146,7 @@ Refus côté scripts et générateur : une ville **ancrée sur un relief** (coll
 crevasse de Vharholdt) ne se déplace pas — sauf un **gouffre**, qui suit sa ville (Thurvhal,
 v1.0.107), une **acropole** (ville en gradins, Lhynn, v1.0.140) : la butte suit la ville ; le
 palais, posé à la main sur le sommet, se déplace à part ; et un **pic** (ville-tour, Magistrya,
-v1.0.142) : le pic et son lac suivent la ville, le palais du Magister se déplace à part. Dans une case à plusieurs lieux sans position, le marqueur commun déplace le
+v1.0.143) : le pic et son lac suivent la ville, le palais du Magister se déplace à part. Dans une case à plusieurs lieux sans position, le marqueur commun déplace le
 premier ; recommencer pour le suivant.
 
 ### 4.2 Tracer, modifier, brancher, supprimer une route

@@ -351,7 +351,7 @@ namespace tools::world_gen
 	}
 
 	// ---------------------------------------------------------------------------------
-	// v1.0.142 — VILLE-TOUR (relief `pic`, Magistrya). Fonctions pures de la
+	// v1.0.143 — VILLE-TOUR (relief `pic`, Magistrya). Fonctions pures de la
 	// forme : rocher de l'aiguille, cages d'escalier (volées, paliers). La heightmap et les
 	// bâtiments sont posés par BuildTowerCity (Settlements.cpp).
 	// ---------------------------------------------------------------------------------
@@ -471,7 +471,7 @@ namespace tools::world_gen
 
 	double ReliefContribution(const ReliefDef& r, double x, double z)
 	{
-		// Pic (v1.0.142) : sculpté dans la cellule (BuildTowerCity), aucune élévation macro.
+		// Pic (v1.0.143) : sculpté dans la cellule (BuildTowerCity), aucune élévation macro.
 		if (r.type == "pic") return 0.0;
 		// Acropole (v1.0.140) : gradins et escalier, avant le masque des terres émergées.
 		if (r.type == "acropole") return AcropoleOffset(r.acropole, { x, z });
@@ -735,7 +735,7 @@ namespace tools::world_gen
 			// Acropole (v1.0.140) : même masque que les massifs (la côte ne bouge pas) ;
 			// ignorée pendant le calcul du plateau de sa ville (g_acropoleOff).
 			if (r.type == "acropole") { if (!g_acropoleOff) massif += ReliefContribution(r, x, z); continue; }
-			// Pic (v1.0.142) : hors du relief macro (sculpté dans sa cellule, BuildTowerCity).
+			// Pic (v1.0.143) : hors du relief macro (sculpté dans sa cellule, BuildTowerCity).
 			if (r.type == "pic") continue;
 			(r.type == "massif" ? massif : h) += ReliefContribution(r, x, z);
 		}
@@ -1074,7 +1074,7 @@ namespace tools::world_gen
 		for (const Lake& l : lakes)
 		{
 			const double dx = p.x - l.center.x, dz = p.z - l.center.z;
-			// v1.0.142 : île centrale (pic d'une ville-tour) hors de l'eau.
+			// v1.0.143 : île centrale (pic d'une ville-tour) hors de l'eau.
 			if (l.islandRadiusM > 0.0 && dx * dx + dz * dz < l.islandRadiusM * l.islandRadiusM) continue;
 			// EAU.5 : contour réel (polygone bruité ±8 %), plus le cercle moyen.
 			const double r = LakeRadiusAt(l, std::atan2(dz, dx)) + 2.0;
@@ -1194,7 +1194,7 @@ namespace tools::world_gen
 		for (CityDef& c : g.cities)
 		{
 			c.radiusM = CityRadius(c.kind, c.procedural);
-			// v1.0.142 : une ville-tour occupe son pic jusqu'au bord du socle.
+			// v1.0.143 : une ville-tour occupe son pic jusqu'au bord du socle.
 			if (c.tower.enabled) c.radiusM = c.tower.SocleR();
 			const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ c.n, c.e });
 			// Position posée à la main (v1.0.95, « tu places, le jeu suit ») : la ville est
@@ -1308,7 +1308,7 @@ namespace tools::world_gen
 			{
 				if (!IsLakeCode(m.gridRows[static_cast<size_t>(r)][static_cast<size_t>(col)])) continue;
 				const int n = s.northN - r, e = s.westE + col;
-				// v1.0.142 : la case d'une ville-tour a SON lac, centré sur le pic (ci-dessous).
+				// v1.0.143 : la case d'une ville-tour a SON lac, centré sur le pic (ci-dessous).
 				bool towerCell = false;
 				for (const CityDef& c : g.cities) towerCell = towerCell || (c.tower.enabled && c.n == n && c.e == e);
 				if (towerCell) continue;
@@ -1331,7 +1331,7 @@ namespace tools::world_gen
 				}
 				g.lakes.push_back(std::move(lake));
 			}
-		// v1.0.142 — lac d'une ville-tour (Magistrya, « au centre d'un grand lac ») : centré sur le
+		// v1.0.143 — lac d'une ville-tour (Magistrya, « au centre d'un grand lac ») : centré sur le
 		// pic, rayon du relief, île centrale = socle du pic (pas d'eau, lit non creusé).
 		for (const CityDef& c : g.cities)
 		{
@@ -1371,7 +1371,7 @@ namespace tools::world_gen
 			lake.waterY = LakeWaterLevel(m, lake,
 				MeanMacroHeight(m, lake.center, lake.radiusM + 30.0, std::max(4.0, lake.radiusM / 12.0)));
 		}
-		// v1.0.142 : le plateau d'une ville-tour est son socle, au ras de son lac.
+		// v1.0.143 : le plateau d'une ville-tour est son socle, au ras de son lac.
 		for (CityDef& c : g.cities)
 			if (c.tower.enabled)
 				for (const Lake& l : g.lakes)
@@ -2058,7 +2058,7 @@ namespace tools::world_gen
 			const double dx = height.WorldX(i) - lake.center.x, dz = height.WorldZ(j) - lake.center.z;
 			const double rr = std::max(1.0, LakeRadiusAt(lake, std::atan2(dz, dx)));
 			double& h = height.At(i, j);
-			// v1.0.142 : île centrale (pic d'une ville-tour, sculpté ensuite) : lit non creusé.
+			// v1.0.143 : île centrale (pic d'une ville-tour, sculpté ensuite) : lit non creusé.
 			if (d < lake.islandRadiusM) return;
 			if (d <= rr)
 			{
@@ -2123,7 +2123,7 @@ namespace tools::world_gen
 				ForDisc(w.height, c.center, c.radiusM + 6.0, [&](int i, int j, double) { sum += w.height.At(i, j); cnt += 1.0; });
 				c.plateauY = std::max(cnt > 0 ? sum / cnt : sea + 8.0, sea + 5.0);
 			}
-			// v1.0.142 — ville-tour : pic, socle et lac sculptés par BuildTowerCity (après l'eau).
+			// v1.0.143 — ville-tour : pic, socle et lac sculptés par BuildTowerCity (après l'eau).
 			if (c.tower.enabled) continue;
 			if (c.acropole.enabled)
 			{
@@ -2145,7 +2145,7 @@ namespace tools::world_gen
 		{
 			// v1.0.140 : un lieu posé sur le sommet d'une acropole (palais) garde la plateforme.
 			if (OnAcropoleSummit(w.master, p.center, 0.0)) continue;
-			// v1.0.142 : idem sur le sommet d'une ville-tour (palais du Magister).
+			// v1.0.143 : idem sur le sommet d'une ville-tour (palais du Magister).
 			if (OnTowerSummit(w.master, p.center, 0.0)) continue;
 			// v1.0.132 : un château (enceinte, douves) demande un plateau plus large.
 			const double R = p.kind == "chateau" ? 40.0 * p.scale + 8.0 : 40.0;

@@ -1,6 +1,6 @@
 #pragma once
 
-// v1.0.142 — sonde de SURFACE MARCHABLE sous un point (ville-tour de Magistrya).
+// v1.0.143 — sonde de SURFACE MARCHABLE sous un point (ville-tour de Magistrya).
 //
 // Les PNJ d'ambiance à altitude réelle (kEntityStateRealHeight : paliers et volées des
 // cages d'escalier) ne sont pas collés à la heightmap : le client cherche la surface

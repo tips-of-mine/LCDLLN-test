@@ -76,6 +76,10 @@ namespace tools::world_gen
 			// Atelier décors T4 (n° 156) : maisons de brique rouge à pignons.
 			{ "maison_brique_4x6",    "Maison de brique (4x6 m, 2 niveaux)",   4,  6, 2, WallStyle::RedBrick, false },
 			{ "maison_brique_6x8",    "Maison de brique (6x8 m, 3 niveaux)",   6,  8, 3, WallStyle::RedBrick, false },
+			// Atelier Kendrhir (BD T1 p.23 et 26, pages du PDF) : hautes maisons de planches
+			// serrées, et ruine de planches (quartiers incendiés de la ville en reconstruction).
+			{ "maison_haute_planches_6x8", "Maison haute de planches (6x8 m, 3 niveaux)", 6, 8, 3, WallStyle::Plank, false },
+			{ "ruine_planches_6x8",   "Ruine de planches (6x8 m)",             6,  8, 1, WallStyle::Plank,    true  },
 		};
 		return k;
 	}

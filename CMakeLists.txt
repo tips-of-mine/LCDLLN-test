@@ -515,7 +515,7 @@ add_library(engine_core
   src/client/gameplay/TerrainCollider.cpp
   src/client/gameplay/CompositeWorldCollider.cpp
   src/client/gameplay/CellWorldCollider.cpp
-  # v1.0.142 — sonde de surface marchable (PNJ à altitude réelle, ville-tour).
+  # v1.0.143 — sonde de surface marchable (PNJ à altitude réelle, ville-tour).
   src/client/gameplay/WalkableSurfaceProbe.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp

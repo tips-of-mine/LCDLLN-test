@@ -773,7 +773,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/tests/AmbientRoutineTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp)
 
-  # v1.0.142 : format des routines à altitude réelle (spawners.json : realHeight, pathY),
+  # v1.0.143 : format des routines à altitude réelle (spawners.json : realHeight, pathY),
   # aller-retour générateur → SpawnerRuntime (ville-tour de Magistrya).
   lcdlln_add_simple_test(spawner_routine_format_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/tests/SpawnerRoutineFormatTests.cpp
@@ -1330,7 +1330,7 @@ elseif(UNIX)
   lcdlln_add_simple_test(composite_world_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CompositeWorldColliderTests.cpp)
 
-  # v1.0.142 — PNJ à altitude réelle (ville-tour) : posé sur la dalle ou la marche sous
+  # v1.0.143 — PNJ à altitude réelle (ville-tour) : posé sur la dalle ou la marche sous
   # son Y répliqué, pas sur l'étage du dessous ni sur un mur.
   lcdlln_add_simple_test(walkable_surface_probe_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/WalkableSurfaceProbeTests.cpp)

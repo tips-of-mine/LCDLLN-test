@@ -1,4 +1,4 @@
-// spawner_routine_format_tests — v1.0.142 : format des routines à altitude réelle dans
+// spawner_routine_format_tests — v1.0.143 : format des routines à altitude réelle dans
 // zones/<zone>/spawners.json (ville-tour de Magistrya, tools/world_gen Output.cpp).
 //
 // Aller-retour du format : un spawners.json écrit comme le générateur (routine `tour`
@@ -25,7 +25,7 @@ namespace
 		if (!ok) { std::printf("FAIL: %s\n", what); ++g_fail; }
 	}
 
-	/// Spawner de la ville-tour tel que l'écrit tools/world_gen (Output.cpp, v1.0.142).
+	/// Spawner de la ville-tour tel que l'écrit tools/world_gen (Output.cpp, v1.0.143).
 	const char* kSpawners = R"({
   "zoneId": 1,
   "spawners": [

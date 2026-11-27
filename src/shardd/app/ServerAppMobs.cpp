@@ -410,7 +410,7 @@ namespace engine::server
 		constexpr float kArriveRadiusMeters = 1.4f;
 		constexpr float kHomeRadiusMeters = 1.5f;
 
-		// 2 bis) v1.0.142 — routine à altitude réelle (ville-tour) : le PNJ rentre en refaisant
+		// 2 bis) v1.0.143 — routine à altitude réelle (ville-tour) : le PNJ rentre en refaisant
 		//     son chemin à l'envers (paliers et volées), jamais en ligne droite à travers les
 		//     étages ; son altitude suit le segment parcouru.
 		if (def->realHeight)
@@ -463,7 +463,7 @@ namespace engine::server
 		if (!mob.routine.hasTarget)
 			ambient::ChooseNextTarget(*def, mob.routine, mob.homePositionMetersX, mob.homePositionMetersZ, roll, this);
 		(void)MoveMobTowards(mob, mob.routine.target.x, mob.routine.target.z);
-		// v1.0.142 — altitude réelle : interpolée sur le segment origine → cible.
+		// v1.0.143 — altitude réelle : interpolée sur le segment origine → cible.
 		if (def->realHeight)
 			mob.positionMetersY = ambient::RoutineHeightAlong(mob.routine.origin, mob.routine.target,
 				mob.positionMetersX, mob.positionMetersZ);
@@ -617,7 +617,7 @@ namespace engine::server
 			mob.positionMetersZ = home.z;
 			mob.homePositionMetersX = home.x;
 			mob.homePositionMetersZ = home.z;
-			// v1.0.142 — altitude réelle : il apparaît à l'altitude de sa porte (palier) et le
+			// v1.0.143 — altitude réelle : il apparaît à l'altitude de sa porte (palier) et le
 			// client le pose sur la surface marchable, pas sur la heightmap.
 			if (spawner.definition.routine.realHeight && !spawner.definition.routine.path.empty())
 			{

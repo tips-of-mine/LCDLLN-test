@@ -70,7 +70,7 @@ namespace tools::world_gen
 		}
 
 		/// Tournée aléatoire (marche sans demi-tour immédiat) sur le graphe de rues.
-		/// \param ys (optionnel, v1.0.142) reçoit l'altitude réelle de chaque point (nœud
+		/// \param ys (optionnel, v1.0.143) reçoit l'altitude réelle de chaque point (nœud
 		///        d'un graphe 3D ; NaN pour un nœud sans altitude).
 		std::vector<Vec2> RandomTour(const SettlementLayout& L, int start, int steps, Rng& rng, std::vector<double>* ys = nullptr)
 		{
@@ -95,7 +95,7 @@ namespace tools::world_gen
 			return out;
 		}
 
-		/// v1.0.142 — vrai si le graphe de la ville est en 3D (au moins un nœud porte une
+		/// v1.0.143 — vrai si le graphe de la ville est en 3D (au moins un nœud porte une
 		/// altitude réelle : ville-tour).
 		bool LayoutIs3D(const SettlementLayout& L)
 		{
@@ -464,7 +464,7 @@ namespace tools::world_gen
 		for (const SettlementLayout& L : w.layouts) layoutOf[L.cityId] = &L;
 
 		auto addSpawner = [&](SpawnerDef s) {
-			// v1.0.142 : un PNJ à altitude réelle (graphe 3D) garde l'altitude de son point de départ.
+			// v1.0.143 : un PNJ à altitude réelle (graphe 3D) garde l'altitude de son point de départ.
 			if (!s.realHeight) s.y = w.HeightAt(s.position) + 0.05;
 			w.spawners.push_back(std::move(s));
 		};
@@ -479,12 +479,12 @@ namespace tools::world_gen
 			Rng cr(Hash(seed, HashString(c.id.c_str()), 77));
 			// Portes des maisons de la ville (départ / retour des tournées).
 			std::vector<Vec2> doors;
-			std::vector<double> doorY;   // v1.0.142 : altitude réelle (NaN : heightmap)
-			std::vector<int> doorNode;   // v1.0.142 : nœud de départ (-1 : le plus proche en XZ)
+			std::vector<double> doorY;   // v1.0.143 : altitude réelle (NaN : heightmap)
+			std::vector<int> doorNode;   // v1.0.143 : nœud de départ (-1 : le plus proche en XZ)
 			constexpr double kNoY = std::numeric_limits<double>::quiet_NaN();
 			for (const BuildingPlacementDef& b : w.buildings)
 				if (b.cityId == c.id && !b.isInn) { doors.push_back(b.doorPoint); doorY.push_back(kNoY); doorNode.push_back(-1); }
-			// v1.0.136 : entrées des tentes (Camp de l'Oracle, sans bâtiment) ; v1.0.142 : portes
+			// v1.0.136 : entrées des tentes (Camp de l'Oracle, sans bâtiment) ; v1.0.143 : portes
 			// des logis sur les paliers de la ville-tour (altitude et nœud du palier).
 			for (size_t k = 0; k < L->homeDoors.size(); ++k)
 			{
@@ -565,7 +565,7 @@ namespace tools::world_gen
 				s.routineKind = "tour"; s.path = tour;
 				s.pauseMinSec = 3.0; s.pauseMaxSec = 14.0; s.pauseChance = 0.4;
 				s.schedule = (k % 5 == 4) ? "always" : "day";
-				// v1.0.142 — graphe 3D (ville-tour) : altitude réelle de chaque point ; pas
+				// v1.0.143 — graphe 3D (ville-tour) : altitude réelle de chaque point ; pas
 				// d'agenda (ses trajets directs entre deux lieux traverseraient les étages).
 				if (graph3D)
 				{
@@ -615,7 +615,7 @@ namespace tools::world_gen
 					std::vector<Vec2> loop;
 					for (int r : L->plazaRing) loop.push_back(L->nodes[static_cast<size_t>(r)].p);
 					// Rondes alternées : place, puis grande boucle par une rue.
-					// (v1.0.142 : pas de grande boucle sur un graphe 3D — la ronde reste sur la place.)
+					// (v1.0.143 : pas de grande boucle sur un graphe 3D — la ronde reste sur la place.)
 					if (k % 2 == 1 && L->nodes.size() > 12 && !graph3D)
 					{
 						const std::vector<Vec2> ext = RandomTour(*L, L->plazaRing[0], 10, cr);
@@ -643,7 +643,7 @@ namespace tools::world_gen
 				s.hasFacePoint = true;
 				s.facePoint = c.center; // tourné vers la place (les clients)
 				// ETAPE4.4 — journée de marchand : son étal, l'auberge à midi, la place le soir.
-				// (v1.0.142 : pas d'agenda sur un graphe 3D — son domicile serait un palier de la
+				// (v1.0.143 : pas d'agenda sur un graphe 3D — son domicile serait un palier de la
 				// ville-tour, rejoint en ligne droite à travers les étages.)
 				if (!graph3D)
 				{

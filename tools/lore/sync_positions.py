@@ -22,7 +22,7 @@
 #   - Refus (code 2) : position hors de la case, ville ancrée sur un relief (`reliefs`) ;
 #     sauf un gouffre (v1.0.107, type `gouffre`) : il suit la ville posée au fond ; et une
 #     acropole (v1.0.140, type `acropole`) : la butte en gradins suit la ville ; et un pic
-#     (v1.0.142, type `pic`, ville-tour) : le pic et son lac suivent la ville.
+#     (v1.0.143, type `pic`, ville-tour) : le pic et son lac suivent la ville.
 #   - Avertissement : position posée sur une fiche sans entrée au master (ignorée).
 #   - Édition CHIRURGICALE du texte du master (une ligne par position) : la mise en forme
 #     écrite à la main est conservée ; rien d'autre ne change (vérifié avant écriture).
@@ -150,7 +150,7 @@ def main():
     # Villes non déplaçables : ancrées sur une colline ou une crevasse (relief dessiné au
     # centre de la case). Un gouffre (v1.0.107) suit sa ville : position admise ; une
     # acropole (v1.0.140, ville en gradins : Lhynn) aussi.
-    # Un pic (v1.0.142, ville-tour : Magistrya) aussi : le pic et son lac suivent la ville.
+    # Un pic (v1.0.143, ville-tour : Magistrya) aussi : le pic et son lac suivent la ville.
     ancrees = {r.get("city") for r in master.get("reliefs", []) if r.get("city") and r.get("type") not in ("gouffre", "acropole", "pic")}
     entrees = {("cities", c["id"]): c for c in master["cities"]}
     entrees.update({("pois", p["id"]): p for p in master["pois"]})

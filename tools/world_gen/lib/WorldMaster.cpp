@@ -239,8 +239,24 @@ namespace tools::world_gen
 			if (d.secret && !d.startFor.empty()) { err = "master: la ville de depart '" + d.id + "' ne peut pas etre secrete"; return false; }
 			// Mise en page dédiée (v1.0.136) : vide (générique) ou « oracle ».
 			d.layout = GetStr(c, "layout");
-			// v1.0.142 : « ville_tour » (Magistrya ; relief `pic` exigé, contrôlé après les reliefs).
+			// v1.0.143 : « ville_tour » (Magistrya ; relief `pic` exigé, contrôlé après les reliefs).
 			if (!d.layout.empty() && d.layout != "oracle" && d.layout != "ville_tour") { err = "master: layout inconnu pour '" + d.id + "' : " + d.layout; return false; }
+			// Apparence propre (v1.0.142) : objet optionnel, valeurs fermées (une faute de
+			// frappe dans le lore doit casser la génération, pas passer inaperçue).
+			if (const JsonValue* ap = FindObjectMember(c, "apparence"))
+			{
+				if (ap->type != JsonType::Object) { err = "master: apparence de '" + d.id + "' n'est pas un objet"; return false; }
+				d.apparence.enceinte = GetStr(*ap, "enceinte");
+				d.apparence.donjon = GetStr(*ap, "donjon");
+				d.apparence.bati = GetStr(*ap, "bati");
+				d.apparence.vestigesSiege = GetBool(*ap, "vestiges_siege", false);
+				if (!d.apparence.enceinte.empty() && d.apparence.enceinte != "rempart_bois")
+				{ err = "master: apparence.enceinte inconnue pour '" + d.id + "' : " + d.apparence.enceinte; return false; }
+				if (!d.apparence.donjon.empty() && d.apparence.donjon != "tour_fleche")
+				{ err = "master: apparence.donjon inconnu pour '" + d.id + "' : " + d.apparence.donjon; return false; }
+				if (!d.apparence.bati.empty() && d.apparence.bati != "planches")
+				{ err = "master: apparence.bati inconnu pour '" + d.id + "' : " + d.apparence.bati; return false; }
+			}
 			out.cities.push_back(std::move(d));
 		}
 		// Une seule ville de départ par faction (v1.0.61 : start_for porte des
@@ -479,7 +495,7 @@ namespace tools::world_gen
 				// Le relief est dessiné au centre de la case de sa ville : une ville perchée
 				// ou au fond d'une crevasse ne peut pas être déplacée à la main (v1.0.95).
 				// Gouffre (v1.0.107) : il SUIT la ville (position manuelle admise).
-				// Acropole (v1.0.140) et pic (v1.0.142) aussi : le relief suit la ville.
+				// Acropole (v1.0.140) et pic (v1.0.143) aussi : le relief suit la ville.
 				if (city->hasPosition && d.type != "gouffre" && d.type != "acropole" && d.type != "pic")
 				{
 					err = "master: ville '" + d.cityId + "' ancree sur le relief '" + d.id + "' : position manuelle interdite"; return false;
@@ -530,7 +546,7 @@ namespace tools::world_gen
 					out.reliefs.push_back(std::move(d));
 					continue;
 				}
-				// Pic (v1.0.142, ville-tour : Magistrya, BD-T2 p.19-27 : aiguille de
+				// Pic (v1.0.143, ville-tour : Magistrya, BD-T2 p.19-27 : aiguille de
 				// bâtiments empilés et cages d'escalier, TowerShape). Le pic suit la ville (position
 				// manuelle admise) ; il n'entre pas dans le relief macro : il est sculpté dans la
 				// heightmap de sa cellule par BuildTowerCity. La ville doit avoir la mise en page
@@ -656,10 +672,10 @@ namespace tools::world_gen
 			for (const ReliefDef& r : out.reliefs)
 				if (r.type == "gouffre" || r.type == "crevasse" || r.type == "colline")
 					out.calmZones.push_back({ r.center, std::max({ r.footRadiusM, r.floorRadiusM * 3.0, 1500.0 }) });
-			// v1.0.142 : lac de la ville-tour et ses rives (pas de source de ruisseau).
+			// v1.0.143 : lac de la ville-tour et ses rives (pas de source de ruisseau).
 			for (const ReliefDef& r : out.reliefs)
 				if (r.type == "pic") out.calmZones.push_back({ r.center, r.tower.lakeRadiusM * 1.1 + kTowerRoadReachM });
-			// v1.0.142 : mise en page « ville_tour » <=> relief `pic` ancré sur la ville.
+			// v1.0.143 : mise en page « ville_tour » <=> relief `pic` ancré sur la ville.
 			for (const CityDef& c : out.cities)
 				if ((c.layout == "ville_tour") != c.tower.enabled)
 				{

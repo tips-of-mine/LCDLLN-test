@@ -295,7 +295,7 @@ namespace engine
 		/// renvoie sol + 0.9 m, cohérent avec l'offset -0.9 (centre→pieds) du
 		/// rendu skinné. Affichage uniquement : le Y serveur reste l'autorité
 		/// gameplay (les tests de portée serveur sont en XZ).
-		/// v1.0.142 — PNJ à ALTITUDE RÉELLE (bit kEntityStateRealHeight : paliers et volées
+		/// v1.0.143 — PNJ à ALTITUDE RÉELLE (bit kEntityStateRealHeight : paliers et volées
 		/// de la ville-tour) : posé sur la surface marchable (dalle, marche) trouvée sous son
 		/// Y répliqué, pas sur la heightmap (qui est le rocher, des dizaines de mètres plus bas).
 		/// \param isPlayer    true si l'entité est un joueur (playerClientId != 0).

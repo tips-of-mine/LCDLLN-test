@@ -84,7 +84,7 @@ namespace tools::world_gen
 		double FootRadiusM() const { return topRadiusM + terraces * bankM + (terraces - 1) * terraceM; }
 	};
 
-	/// v1.0.142 — VILLE-TOUR (relief `pic` du master, Magistrya, BD-T2 p.19-27) : AIGUILLE
+	/// v1.0.143 — VILLE-TOUR (relief `pic` du master, Magistrya, BD-T2 p.19-27) : AIGUILLE
 	/// rocheuse au centre d'un lac, couverte de BÂTIMENTS DISTINCTS empilés jusqu'au palais du
 	/// sommet, séparés par des CAGES D'ESCALIER praticables (volées en zigzag et paliers) qui
 	/// montent du socle au sommet. Silhouette : cône étroit ; l'enveloppe des façades a pour
@@ -174,18 +174,39 @@ namespace tools::world_gen
 		/// Mise en page dédiée (v1.0.136, clé `layout` du master, défaut vide = agglomération
 		/// générique de BuildSettlements) : « oracle » = Camp de l'Oracle bâti selon le plan
 		/// (rocher, escaliers, océan de tentes, menhirs ; Oracle.cpp, LORE_BD §16.62) ;
-		/// v1.0.142 : « ville_tour » = ville-tour sur une aiguille rocheuse au milieu d'un lac
-		/// (Magistrya ; exige un relief `pic` ancré sur la ville, Settlements.cpp, LORE_BD §16.68 ;
-		/// v1.0.142 : bâtiments empilés et cages d'escalier, TowerShape).
+		/// v1.0.143 : « ville_tour » = ville-tour sur une aiguille rocheuse au milieu d'un lac
+		/// (Magistrya ; exige un relief `pic` ancré sur la ville, Settlements.cpp, LORE_BD §16.69 ;
+		/// v1.0.143 : bâtiments empilés et cages d'escalier, TowerShape).
 		std::string layout;
 		/// v1.0.140 — ville en gradins (relief `acropole` du master) : vide si la ville n'en
 		/// a pas. Le plateau de la ville (plateauY) reste celui de la ville basse ; le sol
 		/// d'un point de la ville vaut plateauY + AcropoleOffset(acropole, point).
 		AcropoleShape acropole;
-		/// v1.0.142 — ville-tour (relief `pic` du master) : vide si la ville n'en a pas. Le
+		/// v1.0.143 — ville-tour (relief `pic` du master) : vide si la ville n'en a pas. Le
 		/// plateau (plateauY) est le SOCLE (quai au ras du lac) ; le sol (rocher) d'un point de
 		/// l'aiguille vaut plateauY + TowerOffset(tower, point).
 		TowerShape tower;
+		/// Apparence propre à la ville (v1.0.142, clé `apparence` du master, objet recopié
+		/// du lore par tools/lore/sync_apparence.py ; absente = règles génériques par
+		/// type, race et état). Ex. Kendrhir (BD T1) :
+		/// `{ "enceinte": "rempart_bois", "donjon": "tour_fleche", "bati": "planches",
+		///    "vestiges_siege": true }`.
+		struct Appearance
+		{
+			/// Enceinte : vide = règle générique (rempart / palissade selon le type) ;
+			/// « rempart_bois » = rempart de rondins de 20 m, tours, contreforts et portes
+			/// de bois ; en état « reconstruction », pans neufs, calcinés et brèches.
+			std::string enceinte;
+			/// Édifice du point haut : vide = aucun ; « tour_fleche » = donjon à flèche
+			/// (flèche en chantier si la ville est en reconstruction).
+			std::string donjon;
+			/// Bâti : vide = palette générique ; « planches » = maisons de planches
+			/// majoritaires (≈ 70 %), ruines de planches en reconstruction.
+			std::string bati;
+			/// Restes d'un siège passé hors les murs (tour de siège effondrée, mangonneaux
+			/// brûlés, mantelets, pieux, échelles), rares et loin des routes.
+			bool vestigesSiege = false;
+		} apparence;
 	};
 
 	/// Point d'intérêt (section `pois`).
@@ -287,7 +308,7 @@ namespace tools::world_gen
 	struct ReliefDef
 	{
 		std::string id;
-		std::string type;          ///< colline|crevasse|massif|gouffre|falaise|acropole (v1.0.140)|pic (v1.0.142)
+		std::string type;          ///< colline|crevasse|massif|gouffre|falaise|acropole (v1.0.140)|pic (v1.0.143)
 		std::string cityId;        ///< ville ancrée (posée au centre de sa case) ; vide pour un massif
 		std::string cell;          ///< massif : case d'ancrage (identifiant N019_W013)
 		double offsetXM = 0.0;     ///< massif : décalage du centre vers l'est (m)
@@ -323,7 +344,7 @@ namespace tools::world_gen
 		std::vector<double> galleryAlong; ///< gouffre : abscisse curviligne (m) de chaque point de la galerie
 		double galleryExitM = 0.0; ///< gouffre : abscisse (m) où la galerie sort du fond et de ses parois (le sol y quitte floorY)
 		AcropoleShape acropole;    ///< acropole (v1.0.140) : forme résolue (sommet, gradins, escalier)
-		TowerShape tower;          ///< pic (v1.0.142) : forme résolue (aiguille, cages, socle, lac)
+		TowerShape tower;          ///< pic (v1.0.143) : forme résolue (aiguille, cages, socle, lac)
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).

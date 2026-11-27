@@ -1,4 +1,4 @@
-// walkable_surface_probe_tests — v1.0.142 : un PNJ à altitude réelle (ville-tour) est posé
+// walkable_surface_probe_tests — v1.0.143 : un PNJ à altitude réelle (ville-tour) est posé
 // sur la surface marchable sous son Y répliqué : la dalle d'un palier, la marche d'une
 // volée, et pas sur le palier de l'étage du dessous ni sur un mur.
 #include "src/client/gameplay/WalkableSurfaceProbe.h"

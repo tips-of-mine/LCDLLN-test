@@ -104,7 +104,7 @@ int main()
 		for (int i = 0; i < 4000; ++i) if (RollPauseSeconds(d, Roll, &seed) > 0.0f) ++pauses;
 		Check(pauses > 1200 && pauses < 1600, "tour : frequence de pause ~35 %");
 	}
-	// v1.0.142 — altitude réelle : interpolation le long du segment (ville-tour : volée de
+	// v1.0.143 — altitude réelle : interpolation le long du segment (ville-tour : volée de
 	// 4,17 m sur 5,8 m), bornée aux extrémités.
 	{
 		const RoutinePoint a{ 0.0f, 0.0f, 10.0f }, b{ 6.0f, 0.0f, 14.0f };
@@ -113,7 +113,7 @@ int main()
 			"hauteur : bornee aux extremites");
 		Check(std::fabs(RoutineHeightAlong(b, b, 1.0f, 1.0f) - 14.0f) < 1e-4f, "hauteur : segment degenere");
 	}
-	// v1.0.142 — origine du segment en cours et retour au logis à l'envers (jamais en ligne
+	// v1.0.143 — origine du segment en cours et retour au logis à l'envers (jamais en ligne
 	// droite à travers les étages).
 	{
 		RoutineDefinition d;

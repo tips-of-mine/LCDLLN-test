@@ -2415,7 +2415,7 @@ namespace engine
 		{
 			return serverY; // joueur : centre capsule fiable répliqué par le shard
 		}
-		// v1.0.142 — altitude réelle : surface marchable sous le Y du shard (pieds du PNJ),
+		// v1.0.143 — altitude réelle : surface marchable sous le Y du shard (pieds du PNJ),
 		// cherchée dans le même collisionneur que le joueur ; à défaut, le Y du shard.
 		if ((stateFlags & engine::server::kEntityStateRealHeight) != 0u)
 		{

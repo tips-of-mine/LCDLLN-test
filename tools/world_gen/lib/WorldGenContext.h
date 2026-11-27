@@ -111,7 +111,7 @@ namespace tools::world_gen
 		double radiusM = 20.0;
 		double waterY = 0.0;
 		std::vector<Vec2> polygon;    ///< CCW dans XZ
-		/// v1.0.142 — île centrale (rayon, m ; 0 = aucune) : le pic d'une ville-tour. Le lit
+		/// v1.0.143 — île centrale (rayon, m ; 0 = aucune) : le pic d'une ville-tour. Le lit
 		/// n'y est pas creusé (CarveLake) et ce n'est pas de l'eau (World::IsWater).
 		double islandRadiusM = 0.0;
 	};
@@ -206,7 +206,7 @@ namespace tools::world_gen
 	{
 		Vec2 p;
 		std::vector<int> links;
-		/// v1.0.142 — altitude RÉELLE du nœud (m, sol marchable : palier, volée, plateforme),
+		/// v1.0.143 — altitude RÉELLE du nœud (m, sol marchable : palier, volée, plateforme),
 		/// NaN = sol de la heightmap (cas général). Un graphe 3D (ville-tour) donne une
 		/// altitude à chacun de ses nœuds ; les routines qui le parcourent la transmettent au
 		/// shard (spawners.json, `routine.realHeight` / `pathY`).
@@ -231,10 +231,10 @@ namespace tools::world_gen
 		/// v1.0.136 — entrées des tentes (Camp de l'Oracle : pas de bâtiment) : domiciles des
 		/// villageois en plus des portes des bâtiments de la ville (Population.cpp).
 		std::vector<Vec2> homeDoors;
-		/// v1.0.142 — altitude réelle de chaque entrée de homeDoors (même taille, ou vide :
+		/// v1.0.143 — altitude réelle de chaque entrée de homeDoors (même taille, ou vide :
 		/// sol de la heightmap) : portes des bâtiments de la ville-tour sur les paliers.
 		std::vector<double> homeDoorY;
-		/// v1.0.142 — nœud du graphe le plus proche de chaque entrée de homeDoors (même
+		/// v1.0.143 — nœud du graphe le plus proche de chaque entrée de homeDoors (même
 		/// taille, ou vide : recherche en XZ), pour un graphe 3D où plusieurs paliers se
 		/// superposent à la même position XZ.
 		std::vector<int> homeDoorNode;
@@ -255,7 +255,7 @@ namespace tools::world_gen
 		// --- routine (PNJ d'ambiance) ; kind vide = IA de créature historique ---
 		std::string routineKind;            ///< tour|patrol|post|wander
 		std::vector<Vec2> path;
-		/// v1.0.142 — altitude réelle de chaque point de \p path (même taille) quand
+		/// v1.0.143 — altitude réelle de chaque point de \p path (même taille) quand
 		/// \p realHeight : le shard suit cette altitude (paliers et volées de la ville-tour)
 		/// et le client pose le PNJ sur la surface marchable sous elle (pas sur la heightmap).
 		std::vector<double> pathY;
@@ -413,19 +413,19 @@ namespace tools::world_gen
 	/// v1.0.140 — vrai si \p p est sur la plateforme du sommet d'une acropole du master
 	/// (rayon topRadiusM + \p marginM). Terrain.cpp
 	bool OnAcropoleSummit(const WorldMaster& m, Vec2 p, double marginM);
-	/// v1.0.142 — ville-tour : hauteur (m) du socle au-dessus de la surface du lac (le
+	/// v1.0.143 — ville-tour : hauteur (m) du socle au-dessus de la surface du lac (le
 	/// tablier du ponton y est posé : les pieux du Boardwalk_Deck_1, 1,6 m, touchent l'eau).
 	inline constexpr double kTowerSocleAboveWaterM = 1.6;
-	/// v1.0.142 — ville-tour : distance (m) entre la rive du lac et l'ancre des routes (au-delà
+	/// v1.0.143 — ville-tour : distance (m) entre la rive du lac et l'ancre des routes (au-delà
 	/// de la zone interdite aux routes autour d'un lac sur la grille de 250 m, rayon + 60 m) ;
 	/// un chemin pavé relie l'ancre à la tête du ponton.
 	inline constexpr double kTowerRoadReachM = 260.0;
-	/// v1.0.142 — ville-tour : retrait horizontal (m) du rocher sous l'enveloppe des façades.
+	/// v1.0.143 — ville-tour : retrait horizontal (m) du rocher sous l'enveloppe des façades.
 	/// Assez grand pour que le rocher reste SOUS chaque palier de cage (contrôlé par le test).
 	inline constexpr double kTowerRockInsetM = 18.0;
-	/// v1.0.142 — ville-tour : profondeur (m, radiale) d'un palier de cage d'escalier.
+	/// v1.0.143 — ville-tour : profondeur (m, radiale) d'un palier de cage d'escalier.
 	inline constexpr double kTowerLandingM = 1.8;
-	/// v1.0.142 — ville-tour : volée d'escalier Stair_Interior_Rails (échelle 1 : montée 3,95 m,
+	/// v1.0.143 — ville-tour : volée d'escalier Stair_Interior_Rails (échelle 1 : montée 3,95 m,
 	/// marches de -0,24 à +4,32 m le long de -Z local, largeur 1,72 m) ; mise à l'échelle pour
 	/// monter exactement un tiers de niveau.
 	inline constexpr double kTowerStairRiseM = 3.95;
@@ -433,7 +433,7 @@ namespace tools::world_gen
 	inline constexpr double kTowerStairBackM = 4.32;
 	inline constexpr double kTowerStairHalfWidthM = 0.86;
 
-	/// v1.0.142 — une volée d'une cage d'escalier de la ville-tour (repère de la cage : rayon
+	/// v1.0.143 — une volée d'une cage d'escalier de la ville-tour (repère de la cage : rayon
 	/// depuis l'axe de l'aiguille, décalage tangentiel \p lane).
 	struct TowerFlight
 	{
@@ -446,7 +446,7 @@ namespace tools::world_gen
 		double yBottom = 0.0;        ///< altitude du pied (m au-dessus du socle)
 		double rise = 0.0;           ///< montée (m)
 	};
-	/// v1.0.142 — un palier d'une cage d'escalier (bande radiale [rIn, rOut], toute la largeur).
+	/// v1.0.143 — un palier d'une cage d'escalier (bande radiale [rIn, rOut], toute la largeur).
 	struct TowerLanding
 	{
 		int    level = 0;
@@ -454,38 +454,38 @@ namespace tools::world_gen
 		double rIn = 0.0, rOut = 0.0;
 		bool   outer = true;         ///< palier côté lac (sinon côté aiguille)
 	};
-	/// v1.0.142 — ville-tour : direction (radians) de la cage \p j ∈ [0, shaftsLow).
+	/// v1.0.143 — ville-tour : direction (radians) de la cage \p j ∈ [0, shaftsLow).
 	double TowerShaftAngle(const TowerShape& t, int j);
-	/// v1.0.142 — ville-tour : nombre de niveaux de bâtiments que la cage \p j gravit. Les
+	/// v1.0.143 — ville-tour : nombre de niveaux de bâtiments que la cage \p j gravit. Les
 	/// cages continues (j multiple de shaftsLow / shaftsHigh) vont jusqu'au sommet, sauf celle
 	/// qui fait face au laboratoire du palais (à l'opposé de entryRad), qui s'arrête un niveau
 	/// sous le sommet ; les autres s'arrêtent un niveau sous la coupure (SplitTier()).
 	int TowerShaftTiers(const TowerShape& t, int j);
-	/// v1.0.142 — ville-tour : vrai si la cage \p j existe au niveau \p tier (le vide de la cage
+	/// v1.0.143 — ville-tour : vrai si la cage \p j existe au niveau \p tier (le vide de la cage
 	/// monte jusqu'au plafond du dernier niveau gravi).
 	bool TowerShaftOpenAt(const TowerShape& t, int j, int tier);
-	/// v1.0.142 — ville-tour : rayon du bord extérieur d'une cage au niveau \p tier : en retrait
+	/// v1.0.143 — ville-tour : rayon du bord extérieur d'une cage au niveau \p tier : en retrait
 	/// de toutes les façades voisines (un bâtiment couvre au plus trois niveaux).
 	double TowerShaftOuterR(const TowerShape& t, int tier);
-	/// v1.0.142 — ville-tour : échelle des volées (montée d'un tiers de niveau).
+	/// v1.0.143 — ville-tour : échelle des volées (montée d'un tiers de niveau).
 	double TowerStairScale(const TowerShape& t);
-	/// v1.0.142 — ville-tour : volées de la cage \p j, du socle à son dernier palier (zigzag :
+	/// v1.0.143 — ville-tour : volées de la cage \p j, du socle à son dernier palier (zigzag :
 	/// volée paire vers l'aiguille sur la voie gauche, impaire vers le lac sur la voie droite).
 	/// Fonction pure. Terrain.cpp
 	std::vector<TowerFlight> TowerShaftFlights(const TowerShape& t, int j);
-	/// v1.0.142 — ville-tour : paliers de la cage \p j (un par niveau de palier, du socle au
+	/// v1.0.143 — ville-tour : paliers de la cage \p j (un par niveau de palier, du socle au
 	/// dernier) ; chacun couvre l'arrivée de la volée du dessous et le départ de celle du
 	/// dessus, plus kTowerLandingM. Fonction pure. Terrain.cpp
 	std::vector<TowerLanding> TowerShaftLandings(const TowerShape& t, int j);
-	/// v1.0.142 — ville-tour : altitude du ROCHER (m, au-dessus du socle) en \p p (global) :
+	/// v1.0.143 — ville-tour : altitude du ROCHER (m, au-dessus du socle) en \p p (global) :
 	/// cône kTowerRockInsetM en retrait de l'enveloppe, sommet un demi-mètre sous la
 	/// plateforme du palais, socle (0) jusqu'à SocleR(), puis -1e9 au-delà (le lac).
 	/// Fonction pure. Terrain.cpp
 	double TowerOffset(const TowerShape& t, Vec2 p);
-	/// v1.0.142 — vrai si \p p est sur la plateforme du sommet d'un pic du master (rayon
+	/// v1.0.143 — vrai si \p p est sur la plateforme du sommet d'un pic du master (rayon
 	/// topRadiusM + \p marginM). Terrain.cpp
 	bool OnTowerSummit(const WorldMaster& m, Vec2 p, double marginM);
-	/// v1.0.142 — point où les routes du monde aboutissent pour la ville \p c : son centre,
+	/// v1.0.143 — point où les routes du monde aboutissent pour la ville \p c : son centre,
 	/// sauf pour une ville-tour (au milieu d'un lac) : sur la rive, dans la direction du
 	/// ponton, kTowerRoadReachM au-delà du rayon du lac. Fonction pure. Terrain.cpp
 	Vec2 CityRoadAnchor(const CityDef& c);
@@ -809,7 +809,7 @@ namespace tools::world_gen
 	/// Rayon (m) du chemin de ronde du Camp de l'Oracle : les routes s'y arrêtent, sur le
 	/// terrain (BuildOracleCamp) comme sur la carte (BuildMapFeatures). v1.0.136.
 	inline constexpr double kOracleRoadStopM = 215.0;
-	/// v1.0.142 — Magistrya, ville-tour (mise en page `layout: "ville_tour"`, relief `pic`) :
+	/// v1.0.143 — Magistrya, ville-tour (mise en page `layout: "ville_tour"`, relief `pic`) :
 	/// remplace l'agglomération générique. Sculpte l'aiguille dans la heightmap (socle au ras du
 	/// lac, rocher en retrait de l'enveloppe), pose les bâtiments empilés (façades, flancs, toits
 	/// d'ardoise, tourelles), les cages d'escalier (volées, paliers, parapets, portes et torches,

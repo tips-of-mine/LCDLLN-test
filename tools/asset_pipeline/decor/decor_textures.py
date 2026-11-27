@@ -1325,6 +1325,14 @@ TEXTURES.update({
 })
 
 
+# Atelier Kendrhir (BD T1, PDF p.23-42) : bois calciné des pans incendiés (brun-gris chaud,
+# jamais noir : direction artistique) et bois neuf des tronçons reconstruits.
+TEXTURES.update({
+    "Wood_Charred": lambda: planks("Wood_Charred", 117, [(0, (46, 38, 32)), (0.5, (78, 66, 56)), (1, (112, 96, 80))], 0.22, dark_seam=0.6),
+    "Wood_Fresh": lambda: planks("Wood_Fresh", 118, [(0, (150, 112, 70)), (0.5, (190, 150, 102)), (1, (220, 186, 136))], 0.2),
+})
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

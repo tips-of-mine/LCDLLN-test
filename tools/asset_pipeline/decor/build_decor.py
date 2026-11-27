@@ -830,7 +830,7 @@ KIT_STYLES = {
     # Atelier décors T4 (n° 156) : maisons de brique rouge de Dis.
     "redbrick": {"MI_Plaster": "Brick_Red", "MI_UnevenBrick": "Brick_Red", "MI_WoodTrim": "Wood_Dark",
                  "MI_Brick": "Brick_Red", "MI_RockTrim": "Stone_Carved", "MI_RoundTiles": "Shingle"},
-    # Atelier décors T2 (n° 232, 233) : pierre ocre orangé de Magistrya (grès, brique ocre).
+    # Atelier décors T2 (n° 239, 240) : pierre ocre orangé de Magistrya (grès, brique ocre).
     "sandstone": {"MI_Plaster": "Stone_Sandstone", "MI_UnevenBrick": "Stone_Sandstone", "MI_WoodTrim": "Wood_Dark",
                   "MI_Brick": "Stone_Sandstone", "MI_RockTrim": "Stone_Sandstone", "MI_RoundTiles": "Shingle_Slate"},
     "ochrebrick": {"MI_Plaster": "Brick_Ochre", "MI_UnevenBrick": "Brick_Ochre", "MI_WoodTrim": "Wood_Dark",

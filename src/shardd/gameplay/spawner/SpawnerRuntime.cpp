@@ -406,7 +406,7 @@ namespace engine::server
 
 		/// Monde vivant — décode `routine` : { kind, schedule, path:[[x,z]…],
 		/// pauseMinSec, pauseMaxSec, pauseChance, wanderRadiusMeters, pingPong,
-		/// face:[x,z], realHeight?, pathY?:[y…] (v1.0.142) }. \return false si kind/schedule inconnus ou chemin absent
+		/// face:[x,z], realHeight?, pathY?:[y…] (v1.0.143) }. \return false si kind/schedule inconnus ou chemin absent
 		/// pour tour/patrol.
 		bool ParseRoutine(const JsonValue& v, ambient::RoutineDefinition& out)
 		{
@@ -448,7 +448,7 @@ namespace engine::server
 			}
 			if ((out.kind == ambient::RoutineKind::Tour || out.kind == ambient::RoutineKind::Patrol) && out.path.size() < 2)
 				return false;
-			// v1.0.142 — routine à altitude réelle (ville-tour) : `realHeight: true` et
+			// v1.0.143 — routine à altitude réelle (ville-tour) : `realHeight: true` et
 			// `pathY: [y…]` (une altitude par point du chemin). Champs additifs : absents ou
 			// incohérents (taille, valeur non numérique), la routine garde l'altitude du spawner.
 			if (const JsonValue* rh = FindObjectMember(v, "realHeight"); rh != nullptr && rh->type == JsonType::Bool && rh->boolValue)

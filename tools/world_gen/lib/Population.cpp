@@ -16,6 +16,7 @@
 #include "src/shared/world/instances/Buildings.h"
 
 #include <algorithm>
+#include <limits>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -69,13 +70,16 @@ namespace tools::world_gen
 		}
 
 		/// Tournée aléatoire (marche sans demi-tour immédiat) sur le graphe de rues.
-		std::vector<Vec2> RandomTour(const SettlementLayout& L, int start, int steps, Rng& rng)
+		/// \param ys (optionnel, v1.0.142) reçoit l'altitude réelle de chaque point (nœud
+		///        d'un graphe 3D ; NaN pour un nœud sans altitude).
+		std::vector<Vec2> RandomTour(const SettlementLayout& L, int start, int steps, Rng& rng, std::vector<double>* ys = nullptr)
 		{
 			std::vector<Vec2> out;
 			if (L.nodes.empty()) return out;
 			int cur = std::clamp(start, 0, static_cast<int>(L.nodes.size()) - 1);
 			int prev = -1;
 			out.push_back(L.nodes[static_cast<size_t>(cur)].p);
+			if (ys) ys->push_back(L.nodes[static_cast<size_t>(cur)].y);
 			for (int s = 0; s < steps; ++s)
 			{
 				const auto& links = L.nodes[static_cast<size_t>(cur)].links;
@@ -86,8 +90,18 @@ namespace tools::world_gen
 				const int nxt = options[rng.Below(static_cast<uint32_t>(options.size()))];
 				prev = cur; cur = nxt;
 				out.push_back(L.nodes[static_cast<size_t>(cur)].p);
+				if (ys) ys->push_back(L.nodes[static_cast<size_t>(cur)].y);
 			}
 			return out;
+		}
+
+		/// v1.0.142 — vrai si le graphe de la ville est en 3D (au moins un nœud porte une
+		/// altitude réelle : ville-tour).
+		bool LayoutIs3D(const SettlementLayout& L)
+		{
+			for (const StreetNode& n : L.nodes)
+				if (n.HasY()) return true;
+			return false;
 		}
 
 		int NearestNode(const SettlementLayout& L, Vec2 p)
@@ -450,7 +464,8 @@ namespace tools::world_gen
 		for (const SettlementLayout& L : w.layouts) layoutOf[L.cityId] = &L;
 
 		auto addSpawner = [&](SpawnerDef s) {
-			s.y = w.HeightAt(s.position) + 0.05;
+			// v1.0.142 : un PNJ à altitude réelle (graphe 3D) garde l'altitude de son point de départ.
+			if (!s.realHeight) s.y = w.HeightAt(s.position) + 0.05;
 			w.spawners.push_back(std::move(s));
 		};
 
@@ -464,11 +479,21 @@ namespace tools::world_gen
 			Rng cr(Hash(seed, HashString(c.id.c_str()), 77));
 			// Portes des maisons de la ville (départ / retour des tournées).
 			std::vector<Vec2> doors;
+			std::vector<double> doorY;   // v1.0.142 : altitude réelle (NaN : heightmap)
+			std::vector<int> doorNode;   // v1.0.142 : nœud de départ (-1 : le plus proche en XZ)
+			constexpr double kNoY = std::numeric_limits<double>::quiet_NaN();
 			for (const BuildingPlacementDef& b : w.buildings)
-				if (b.cityId == c.id && !b.isInn) doors.push_back(b.doorPoint);
-			// v1.0.136 : entrées des tentes (Camp de l'Oracle, sans bâtiment).
-			doors.insert(doors.end(), L->homeDoors.begin(), L->homeDoors.end());
-			if (doors.empty()) doors.push_back(L->nodes[0].p);
+				if (b.cityId == c.id && !b.isInn) { doors.push_back(b.doorPoint); doorY.push_back(kNoY); doorNode.push_back(-1); }
+			// v1.0.136 : entrées des tentes (Camp de l'Oracle, sans bâtiment) ; v1.0.142 : portes
+			// des logis sur les paliers de la ville-tour (altitude et nœud du palier).
+			for (size_t k = 0; k < L->homeDoors.size(); ++k)
+			{
+				doors.push_back(L->homeDoors[k]);
+				doorY.push_back(k < L->homeDoorY.size() ? L->homeDoorY[k] : kNoY);
+				doorNode.push_back(k < L->homeDoorNode.size() ? L->homeDoorNode[k] : -1);
+			}
+			if (doors.empty()) { doors.push_back(L->nodes[0].p); doorY.push_back(L->nodes[0].y); doorNode.push_back(0); }
+			const bool graph3D = LayoutIs3D(*L);
 
 			if (ruin)
 			{
@@ -523,11 +548,15 @@ namespace tools::world_gen
 			const int villagers = VillagersFor(c);
 			for (int k = 0; k < villagers; ++k)
 			{
-				const Vec2 door = doors[cr.Below(static_cast<uint32_t>(doors.size()))];
+				const size_t di = cr.Below(static_cast<uint32_t>(doors.size()));
+				const Vec2 door = doors[di];
 				std::vector<Vec2> tour{ door };
-				const std::vector<Vec2> walk = RandomTour(*L, NearestNode(*L, door), 5 + static_cast<int>(cr.Below(6)), cr);
+				std::vector<double> tourY{ doorY[di] };
+				const int startNode = doorNode[di] >= 0 ? doorNode[di] : NearestNode(*L, door);
+				const std::vector<Vec2> walk = RandomTour(*L, startNode, 5 + static_cast<int>(cr.Below(6)), cr, &tourY);
 				tour.insert(tour.end(), walk.begin(), walk.end());
 				tour.push_back(door);
+				tourY.push_back(doorY[di]);
 				SpawnerDef s;
 				s.id = "amb_" + c.id + "_villageois_" + std::to_string(k);
 				s.archetypeId = (k % 2) ? ids.villagerF : ids.villagerM;
@@ -536,9 +565,19 @@ namespace tools::world_gen
 				s.routineKind = "tour"; s.path = tour;
 				s.pauseMinSec = 3.0; s.pauseMaxSec = 14.0; s.pauseChance = 0.4;
 				s.schedule = (k % 5 == 4) ? "always" : "day";
+				// v1.0.142 — graphe 3D (ville-tour) : altitude réelle de chaque point ; pas
+				// d'agenda (ses trajets directs entre deux lieux traverseraient les étages).
+				if (graph3D)
+				{
+					s.realHeight = true;
+					s.pathY.clear();
+					for (size_t q = 0; q < tour.size(); ++q)
+						s.pathY.push_back(std::isnan(tourY[q]) ? w.HeightAt(tour[q]) + 0.05 : tourY[q]);
+					s.y = s.pathY.front();
+				}
 				// ETAPE4.4 — villageois de jour : une journée de métier (fermier, artisan,
 				// flâneur) ; les noctambules (« always ») gardent leur tournée.
-				if (s.schedule == "day")
+				if (s.schedule == "day" && !graph3D)
 				{
 					static const char* kTrades[] = { "fermier", "artisan", "flaneur" };
 					s.agendaProfession = kTrades[k % 3];
@@ -576,7 +615,8 @@ namespace tools::world_gen
 					std::vector<Vec2> loop;
 					for (int r : L->plazaRing) loop.push_back(L->nodes[static_cast<size_t>(r)].p);
 					// Rondes alternées : place, puis grande boucle par une rue.
-					if (k % 2 == 1 && L->nodes.size() > 12)
+					// (v1.0.142 : pas de grande boucle sur un graphe 3D — la ronde reste sur la place.)
+					if (k % 2 == 1 && L->nodes.size() > 12 && !graph3D)
 					{
 						const std::vector<Vec2> ext = RandomTour(*L, L->plazaRing[0], 10, cr);
 						loop.insert(loop.end(), ext.begin(), ext.end());
@@ -603,9 +643,14 @@ namespace tools::world_gen
 				s.hasFacePoint = true;
 				s.facePoint = c.center; // tourné vers la place (les clients)
 				// ETAPE4.4 — journée de marchand : son étal, l'auberge à midi, la place le soir.
-				s.agendaProfession = "marchand";
-				commonPlaces(s, doors[ar.Below(static_cast<uint32_t>(doors.size()))]);
-				s.agendaPlaces["market"] = { L->stallFronts[k] };
+				// (v1.0.142 : pas d'agenda sur un graphe 3D — son domicile serait un palier de la
+				// ville-tour, rejoint en ligne droite à travers les étages.)
+				if (!graph3D)
+				{
+					s.agendaProfession = "marchand";
+					commonPlaces(s, doors[ar.Below(static_cast<uint32_t>(doors.size()))]);
+					s.agendaPlaces["market"] = { L->stallFronts[k] };
+				}
 				addSpawner(s);
 				++w.report.ambientNpcs;
 			}

@@ -1,4 +1,5 @@
 ﻿#include "src/client/app/Engine.h"
+#include "src/client/gameplay/WalkableSurfaceProbe.h"
 #include "src/client/app/EngineHelpers.h"
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
@@ -2408,11 +2409,22 @@ namespace engine
 	}
 
 	float Engine::ResolveRemoteDisplayCenterY(bool isPlayer, float serverY,
-	                                          float worldX, float worldZ) const
+	                                          float worldX, float worldZ, uint32_t stateFlags) const
 	{
 		if (isPlayer)
 		{
 			return serverY; // joueur : centre capsule fiable répliqué par le shard
+		}
+		// v1.0.142 — altitude réelle : surface marchable sous le Y du shard (pieds du PNJ),
+		// cherchée dans le même collisionneur que le joueur ; à défaut, le Y du shard.
+		if ((stateFlags & engine::server::kEntityStateRealHeight) != 0u)
+		{
+			const engine::gameplay::IWorldCollider& world = m_cellWorld
+				? static_cast<const engine::gameplay::IWorldCollider&>(m_cellCollider)
+				: static_cast<const engine::gameplay::IWorldCollider&>(m_worldCollider);
+			float surfaceY = serverY;
+			(void)engine::gameplay::ProbeWalkableSurfaceBelow(world, worldX, worldZ, serverY, 0.6f, 3.0f, surfaceY);
+			return surfaceY + 0.9f;
 		}
 		// Mob / node / loot bag : Y de spawn brut (souvent 0) → snap visuel au sol
 		// client. SampleHeightAtWorldXZ retombe sur 0 si la heightmap n'est pas
@@ -3823,7 +3835,7 @@ namespace engine
 			// SOUS le terrain (sanglier invisible, plaque flottante). Snap visuel au
 			// sol client : ResolveRemoteDisplayCenterY renvoie sol + 0.9 pour les
 			// non-joueurs, que le -0.9 ramène exactement au niveau des pieds.
-			py = ResolveRemoteDisplayCenterY(re.playerClientId != 0u, py, px, pz);
+			py = ResolveRemoteDisplayCenterY(re.playerClientId != 0u, py, px, pz, re.stateFlags);
 			// TD.7 — état d'animation par avatar distant. Crée l'entrée à la première frame
 			// où on voit cet entityId. L'horloge utilisée pour Sample() / Play() est la même
 			// (nowSec) pour tous les avatars : crossfade et boucle restent en phase.

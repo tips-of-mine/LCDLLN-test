@@ -24,6 +24,11 @@ namespace engine::server
 	/// v1.0.125 — bateau répliqué à l'arrêt à un quai (embarquement / débarquement possibles).
 	inline constexpr uint32_t kEntityStateBoatDocked = 1u << 1;
 
+	/// v1.0.142 — entité (PNJ d'ambiance) à ALTITUDE RÉELLE : son Y répliqué suit les paliers
+	/// et volées d'une ville-tour ; le client la pose sur la surface marchable sous ce Y au
+	/// lieu de la coller à la heightmap. Bit additif de stateFlags (même format de paquet).
+	inline constexpr uint32_t kEntityStateRealHeight = 1u << 2;
+
 	/// Vrai si \p archetypeId est celui d'un bateau (v1.0.125).
 	inline constexpr bool IsBoatArchetype(uint32_t archetypeId) { return archetypeId == kBoatArchetypeId; }
 	/// Vrai si \p archetypeId est celui d'un node de récolte (plage Métiers SP1, bateaux exclus).

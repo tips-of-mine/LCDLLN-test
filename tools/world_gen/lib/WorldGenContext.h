@@ -22,6 +22,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -183,6 +184,12 @@ namespace tools::world_gen
 	{
 		Vec2 p;
 		std::vector<int> links;
+		/// v1.0.142 — altitude RÉELLE du nœud (m, sol marchable : palier, volée, plateforme),
+		/// NaN = sol de la heightmap (cas général). Un graphe 3D (ville-tour) donne une
+		/// altitude à chacun de ses nœuds ; les routines qui le parcourent la transmettent au
+		/// shard (spawners.json, `routine.realHeight` / `pathY`).
+		double y = std::numeric_limits<double>::quiet_NaN();
+		bool HasY() const { return !std::isnan(y); }
 	};
 
 	/// Résultat de mise en page d'une agglomération.
@@ -202,6 +209,13 @@ namespace tools::world_gen
 		/// v1.0.136 — entrées des tentes (Camp de l'Oracle : pas de bâtiment) : domiciles des
 		/// villageois en plus des portes des bâtiments de la ville (Population.cpp).
 		std::vector<Vec2> homeDoors;
+		/// v1.0.142 — altitude réelle de chaque entrée de homeDoors (même taille, ou vide :
+		/// sol de la heightmap) : portes des bâtiments de la ville-tour sur les paliers.
+		std::vector<double> homeDoorY;
+		/// v1.0.142 — nœud du graphe le plus proche de chaque entrée de homeDoors (même
+		/// taille, ou vide : recherche en XZ), pour un graphe 3D où plusieurs paliers se
+		/// superposent à la même position XZ.
+		std::vector<int> homeDoorNode;
 		Vec2 startSpot;                     ///< point de départ joueur (si ville de départ)
 		double startYawDeg = 0.0;
 	};
@@ -219,6 +233,11 @@ namespace tools::world_gen
 		// --- routine (PNJ d'ambiance) ; kind vide = IA de créature historique ---
 		std::string routineKind;            ///< tour|patrol|post|wander
 		std::vector<Vec2> path;
+		/// v1.0.142 — altitude réelle de chaque point de \p path (même taille) quand
+		/// \p realHeight : le shard suit cette altitude (paliers et volées de la ville-tour)
+		/// et le client pose le PNJ sur la surface marchable sous elle (pas sur la heightmap).
+		std::vector<double> pathY;
+		bool realHeight = false;
 		double wanderRadiusM = 0.0;
 		double pauseMinSec = 0.0, pauseMaxSec = 0.0;
 		std::string schedule;               ///< always|day|night
@@ -379,33 +398,68 @@ namespace tools::world_gen
 	/// de la zone interdite aux routes autour d'un lac sur la grille de 250 m, rayon + 60 m) ;
 	/// un chemin pavé relie l'ancre à la tête du ponton.
 	inline constexpr double kTowerRoadReachM = 260.0;
-	/// v1.0.141 — ville-tour : point de la rampe à l'abscisse \p s ∈ [0, 1] (0 au pied, 1 au
-	/// sommet) : position sur l'axe du replat (m, global). Fonction pure. Terrain.cpp
-	Vec2 TowerRampPoint(const TowerShape& t, double s);
-	/// v1.0.141 — ville-tour : longueur (m) parcourue sur l'axe de la rampe du pied jusqu'à
-	/// l'abscisse \p s (rayon linéaire en s). Fonction pure. Terrain.cpp
-	double TowerLengthAt(const TowerShape& t, double s);
-	/// v1.0.141 — ville-tour : abscisse s ∈ [0, 1] de la rampe pour la longueur parcourue \p l
-	/// (m ; inverse de TowerLengthAt, bornée). Fonction pure. Terrain.cpp
-	double TowerSAtLength(const TowerShape& t, double l);
-	/// v1.0.141 — ville-tour : altitude de la rampe (m, au-dessus du socle) à l'abscisse \p s :
-	/// paliers de pente faible et volées d'escalier de pente 0,6 en alternance (période
-	/// TowerStairPeriodM(), volée de TowerStairRunM() m en fin de période), 0 au pied et heightM
-	/// au sommet. Fonction pure. Terrain.cpp
-	double TowerRampHeight(const TowerShape& t, double s);
-	/// v1.0.141 — ville-tour : longueur (m) d'une période palier + volée, ajustée pour que la
-	/// rampe en compte un nombre entier (≈ 100 m). Fonction pure. Terrain.cpp
-	double TowerStairPeriodM(const TowerShape& t);
-	/// v1.0.141 — ville-tour : longueur horizontale (m) de la volée d'escalier d'une période
-	/// (pente 0,6 ; au plus 80 % de la montée d'une période). Fonction pure. Terrain.cpp
-	double TowerStairRunM(const TowerShape& t);
-	/// v1.0.141 — ville-tour : altitude du sol (m, au-dessus du socle) en \p p (global) :
-	/// plateforme du sommet (heightM), replats de la spirale (altitude de la rampe, plats en
-	/// travers), parois entre deux spires (pente linéaire sur bandM), socle (0) jusqu'à
-	/// SocleR(), puis -1e9 au-delà (hors du pic : le lac). \p onLedge (optionnel) reçoit
-	/// l'abscisse s du replat sous \p p (-1 hors d'un replat) ; \p across reçoit la position
-	/// en travers du replat (m, -ledgeM/2 côté pic à +ledgeM/2 côté vide). Fonction pure. Terrain.cpp
-	double TowerOffset(const TowerShape& t, Vec2 p, double* onLedge = nullptr, double* across = nullptr);
+	/// v1.0.142 — ville-tour : retrait horizontal (m) du rocher sous l'enveloppe des façades.
+	/// Assez grand pour que le rocher reste SOUS chaque palier de cage (contrôlé par le test).
+	inline constexpr double kTowerRockInsetM = 18.0;
+	/// v1.0.142 — ville-tour : profondeur (m, radiale) d'un palier de cage d'escalier.
+	inline constexpr double kTowerLandingM = 1.8;
+	/// v1.0.142 — ville-tour : volée d'escalier Stair_Interior_Rails (échelle 1 : montée 3,95 m,
+	/// marches de -0,24 à +4,32 m le long de -Z local, largeur 1,72 m) ; mise à l'échelle pour
+	/// monter exactement un tiers de niveau.
+	inline constexpr double kTowerStairRiseM = 3.95;
+	inline constexpr double kTowerStairFrontM = 0.24;
+	inline constexpr double kTowerStairBackM = 4.32;
+	inline constexpr double kTowerStairHalfWidthM = 0.86;
+
+	/// v1.0.142 — une volée d'une cage d'escalier de la ville-tour (repère de la cage : rayon
+	/// depuis l'axe de l'aiguille, décalage tangentiel \p lane).
+	struct TowerFlight
+	{
+		int    level = 0;            ///< niveau de palier du bas (0 = socle) ; trois par niveau de bâtiments
+		int    tier = 0;             ///< niveau de bâtiments
+		bool   inward = true;        ///< monte vers l'aiguille (sinon vers le lac)
+		double lane = 0.0;           ///< décalage tangentiel de l'axe de la volée (m)
+		double rBottom = 0.0;        ///< rayon du bord de la première marche (m)
+		double rTop = 0.0;           ///< rayon du bord de la dernière marche (m)
+		double yBottom = 0.0;        ///< altitude du pied (m au-dessus du socle)
+		double rise = 0.0;           ///< montée (m)
+	};
+	/// v1.0.142 — un palier d'une cage d'escalier (bande radiale [rIn, rOut], toute la largeur).
+	struct TowerLanding
+	{
+		int    level = 0;
+		double y = 0.0;              ///< altitude du dessus (m au-dessus du socle)
+		double rIn = 0.0, rOut = 0.0;
+		bool   outer = true;         ///< palier côté lac (sinon côté aiguille)
+	};
+	/// v1.0.142 — ville-tour : direction (radians) de la cage \p j ∈ [0, shaftsLow).
+	double TowerShaftAngle(const TowerShape& t, int j);
+	/// v1.0.142 — ville-tour : nombre de niveaux de bâtiments que la cage \p j gravit. Les
+	/// cages continues (j multiple de shaftsLow / shaftsHigh) vont jusqu'au sommet, sauf celle
+	/// qui fait face au laboratoire du palais (à l'opposé de entryRad), qui s'arrête un niveau
+	/// sous le sommet ; les autres s'arrêtent un niveau sous la coupure (SplitTier()).
+	int TowerShaftTiers(const TowerShape& t, int j);
+	/// v1.0.142 — ville-tour : vrai si la cage \p j existe au niveau \p tier (le vide de la cage
+	/// monte jusqu'au plafond du dernier niveau gravi).
+	bool TowerShaftOpenAt(const TowerShape& t, int j, int tier);
+	/// v1.0.142 — ville-tour : rayon du bord extérieur d'une cage au niveau \p tier : en retrait
+	/// de toutes les façades voisines (un bâtiment couvre au plus trois niveaux).
+	double TowerShaftOuterR(const TowerShape& t, int tier);
+	/// v1.0.142 — ville-tour : échelle des volées (montée d'un tiers de niveau).
+	double TowerStairScale(const TowerShape& t);
+	/// v1.0.142 — ville-tour : volées de la cage \p j, du socle à son dernier palier (zigzag :
+	/// volée paire vers l'aiguille sur la voie gauche, impaire vers le lac sur la voie droite).
+	/// Fonction pure. Terrain.cpp
+	std::vector<TowerFlight> TowerShaftFlights(const TowerShape& t, int j);
+	/// v1.0.142 — ville-tour : paliers de la cage \p j (un par niveau de palier, du socle au
+	/// dernier) ; chacun couvre l'arrivée de la volée du dessous et le départ de celle du
+	/// dessus, plus kTowerLandingM. Fonction pure. Terrain.cpp
+	std::vector<TowerLanding> TowerShaftLandings(const TowerShape& t, int j);
+	/// v1.0.142 — ville-tour : altitude du ROCHER (m, au-dessus du socle) en \p p (global) :
+	/// cône kTowerRockInsetM en retrait de l'enveloppe, sommet un demi-mètre sous la
+	/// plateforme du palais, socle (0) jusqu'à SocleR(), puis -1e9 au-delà (le lac).
+	/// Fonction pure. Terrain.cpp
+	double TowerOffset(const TowerShape& t, Vec2 p);
 	/// v1.0.141 — vrai si \p p est sur la plateforme du sommet d'un pic du master (rayon
 	/// topRadiusM + \p marginM). Terrain.cpp
 	bool OnTowerSummit(const WorldMaster& m, Vec2 p, double marginM);

@@ -76,7 +76,7 @@ Tout ce qui fait foi est inscrit dans le JSON (`regles_transverses`, catégorie 
 | L'Atmosphère | S001_W003 | [DÉDUCTION] = entrée de la Passe des Dragons (paroi en visage, p.27) ; POI `poi_atmosphere`. |
 | Palais du Maître des Dragons | S003_W004 | = « Palais abandonné de la Passe » (`zone_palais_abandonne_passe`, POI existant). |
 | Feyhin Lokcthat ↔ Magistrya | — | Route 000117 ajoutée (panneau p.19) ; une écurie de plus dans chaque ville. |
-| Magistrya | N003_W003 | Ville **tout en hauteur** : prévoir de très nombreux escaliers [GD] ; l'arène est à Feyhin, pas à Magistrya. v1.0.141 : ville-tour en spirale de 250 m au milieu du lac (§16.67). |
+| Magistrya | N003_W003 | Ville **tout en hauteur** : prévoir de très nombreux escaliers [GD] ; l'arène est à Feyhin, pas à Magistrya. v1.0.141 : ville-tour au milieu du lac ; v1.0.142 : aiguille de 600 m, bâtiments empilés et cages d'escalier (§16.67). |
 | Passe → Oracle | — | Positions conservées ; l'indication « à l'ouest » de Desdémone est notée non fiable. |
 
 ### 3.3 Autres corrections
@@ -5548,7 +5548,7 @@ héraldique ; le propriétaire l'a demandé malgré le retrait des signatures en
 **Contrôles** : `world_gen_tests` (`TestAcropoleLhynnV1140` : gradins, plateforme, rampe, palais bâti, collision du
 catalogue) ; `world_places_tests` (libellé « Palais ») ; `validate_decor.py` ; contrôles du lore.
 
-### 16.67 Magistrya, ville-tour (v1.0.141)
+### 16.67 Magistrya, ville-tour (v1.0.141, v1.0.142)
 
 **Demande du propriétaire** (26/11/2026, atelier : « Améliore Magistrya », Tome 2 joint) : la ville doit suivre la BD —
 ville tout en hauteur au milieu du lac, ponton, intérieur de la ville (ponts, bâtiments en hauteur, escaliers, tours
@@ -5561,15 +5561,23 @@ et ponts, escalier sur arc rampant, tours d'angle et toits, portail du palais), 
 longueur et vue du trône, laboratoire), p.25 (hauteur de la ville, porte du laboratoire), p.27 (la ville au loin).
 Époque du jeu : ville **intacte** (v1.0.54) ; l'incendie de la p.27 n'est pas repris.
 
+**Retour du test visuel** (27/11/2026, v1.0.142) : la rampe en spirale de la v1.0.141 rappelait la tour de Babel (tableau)
+ou Minas Tirith ; « Magistrya est plus droite et plus haute ; il n'y a pas de palier circulaire ; on doit voir les
+séparations entre les bâtiments, il y a des escaliers entre chaque ». Arbitrages : hauteur **600 m** ; accès **à pied
+partout jusqu'au sommet** ; silhouette en **cône étroit** ; **Q1 b** (graphe des PNJ en 3D, shard et client compris) ;
+**Q2 a** (budget de pièces accepté, mesuré avant envoi) ; **Q3 a** (bâtiments = volumes non visitables, portes
+décoratives). La spirale est remplacée ; le tableau ci-dessous décrit l'état v1.0.142.
+
 | Élément | Avant | Après |
 |---|---|---|
-| Relief | aucun : ville générique plate (rues rayonnantes, anneau) ; lac de la case repoussé hors de la ville | relief `pic_magistrya` du master (type **`pic`**, mise en page de la ville **`ville_tour`**) : pic rocheux de **250 m** sculpté dans la cellule (hors du relief macro), plateforme du sommet de 32 m de rayon, **rampe en spirale** de 2,75 tours (1,6 km sur l'axe, pente moyenne 0,16) du socle au sommet, replats de 24 m (chaussée de 8 m côté vide, maisons côté pic) séparés par des parois de 10 m ; paliers presque plats (pente 0,05) et **volées d'escalier** de 20 m (pente 0,6) en alternance, une période d'environ 100 m ; pic de 150 m de rayon, socle de 180 m (quai à 1,6 m au-dessus du lac) |
+| Relief | aucun : ville générique plate (rues rayonnantes, anneau) ; lac de la case repoussé hors de la ville | relief `pic_magistrya` du master (type **`pic`**, mise en page de la ville **`ville_tour`**) : **aiguille rocheuse de 600 m** sculptée dans la cellule (hors du relief macro) ; enveloppe des façades en **cône étroit** (rayon 120 m au ras du socle, 30 m au sommet), rocher 18 m en retrait (caché par les bâtiments, visible au fond des cages) ; socle de 150 m de rayon (quai à 1,6 m au-dessus du lac) ; ni rampe ni palier circulaire |
 | Lac | lac de la case (180-420 m) poussé à l'écart de la ville | **lac centré sur le pic**, 650 m de rayon, île centrale = socle (pas d'eau, lit non creusé) ; le lac de la case est remplacé |
 | Accès | routes du lore au centre de la ville | **un seul ponton** de bois de 6 m (≈ 470 m) du socle à la rive, tourné vers Feyhin Lokcthat (−27°), garde-corps, poteaux à torche ; levée de terre sur la rive ; **gibets** et **poteau indicateur** à la tête du ponton ; chemin pavé jusqu'à l'ancre des routes (260 m au-delà de la rive) : les cinq routes du lore y aboutissent (`CityRoadAnchor`) |
-| Façades | — | parois couvertes de murs de pierre (échelle 3 : 6 × 9,4 m) à fenêtres en plein cintre, **toits d'ardoise** sur la crête, **tourelles** d'angle tous les ≈ 70 m, **arcs-boutants** contre la face au lac ; **arches** au-dessus de la chaussée ; parapet tout le long du vide ; torches |
-| Maisons | 1 auberge, lots autour de la place | **≈ 130 maisons** le long de la rampe (dos à la paroi, porte vers la chaussée), maisons hautes à toit d'ardoise, échoppes ; grandes maisons et manoirs dans la moitié haute (« ses plus belles demeures se déployaient vers les hauteurs ») ; auberge et étals du marché sur la place du socle, au pied de la rampe |
-| Geôles | — | salle de 24 × 12 m adossée à la tour sur le socle : cinq **cellules voûtées** grillagées (`Dungeon_Vault_1`), piliers massifs, plafond de dalles, soupiraux, banquettes, chaînes, torches ; **service prison** et son geôlier (Q6 a) |
-| Palais | aucun lieu | POI `poi_palais_magister_magistrya` (genre `palais`, fiche `lieu_palais_magister_magistrya`) bâti par `Landmarks.cpp` (`BuildMagisterPalace`) : parapet de la plateforme ouvert sur l'arrivée de la rampe, quatre tours rondes ; **salle du trône** en longueur (34 × 16 m, murs de 6 étages, sol de dalles), **portail gothique à rosace** (sans pentagramme), deux rangées de quatre **colonnes torsadées colossales**, tapis, braseros, trône sur estrade, fauteuil sculpté ; **laboratoire** au fond (porte de bois en plein cintre, charpente, table de pierre, étagères d'apothicaire, alambic, chaudron, chaînes à crochet) |
+| Bâtiments | — | **48 niveaux de 12,5 m** (deux étages de murs chacun) ; entre deux cages, une colonne de **bâtiments distincts empilés** (un à trois niveaux chacun, tirés au hasard) : façade à l'enveloppe de son sommet (retrait vers le haut), murs de pierre, d'enduit, de brique ou de pierre sèche à fenêtres en plein cintre, **toit d'ardoise** sur chaque retrait, **tourelles d'angle** ; portes décoratives au rez du socle ; bâtiments **non visitables** (Q3 a) ; ≈ 13 000 murs de façade et de flanc, ≈ 2 100 toits |
+| Escaliers | — | **cages d'escalier** de 4 m entre les colonnes : 24 sous 300 m, 12 au-dessus (une cage basse sur deux continue ; les autres s'arrêtent sous la coupure, plafond de dalles) ; dans chaque cage, **volées en zigzag** (`Stair_Interior_Rails`, un tiers de niveau chacune, deux voies côte à côte) et **paliers** de dalles à chaque tiers de niveau ; parapets côté vide, **portes décoratives** de logis et torches sur les paliers côté lac ; flancs des bâtiments voisins sur 16 m ; onze cages débouchent sur la plateforme du palais (la douzième s'arrête sous le laboratoire) ; ≈ 2 550 volées, rocher toujours sous les paliers (contrôlé) |
+| Maisons | 1 auberge, lots autour de la place | les logis sont les bâtiments de la tour (≈ 1 300 portes sur les paliers) ; auberge et étals du marché sur le socle, près de la place, au pied de la cage 0 (face au ponton) |
+| Geôles | — | salle de 24 × 12 m sur le socle, au pied de la tour entre deux cages : cinq **cellules voûtées** grillagées (`Dungeon_Vault_1`), piliers massifs, plafond de dalles, soupiraux, banquettes, chaînes, torches ; **service prison** et son geôlier (Q6 a) |
+| Palais | aucun lieu | POI `poi_palais_magister_magistrya` (genre `palais`, fiche `lieu_palais_magister_magistrya`) bâti par `Landmarks.cpp` (`BuildMagisterPalace`) sur le **dallage du sommet** (600 m, posé à plat : le rocher est en retrait), portail tourné vers la cage 0 : parapet de la plateforme, quatre tours rondes ; **salle du trône** en longueur (31 × 16 m, murs de 6 étages, sol de dalles), **portail gothique à rosace** (sans pentagramme), deux rangées de quatre **colonnes torsadées colossales**, tapis, braseros, trône sur estrade, fauteuil sculpté ; **laboratoire** au fond (porte de bois en plein cintre, charpente, table de pierre, étagères d'apothicaire, alambic, chaudron, chaînes à crochet) |
 
 **Asset** (atelier décors, `decor_specs.json` n° 219, budget `building`) : `Column_Twisted_Giant_1` (3,7 × 15,8 m :
 socle mouluré, fût de quatre brins torsadés renflé au milieu, chapiteau ; 1 508 / 700 / 248 triangles), texture
@@ -5577,18 +5585,22 @@ procédurale `Stone_Serpentine` (vert sourd veiné, pas de vert saturé) ; colli
 (`building_pieces.json`). Juriste PI : **générique** (colonne torsadée), aucune reproduction des signatures de la BD
 (pentagramme marqué « H », machine d'extraction du Magister).
 
-**Lore** : ville (features, dimensions 250 m, ponton unique, prompt corrigé), service prison (`grille.ajustements`) et
+**Lore** : ville (features, dimensions 600 m, aiguille et cages d'escalier, ponton unique, prompt corrigé), service prison (`grille.ajustements`) et
 geôlier ; Magister vivant (`alive`, note [DÉCISION]) ; mort du T2 annotée hors continuité ; étapes de
 `quest_t2_audience_magister` ancrées (arrivée et geôles sur la ville — la première pointait par erreur sur le Mont des
-Neuf Pics —, audience et laboratoire sur le palais) ; 4 entrées au registre des décisions.
+Neuf Pics —, audience et laboratoire sur le palais) ; 5 entrées au registre des décisions (v1.0.141 : 4, v1.0.142 : 1).
+
+**PNJ à altitude réelle** (v1.0.142, Q1 b) : le graphe des PNJ de la ville-tour est en 3D (altitude de chaque nœud : socle, deux nœuds par volée, paliers, plateforme) ; les habitants partent des portes des paliers et parcourent les cages ; `spawners.json` reçoit, dans la routine, `realHeight: true` et `pathY` (une altitude par point du chemin, champs additifs) ; le shard interpole l'altitude le long du segment et fait rentrer le PNJ en refaisant son chemin à l'envers (`AmbientRoutine`) ; l'entité porte le drapeau répliqué `kEntityStateRealHeight` et le client la pose sur la surface marchable sous son altitude (`WalkableSurfaceProbe`) au lieu de la heightmap ; pas d'agenda de métier pour ces PNJ (ses trajets directs traverseraient les étages).
 
 **Inchangé** : case N003_W003, services existants et leurs PNJ, routes du lore, région.
 
 **Outils** : `sync_positions.py` admet la position manuelle d'une ville-tour (le pic et son lac la suivent).
 
-**Contrôles** : `world_gen_tests` (`TestVilleTourMagistryaV1141` : forme, lac et île, socle, sommet, rampe praticable,
-maisons, façades, escaliers, ponton, geôles, palais, routes arrêtées sur la rive, graphe des PNJ jusqu'au sommet,
-collision de la colonne) ; `validate_decor.py` ; contrôles du lore.
+**Contrôles** : `world_gen_tests` (`TestVilleTourMagistryaV1142` : silhouette, volées continues et paliers, rocher sous
+les cages, cages dans l'enveloppe, lac et île, socle, sommet, quatre matériaux, toits, tourelles, portes, aucune pièce
+dans le vide d'une cage, ponton, geôles, palais posé à plat, routes arrêtées sur la rive, graphe 3D connexe du socle
+au palais, habitants à altitude réelle, collision) ; `ambient_routine_tests`, `spawner_routine_format_tests`
+(aller-retour du format), `walkable_surface_probe_tests` ; `validate_decor.py` ; contrôles du lore.
 
 ## 17. Questions ouvertes
 
@@ -5607,7 +5619,7 @@ collision de la colonne) ; `validate_decor.py` ; contrôles du lore.
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
 - Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur tranché en v1.0.105 (16.34 : le générateur suit les routes du lore) ; sauvegarde complète vérifiée en v1.0.98 (16.27) : ~~références orphelines laissées par les suppressions~~ (0 en v1.0.115, 16.42) et noms vides de 159 fiches à traiter.
 - Fiches complètes (v1.0.100) : niveaux par faction à définir (`niveau_par_faction` vide), niveaux des 8 régions et 33 raids sans repère, étapes situées des 71 quêtes non pré-remplies (16.29).
-- Magistrya (v1.0.141) : rôle du Magister dans les quêtes (donneur de quêtes ou adversaire, Q8) ; salles du palais autres que la salle du trône et le laboratoire non construites ; geôles bâties sur le socle (pas de souterrain) ; vue lointaine de la p.27 (la tour vue de la plaine) à vérifier en jeu (chargement des cellules, HLOD) (16.67).
+- Magistrya (v1.0.141, v1.0.142) : rôle du Magister dans les quêtes (donneur de quêtes ou adversaire, Q8) ; intérieurs des bâtiments de la tour non construits (Q3 a : portes décoratives) ; ponts entre bâtiments (p.20) non posés : les cages d'escalier assurent la montée ; salles du palais autres que la salle du trône et le laboratoire non construites ; geôles bâties sur le socle (pas de souterrain) ; vue lointaine de la p.27 (la tour vue de la plaine) à vérifier en jeu (chargement des cellules, HLOD) (16.67).
 - Palais impérial de Lhynn (v1.0.140) : intérieur limité à la salle du trône ; salles du conseil, appartements, atelier de Shamballeau et salle cachée sous le trône (T11 p.12-13) non construits ; monument signature réinterprété en attente de la réponse de Mediatoon (16.66).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).

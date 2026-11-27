@@ -295,11 +295,15 @@ namespace engine
 		/// renvoie sol + 0.9 m, cohérent avec l'offset -0.9 (centre→pieds) du
 		/// rendu skinné. Affichage uniquement : le Y serveur reste l'autorité
 		/// gameplay (les tests de portée serveur sont en XZ).
+		/// v1.0.142 — PNJ à ALTITUDE RÉELLE (bit kEntityStateRealHeight : paliers et volées
+		/// de la ville-tour) : posé sur la surface marchable (dalle, marche) trouvée sous son
+		/// Y répliqué, pas sur la heightmap (qui est le rocher, des dizaines de mètres plus bas).
 		/// \param isPlayer    true si l'entité est un joueur (playerClientId != 0).
 		/// \param serverY     Y répliqué par le serveur (mètres monde).
 		/// \param worldX,worldZ  position horizontale pour l'échantillon terrain.
+		/// \param stateFlags  drapeaux répliqués de l'entité (kEntityStateRealHeight).
 		float ResolveRemoteDisplayCenterY(bool isPlayer, float serverY,
-		                                  float worldX, float worldZ) const;
+		                                  float worldX, float worldZ, uint32_t stateFlags = 0u) const;
 
 		/// Persiste et applique le genre d'un personnage donne, par NOM
 		/// (fix client interim #1 : le genre n'est pas encore stocke serveur).

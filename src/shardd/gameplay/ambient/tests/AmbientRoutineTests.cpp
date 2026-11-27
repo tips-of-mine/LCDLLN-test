@@ -104,6 +104,35 @@ int main()
 		for (int i = 0; i < 4000; ++i) if (RollPauseSeconds(d, Roll, &seed) > 0.0f) ++pauses;
 		Check(pauses > 1200 && pauses < 1600, "tour : frequence de pause ~35 %");
 	}
+	// v1.0.142 — altitude réelle : interpolation le long du segment (ville-tour : volée de
+	// 4,17 m sur 5,8 m), bornée aux extrémités.
+	{
+		const RoutinePoint a{ 0.0f, 0.0f, 10.0f }, b{ 6.0f, 0.0f, 14.0f };
+		Check(std::fabs(RoutineHeightAlong(a, b, 3.0f, 0.4f) - 12.0f) < 1e-4f, "hauteur : milieu de la volee");
+		Check(std::fabs(RoutineHeightAlong(a, b, -2.0f, 0.0f) - 10.0f) < 1e-4f && std::fabs(RoutineHeightAlong(a, b, 9.0f, 0.0f) - 14.0f) < 1e-4f,
+			"hauteur : bornee aux extremites");
+		Check(std::fabs(RoutineHeightAlong(b, b, 1.0f, 1.0f) - 14.0f) < 1e-4f, "hauteur : segment degenere");
+	}
+	// v1.0.142 — origine du segment en cours et retour au logis à l'envers (jamais en ligne
+	// droite à travers les étages).
+	{
+		RoutineDefinition d;
+		d.kind = RoutineKind::Tour;
+		d.realHeight = true;
+		d.path = { { 0, 0, 0 }, { 5, 0, 0 }, { 5, 5, 4 }, { 0, 5, 8 } };
+		RoutineState st;
+		ChooseNextTarget(d, st, 0, 0, Roll, &seed);
+		ChooseNextTarget(d, st, 0, 0, Roll, &seed);
+		ChooseNextTarget(d, st, 0, 0, Roll, &seed);
+		ChooseNextTarget(d, st, 0, 0, Roll, &seed);
+		Check(st.waypoint == 3 && st.origin.x == 5.0f && st.origin.z == 5.0f && st.origin.y == 4.0f && st.target.y == 8.0f,
+			"origine = cible precedente (avec son altitude)");
+		BeginHomeRetrace(d, st, 0, 0);
+		Check(st.homeRetrace && st.waypoint == 2 && st.target.y == 4.0f && st.origin.y == 8.0f, "retour : demi-tour vers le point precedent");
+		Check(!AdvanceHomeRetrace(d, st) && st.waypoint == 1 && st.target.x == 5.0f && st.target.z == 0.0f, "retour : point precedent");
+		Check(!AdvanceHomeRetrace(d, st) && st.waypoint == 0 && st.target.x == 0.0f, "retour : porte");
+		Check(AdvanceHomeRetrace(d, st), "retour : logis atteint");
+	}
 	if (g_fail == 0) std::printf("AmbientRoutineTests: OK\n");
 	return g_fail == 0 ? 0 : 1;
 }

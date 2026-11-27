@@ -618,12 +618,21 @@ namespace tools::world_gen
 						tw = &c.tower;
 				}
 				// v1.0.141 : sommet d'une ville-tour (Magistrya) : palais du Magister, portail vers
-				// l'arrivée de la rampe en spirale.
+				// l'arrivée de la cage d'escalier 0 (direction du ponton). v1.0.142 : le sommet de
+				// l'aiguille n'est pas un plateau de heightmap (rocher en retrait, dallage posé par
+				// BuildTowerCity à l'altitude du sommet) : les pièces du palais, posées par rapport
+				// au sol, sont ramenées à un sol PLAT à cette altitude.
 				if (tw)
 				{
-					const Vec2 top = TowerRampPoint(*tw, 1.0) - tw->center;
-					const double l = std::max(1e-6, std::hypot(top.x, top.z));
-					BuildMagisterPalace(w, p, tw->center, top * (1.0 / l), tw->topRadiusM, rng);
+					const size_t s0 = w.scatter.size(), l0 = w.pointLights.size();
+					BuildMagisterPalace(w, p, tw->center, Vec2{ std::cos(tw->entryRad), std::sin(tw->entryRad) }, tw->topRadiusM, rng);
+					double summitY = 0.0;
+					for (const CityDef& c : w.cities)
+						if (&c.tower == tw) summitY = c.plateauY + tw->heightM;
+					for (size_t k = s0; k < w.scatter.size(); ++k)
+						w.scatter[k].yOffset += summitY - w.HeightAt(w.scatter[k].position);
+					for (size_t k = l0; k < w.pointLights.size(); ++k)
+						w.pointLights[k].y += summitY - w.HeightAt(w.pointLights[k].position);
 				}
 				else
 					BuildImperialPalace(w, p, ac ? ac->summit : p.center, ac ? ac->stairDir : toward, ac ? ac->topRadiusM : 56.0, rng);

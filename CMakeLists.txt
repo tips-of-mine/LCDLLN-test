@@ -515,6 +515,8 @@ add_library(engine_core
   src/client/gameplay/TerrainCollider.cpp
   src/client/gameplay/CompositeWorldCollider.cpp
   src/client/gameplay/CellWorldCollider.cpp
+  # v1.0.142 — sonde de surface marchable (PNJ à altitude réelle, ville-tour).
+  src/client/gameplay/WalkableSurfaceProbe.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp
   # Combat SP3 — métadonnées d'affichage des kits de sorts (barre d'action).

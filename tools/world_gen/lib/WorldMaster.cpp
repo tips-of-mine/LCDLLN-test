@@ -530,11 +530,11 @@ namespace tools::world_gen
 					out.reliefs.push_back(std::move(d));
 					continue;
 				}
-				// Pic (v1.0.141, ville-tour : Magistrya, BD-T2 p.19-20) : pic rocheux au centre
-				// d'un lac, rampe en spirale du socle au sommet (TowerShape). Le pic suit la ville
-				// (position manuelle admise) ; il n'entre pas dans le relief macro : il est
-				// sculpté dans la heightmap de sa cellule par BuildTowerCity. La ville doit avoir
-				// la mise en page « ville_tour ».
+				// Pic (v1.0.141, ville-tour : Magistrya, BD-T2 p.19-27 ; v1.0.142 : aiguille de
+				// bâtiments empilés et cages d'escalier, TowerShape). Le pic suit la ville (position
+				// manuelle admise) ; il n'entre pas dans le relief macro : il est sculpté dans la
+				// heightmap de sa cellule par BuildTowerCity. La ville doit avoir la mise en page
+				// « ville_tour ».
 				if (d.type == "pic")
 				{
 					TowerShape& t = d.tower;
@@ -543,28 +543,37 @@ namespace tools::world_gen
 					t.heightM = d.heightM;
 					t.topRadiusM = d.topRadiusM;
 					t.baseRadiusM = GetNum(v, "base_radius_m", 0.0);
-					t.ledgeM = GetNum(v, "ledge_m", 0.0);
-					t.roadM = GetNum(v, "road_m", 0.0);
-					t.bandM = GetNum(v, "band_m", 0.0);
+					t.tierTargetM = GetNum(v, "tier_m", 0.0);
+					t.shaftM = GetNum(v, "shaft_m", 0.0);
+					t.shaftsLow = static_cast<int>(GetNum(v, "shafts_low", 0.0));
+					t.shaftsHigh = static_cast<int>(GetNum(v, "shafts_high", 0.0));
+					t.splitM = GetNum(v, "split_m", 0.0);
 					t.socleM = GetNum(v, "socle_m", 0.0);
 					t.lakeRadiusM = GetNum(v, "lake_radius_m", 0.0);
 					t.entryRad = GetNum(v, "entry_deg", 0.0) * 3.14159265358979323846 / 180.0;
 					d.center = t.center;
-					// Formes admises : rampe d'au moins un tour, pente moyenne ≤ 0,2 (paliers et
-					// volées praticables), chaussée et maisons sur le replat, paroi d'au moins 4 m,
-					// lac plus large que le socle (ponton d'au moins 150 m), tout dans la case.
-					const double turns = t.Turns();
-					const bool shapeOk = t.heightM >= 60.0 && t.heightM <= 400.0 && t.topRadiusM >= 20.0 && t.topRadiusM <= 80.0
-						&& t.ledgeM >= 12.0 && t.ledgeM <= 40.0 && t.roadM >= 4.0 && t.roadM <= t.ledgeM - 6.0
-						&& t.bandM >= 4.0 && t.bandM <= 30.0 && t.socleM >= 10.0 && t.socleM <= 80.0
-						&& t.baseRadiusM > t.topRadiusM + t.ledgeM + t.PitchM() && t.baseRadiusM <= 400.0
-						&& turns >= 1.0 && turns <= 10.0 && t.heightM / t.RampLengthM() <= 0.2
+					// Formes admises : aiguille (rayon du sommet au moins 24 m pour le palais, base
+					// plus large), niveaux de 8 à 16 m, cages de 3,8 à 6 m (deux volées côte à côte),
+					// cages hautes diviseur des basses, assez de façade entre deux cages au sommet,
+					// coupure entre les deux, lac plus large que le socle (ponton d'au moins 150 m),
+					// tout dans la case.
+					const double pi = 3.14159265358979323846;
+					const bool countsOk = t.shaftsLow >= 4 && t.shaftsLow <= 48 && t.shaftsHigh >= 2
+						&& t.shaftsHigh <= t.shaftsLow && t.shaftsLow % t.shaftsHigh == 0;
+					const bool shapeOk = countsOk && t.heightM >= 100.0 && t.heightM <= 900.0
+						&& t.topRadiusM >= 24.0 && t.topRadiusM <= 80.0
+						&& t.baseRadiusM >= t.topRadiusM + 20.0 && t.baseRadiusM <= 400.0
+						&& t.tierTargetM >= 8.0 && t.tierTargetM <= 16.0
+						&& t.shaftM >= 3.8 && t.shaftM <= 6.0
+						&& 2.0 * pi * t.topRadiusM / t.shaftsHigh >= t.shaftM + 6.0
+						&& t.splitM > t.tierTargetM && t.splitM < t.heightM - t.tierTargetM
+						&& t.socleM >= 10.0 && t.socleM <= 80.0
 						&& t.lakeRadiusM >= t.SocleR() + 150.0 && t.lakeRadiusM <= 2000.0
 						&& std::fabs(t.center.x - ctr.x) + t.lakeRadiusM * 1.1 + kTowerRoadReachM <= 4700.0
 						&& std::fabs(t.center.z - ctr.z) + t.lakeRadiusM * 1.1 + kTowerRoadReachM <= 4700.0;
 					if (!shapeOk)
 					{
-						err = "master: relief '" + d.id + "' : pic invalide (hauteur, plateforme, replat, chaussee, paroi, socle, au moins un tour, pente <= 0,2, lac, tout dans la case)"; return false;
+						err = "master: relief '" + d.id + "' : pic invalide (hauteur, rayons, niveaux, cages basses/hautes, coupure, socle, lac, tout dans la case)"; return false;
 					}
 					d.footRadiusM = t.SocleR();
 					city->tower = t;

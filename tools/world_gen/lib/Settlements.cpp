@@ -868,26 +868,28 @@ namespace tools::world_gen
 	}
 
 	// ---------------------------------------------------------------------------------
-	// v1.0.141 — MAGISTRYA, VILLE-TOUR (mise en page « ville_tour », relief `pic` ;
-	// BD-T2 p.19-27, LORE_BD §16.67). Pic rocheux au milieu d'un lac, rampe en spirale du
-	// socle au sommet (TowerShape, Terrain.cpp) ; les parois entre deux spires sont couvertes
-	// de façades (murs à fenêtres, toits d'ardoise, tourelles) comme « un écheveau de
-	// dentelle » ; maisons le long de la rampe (les plus belles vers les hauteurs), volées
-	// d'escalier, arches au-dessus de la chaussée ; long ponton de bois depuis la rive (gibets
-	// et poteau indicateur, p.19) ; geôles voûtées au socle (p.22). Le palais du Magister, au
-	// sommet, est bâti par BuildLandmarks (POI de genre « palais »).
+	// v1.0.141, v1.0.142 — MAGISTRYA, VILLE-TOUR (mise en page « ville_tour », relief
+	// `pic` ; BD-T2 p.19-27, LORE_BD §16.67). Aiguille rocheuse au milieu d'un lac, couverte
+	// de BÂTIMENTS DISTINCTS empilés (un à trois niveaux chacun, matériaux variés, toits
+	// d'ardoise à chaque retrait, tourelles d'angle) jusqu'au palais du sommet ; entre deux
+	// colonnes de bâtiments, une CAGE D'ESCALIER praticable (volées en zigzag, paliers,
+	// parapets, portes décoratives, torches) monte du socle au palais (TowerShape,
+	// Terrain.cpp). Socle au ras de l'eau : place, auberge, étals, geôles voûtées (p.22) ;
+	// long ponton de bois vers la rive (gibets et poteau indicateur, p.19). Le graphe des PNJ
+	// est en 3D (altitude de chaque nœud : paliers, volées, plateforme). Le palais du
+	// Magister est bâti par BuildLandmarks (POI de genre « palais »).
 	// ---------------------------------------------------------------------------------
 	namespace
 	{
-		/// Pose un décor de meshes/props/ dont la base est à l'altitude ABSOLUE \p yAbs (m) ;
-		/// \p tilt : rotation autour de l'axe X local (degrés). Effet de bord : w.scatter.
+		/// Pose un décor de meshes/props/ dont la base est à l'altitude ABSOLUE \p yAbs (m).
+		/// Effet de bord : w.scatter.
 		void TowerProp(World& w, const std::string& mesh, Vec2 p, double yaw, double scale, uint8_t flags, uint8_t cull,
-			double yAbs, double collisionR = 0.0, double tilt = 0.0)
+			double yAbs, double collisionR = 0.0)
 		{
 			ScatterDef s;
 			s.mesh = "meshes/props/" + mesh + ".gltf";
 			s.position = p; s.yawDeg = yaw; s.scale = scale; s.flags = flags; s.cullClass = cull;
-			s.collisionRadius = collisionR; s.yOffset = yAbs - w.HeightAt(p); s.tiltDeg = tilt;
+			s.collisionRadius = collisionR; s.yOffset = yAbs - w.HeightAt(p);
 			w.scatter.push_back(std::move(s));
 		}
 
@@ -933,20 +935,6 @@ namespace tools::world_gen
 			}
 		}
 
-		/// Repère local de la rampe à l'abscisse \p s : axe du replat \p axis, normale vers le
-		/// vide \p out (unitaire), tangente de montée \p up (unitaire, horizontale).
-		void TowerFrame(const TowerShape& t, double s, Vec2& axis, Vec2& out, Vec2& up)
-		{
-			axis = TowerRampPoint(t, s);
-			const Vec2 d = axis - t.center;
-			const double l = std::max(1e-6, std::hypot(d.x, d.z));
-			out = d * (1.0 / l);
-			const double ds = 1e-4;
-			Vec2 a = TowerRampPoint(t, std::min(1.0, s + ds)) - TowerRampPoint(t, std::max(0.0, s - ds));
-			const double la = std::max(1e-9, std::hypot(a.x, a.z));
-			up = a * (1.0 / la);
-		}
-
 		/// Nœud le plus proche de \p p parmi \p ids (-1 si vide).
 		int TowerNearestOf(const SettlementLayout& L, const std::vector<int>& ids, Vec2 p)
 		{
@@ -967,30 +955,47 @@ namespace tools::world_gen
 			return w.roadDist.InBounds(i, j) ? w.roadDist.At(i, j) : 1e9;
 		}
 
-		/// Palette des maisons de la ville-tour : maisons hautes de pierre à toit d'ardoise,
-		/// échoppes ; vers les hauteurs (\p high), grandes maisons et manoirs (« ses plus belles
-		/// demeures se déployaient vers les hauteurs », p.20).
-		std::vector<TemplateRef> TowerPalette(bool high)
+		/// Nœud 3D du graphe des PNJ (altitude ABSOLUE \p y).
+		int TowerNode(SettlementLayout& L, Vec2 p, double y)
 		{
-			std::vector<TemplateRef> pal = { House("maison_haute_ardoise_6x8", 3), House("maison_ardoise_6x6", 2.5),
-				House("maison_haute_6x8", 1.5), House("echoppe_4x8", 1.2), House("maison_6x6", 1) };
-			if (high) { pal.push_back(House("grande_maison_ardoise_8x10", 2.5)); pal.push_back(House("manoir_8x12", 1.5)); }
-			else pal.push_back(House("grande_maison_ardoise_8x10", 0.6));
-			return pal;
+			StreetNode n;
+			n.p = p; n.y = y;
+			L.nodes.push_back(std::move(n));
+			return static_cast<int>(L.nodes.size()) - 1;
 		}
+
+		/// Familles de murs des bâtiments de la ville-tour (même gabarit 2 × 3,12 m, variantes
+		/// Straight / Window_Thin_Round / Window_Wide_Round / Door_Round) et leur poids.
+		constexpr const char* kTowerWallFamilies[] = { "UnevenBrick", "Plaster", "DryStone", "RedBrick" };
+		constexpr double kTowerWallWeights[] = { 0.4, 0.25, 0.2, 0.15 };
+
+		/// Un bâtiment de la ville-tour : niveaux [tier0, tier0 + tiers) d'une colonne.
+		struct TowerBuilding
+		{
+			int tier0 = 0, tiers = 1;
+			int family = 0;
+			double facadeR = 0.0;      ///< rayon de la façade (m) : enveloppe à son sommet
+		};
+		/// Colonne de bâtiments entre deux cages voisines d'une section (angles a0 < a1).
+		struct TowerColumn
+		{
+			int shaftA = 0, shaftB = 0;   ///< cages qui la bordent (indices bas)
+			double a0 = 0.0, a1 = 0.0;    ///< angles des axes des deux cages (a1 > a0)
+			std::vector<TowerBuilding> buildings;
+		};
 	}
 
 	void BuildTowerCity(World& w, CityDef& c, SettlementLayout& L, size_t firstBuilding)
 	{
 		const TowerShape& t = c.tower;
-		Rng rng(Hash(w.master.seed, HashString(c.id.c_str()), 1141));
+		Rng rng(Hash(w.master.seed, HashString(c.id.c_str()), 1142));
 		const Vec2 o = t.center;
 		const double socleY = c.plateauY;
-		const double half = t.ledgeM * 0.5;
-		const double H = t.heightM;
-		const double R = t.SocleR();
-		const double turns = t.Turns();
-		const double rampL = TowerLengthAt(t, 1.0);
+		const double H = t.heightM, R = t.SocleR();
+		const int T = t.Tiers(), ks = t.SplitTier();
+		const double Ht = t.TierM();
+		const double halfG = t.shaftM * 0.5;
+		const double twoPi = 2.0 * kPi;
 		const Vec2 entry = Dir(t.entryRad);
 		const Vec2 entrySide{ -entry.z, entry.x };
 		const Lake* lake = nullptr;
@@ -999,9 +1004,13 @@ namespace tools::world_gen
 		const double waterY = lake ? lake->waterY : socleY - kTowerSocleAboveWaterM;
 		const double bedY = waterY - 4.0;
 		c.radiusM = R;
+		constexpr uint8_t kPieceFlags = static_cast<uint8_t>(kSolid | kPiece);
+		// Repère d'une direction : vers le lac (out) et tangente (sens trigonométrique).
+		auto outOf = [](double a) { return Dir(a); };
+		auto tanOf = [](double a) { const Vec2 u = Dir(a); return Vec2{ -u.z, u.x }; };
 
-		// --- 1. Pic, socle et pied du socle sculptés dans la heightmap ; emprise urbaine (rues :
-		//     chaussées et socle ; maisons : 1) ; parois en roche ocre (peinture 3).
+		// --- 1. Aiguille, socle et pied du socle sculptés dans la heightmap ; emprise (bâti : 1,
+		//     socle : 2) ; rocher ocre (peinture 3).
 		if (w.paint.data.empty())
 			w.paint.Init(w.height.width, w.height.height, w.height.originX, w.height.originZ, w.height.step, uint8_t(0));
 		TowerForDisc(w.height, o, R + 4.0, [&](int i, int j, double d) {
@@ -1014,168 +1023,361 @@ namespace tools::world_gen
 				w.paint.At(i, j) = 3;
 				return;
 			}
-			double s = -1.0, across = 0.0;
-			const double off = TowerOffset(t, q, &s, &across);
+			const double off = TowerOffset(t, q);
 			h = socleY + off;
-			if (d <= t.topRadiusM) { w.urban.At(i, j) = 2; return; }       // plateforme du palais
-			if (s >= 0.0) { w.urban.At(i, j) = across >= half - t.roadM - 0.5 ? 2 : 1; return; } // replat
-			if (off <= 0.05) { w.urban.At(i, j) = 2; return; }              // socle (quai)
-			w.paint.At(i, j) = 3;                                            // paroi rocheuse
-			w.urban.At(i, j) = 1;
+			w.urban.At(i, j) = d <= t.baseRadiusM + 1.0 ? 1 : 2;
+			if (off > 0.5) w.paint.At(i, j) = 3;
 		});
+		w.Occupy(o, t.baseRadiusM + 1.0);
 
-		// --- 2. Réserve de la chaussée (tout le long de la rampe) et de la plateforme.
-		for (double l = 0.0; l <= rampL; l += 2.0)
+		// --- 2. Colonnes de bâtiments par section : sous la coupure, entre deux cages basses
+		//     voisines ; au-dessus, entre deux cages continues. Chaque colonne empile des
+		//     bâtiments d'un à trois niveaux ; la façade d'un bâtiment est à l'enveloppe de son
+		//     sommet (retrait vers le haut : un toit à chaque changement de bâtiment).
+		const int ratio = std::max(1, t.shaftsLow / std::max(1, t.shaftsHigh));
+		std::vector<TowerColumn> columns[2];
+		for (int sec = 0; sec < 2; ++sec)
 		{
-			Vec2 axis, out, up;
-			TowerFrame(t, TowerSAtLength(t, l), axis, out, up);
-			w.Occupy(axis + out * (half - t.roadM * 0.5), t.roadM * 0.5 + 0.3);
+			const int step = sec == 0 ? 1 : ratio;
+			const int k0 = sec == 0 ? 0 : ks, k1 = sec == 0 ? ks : T;
+			for (int j = 0; j < t.shaftsLow; j += step)
+			{
+				TowerColumn col;
+				col.shaftA = j;
+				col.shaftB = (j + step) % t.shaftsLow;
+				col.a0 = TowerShaftAngle(t, j);
+				col.a1 = col.a0 + twoPi * step / t.shaftsLow;
+				for (int k = k0; k < k1;)
+				{
+					const double u = rng.Next();
+					int n = u < 0.35 ? 1 : (u < 0.75 ? 2 : 3);
+					n = std::min(n, k1 - k);
+					TowerBuilding b;
+					b.tier0 = k; b.tiers = n;
+					double pick = rng.Next(), acc = 0.0;
+					for (int f = 0; f < 4; ++f) { acc += kTowerWallWeights[f]; if (pick < acc) { b.family = f; break; } }
+					b.facadeR = t.EnvelopeR((k + n) * Ht);
+					col.buildings.push_back(b);
+					k += n;
+				}
+				columns[sec].push_back(std::move(col));
+			}
+		}
+		// Bâtiment couvrant l'angle \p a au niveau \p tier (nullptr hors de l'aiguille).
+		auto buildingAt = [&](double a, int tier, const TowerColumn** colOut) -> const TowerBuilding* {
+			if (tier < 0 || tier >= T) return nullptr;
+			const int sec = tier < ks ? 0 : 1;
+			for (const TowerColumn& col : columns[sec])
+			{
+				double da = a - col.a0;
+				da -= twoPi * std::floor(da / twoPi);
+				if (da > col.a1 - col.a0) continue;
+				for (const TowerBuilding& b : col.buildings)
+					if (tier >= b.tier0 && tier < b.tier0 + b.tiers)
+					{
+						if (colOut) *colOut = &col;
+						return &b;
+					}
+			}
+			return nullptr;
+		};
+
+		// --- 3. Bâtiments : façade (murs à l'échelle d'un demi-niveau : deux étages par
+		//     niveau ; fenêtres en plein cintre, portes au rez du socle), toit d'ardoise sur le
+		//     retrait au-dessus, tourelles d'angle.
+		const double wallS = Ht * 0.5 / 3.12;       // façade : 2·wallS m de large, Ht/2 de haut
+		const double sideS = Ht / 3.12;             // flancs (dans les cages) : un niveau de haut
+		int facadePanels = 0, roofs = 0, turrets = 0, sidePanels = 0, doors = 0;
+		for (int sec = 0; sec < 2; ++sec)
+			for (const TowerColumn& col : columns[sec])
+				for (const TowerBuilding& b : col.buildings)
+				{
+					const std::string fam = kTowerWallFamilies[b.family];
+					const double Rb = b.facadeR;
+					const double margin = std::asin(std::min(0.95, halfG / Rb));
+					const double aStart = col.a0 + margin, aEnd = col.a1 - margin;
+					const int nPanels = std::max(1, static_cast<int>(std::ceil((aEnd - aStart) * Rb / (2.0 * wallS) - 1e-6)));
+					const double da = (aEnd - aStart) / nPanels;
+					const double yBottom = socleY + b.tier0 * Ht, yTop = socleY + (b.tier0 + b.tiers) * Ht;
+					for (int i = 0; i < nPanels; ++i)
+					{
+						const double a = aStart + (i + 0.5) * da;
+						const Vec2 out = outOf(a), tan = tanOf(a);
+						// Face décorée (−Z local) vers le lac : origine 0,31·échelle en retrait.
+						const Vec2 p = o + out * (Rb - 0.31 * wallS);
+						for (int row = 0; row < 2 * b.tiers; ++row)
+						{
+							const double u = rng.Next();
+							std::string variant;
+							bool door = false;
+							if (b.tier0 == 0 && row == 0) { door = u < 0.15; variant = door || u >= 0.55 ? "Straight" : "Window_Thin_Round"; }
+							else variant = u < 0.45 ? "Straight" : (u < 0.8 ? "Window_Thin_Round" : "Window_Wide_Round");
+							TowerProp(w, "Wall_" + fam + "_" + variant, p, YawAlong(tan), wallS, kPieceFlags, 0, yBottom + row * Ht * 0.5);
+							++facadePanels;
+							// Porte décorative au rez du socle : battant posé contre un mur plein (les
+							// bâtiments ne se visitent pas, BD-T2 : décor).
+							if (door)
+							{
+								TowerProp(w, "Door_1_Round", o + out * (Rb + 0.05) - tan * 0.7, YawAlong(tan), 1.3, 0, 1, yBottom);
+								++doors;
+							}
+						}
+					}
+					// Toit d'ardoise sur le retrait jusqu'à la façade du bâtiment du dessus (faîtage
+					// le long de la façade, égout au nu de la façade du bâtiment).
+					if (b.tier0 + b.tiers < T)
+					{
+						const double aMid = 0.5 * (col.a0 + col.a1);
+						const TowerBuilding* above = buildingAt(aMid, b.tier0 + b.tiers, nullptr);
+						const double recess = above ? std::max(0.5, Rb - above->facadeR) : 2.0;
+						const double sr = std::clamp(recess / 2.76, 0.55, 1.1);
+						const double rc = Rb - 2.76 * sr;
+						const int nRoof = std::max(1, static_cast<int>(std::ceil((aEnd - aStart) * rc / (5.5 * sr) - 1e-6)));
+						const double dr = (aEnd - aStart) / nRoof;
+						for (int i = 0; i < nRoof; ++i)
+						{
+							const double a = aStart + (i + 0.5) * dr;
+							TowerProp(w, "Roof_Slate_4x4", o + outOf(a) * rc, YawAlong(outOf(a)), sr, 0, 0, yTop - 0.1);
+							++roofs;
+						}
+					}
+					// Tourelle d'angle (« des tours dans les angles », p.20) sur un bâtiment de deux
+					// niveaux ou plus, d'un côté ou de l'autre.
+					if (b.tiers >= 2 && rng.Chance(0.22))
+					{
+						const bool left = rng.Chance(0.5);
+						const double aS = left ? col.a0 : col.a1;
+						const double v = (left ? 1.0 : -1.0) * (halfG + 1.9);
+						const Vec2 tp = o + outOf(aS) * (Rb + 0.4) + tanOf(aS) * v;
+						TowerProp(w, "Turret_Corner_1", tp, YawAlong(tanOf(aS)), 0.9, kSolid, 0, yTop - 9.0, 1.6);
+						++turrets;
+					}
+				}
+
+		// Place du socle (nœud 0 du graphe) devant la cage 0, au départ du ponton : créée avant
+		// les nœuds des cages (Population.cpp suppose nodes[0] = place).
+		const double socleIn = t.baseRadiusM + 1.0;      // bord intérieur du socle libre
+		const Vec2 plaza = o + entry * (0.5 * (socleIn + R) + 2.0);
+		AddNode(L, plaza);
+		L.nodes[0].y = socleY;
+		for (int k = 0; k < 8; ++k)
+		{
+			const int id = TowerNode(L, plaza + Dir(k * kPi / 4.0 + 0.2) * 5.0, socleY);
+			L.plazaRing.push_back(id);
+			Link(L, 0, id);
+		}
+		for (size_t k = 0; k < L.plazaRing.size(); ++k) Link(L, L.plazaRing[k], L.plazaRing[(k + 1) % L.plazaRing.size()]);
+		w.Occupy(plaza, 6.0);
+		// --- 4. Cages d'escalier : flancs des bâtiments (murs du côté de la cage), volées,
+		//     paliers de dalles, parapets côté vide, portes décoratives et torches sur les
+		//     paliers côté lac, plafond des cages arrêtées sous la coupure ; graphe 3D.
+		const double ss = TowerStairScale(t);
+		std::vector<int> shaftFoot(static_cast<size_t>(t.shaftsLow), -1);   // nœud du pied de chaque cage
+		std::vector<int> shaftTopNode(static_cast<size_t>(t.shaftsLow), -1); // nœud du dernier palier (cages du sommet)
+		int flights = 0, landingTiles = 0, lights = 0;
+		for (int j = 0; j < t.shaftsLow; ++j)
+		{
+			const double a = TowerShaftAngle(t, j);
+			const Vec2 out = outOf(a), tan = tanOf(a);
+			auto at = [&](double r, double v) { return o + out * r + tan * v; };
+			// Flancs : à chaque niveau ouvert, un mur par côté, du nu de la façade voisine sur
+			// 16 m vers l'aiguille (deux panneaux de 8 m), face décorée vers la cage.
+			for (int k = 0; k < T; ++k)
+			{
+				if (!TowerShaftOpenAt(t, j, k)) continue;
+				for (int sg = -1; sg <= 1; sg += 2)
+				{
+					const double probeA = a + sg * (halfG + 2.0) / std::max(10.0, t.EnvelopeR(k * Ht));
+					const TowerBuilding* b = buildingAt(probeA, k, nullptr);
+					const double Rb = b ? b->facadeR : TowerShaftOuterR(t, k);
+					const std::string fam = kTowerWallFamilies[b ? b->family : 0];
+					for (int p = 0; p < 2; ++p)
+					{
+						const Vec2 q = at(Rb - sideS * (1.0 + 2.0 * p), sg * (halfG + 0.31 * sideS));
+						// +Z local vers le bâtiment (côté sg) : face −Z vers la cage.
+						TowerProp(w, "Wall_" + fam + "_Straight", q, YawAlong(sg > 0 ? out : out * -1.0), sideS, kPieceFlags, 0, socleY + k * Ht);
+						++sidePanels;
+					}
+				}
+			}
+			// Volées (Stair_Interior_Rails : la volée monte vers −Z local ; YawFacing tourne −Z vers la montée).
+			const std::vector<TowerFlight> fl = TowerShaftFlights(t, j);
+			const std::vector<TowerLanding> la = TowerShaftLandings(t, j);
+			for (const TowerFlight& f : fl)
+			{
+				const Vec2 climb = f.inward ? out * -1.0 : out;
+				const double rOrigin = f.rBottom + (f.inward ? -1.0 : 1.0) * kTowerStairFrontM * ss;
+				TowerProp(w, "Stair_Interior_Rails", at(rOrigin, f.lane), YawFacing(climb), ss, kPieceFlags, 0, socleY + f.yBottom);
+				++flights;
+			}
+			// Paliers : dalles de 2 m sur toute la largeur de la cage.
+			const int across = std::max(1, static_cast<int>(std::ceil(t.shaftM / 2.0 - 1e-6)));
+			const bool toSummit = TowerShaftTiers(t, j) == T;
+			for (const TowerLanding& L0 : la)
+			{
+				const double len = L0.rOut - L0.rIn;
+				const int nr = std::max(1, static_cast<int>(std::ceil(len / 2.0 - 1e-6)));
+				const double y = socleY + L0.y;
+				for (int ir = 0; ir < nr; ++ir)
+				{
+					const double r = nr == 1 ? 0.5 * (L0.rIn + L0.rOut) : L0.rIn + 1.0 + ir * (len - 2.0) / (nr - 1);
+					for (int iv = 0; iv < across; ++iv)
+					{
+						const double v = across == 1 ? 0.0 : -halfG + 1.0 + iv * (t.shaftM - 2.0) / (across - 1);
+						TowerProp(w, "Bridge_Stone_Deck_1", at(r, v), YawAlong(tan), 1.0, kPieceFlags, 0, y - 0.01);
+						++landingTiles;
+					}
+				}
+				const bool summit = toSummit && L0.level == static_cast<int>(fl.size());
+				// Parapet côté vide (sauf au socle et au sommet, où l'on sort de la cage).
+				if (L0.level > 0 && !summit)
+				{
+					const double rp = L0.outer ? L0.rOut - 0.22 : L0.rIn + 0.22;
+					for (int iv = 0; iv < across; ++iv)
+					{
+						const double v = across == 1 ? 0.0 : -halfG + 1.0 + iv * (t.shaftM - 2.0) / (across - 1);
+						TowerProp(w, "Bridge_Stone_Parapet_1", at(rp, v), YawAlong(tan), 1.0, kPieceFlags, 1, y);
+					}
+				}
+				// Palier côté lac en saillie sur la façade du bâtiment du niveau (changement de
+				// niveau sous un bâtiment en retrait) : parapet latéral sur la saillie.
+				if (L0.outer && L0.level > 0 && !summit)
+					for (int sg = -1; sg <= 1; sg += 2)
+					{
+						const int kHere = std::min(T - 1, L0.level / 3);
+						const TowerBuilding* b = buildingAt(a + sg * (halfG + 2.0) / std::max(10.0, L0.rOut), kHere, nullptr);
+						if (b == nullptr || b->facadeR >= L0.rOut - 0.1) continue;
+						TowerProp(w, "Bridge_Stone_Parapet_1", at(0.5 * (b->facadeR + L0.rOut), sg * (halfG - 0.22)), YawAlong(out), 1.0, kPieceFlags, 1, y);
+					}
+				// Palier côté lac : porte décorative d'un logis (non visitable) sur un flanc, en
+				// alternance ; domicile des habitants ; torche un palier sur trois.
+				if (L0.outer && !summit)
+				{
+					int sg = (L0.level / 2) % 2 == 0 ? 1 : -1;
+					const double rMid = 0.5 * (L0.rIn + L0.rOut);
+					// Le battant s'appuie sur le flanc du bâtiment du niveau (pas sur une saillie).
+					const int kHere = std::min(T - 1, L0.level / 3);
+					auto flankOk = [&](int side) {
+						const TowerBuilding* b = buildingAt(a + side * (halfG + 2.0) / std::max(10.0, rMid), kHere, nullptr);
+						return b != nullptr && b->facadeR >= rMid + 0.6;
+					};
+					if (!flankOk(sg)) sg = -sg;
+					if (flankOk(sg))
+					{
+						TowerProp(w, "Door_1_Round", at(rMid - 0.53, sg * (halfG - 0.07)), YawAlong(out), 1.0, 0, 1, y);
+						++doors;
+					}
+					L.homeDoors.push_back(at(rMid, sg * (halfG - 0.7)));
+					L.homeDoorY.push_back(y);
+					L.homeDoorNode.push_back(-1); // rempli avec le graphe (ci-dessous)
+					if (L0.level % 6 == 0)
+					{
+						const Vec2 tp = at(rMid + 0.4, -sg * (halfG - 0.05));
+						TowerProp(w, "Torch_Metal", tp, YawFacing(tan * static_cast<double>(sg)), 1.0, 0, 1, y + 2.0);
+						if (j % ratio == 0 && L0.level % 18 == 0)
+							TowerLight(w, c.id + "_cage_" + std::to_string(lights++), tp, y + 2.4, 9.0, 1.3);
+					}
+				}
+			}
+			// Cage arrêtée sous la coupure : plafond de dalles au pied du bâtiment du dessus.
+			if (!toSummit && TowerShaftTiers(t, j) < ks)
+			{
+				const double yc = socleY + (TowerShaftTiers(t, j) + 1) * Ht;
+				const double rs = TowerShaftOuterR(t, TowerShaftTiers(t, j));
+				for (double r = rs + 1.0; r > rs - 13.0; r -= 2.0)
+					for (int iv = 0; iv < across; ++iv)
+					{
+						const double v = across == 1 ? 0.0 : -halfG + 1.0 + iv * (t.shaftM - 2.0) / (across - 1);
+						TowerProp(w, "Bridge_Stone_Deck_1", at(r, v), YawAlong(tan), 1.0, kPieceFlags, 0, yc);
+					}
+			}
+			// Graphe 3D : pied de la cage (socle), puis deux nœuds par volée (avant la première
+			// marche, après la dernière, sur l'axe de la voie), reliés en chaîne.
+			if (!fl.empty())
+			{
+				const size_t firstDoor = L.homeDoors.size() - static_cast<size_t>(std::count_if(la.begin(), la.end(),
+					[&](const TowerLanding& q) { return q.outer && !(toSummit && q.level == static_cast<int>(fl.size())); }));
+				size_t doorIdx = firstDoor;
+				int prev = TowerNode(L, at(fl.front().rBottom + 0.5, 0.0), socleY);
+				shaftFoot[static_cast<size_t>(j)] = prev;
+				for (const TowerFlight& f : fl)
+				{
+					const double toward = f.inward ? 1.0 : -1.0; // décalage vers le palier du bas
+					const int nb = TowerNode(L, at(f.rBottom + 0.5 * toward, f.lane), socleY + f.yBottom);
+					Link(L, prev, nb);
+					// Porte du palier côté lac de ce niveau : nœud du pied de la volée qui en part.
+					if (f.level % 2 == 0 && doorIdx < L.homeDoorNode.size()) L.homeDoorNode[doorIdx++] = nb;
+					const int nt = TowerNode(L, at(f.rTop - 0.5 * toward, f.lane), socleY + f.yBottom + f.rise);
+					Link(L, nb, nt);
+					prev = nt;
+				}
+				if (doorIdx < L.homeDoorNode.size()) L.homeDoorNode[doorIdx] = prev; // dernier palier
+				if (toSummit) shaftTopNode[static_cast<size_t>(j)] = prev;
+			}
+		}
+
+		// --- 5. Plateforme du sommet : dallage à l'altitude du sommet (rocher un demi-mètre
+		//     dessous), sauf au-dessus de la dernière volée de chaque cage du sommet (voie
+		//     droite : on y monte) ; dans la largeur d'une cage, dalles alignées sur la cage.
+		const double summitY = socleY + H;
+		int summitTiles = 0;
+		{
+			std::vector<int> topShafts;
+			for (int j = 0; j < t.shaftsLow; ++j)
+				if (TowerShaftTiers(t, j) == T) topShafts.push_back(j);
+			const double rsTop = TowerShaftOuterR(t, T - 1);
+			const double run = (kTowerStairFrontM + kTowerStairBackM) * ss;
+			const double rOuter = rsTop - kTowerLandingM, rInner = rOuter - run, rDeep = rInner - kTowerLandingM;
+			const double rimR = t.topRadiusM + 1.0;
+			for (double x = -rimR + 1.0; x <= rimR - 1.0 + 1e-6; x += 2.0)
+				for (double z = -rimR + 1.0; z <= rimR - 1.0 + 1e-6; z += 2.0)
+				{
+					if (std::hypot(x, z) > rimR) continue;
+					bool inShaft = false;
+					for (int j : topShafts)
+					{
+						const double a = TowerShaftAngle(t, j);
+						const Vec2 u = outOf(a), v = tanOf(a);
+						const double along = x * u.x + z * u.z, side = x * v.x + z * v.z;
+						if (std::fabs(side) < halfG + 1.0 && along > rDeep - 1.0 && along < rsTop + 1.2) inShaft = true;
+					}
+					if (inShaft) continue;
+					TowerProp(w, "Bridge_Stone_Deck_1", o + Vec2{ x, z }, 0.0, 1.0, kPieceFlags, 0, summitY - 0.01);
+					++summitTiles;
+				}
+			for (int j : topShafts)
+			{
+				const double a = TowerShaftAngle(t, j);
+				const Vec2 u = outOf(a), v = tanOf(a);
+				// Voie gauche (au-dessus de l'avant-dernière volée : un niveau de palier d'écart).
+				const int nA = std::max(2, static_cast<int>(std::ceil((rOuter - rDeep) / 2.0 - 1e-6)));
+				for (int i = 0; i < nA; ++i)
+				{
+					const double r = rDeep + 1.0 + i * (rOuter - rDeep - 2.0) / (nA - 1);
+					TowerProp(w, "Bridge_Stone_Deck_1", o + u * r + v * -1.0, YawAlong(v), 1.0, kPieceFlags, 0, summitY - 0.01);
+					++summitTiles;
+				}
+				// Voie droite : seulement au-dessus du palier côté aiguille (départ de la dernière volée).
+				TowerProp(w, "Bridge_Stone_Deck_1", o + u * (rDeep + 0.85) + v * 1.0, YawAlong(v), 1.0, kPieceFlags, 0, summitY - 0.01);
+				++summitTiles;
+				// Rebord : de part et d'autre de la cage, jusqu'au bord de la plateforme.
+				for (int sg = -1; sg <= 1; sg += 2)
+					for (double r = rDeep - 1.0; r <= rimR - 1.0 + 1e-6; r += 2.0)
+					{
+						TowerProp(w, "Bridge_Stone_Deck_1", o + u * r + v * (sg * (halfG + 1.0)), YawAlong(v), 1.0, kPieceFlags, 0, summitY - 0.01);
+						++summitTiles;
+					}
+			}
 		}
 		w.Occupy(o, t.topRadiusM + 2.0);
 
-		// --- 3. Façades des parois : au pied de chaque paroi, des murs de pierre (échelle 3 :
-		//     6 × 9,4 m) jusqu'au replat du dessus, fenêtres en plein cintre au hasard ; toits
-		//     d'ardoise et tourelles sur la crête (entre la façade et le parapet du dessus).
-		//     Paroi intérieure d'un replat (vers le pic) : de son altitude à celle du replat
-		//     suivant (un tour plus haut) ou de la plateforme ; paroi extérieure du premier tour
-		//     (face au lac) : du socle au replat.
-		constexpr double kWallS = 3.0, kWallW = 2.0 * kWallS, kWallHt = 3.12 * kWallS;
-		int facadePanels = 0;
-		auto facade = [&](Vec2 foot, Vec2 tan, double y0, double y1, bool crest, Vec2 inward) {
-			if (y1 - y0 < 1.0) return;
-			const int rows = static_cast<int>(std::ceil((y1 - y0) / kWallHt));
-			const double yaw = YawAlong(tan); // +Z local vers le pic (face décorée vers le vide)
-			// Rangées alignées sur la crête (y1) : la rangée du bas s'enfonce sous le replat ou le
-			// socle (cachée), aucune ne dépasse au-dessus du replat du dessus.
-			const double yBase = y1 - rows * kWallHt;
-			for (int row = 0; row < rows; ++row)
-			{
-				const double u = rng.Next();
-				const char* mesh = (row == 0 || u < 0.55) ? "Wall_UnevenBrick_Straight"
-					: (u < 0.85 ? "Wall_UnevenBrick_Window_Thin_Round" : "Wall_UnevenBrick_Window_Wide_Round");
-				TowerProp(w, mesh, foot, yaw, kWallS, static_cast<uint8_t>(kSolid | kPiece), 0, yBase + row * kWallHt);
-				++facadePanels;
-			}
-			// Toit d'ardoise sur l'interstice entre la crête du mur et la marche de la paroi (une
-			// maille de heightmap, au quart de la paroi depuis le mur).
-			if (crest && rng.Chance(0.6))
-				TowerProp(w, "Roof_Slate_4x4", foot + inward * (t.bandM * 0.25), yaw, 1.0, 0, 0, y1 - 0.4);
-		};
-		{
-			// Le long de chaque replat, un panneau tous les 6 m (mesurés sur la ligne de pied).
-			double l = 0.0;
-			int turret = 0;
-			while (l < rampL)
-			{
-				const double s = TowerSAtLength(t, l);
-				Vec2 axis, out, up;
-				TowerFrame(t, s, axis, out, up);
-				const double r = std::hypot(axis.x - o.x, axis.z - o.z);
-				const double hHere = TowerRampHeight(t, s);
-				const double sUp = s + 1.0 / turns;
-				// Mur : bord X local le long de la tangente, sens trigonométrique (le +Z local regarde le pic).
-				const Vec2 tan{ -out.z, out.x };
-				// Paroi intérieure (au pied, côté pic).
-				const double footR = r - half - 0.1;
-				const Vec2 footIn = o + out * footR;
-				const double yLow = socleY + std::min(hHere, TowerRampHeight(t, TowerSAtLength(t, l + kWallW))) - 0.3;
-				// Crête : le plus bas du replat du dessus sur la largeur du panneau (une volée peut y
-				// commencer) — le mur ne dépasse jamais du replat qu'il soutient.
-				const double sUp2 = TowerSAtLength(t, TowerLengthAt(t, std::min(1.0, sUp)) + kWallW * r / std::max(10.0, footR));
-				const double yTop = socleY + (sUp <= 1.0 ? std::min(TowerRampHeight(t, sUp), TowerRampHeight(t, sUp2)) : H) + 0.4;
-				facade(footIn, tan, yLow, yTop, true, out * -1.0);
-				// Tourelle sur la crête, tous les ~70 m (« des tours dans les angles », p.20).
-				if (sUp <= 1.0 && l > 40.0 && (++turret % 12) == 0)
-				{
-					const Vec2 tp = o + out * (footR - t.bandM * 0.75); // replat haut de la paroi, devant le parapet
-					TowerProp(w, "Turret_Corner_1", tp, YawAlong(tan), 1.2, kSolid, 0, socleY + TowerRampHeight(t, sUp) - 0.5, 2.0);
-				}
-				// Pas de 6 m le long du pied de la paroi (rayon footR) : dl sur l'axe = 6·r/footR.
-				l += kWallW * r / std::max(10.0, footR);
-			}
-			// Paroi extérieure du premier tour (face au lac), du socle au replat ; arcs-boutants
-			// contre elle là où elle est haute (tous les ~48 m).
-			const double lFirst = TowerLengthAt(t, 1.0 / turns);
-			int k = 0;
-			for (double lo = 0.0; lo < lFirst; ++k)
-			{
-				const double s = TowerSAtLength(t, lo);
-				Vec2 axis, out, up;
-				TowerFrame(t, s, axis, out, up);
-				const double r = std::hypot(axis.x - o.x, axis.z - o.z);
-				const double hHere = TowerRampHeight(t, s);
-				const Vec2 tan{ -out.z, out.x };
-				const double footR = r + half + t.bandM + 0.1;
-				const Vec2 footOut = o + out * footR;
-				const double hTop = std::min(hHere, TowerRampHeight(t, TowerSAtLength(t, lo + kWallW * r / footR)));
-				facade(footOut, tan, socleY - 0.3, socleY + hTop + 0.4, true, out * -1.0);
-				if (hHere > 24.0 && k % 8 == 0)
-					TowerProp(w, "Flyingbuttress_1", footOut + out * 6.2, YawAlong(out * -1.0), 2.0, 0, 0, socleY - 0.2);
-				lo += kWallW * r / footR;
-			}
-		}
-
-		// --- 4. Chaussée : parapet au bord du vide (ouvert au pied de la rampe, sur le socle),
-		//     volées d'escalier (Stairs_Monumental_1 à l'échelle 0,85 : 2,55 × 1,53 m), arches
-		//     au-dessus de la chaussée sur les paliers, torches.
-		const double P = TowerStairPeriodM(t), run = TowerStairRunM(t);
-		int flights = 0, arches = 0, lights = 0;
-		for (double l = 25.0; l <= rampL; l += 2.0)
-		{
-			Vec2 axis, out, up;
-			TowerFrame(t, TowerSAtLength(t, l), axis, out, up);
-			const Vec2 tan{ -out.z, out.x };
-			const Vec2 p = axis + out * (half - 0.3);
-			TowerProp(w, "Bridge_Stone_Parapet_1", p, YawAlong(tan), 1.0, static_cast<uint8_t>(kSolid | kPiece), 1,
-				socleY + TowerRampHeight(t, TowerSAtLength(t, l)) - 0.05);
-		}
-		const int periods = static_cast<int>(std::lround(rampL / P));
-		for (int k = 0; k < periods; ++k)
-		{
-			const double l0 = k * P + (P - run); // bas de la volée
-			const int nf = static_cast<int>(std::lround(run / 2.55));
-			for (int f = 0; f < nf; ++f)
-			{
-				const double lm = l0 + 2.55 * (f + 0.5);
-				Vec2 axis, out, up;
-				TowerFrame(t, TowerSAtLength(t, lm), axis, out, up);
-				const Vec2 p = axis + out * (half - t.roadM * 0.5);
-				const double baseY = socleY + TowerRampHeight(t, TowerSAtLength(t, l0)) + 1.53 * f;
-				TowerProp(w, "Stairs_Monumental_1", p, YawFacing(up), 0.85, 0, 0, baseY);
-				++flights;
-			}
-			// Arche au-dessus de la chaussée au milieu du palier, une période sur deux.
-			if (k % 2 == 1)
-			{
-				const double la = k * P + (P - run) * 0.5;
-				Vec2 axis, out, up;
-				TowerFrame(t, TowerSAtLength(t, la), axis, out, up);
-				const double sc = (t.roadM + 1.2) / 4.9;
-				const Vec2 p = axis + out * (half - t.roadM * 0.5);
-				TowerProp(w, "Arch_Stone_1", p, YawAlong(out), sc, 0, 0, socleY + TowerRampHeight(t, TowerSAtLength(t, la)) - 0.1);
-				++arches;
-			}
-			// Torche au parapet, une période sur deux (lumière : flamme à 1,9 m).
-			if (k % 2 == 0)
-			{
-				const double lt = k * P + 10.0;
-				Vec2 axis, out, up;
-				TowerFrame(t, TowerSAtLength(t, lt), axis, out, up);
-				const Vec2 p = axis + out * (half - 0.9);
-				const double y = socleY + TowerRampHeight(t, TowerSAtLength(t, lt));
-				TowerProp(w, "Torch_Pole_1", p, 0.0, 1.0, kSolid, 1, y, 0.2);
-				TowerLight(w, c.id + "_rampe_" + std::to_string(lights++), p, y + 3.1, 10.0, 1.6);
-			}
-		}
-
-		// --- 5. Ponton de bois (un seul, BD p.19) : du bord du socle à la rive, dans la direction
-		//     d'entrée ; tablier de 6 m au niveau du socle (pieux jusqu'à l'eau), garde-corps,
-		//     poteaux à torche ; levée de terre sur la rive ; gibets et poteau indicateur à la
-		//     tête du ponton ; chemin pavé jusqu'à l'ancre des routes.
+		// --- 6. Ponton de bois (un seul, BD p.19) : du bord du socle à la rive, dans la direction
+		//     d'entrée (face à la cage 0) ; tablier de 6 m au niveau du socle (pieux jusqu'à
+		//     l'eau), garde-corps, poteaux à torche ; levée de terre sur la rive ; gibets et
+		//     poteau indicateur à la tête du ponton ; chemin pavé jusqu'à l'ancre des routes.
 		double shoreR = (lake ? LakeRadiusAt(*lake, t.entryRad) : t.lakeRadiusM) + 2.0;
 		while (shoreR < t.lakeRadiusM * 1.3 && w.HeightAt(o + entry * shoreR) < waterY + 0.25) shoreR += 2.0;
 		const double deckEnd = shoreR + 6.0;
-		// Levée de terre (7 m de large, 30 m) du niveau du tablier au terrain naturel.
 		TowerForDisc(w.height, o + entry * (deckEnd + 15.0), 26.0, [&](int i, int j, double) {
 			const Vec2 q{ w.height.WorldX(i) - o.x, w.height.WorldZ(j) - o.z };
 			const double along = q.x * entry.x + q.z * entry.z, side = std::fabs(q.x * entrySide.x + q.z * entrySide.z);
@@ -1191,7 +1393,7 @@ namespace tools::world_gen
 			for (int col = -1; col <= 1; ++col)
 			{
 				const Vec2 p = o + entry * r + entrySide * (col * 2.0);
-				TowerProp(w, "Boardwalk_Deck_1", p, YawAlong(entry), 1.0, static_cast<uint8_t>(kSolid | kPiece), 0, socleY);
+				TowerProp(w, "Boardwalk_Deck_1", p, YawAlong(entry), 1.0, kPieceFlags, 0, socleY);
 				++deckTiles;
 			}
 			for (int sd = -1; sd <= 1; sd += 2)
@@ -1217,7 +1419,6 @@ namespace tools::world_gen
 			AddProp(w, "Signpost_1", sp, YawFacing(entry), 1.0, kSolid, 1, 0.3);
 			w.Occupy(sp, 1.0);
 		}
-		// Chemin pavé de la tête du ponton à l'ancre des routes (rive).
 		{
 			Road path;
 			path.fromId = c.id; path.widthM = 5.0; path.path = true;
@@ -1239,41 +1440,31 @@ namespace tools::world_gen
 			}
 		}
 
-		// --- 6. Place du socle (nœud 0 du graphe), juste avant le pied de la rampe (sens inverse) :
-		//     auberge, étals du marché ; geôles plus loin sur le socle.
-		auto socleWidthAt = [&](double a, double& rIn) {
-			// Bord intérieur du socle (pied de la paroi extérieure du premier tour) à l'angle a.
-			double a0 = a - t.entryRad;
-			a0 -= 2.0 * 3.14159265358979323846 * std::floor(a0 / (2.0 * 3.14159265358979323846));
-			const double s0 = a0 / (2.0 * 3.14159265358979323846 * turns);
-			rIn = t.OuterR() - (t.OuterR() - t.InnerR()) * s0 + half + t.bandM + 0.6;
-			return R - rIn;
-		};
-		const double plazaA = t.entryRad - 0.30;
-		double plazaIn = 0.0;
-		socleWidthAt(plazaA, plazaIn);
-		const Vec2 plaza = o + Dir(plazaA) * (0.5 * (plazaIn + R));
-		AddNode(L, plaza);
-		for (int k = 0; k < 8; ++k)
+
+		// --- 7. Socle : anneau de rue au pied des bâtiments (un nœud devant chaque cage, relié
+		//     au pied de la cage) ; auberge, étals du marché ; geôles.
+		const double stepA = twoPi / t.shaftsLow;
+		const double ringR = socleIn - 1.0; // entre les façades du rez (≤ enveloppe du 1er niveau) et les geôles
+		std::vector<int> ring;
+		for (int j = 0; j < t.shaftsLow; ++j)
 		{
-			const int id = AddNode(L, plaza + Dir(k * kPi / 4.0 + 0.2) * 5.0);
-			L.plazaRing.push_back(id);
-			Link(L, 0, id);
+			const int id = TowerNode(L, o + outOf(TowerShaftAngle(t, j)) * ringR, socleY);
+			if (!ring.empty()) Link(L, ring.back(), id);
+			if (shaftFoot[static_cast<size_t>(j)] >= 0) Link(L, id, shaftFoot[static_cast<size_t>(j)]);
+			ring.push_back(id);
 		}
-		for (size_t k = 0; k < L.plazaRing.size(); ++k) Link(L, L.plazaRing[k], L.plazaRing[(k + 1) % L.plazaRing.size()]);
-		w.Occupy(plaza, 6.0);
-		// Auberge (lore : « au pied », fréquentée par les nains) : sur le socle, porte vers la place.
+		if (ring.size() > 2) Link(L, ring.back(), ring.front());
+		Link(L, TowerNearestOf(L, L.plazaRing, o + entry * ringR), ring.front());
+		// Auberge (lore : « au pied », fréquentée par les nains) : sur le socle, porte vers le lac.
 		{
 			L.innDoor = plaza;
 			const TemplateRef inn = InnFor(c);
 			for (int attempt = 0; attempt < 16; ++attempt)
 			{
-				const double a = plazaA - 0.10 - 0.025 * attempt;
-				double rIn = 0.0;
-				const double wdt = socleWidthAt(a, rIn);
-				if (wdt < 2.0 * inn.halfD + 4.0) continue;
-				const Vec2 out = Dir(a);
-				const Vec2 ctr = o + out * (rIn + inn.halfD + 1.0);
+				const double a = t.entryRad + stepA * (1.5 + 0.25 * attempt);
+				const Vec2 out = outOf(a);
+				const Vec2 ctr = o + out * (socleIn + inn.halfD + 1.0);
+				if (socleIn + 2.0 * inn.halfD + 2.0 > R) break;
 				const int b = TryPlaceBuilding(w, c, inn, ctr, out, "Auberge");
 				if (b >= 0)
 				{
@@ -1284,15 +1475,13 @@ namespace tools::world_gen
 				}
 			}
 		}
-		// Étals du marché sur la place (herbes et réactifs des marais, lore v1.0.58).
+		// Étals du marché près de la place (herbes et réactifs des marais, lore v1.0.58).
 		{
 			static const char* kGoods[] = { "Shelf_Small_Bottles", "Basket_1", "Crate_Wooden", "Barrel" };
 			for (int k = 0; k < 4; ++k)
 			{
-				const double a = plazaA + 0.06 + 0.035 * k;
-				double rIn = 0.0;
-				socleWidthAt(a, rIn);
-				const Vec2 out = Dir(a), p = o + out * (R - 6.0);
+				const double a = t.entryRad - stepA * (0.5 + 0.3 * k);
+				const Vec2 out = outOf(a), p = o + out * (R - 6.0);
 				if (w.IsOccupied(p, 1.4)) continue;
 				AddProp(w, k % 2 ? "Awning_Striped_1" : "Stall_Empty", p, YawFacing(out), 1.0, kSolid, 0, 1.0);
 				AddProp(w, kGoods[k], p - out * 1.4 + Vec2{ -out.z, out.x } * 0.8, rng.Range(0.0, 360.0), 1.0, 0, 2);
@@ -1301,23 +1490,20 @@ namespace tools::world_gen
 			}
 		}
 
-		// --- 7. Geôles (BD p.22 : voûtes, gros piliers, banquettes, anneaux, soupiraux et rais de
-		//     lumière) : salle adossée à la face au lac du premier tour, sur le socle (24 × 12 m) ;
-		//     au fond, cinq cellules voûtées (Dungeon_Vault_1, 4,8 × 4 m, ouverture vers la salle)
-		//     fermées de grilles ; salle à piliers massifs sous un plafond de dalles (4,4 m) ;
-		//     façade sur le quai avec porte, soupiraux et enseigne de la prison.
+		// --- 8. Geôles (BD p.22 : voûtes, gros piliers, banquettes, anneaux, soupiraux et rais de
+		//     lumière) : salle adossée au pied de l'aiguille, sur le socle (24 × 12 m), entre deux
+		//     cages ; au fond, cinq cellules voûtées (Dungeon_Vault_1, 4,8 × 4 m, ouverture vers
+		//     la salle) fermées de grilles ; salle à piliers massifs sous un plafond de dalles
+		//     (4,4 m) ; façade sur le quai avec porte, soupiraux et enseigne de la prison.
 		Vec2 prisonDoor = plaza;
 		{
-			const double a = plazaA - 0.75;
-			double rIn = 0.0;
-			const double wdt = socleWidthAt(a, rIn);
-			const Vec2 out = Dir(a), tan{ -out.z, out.x };
+			const double a = t.entryRad - stepA * 2.5;
+			const Vec2 out = outOf(a), tan = tanOf(a);
 			const double depth = 12.0, width = 24.0, ceilY = 4.4;
-			if (wdt >= depth + 5.0)
+			if (R - socleIn >= depth + 5.0)
 			{
-				const Vec2 back = o + out * rIn; // pied de la façade du premier tour
+				const Vec2 back = o + out * (socleIn + 0.5);
 				auto at = [&](double u, double v) { return back + out * u + tan * v; };
-				// Cellules : axe de la voûte (Z local) vers la salle, murets latéraux (X local).
 				for (int i = 0; i < 5; ++i)
 				{
 					const double v = -9.6 + 4.8 * i;
@@ -1327,27 +1513,25 @@ namespace tools::world_gen
 					TowerProp(w, "Bench", at(0.9, v), YawFacing(out * -1.0), 1.0, kSolid, 1, socleY, 0.5);
 					TowerProp(w, "Chain_Hook_1", at(0.5, v + 1.3), 0.0, 1.0, 0, 2, socleY + 0.6);
 				}
-				// Salle : deux rangées de piliers massifs, plafond de dalles.
 				for (int i = 0; i < 4; ++i)
 					for (int j = 0; j < 2; ++j)
 						TowerProp(w, "Dungeon_Pillar_1", at(6.5 + 3.5 * j, -7.2 + 4.8 * i), 0.0, 1.0, kSolid, 0, socleY, 0.6);
 				for (double u = 5.0; u < depth; u += 2.0)
 					for (double v = -width * 0.5 + 1.0; v < width * 0.5; v += 2.0)
-						TowerProp(w, "Floor_Brick", at(u, v), YawAlong(tan), 1.0, static_cast<uint8_t>(kSolid | kPiece), 0, socleY + ceilY);
-				// Murs (échelle 1,5 : 3 × 4,7 m) : façade sur le quai (porte au milieu, soupiraux), flancs.
+						TowerProp(w, "Floor_Brick", at(u, v), YawAlong(tan), 1.0, kPieceFlags, 0, socleY + ceilY);
 				const double ws = 1.5;
 				for (int k = 0; k < 8; ++k)
 				{
 					const double v = -width * 0.5 + 1.5 + 3.0 * k;
 					const bool door = k == 4;
 					TowerProp(w, door ? "Wall_UnevenBrick_Door_Round" : "Wall_UnevenBrick_Straight", at(depth + 0.2, v), YawAlong(tan * -1.0), ws,
-						static_cast<uint8_t>(kSolid | kPiece), 0, socleY);
+						kPieceFlags, 0, socleY);
 					if (!door && k % 2 == 1) TowerProp(w, "Dungeon_Window_1", at(depth + 0.35, v), YawAlong(tan * -1.0), 1.0, 0, 1, socleY + 3.4);
 				}
 				for (int sd = -1; sd <= 1; sd += 2)
 					for (int k = 0; k < 4; ++k)
 						TowerProp(w, "Wall_UnevenBrick_Straight", at(1.5 + 3.0 * k, sd * (width * 0.5 + 0.2)), YawAlong(out * static_cast<double>(sd)), ws,
-							static_cast<uint8_t>(kSolid | kPiece), 0, socleY);
+							kPieceFlags, 0, socleY);
 				const double doorV = -width * 0.5 + 1.5 + 12.0;
 				prisonDoor = at(depth + 2.4, doorV);
 				TowerProp(w, "Door_2_Round", at(depth + 0.3, doorV - 0.8), YawAlong(tan * -1.0) + 70.0, ws, 0, 1, socleY);
@@ -1361,28 +1545,6 @@ namespace tools::world_gen
 				w.OccupyRect(at(depth * 0.5 + 0.5, 0.0), width * 0.5 + 0.6, depth * 0.5 + 1.0, YawFacing(out));
 			}
 			else w.Warn("ville-tour " + c.id + " : socle trop etroit pour les geoles");
-		}
-
-		// --- 8. Maisons le long de la rampe : rangée côté pic (dos à la paroi, porte vers la
-		//     chaussée), sur les paliers (GroundOk écarte les volées). Les plus belles vers le haut.
-		int houses = 0;
-		{
-			double l = 30.0;
-			while (l < rampL - 25.0)
-			{
-				const double s = TowerSAtLength(t, l);
-				const std::vector<TemplateRef> pal = TowerPalette(s > 0.5);
-				const TemplateRef& tm = PickWeighted(pal, rng.Next());
-				const double hx = tm.halfW + 0.6, hz = tm.halfD + 0.6;
-				const double footR = std::sqrt(hx * hx + hz * hz);
-				const double u = -half + footR + 0.4;
-				if (u + tm.halfD > half - t.roadM - 0.6) { l += 2.0; continue; }
-				Vec2 axis, out, up;
-				TowerFrame(t, s, axis, out, up);
-				const int b = TryPlaceBuilding(w, c, tm, axis + out * u, out, "Maison");
-				if (b >= 0) { L.buildingIndices.push_back(b); ++houses; l += 2.0 * tm.halfW + 1.2 + rng.Range(0.0, 1.0); }
-				else l += 2.0;
-			}
 		}
 
 		// --- 9. Cimetière (point de résurrection) : sur la rive, à côté du chemin pavé.
@@ -1403,32 +1565,46 @@ namespace tools::world_gen
 		}
 		else L.graveyard = plaza;
 
-		// --- 10. Graphe des PNJ : place → pied de la rampe → chaussée jusqu'au sommet (nœuds tous
-		//     les 9 m) → parvis du palais ; place → ponton → rive ; place → geôles et auberge.
+		// --- 10. Graphe des PNJ (suite) : au sommet, du dernier palier de chaque cage (voie
+		//     droite) à la voie gauche, dallée, puis à 22 m de l'axe ; ces nœuds forment un arc
+		//     autour du palais (interrompu derrière, au laboratoire) ; parvis devant le portail
+		//     (cage 0) ; place → ponton → rive ; place → geôles et auberge (sol du socle).
 		{
-			int prev = TowerNearestOf(L, L.plazaRing, o + entry * (t.OuterR() + half));
-			for (double l = 0.0; l <= rampL; l += 9.0)
+			const double summitNodeR = 0.6 * t.topRadiusM + 4.0;
+			std::vector<std::pair<double, int>> crown; // (angle, nœud)
+			for (int j = 0; j < t.shaftsLow; ++j)
 			{
-				Vec2 axis, out, up;
-				TowerFrame(t, TowerSAtLength(t, l), axis, out, up);
-				const int id = AddNode(L, axis + out * (half - t.roadM * 0.5));
-				Link(L, prev, id);
-				prev = id;
+				const int top = shaftTopNode[static_cast<size_t>(j)];
+				if (top < 0) continue;
+				const double a = TowerShaftAngle(t, j);
+				const Vec2 u = outOf(a), v = tanOf(a);
+				const Vec2 tp = L.nodes[static_cast<size_t>(top)].p;
+				const double r = (tp.x - o.x) * u.x + (tp.z - o.z) * u.z;
+				const int left = TowerNode(L, o + u * r + v * -0.95, summitY);
+				Link(L, top, left);
+				const int inner = TowerNode(L, o + u * summitNodeR + v * -0.95, summitY);
+				Link(L, left, inner);
+				crown.push_back({ a, inner });
 			}
-			const Vec2 topEdge = TowerRampPoint(t, 1.0);
-			const int parvis = AddNode(L, o + (topEdge - o) * ((t.topRadiusM - 6.0) / std::max(1.0, std::hypot(topEdge.x - o.x, topEdge.z - o.z))));
-			Link(L, prev, parvis);
-			prev = TowerNearestOf(L, L.plazaRing, o + entry * R);
+			for (size_t k = 0; k + 1 < crown.size(); ++k)
+				if (crown[k + 1].first - crown[k].first < 1.01 * twoPi / t.shaftsHigh)
+					Link(L, crown[k].second, crown[k + 1].second);
+			if (crown.size() > 2 && crown.front().first + twoPi - crown.back().first < 1.01 * twoPi / t.shaftsHigh)
+				Link(L, crown.back().second, crown.front().second);
+			const int parvis = TowerNode(L, o + entry * (0.6 * t.topRadiusM + 1.5), summitY);
+			if (!crown.empty() && std::fabs(std::remainder(crown.front().first - t.entryRad, twoPi)) < 1e-6)
+				Link(L, crown.front().second, parvis);
+			int prev = TowerNearestOf(L, L.plazaRing, o + entry * R);
 			for (double r = R - 2.0; r <= deckEnd + 20.0; r += 9.0)
 			{
-				const int id = AddNode(L, o + entry * r);
+				const int id = TowerNode(L, o + entry * r, r <= deckEnd ? socleY : w.HeightAt(o + entry * r));
 				Link(L, prev, id);
 				prev = id;
 			}
-			const int pd = AddNode(L, prisonDoor);
-			Link(L, TowerNearestOf(L, L.plazaRing, prisonDoor), pd);
-			const int id = AddNode(L, L.innDoor);
-			Link(L, TowerNearestOf(L, L.plazaRing, L.innDoor), id);
+			const int pd = TowerNode(L, prisonDoor, socleY);
+			Link(L, TowerNearestOf(L, ring, prisonDoor), pd);
+			const int id = TowerNode(L, L.innDoor, w.HeightAt(L.innDoor));
+			Link(L, TowerNearestOf(L, ring, L.innDoor), id);
 		}
 
 		// --- 11. Enseignes de service (la prison a la sienne, à la porte des geôles).
@@ -1439,8 +1615,8 @@ namespace tools::world_gen
 		}
 		L.startSpot = plaza - entry * 2.0;
 		L.startYawDeg = YawFacing(entry * -1.0);
-		if (houses < 120) w.Warn("ville-tour " + c.id + " : seulement " + std::to_string(houses) + " maisons");
-		(void)facadePanels; (void)flights; (void)arches; (void)deckTiles;
+		(void)facadePanels; (void)sidePanels; (void)roofs; (void)turrets; (void)flights; (void)landingTiles; (void)doors; (void)summitTiles;
+		(void)deckTiles;
 	}
 
 	void BuildSettlements(World& w)
@@ -1458,7 +1634,7 @@ namespace tools::world_gen
 				w.layouts.push_back(std::move(L));
 				continue;
 			}
-			// v1.0.141 : Magistrya, ville-tour en spirale sur son pic au milieu du lac.
+			// v1.0.141, v1.0.142 : Magistrya, ville-tour sur son aiguille au milieu du lac.
 			if (c.layout == "ville_tour" && c.tower.enabled)
 			{
 				BuildTowerCity(w, c, L, firstBuilding);

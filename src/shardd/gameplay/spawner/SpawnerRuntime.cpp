@@ -406,7 +406,7 @@ namespace engine::server
 
 		/// Monde vivant — décode `routine` : { kind, schedule, path:[[x,z]…],
 		/// pauseMinSec, pauseMaxSec, pauseChance, wanderRadiusMeters, pingPong,
-		/// face:[x,z] }. \return false si kind/schedule inconnus ou chemin absent
+		/// face:[x,z], realHeight?, pathY?:[y…] (v1.0.142) }. \return false si kind/schedule inconnus ou chemin absent
 		/// pour tour/patrol.
 		bool ParseRoutine(const JsonValue& v, ambient::RoutineDefinition& out)
 		{
@@ -448,6 +448,19 @@ namespace engine::server
 			}
 			if ((out.kind == ambient::RoutineKind::Tour || out.kind == ambient::RoutineKind::Patrol) && out.path.size() < 2)
 				return false;
+			// v1.0.142 — routine à altitude réelle (ville-tour) : `realHeight: true` et
+			// `pathY: [y…]` (une altitude par point du chemin). Champs additifs : absents ou
+			// incohérents (taille, valeur non numérique), la routine garde l'altitude du spawner.
+			if (const JsonValue* rh = FindObjectMember(v, "realHeight"); rh != nullptr && rh->type == JsonType::Bool && rh->boolValue)
+			{
+				const JsonValue* py = FindObjectMember(v, "pathY");
+				bool ok = py != nullptr && py->type == JsonType::Array && py->arrayValue.size() == out.path.size() && !out.path.empty();
+				for (size_t i = 0; ok && i < out.path.size(); ++i)
+					ok = TryGetFloat(py->arrayValue[i], out.path[i].y);
+				out.realHeight = ok;
+				if (!ok)
+					for (ambient::RoutinePoint& p : out.path) p.y = 0.0f;
+			}
 			out.pauseChance = std::clamp(out.pauseChance, 0.0f, 1.0f);
 			return true;
 		}

@@ -25,7 +25,9 @@ namespace engine::server::ambient
 	enum class RoutineKind : uint8_t { None = 0, Tour, Patrol, Post, Wander };
 	enum class RoutineSchedule : uint8_t { Always = 0, Day, Night };
 
-	struct RoutinePoint { float x = 0.0f; float z = 0.0f; };
+	/// Point d'une routine (m, global). \p y : altitude RÉELLE (v1.0.142, routines à
+	/// altitude réelle de la ville-tour : paliers et volées) ; ignorée sinon.
+	struct RoutinePoint { float x = 0.0f; float z = 0.0f; float y = 0.0f; };
 
 	/// Définition (données de spawner, immuables).
 	struct RoutineDefinition
@@ -40,6 +42,11 @@ namespace engine::server::ambient
 		bool pingPong = false;
 		bool hasFacePoint = false;   ///< post : point regardé à l'arrêt
 		RoutinePoint facePoint;
+		/// v1.0.142 — routine à ALTITUDE RÉELLE (spawners.json : `realHeight` + `pathY`) :
+		/// chaque point du chemin porte son altitude (RoutinePoint::y) ; le PNJ suit cette
+		/// altitude (interpolée le long du segment) au lieu de garder celle du spawner, et
+		/// rentre chez lui en refaisant son chemin à l'envers (jamais en ligne droite).
+		bool realHeight = false;
 	};
 
 	/// État courant d'un PNJ (mutable, par mob).
@@ -51,6 +58,11 @@ namespace engine::server::ambient
 		RoutinePoint target;
 		uint32_t pauseUntilTick = 0; ///< tick serveur de fin de pause (0 = pas de pause)
 		bool goingHome = false;      ///< hors horaire : rentre à son point de départ
+		/// v1.0.142 — point d'où part le segment en cours (cible précédente), pour
+		/// l'interpolation de l'altitude réelle.
+		RoutinePoint origin;
+		/// v1.0.142 — retour au logis le long du chemin, à l'envers (routine à altitude réelle).
+		bool homeRetrace = false;
 	};
 
 	/// Convertit les libellés JSON. Inconnu → None / Always (et false).
@@ -73,4 +85,19 @@ namespace engine::server::ambient
 
 	/// Durée de pause (s) à tirer à l'arrivée sur une cible, ou 0 si pas de pause.
 	float RollPauseSeconds(const RoutineDefinition& def, float (*roll01)(void* ctx), void* ctx);
+
+	/// v1.0.142 — altitude réelle en (\p x, \p z) sur le segment \p from → \p to :
+	/// interpolation linéaire selon la projection du point sur le segment (bornée aux
+	/// extrémités). Segment dégénéré : altitude de \p to.
+	float RoutineHeightAlong(const RoutinePoint& from, const RoutinePoint& to, float x, float z);
+
+	/// v1.0.142 — début du retour au logis d'une routine à altitude réelle : le PNJ revient
+	/// sur ses pas (cible : point précédent du chemin, origine : la cible en cours). Sans
+	/// chemin : cible = logis. Effet de bord : `state` (homeRetrace, waypoint, target, origin).
+	void BeginHomeRetrace(const RoutineDefinition& def, RoutineState& state, float homeX, float homeZ);
+
+	/// v1.0.142 — arrivée sur une cible du retour au logis : \return true si le logis
+	/// (premier point du chemin) est atteint ; sinon passe au point précédent.
+	/// Effet de bord : `state` (waypoint, target, origin).
+	bool AdvanceHomeRetrace(const RoutineDefinition& def, RoutineState& state);
 }

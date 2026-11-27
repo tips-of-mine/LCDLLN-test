@@ -351,130 +351,108 @@ namespace tools::world_gen
 	}
 
 	// ---------------------------------------------------------------------------------
-	// v1.0.141 — VILLE-TOUR (relief `pic`, Magistrya). Fonctions pures de la forme : rampe en
-	// spirale (position, altitude), sol du pic. La heightmap est sculptée par BuildTowerCity.
+	// v1.0.141, v1.0.142 — VILLE-TOUR (relief `pic`, Magistrya). Fonctions pures de la
+	// forme : rocher de l'aiguille, cages d'escalier (volées, paliers). La heightmap et les
+	// bâtiments sont posés par BuildTowerCity (Settlements.cpp).
 	// ---------------------------------------------------------------------------------
 	namespace
 	{
 		constexpr double kTowerPi = 3.14159265358979323846;
-		/// Pente des volées d'escalier de la rampe (marche 0,18 × 0,30 m).
-		constexpr double kTowerStairSlope = 0.6;
-		/// Longueur visée d'une période palier + volée (m).
-		constexpr double kTowerPeriodM = 100.0;
-
+		/// Volées par niveau de bâtiments (trois tiers de niveau).
+		constexpr int kTowerFlightsPerTier = 3;
+		/// Demi-écart (m) entre les axes des deux voies d'une cage.
+		constexpr double kTowerLaneM = 0.95;
 	}
 
-	double TowerLengthAt(const TowerShape& t, double s)
+	double TowerShaftAngle(const TowerShape& t, int j)
 	{
-		return 2.0 * kTowerPi * t.Turns() * (t.OuterR() * s - (t.OuterR() - t.InnerR()) * s * s * 0.5);
+		return t.entryRad + 2.0 * kTowerPi * j / std::max(1, t.shaftsLow);
 	}
 
-	double TowerSAtLength(const TowerShape& t, double l)
+	int TowerShaftTiers(const TowerShape& t, int j)
 	{
-		const double k = 2.0 * kTowerPi * t.Turns();
-		const double a = (t.OuterR() - t.InnerR()) * 0.5 * k, b = t.OuterR() * k;
-		if (a < 1e-9) return Clamp(l / b, 0.0, 1.0);
-		// a·s² − b·s + l = 0, racine dans [0, 1].
-		const double disc = std::max(0.0, b * b - 4.0 * a * l);
-		return Clamp((b - std::sqrt(disc)) / (2.0 * a), 0.0, 1.0);
+		const int ratio = std::max(1, t.shaftsLow / std::max(1, t.shaftsHigh));
+		if (j % ratio != 0) return std::max(0, t.SplitTier() - 1);
+		// Cage face au laboratoire du palais (derrière la salle du trône) : arrêt un niveau
+		// sous le sommet, le plafond est le dallage de la plateforme.
+		if (std::fabs(std::remainder(TowerShaftAngle(t, j) - t.entryRad - kTowerPi, 2.0 * kTowerPi)) < 20.0 * kTowerPi / 180.0)
+			return t.Tiers() - 1;
+		return t.Tiers();
 	}
 
-	double TowerStairPeriodM(const TowerShape& t)
+	bool TowerShaftOpenAt(const TowerShape& t, int j, int tier)
 	{
-		const double L = TowerLengthAt(t, 1.0);
-		return L / std::max(1.0, std::round(L / kTowerPeriodM));
+		return tier >= 0 && tier < TowerShaftTiers(t, j) + (TowerShaftTiers(t, j) < t.Tiers() ? 1 : 0);
 	}
 
-	double TowerStairRunM(const TowerShape& t)
+	double TowerShaftOuterR(const TowerShape& t, int tier)
 	{
-		const double L = TowerLengthAt(t, 1.0), P = TowerStairPeriodM(t);
-		const double risePerPeriod = t.heightM * P / std::max(1.0, L);
-		// Volée : au plus 80 % de la montée d'une période, par pas de 2,55 m (une volée
-		// Stairs_Monumental_1 à l'échelle 0,85 : 1,53 m de haut), au moins une volée.
-		const double flights = std::max(1.0, std::floor(0.8 * risePerPeriod / (kTowerStairSlope * 2.55)));
-		return std::min(flights * 2.55, 0.5 * P);
+		return t.EnvelopeR((tier + 3) * t.TierM());
 	}
 
-	Vec2 TowerRampPoint(const TowerShape& t, double s)
+	double TowerStairScale(const TowerShape& t)
 	{
-		const double a = t.entryRad + 2.0 * kTowerPi * t.Turns() * s;
-		const double r = t.OuterR() - (t.OuterR() - t.InnerR()) * s;
-		return t.center + Vec2{ std::cos(a), std::sin(a) } * r;
+		return t.TierM() / kTowerFlightsPerTier / kTowerStairRiseM;
 	}
 
-	double TowerRampHeight(const TowerShape& t, double s)
+	std::vector<TowerFlight> TowerShaftFlights(const TowerShape& t, int j)
 	{
-		if (!t.enabled) return 0.0;
-		const double L = TowerLengthAt(t, 1.0), P = TowerStairPeriodM(t), run = TowerStairRunM(t);
-		const double l = Clamp(TowerLengthAt(t, Clamp(s, 0.0, 1.0)), 0.0, L);
-		const double risePerPeriod = t.heightM * P / std::max(1.0, L);
-		const double stairRise = kTowerStairSlope * run;
-		const double flatSlope = (risePerPeriod - stairRise) / std::max(1.0, P - run);
-		const double k = std::min(std::floor(l / P), std::round(L / P) - 1.0);
-		const double x = l - k * P; // position dans la période : palier puis volée
-		const double inPeriod = x < P - run ? flatSlope * x : flatSlope * (P - run) + kTowerStairSlope * (x - (P - run));
-		return std::min(t.heightM, k * risePerPeriod + inPeriod);
-	}
-
-	double TowerOffset(const TowerShape& t, Vec2 p, double* onLedge, double* across)
-	{
-		if (onLedge) *onLedge = -1.0;
-		if (across) *across = 0.0;
-		if (!t.enabled) return 0.0;
-		const double dx = p.x - t.center.x, dz = p.z - t.center.z;
-		const double r = std::hypot(dx, dz);
-		if (r > t.SocleR()) return -1e9;
-		if (r <= t.topRadiusM) return t.heightM;
-		const double turns = t.Turns(), half = t.ledgeM * 0.5;
-		// Paroi entre deux niveaux : MARCHE nette (1 m) au milieu de la paroi, plat de part et
-		// d'autre. L'échantillonnage de la heightmap (≈ 4,9 m) étale la marche sur une maille de
-		// chaque côté : avec une paroi d'au moins 10 m, la pente reste DANS la paroi et les
-		// replats restent plats jusqu'à leur bord (maisons, parapet, façade au pied).
-		auto wall = [](double hIn, double hOut, double x, double width) {
-			return Lerp(hIn, hOut, SmoothStep(width * 0.5 - 0.5, width * 0.5 + 0.5, x));
-		};
-		// Angle déroulé depuis le pied de la rampe, dans [0, 2π).
-		double a0 = std::atan2(dz, dx) - t.entryRad;
-		a0 -= 2.0 * kTowerPi * std::floor(a0 / (2.0 * kTowerPi));
-		// Palier d'arrivée : la rampe se prolonge à plat (heightM) sur 20 m au-delà du sommet,
-		// le long de la plateforme (on y entre de côté).
-		const double landingS = 20.0 / (2.0 * kTowerPi * turns * t.InnerR());
-		// Passages de la rampe à cet angle : k = 0 (le plus bas, le plus à l'extérieur), 1, …
-		double prevS = -1.0;
-		for (int k = 0; ; ++k)
+		std::vector<TowerFlight> out;
+		if (!t.enabled) return out;
+		const double s = TowerStairScale(t);
+		const double run = (kTowerStairFrontM + kTowerStairBackM) * s;
+		const int levels = TowerShaftTiers(t, j) * kTowerFlightsPerTier;
+		for (int g = 0; g < levels; ++g)
 		{
-			const double s = (a0 + 2.0 * kTowerPi * k) / (2.0 * kTowerPi * turns);
-			if (s > 1.0)
-			{
-				if (s <= 1.0 + landingS && std::fabs(r - t.InnerR()) <= half)
-				{
-					if (onLedge) *onLedge = 1.0;
-					if (across) *across = r - t.InnerR();
-					return t.heightM;
-				}
-				// Plus de passage vers l'intérieur : paroi jusqu'à la plateforme du sommet.
-				if (prevS < 0.0) return t.heightM; // (rampe d'un tour au moins : non atteint)
-				const double rIn = t.OuterR() - (t.OuterR() - t.InnerR()) * prevS - half;
-				return wall(t.heightM, TowerRampHeight(t, prevS), r - t.topRadiusM, rIn - t.topRadiusM);
-			}
-			const double rk = t.OuterR() - (t.OuterR() - t.InnerR()) * s;
-			if (r >= rk - half)
-			{
-				const double hk = TowerRampHeight(t, s);
-				if (r <= rk + half)
-				{
-					if (onLedge) *onLedge = s;
-					if (across) *across = r - rk;
-					return hk;
-				}
-				// Au-delà de la spire la plus basse : paroi (bandM) jusqu'au socle (0).
-				if (k == 0) return wall(hk, 0.0, r - (rk + half), t.bandM);
-				// Entre la spire k (plus haute, à l'intérieur) et la spire k − 1 (plus basse).
-				const double rOut = t.OuterR() - (t.OuterR() - t.InnerR()) * prevS - half;
-				return wall(hk, TowerRampHeight(t, prevS), r - (rk + half), rOut - (rk + half));
-			}
-			prevS = s;
+			TowerFlight f;
+			f.level = g;
+			f.tier = g / kTowerFlightsPerTier;
+			f.inward = g % 2 == 0;
+			f.lane = f.inward ? -kTowerLaneM : kTowerLaneM;
+			const double rs = TowerShaftOuterR(t, f.tier);
+			const double rOuter = rs - kTowerLandingM, rInner = rOuter - run;
+			f.rBottom = f.inward ? rOuter : rInner;
+			f.rTop = f.inward ? rInner : rOuter;
+			f.rise = t.TierM() / kTowerFlightsPerTier;
+			f.yBottom = g * f.rise;
+			out.push_back(f);
 		}
+		return out;
+	}
+
+	std::vector<TowerLanding> TowerShaftLandings(const TowerShape& t, int j)
+	{
+		std::vector<TowerLanding> out;
+		const std::vector<TowerFlight> fl = TowerShaftFlights(t, j);
+		if (fl.empty()) return out;
+		const double rise = fl.front().rise;
+		for (size_t g = 0; g <= fl.size(); ++g)
+		{
+			TowerLanding L;
+			L.level = static_cast<int>(g);
+			L.y = g * rise;
+			// Palier pair : côté lac (départ d'une volée vers l'aiguille) ; impair : côté aiguille.
+			L.outer = g % 2 == 0;
+			double lo = 1e18, hi = -1e18;
+			if (g > 0) { lo = std::min(lo, fl[g - 1].rTop); hi = std::max(hi, fl[g - 1].rTop); }
+			if (g < fl.size()) { lo = std::min(lo, fl[g].rBottom); hi = std::max(hi, fl[g].rBottom); }
+			if (L.outer) { L.rIn = lo; L.rOut = hi + kTowerLandingM; }
+			else { L.rIn = lo - kTowerLandingM; L.rOut = hi; }
+			out.push_back(L);
+		}
+		return out;
+	}
+
+	double TowerOffset(const TowerShape& t, Vec2 p)
+	{
+		if (!t.enabled) return 0.0;
+		const double r = std::hypot(p.x - t.center.x, p.z - t.center.z);
+		if (r > t.SocleR()) return -1e9;
+		const double span = t.baseRadiusM - t.topRadiusM;
+		if (span <= 1e-6) return 0.0;
+		// Cône du rocher : l'altitude où l'enveloppe passe kTowerRockInsetM plus loin que r.
+		const double h = (t.baseRadiusM - (r + kTowerRockInsetM)) * t.heightM / span;
+		return std::clamp(h, 0.0, t.heightM - 0.5);
 	}
 
 	bool OnTowerSummit(const WorldMaster& m, Vec2 p, double marginM)

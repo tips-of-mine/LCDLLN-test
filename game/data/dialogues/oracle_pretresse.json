@@ -1,0 +1,82 @@
+{
+    "_comment": "Lore v1.0.141 — Camp de l'Oracle : pretresse du dais, dans la salle de l'Oracle (PNJ de quete pose par tools/world_gen, Oracle.cpp). Recoit « L'Appel de l'Oracle », propose « L'Epreuve des Echos » (raid de la porte E). Les boutons Accepter/Rendre sont injectes a l'execution.",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Tu es entré. Peu franchissent cette porte, et moins encore en ressortent inchangés."
+                },
+                "1": {
+                    "text": "(Au centre du dais, la colonne de brume figée luit d'une lumière froide.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Que voit l'Oracle ?",
+                    "next": "voir"
+                },
+                "1": {
+                    "text": "Qu'y a-t-il derrière la porte de l'est ?",
+                    "next": "echos"
+                },
+                "2": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "voir",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Il voit les fils du destin se nouer. Ce qu'il dit, il le dit une fois ; à toi d'en porter le poids."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Revenir.",
+                    "next": "intro"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "echos",
+            "lines": {
+                "count": 3,
+                "0": {
+                    "text": "La salle des Échos. Un gardien de cristal y veille sur ce que l'Oracle tait. Seul, tu n'en reviendrais pas."
+                },
+                "1": {
+                    "text": "Réunis au moins trois compagnons, puis présentez-vous ensemble à la porte de l'est."
+                },
+                "2": {
+                    "text": "(Pour t'engager ou rendre une tâche, choisis « Accepter » / « Rendre » ci-dessous.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Revenir.",
+                    "next": "intro"
+                },
+                "1": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

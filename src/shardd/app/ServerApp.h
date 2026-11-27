@@ -49,6 +49,7 @@
 #include "src/shardd/world/RegionActivity.h"
 #include "src/shardd/world/RegionLifecycle.h"
 #include "src/shardd/world/PortalNetwork.h"
+#include "src/shardd/world/DoorPassages.h"
 #include "src/shardd/world/LavaHazard.h"
 #include "src/shardd/world/SeaLines.h"
 #include "src/shardd/world/MobActivity.h"
@@ -289,6 +290,9 @@ namespace engine::server
 		/// Seconde carte (Les Enfers) — état de passage des portails entre cartes
 		/// (réarmement 5 s après la sortie du rayon). Désarmé à la connexion.
 		PortalTravelState portalTravel;
+		/// Lore v1.0.141 (Camp de l'Oracle) — état des passages conditionnels d'une même
+		/// carte (portes du rocher de l'Oracle) : réarmement 5 s, refus signalé une fois.
+		DoorPassageTravelState doorPassageTravel;
 		/// v1.0.123 — temps passé dans la lave des Enfers (mort à 3 s, LavaHazard).
 		LavaExposureState lavaExposure;
 		/// v1.0.125 — bateau à bord duquel est le joueur (index BoatFleet), -1 = à terre.
@@ -1051,6 +1055,12 @@ namespace engine::server
 		/// vivant et armé, est dans le rayon d'un portail relié, il est transféré sur
 		/// l'autre carte (TransferToMap). No-op hors monde en cellules.
 		void MaybeApplyPortal(ConnectedClient& client);
+		/// Lore v1.0.141 (Camp de l'Oracle) — après chaque position acceptée : si le joueur,
+		/// vivant et armé, est dans le rayon d'un passage conditionnel (world/<monde>/
+		/// passages.json), il est replacé au point d'arrivée quand ses quêtes et son groupe
+		/// remplissent les conditions (téléport sur la même carte : ForcePosition), sinon le
+		/// refus est signalé une fois par message système. No-op hors monde en cellules.
+		void MaybeApplyDoorPassage(ConnectedClient& client);
 
 		/// v1.0.125 — bateaux des lignes maritimes : horaire (m_boatFleet, vitesse
 		/// `boats.speed_mps`, défaut 8 m/s) et identifiants d'entité répliquée, une fois les
@@ -1978,6 +1988,8 @@ namespace engine::server
 		RegionActivity m_regionActivity;
 		/// Seconde carte (Les Enfers) — portails entre cartes (world/<monde>/portals.json).
 		PortalNetwork m_portalNetwork;
+		/// Lore v1.0.141 — passages conditionnels d'une même carte (portes de l'Oracle).
+		DoorPassages m_doorPassages;
 		/// v1.0.123 — masques de lave des Enfers (InitLavaHazard).
 		LavaHazard m_lavaHazard;
 		/// v1.0.124 — lignes maritimes (world/<monde>/sea_lines.json : pontons, quais, trajets).

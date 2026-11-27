@@ -372,6 +372,7 @@ namespace engine::render::terrain
 
         float                 m_grassMaskVisualStrength = 0.0f; ///< `render.terrain.grass_mask_visual_strength` (0 = off)
         bool                  m_lavaLayer = false;              ///< `render.terrain.lava_layer` : canal A = lave (Enfers)
+        bool                  m_crystalLayer = false;           ///< `render.terrain.crystal_layer` : canal A = cristal bleu là où la roche domine aussi (rocher de l'Oracle, v1.0.141)
 
         // ── M34.3: Cliff pipeline ─────────────────────────────────────────────────
         VkDescriptorSetLayout m_cliffDescSetLayout = VK_NULL_HANDLE;

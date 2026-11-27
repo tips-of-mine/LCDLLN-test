@@ -4571,8 +4571,9 @@ namespace
 			const double d = dist(s.position);
 			if (s.mesh.find("Tent_Pilgrim_") != std::string::npos && (s.flags & 1u) && d > 220.0 && d < 432.0) ++tents;
 			if (s.mesh.find("Stairs_Exterior_Straight") != std::string::npos && d < 210.0) ++stairs;
-			if (s.mesh.find("Door_2_Round") != std::string::npos && d < 170.0) ++doors;
-			if (s.mesh.find("Pebble_Square_5") != std::string::npos && s.scale >= 12.0 && d > 420.0 && d < 560.0) ++stones;
+			// v1.0.141 : grandes portes peintes (8 dehors + 2 portes intérieures des salles).
+			if (s.mesh.find("Oracle_Door_Grand") != std::string::npos && d < 170.0) ++doors;
+			if (s.mesh.find("Oracle_Menhir_") != std::string::npos && d > 420.0 && d < 560.0) ++stones;
 			if (s.mesh.find("Stall_") != std::string::npos && d > 340.0 && d < 760.0)
 			{
 				const Vec2 q{ s.position.x - o.x, s.position.z - o.z };
@@ -4587,7 +4588,8 @@ namespace
 		Check(houses == 0, "oracle v1.0.136 : aucune maison europeenne dans le camp");
 		// Retour propriétaire du 23/11/2026 : « pas assez de tentes autour » -> quinze rangs.
 		Check(tents >= 1200, "oracle : ocean de tentes de pelerins (1200 tentes au moins)");
-		Check(stairs == 8 * 33 && doors == 8, "oracle v1.0.136 : 8 escaliers et 8 portes");
+		// v1.0.141 : escaliers de 6 m (15 rangs de 2 pièces de 3 m), 8 portes + 2 portes intérieures.
+		Check(stairs == 8 * 30 && doors == 10, "oracle v1.0.141 : 8 escaliers de 6 m, 8 grandes portes et 2 portes interieures");
 		Check(stones >= 18 && blueStones >= 9, "oracle v1.0.136 : menhirs bleus sur le grand cercle");
 		Check(stallsSw >= 8, "oracle v1.0.136 : echoppes des faux devins le long du chemin du sud-ouest");
 		// Rocher : sommet ≥ 50 m au-dessus de la plaine, paroi raide, plaine plate.
@@ -4598,7 +4600,10 @@ namespace
 			const double a = (k + 0.5) * 3.141592653589793 / 4.0;
 			steep = std::max(steep, w->SlopeDegAt(o + Vec2{ std::cos(a), std::sin(a) } * 150.0));
 		}
-		Check(w->HeightAt(o) - plain >= 50.0 && steep > 45.0 && std::fabs(plain - c->plateauY) < 0.5,
+		// v1.0.141 : le centre est la salle de l'Oracle (creusée) ; le rocher est mesuré à 110 m
+		// du centre, à l'ouest-nord-ouest (hors des salles).
+		const Vec2 onRock = o + Vec2{ std::cos(4.5 * 3.141592653589793 / 4.0), std::sin(4.5 * 3.141592653589793 / 4.0) } * 110.0;
+		Check(w->HeightAt(onRock) - plain >= 50.0 && steep > 45.0 && std::fabs(plain - c->plateauY) < 0.5,
 			"oracle v1.0.136 : rocher dominant la plaine, parois infranchissables");
 		int roadOnRock = 0;
 		for (const Road& r : w->roads) for (const Vec2& p : r.points) roadOnRock += dist(p) < 205.0 ? 1 : 0;
@@ -4622,13 +4627,88 @@ namespace
 			if (s.id == "amb_" + c->id + "_aubergiste") ++inn;
 			if (s.id.find("amb_" + c->id + "_marchand_") == 0) ++merchants;
 			if (s.id.find("amb_" + c->id + "_villageois_") == 0) ++villagers;
-			if (s.routineKind.empty() && dist(s.position) < 700.0) ++fauna;
+			// v1.0.141 : le raid de la salle des Échos (170, 171) n'est pas de la faune du camp.
+			if (s.routineKind.empty() && dist(s.position) < 700.0 && s.archetypeId != 170u && s.archetypeId != 171u) ++fauna;
 		}
 		for (const RespawnDef& r : w->respawns) graveyards += (r.type == "graveyard" && r.graveyardId == c->id) ? 1 : 0;
 		Check(inn == 1 && merchants >= 11 && L->stallFronts.size() >= 11 && villagers >= 10 && !L->homeDoors.empty(),
 			"oracle v1.0.136 : services gardes (auberge, etals et marchands, pelerins)");
 		Check(graveyards == 1 && L->hasGraveyard && dist(L->graveyard) > 360.0, "oracle v1.0.136 : un seul cimetiere, hors des tentes");
 		Check(fauna == 0, "oracle v1.0.136 : ni faune ni monstre dans le camp (lieu neutre)");
+
+		// ---- v1.0.141 (demande du propriétaire du 25/11/2026) : salles, portes, raid, camp.
+		const double floorY = plain + 22.0;
+		const Vec2 nE{ 1.0, 0.0 };
+		const Vec2 ec = o + nE * 94.0;
+		Check(std::fabs(w->HeightAt(o) - floorY) < 0.6 && std::fabs(w->HeightAt(o + Vec2{ 20.0, -15.0 }) - floorY) < 0.6,
+			"oracle v1.0.141 : salle de l'Oracle creusee au niveau des paliers");
+		Check(std::fabs(w->HeightAt(ec) - floorY) < 0.6, "oracle v1.0.141 : salle des Echos creusee au niveau des paliers");
+		// Parois pleines : entre les deux salles, entre la salle des Échos et le palier est, autour.
+		double between = 1e9, eastWall = 0.0, ring = 1e9;
+		for (double r = 53.0; r <= 63.0; r += 2.0) between = std::min(between, w->HeightAt(o + nE * r) - floorY);
+		for (double r = 124.0; r <= 132.0; r += 2.0) eastWall = std::max(eastWall, w->HeightAt(o + nE * r) - floorY);
+		for (int k = 0; k < 16; ++k)
+		{
+			const double a = (k + 0.5) * 3.141592653589793 / 8.0;
+			if (std::cos(a) > 0.7) continue; // côté de la salle des Échos
+			ring = std::min(ring, w->HeightAt(o + Vec2{ std::cos(a), std::sin(a) } * 56.0) - floorY);
+		}
+		std::fprintf(stderr, "  oracle v1.0.141 : paroi entre salles %.1f m, paroi est %.1f m, pourtour %.1f m\n", between, eastWall, ring);
+		Check(between > 30.0 && eastWall > 30.0 && ring > 25.0, "oracle v1.0.141 : salles fermees par le rocher (acces par les passages seulement)");
+		int walls = 0, vaults = 0, dais = 0, pillar = 0, colored4 = 0, colored5 = 0, pennants = 0, troughs = 0, slabs = 0;
+		for (const ScatterDef& s : w->scatter)
+		{
+			const double d = dist(s.position);
+			walls += s.mesh.find("Oracle_Hall_Wall") != std::string::npos ? 1 : 0;
+			vaults += s.mesh.find("Oracle_Vault") != std::string::npos ? 1 : 0;
+			dais += (s.mesh.find("Oracle_Hall_Dais") != std::string::npos && d < 1.0) ? 1 : 0;
+			pillar += (s.mesh.find("Oracle_Light_Pillar") != std::string::npos && d < 1.0) ? 1 : 0;
+			colored4 += s.mesh.find("Tent_Pilgrim_4") != std::string::npos ? 1 : 0;
+			colored5 += s.mesh.find("Tent_Pilgrim_5") != std::string::npos ? 1 : 0;
+			pennants += s.mesh.find("Pennant_Pole_1") != std::string::npos ? 1 : 0;
+			troughs += s.mesh.find("Trough_Stone_1") != std::string::npos ? 1 : 0;
+			slabs += s.mesh.find("Oracle_Crystal_Slab_") != std::string::npos ? 1 : 0;
+		}
+		std::fprintf(stderr, "  oracle v1.0.141 : parois %d, voutes %d, tentes rouges %d, bleues %d, fanions %d, abreuvoirs %d, dalles %d\n",
+			walls, vaults, colored4, colored5, pennants, troughs, slabs);
+		Check(walls == 32 && vaults == 2 && dais == 1 && pillar == 1, "oracle v1.0.141 : salles habillees (parois, voutes, dais, colonne de brume)");
+		Check(slabs >= 40 && w->crystalLayer, "oracle v1.0.141 : rocher de cristal (dalles et couche de cristal du terrain)");
+		Check(colored4 >= 100 && colored5 >= 100 && pennants >= 20, "oracle v1.0.141 : tentes de couleur et mats a fanion");
+		int ponds = 0;
+		for (const Lake& l : w->lakes) ponds += l.name.find(c->id + "_bassin_") == 0 ? 1 : 0;
+		Check(ponds >= 3 && troughs >= 10, "oracle v1.0.141 : bassins des pelerins et abreuvoirs");
+		// Passages conditionnels (shard).
+		const PassageDef* soIn = nullptr; const PassageDef* eIn = nullptr; int outs = 0;
+		for (const PassageDef& p : w->passages)
+		{
+			if (p.id == c->id + "_porte_so_entree") soIn = &p;
+			if (p.id == c->id + "_porte_e_entree") eIn = &p;
+			if (p.id.find("_sortie") != std::string::npos && p.requiredQuests.empty() && p.minGroup == 0
+				&& std::fabs(w->HeightAt(p.destination) - floorY) < 0.6) ++outs;
+		}
+		Check(w->passages.size() == 4 && outs == 2, "oracle v1.0.141 : 2 entrees et 2 sorties sans condition (arrivee sur le palier)");
+		Check(soIn && soIn->requiredQuests == std::vector<std::string>{ "oracle_appel" } && soIn->minGroup == 0
+			&& dist(soIn->destination) < 44.0 && std::fabs(w->HeightAt(soIn->destination) - floorY) < 0.6,
+			"oracle v1.0.141 : porte SO -> salle de l'Oracle, quete L'Appel de l'Oracle");
+		Check(eIn && eIn->requiredQuests.size() == 2 && eIn->minGroup == 3
+			&& std::hypot(eIn->destination.x - ec.x, eIn->destination.z - ec.z) < 24.0,
+			"oracle v1.0.141 : porte E -> salle des Echos, quete et groupe de 3");
+		// PNJ de quête, raid, ambiances.
+		int npcs = 0, boss = 0, echoes = 0;
+		for (const InteractableDef& d : w->interactables)
+			npcs += (d.npcTargetId == "npc:oracle_veilleur" && dist({ d.x, d.z }) > 200.0)
+				|| (d.npcTargetId == "npc:oracle_pretresse" && dist({ d.x, d.z }) < 30.0) ? 1 : 0;
+		for (const SpawnerDef& s : w->spawners)
+		{
+			const double de = std::hypot(s.position.x - ec.x, s.position.z - ec.z);
+			boss += (s.archetypeId == 170u && de < 2.0) ? 1 : 0;
+			echoes += (s.archetypeId == 171u && de < 20.0) ? 1 : 0;
+		}
+		int dark = 0;
+		for (const AmbianceZoneDef& z : w->ambianceZones) dark += (z.id.find(c->id + "_salle_") == 0 && z.darkness > 0.5) ? 1 : 0;
+		Check(npcs == 2, "oracle v1.0.141 : veilleur dehors, pretresse dans la salle");
+		Check(boss == 1 && echoes == 4, "oracle v1.0.141 : raid de la salle des Echos (gardien et 4 echos)");
+		Check(dark == 2, "oracle v1.0.141 : salles sombres (zones d'ambiance)");
 	}
 
 	/// v1.0.134 — routes soudées, plus de doublon (LORE_BD §16.60). Sur le réseau macro des

@@ -146,6 +146,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # Seconde carte (Les Enfers) : portails entre cartes.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
+    # Lore v1.0.141 : passages conditionnels d'une même carte (portes de l'Oracle).
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DoorPassages.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp
     # v1.0.124 : lignes maritimes ; v1.0.125 : bateaux (BoatFleet).
@@ -682,6 +684,13 @@ elseif(UNIX)
   lcdlln_add_simple_test(portal_network_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/PortalNetworkTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
+
+  # Lore v1.0.141 — passages conditionnels d'une même carte (portes du rocher de l'Oracle :
+  # quêtes exigées, groupe minimal, réarmement, refus signalé une fois).
+  lcdlln_add_simple_test(door_passages_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/DoorPassagesTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DoorPassages.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
   # v1.0.123 — lave mortelle des Enfers (masque lava_mask.lvmk, mort en 3 s).
@@ -1698,6 +1707,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # Seconde carte (Les Enfers) : portails entre cartes.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
+    # Lore v1.0.141 : passages conditionnels d'une même carte (portes de l'Oracle).
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DoorPassages.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp
     # v1.0.124 : lignes maritimes ; v1.0.125 : bateaux (BoatFleet).

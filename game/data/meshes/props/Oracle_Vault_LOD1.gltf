@@ -1,0 +1,256 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Oracle_Vault_LOD1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Stone_Oracle",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Crystal_Blue",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Oracle_Vault_LOD1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 3,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Stone_Oracle_Normal.png",
+   "uri": "T_Decor_Stone_Oracle_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Stone_Oracle_BaseColor.png",
+   "uri": "T_Decor_Stone_Oracle_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Stone_Oracle_ORM.png",
+   "uri": "T_Decor_Stone_Oracle_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Crystal_Blue_Normal.png",
+   "uri": "T_Decor_Crystal_Blue_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Crystal_Blue_BaseColor.png",
+   "uri": "T_Decor_Crystal_Blue_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Crystal_Blue_ORM.png",
+   "uri": "T_Decor_Crystal_Blue_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 380,
+   "max": [
+    52,
+    22,
+    51.82239532470703
+   ],
+   "min": [
+    -51.29078674316406,
+    0,
+    -51.82239532470703
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 380,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 380,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 570,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 380,
+   "max": [
+    52,
+    23.5,
+    51.82239532470703
+   ],
+   "min": [
+    -51.29078674316406,
+    1.5,
+    -51.82239532470703
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 380,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 380,
+   "type": "VEC2"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 4560,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 4560,
+   "byteOffset": 4560,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3040,
+   "byteOffset": 9120,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1140,
+   "byteOffset": 12160,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 4560,
+   "byteOffset": 13300,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 4560,
+   "byteOffset": 17860,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3040,
+   "byteOffset": 22420,
+   "target": 34962
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 25460,
+   "uri": "Oracle_Vault_LOD1.bin"
+  }
+ ]
+}

@@ -2801,12 +2801,17 @@ namespace
 			none = none && (!c.hasPosition || c.id == "ville_thurvhal" || c.id == "ville_lhynn" || c.id == "ville_altenberg"
 				// v1.0.128 : 10 villes portuaires posées au bord de la mer (LORE_BD §16.54).
 				|| c.id == "hishtarland" || c.id == "town_0123" || c.id == "town_truceholm" || c.id == "town_0137" || c.id == "town_ile_ashwick"
-				|| c.id == "town_brinehaven" || c.id == "hamlet_0172" || c.id == "hamlet_0189" || c.id == "town_riverfold" || c.id == "ville_equiton");
+				|| c.id == "town_brinehaven" || c.id == "hamlet_0172" || c.id == "hamlet_0189" || c.id == "town_riverfold" || c.id == "ville_equiton"
+				// v1.0.144 : Feyhin Lokcthat sur son éperon, dans la boucle de la rivière (LORE_BD §16.70).
+				|| c.id == "ville_feyhin_lokcthat");
 		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
 			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes", "poi_temple_methraton", "poi_seuil_lhynn",
 			"poi_borne_monts_de_moork", // v1.0.128 : au bord de la route Moork - Ghrunke Dash (000242)
 			"poi_palais_imperial_lhynn", // v1.0.140 : sommet de Lhynn en gradins (LORE_BD §16.66)
-			"poi_palais_magister_magistrya" }; // v1.0.143 : sommet de la ville-tour de Magistrya (LORE_BD §16.69)
+			"poi_palais_magister_magistrya", // v1.0.143 : sommet de la ville-tour de Magistrya (LORE_BD §16.69)
+			// v1.0.144 : cathédrale au sommet, arène de la ville basse, Porte 2 au pied de la falaise
+			// de Feyhin Lokcthat (LORE_BD §16.70).
+			"poi_cathedrale_feyhin_lokcthat", "poi_arene_feyhin_lokcthat", "poi_porte_2" };
 		size_t posees = 0;
 		for (const PoiDef& p : g0.master.pois)
 		{
@@ -2814,7 +2819,7 @@ namespace
 			none = none && balises.count(p.id);
 			++posees;
 		}
-		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140), palais du Magister (v1.0.143)");
+		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128), Feyhin Lokcthat (v1.0.144) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128), palais imperial de Lhynn (v1.0.140), palais du Magister (v1.0.143) ; Feyhin Lokcthat, sa cathedrale, son arene et la Porte 2 (v1.0.144)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
@@ -4336,7 +4341,8 @@ namespace
 			if (c.id == "ville_lhynn") lm = &c;
 			acropoles += c.acropole.enabled ? 1 : 0;
 		}
-		Check(lm && lm->acropole.enabled && acropoles == 1, "acropole v1.0.140 : Lhynn seule ville en gradins");
+		// v1.0.144 : Feyhin Lokcthat est la seconde ville en gradins (TestFeyhinLokcthatV1144).
+		Check(lm && lm->acropole.enabled && acropoles == 2, "acropole v1.0.140 : Lhynn ville en gradins (avec Feyhin Lokcthat, v1.0.144)");
 		if (!lm || !lm->acropole.enabled) return;
 		const AcropoleShape& a = lm->acropole;
 		const auto ctr = engine::world::cells::CellCenter({ lm->n, lm->e });
@@ -4666,6 +4672,125 @@ namespace
 				&& txt.find("\"bridge_stone_deck_1\"") != std::string::npos && txt.find("\"wall_sandstone_straight\"") != std::string::npos
 				&& txt.find("\"wall_ochrebrick_door_round\"") != std::string::npos,
 			"ville-tour v1.0.143 : volees, dalles, murs et colonne au catalogue de collision");
+	}
+
+	/// v1.0.144 — Feyhin Lokcthat d'après le Tome 2 (LORE_BD §16.70) : ville perchée sur un éperon de
+	/// trois gradins dans la boucle de la Rivière des deux lacs, ville basse au pied de la falaise,
+	/// long pont de pierre sur la rivière élargie (plaine basse), arène et geôles creusées sous ses
+	/// gradins, cathédrale au sommet, Porte 2 au pied de la falaise ; services arène et temple portés
+	/// par leurs lieux bâtis ; collisions des nouvelles pièces au catalogue.
+	void TestFeyhinLokcthatV1144()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "feyhin v1.0.144 : master royaumes charge");
+		if (!ok) return;
+		const CityDef* fm = nullptr;
+		for (const CityDef& c : g.master.cities) if (c.id == "ville_feyhin_lokcthat") fm = &c;
+		Check(fm && fm->acropole.enabled && fm->acropole.backTown && fm->acropole.streetStairs && std::fabs(fm->acropole.cityRadiusM - 150.0) < 1e-9
+				&& fm->hasPosition, "feyhin v1.0.144 : ville perchee posee a la main (acropole, ville basse, escalier de rue, rayon 150 m)");
+		if (!fm || !fm->acropole.enabled) return;
+		const AcropoleShape a = fm->acropole;
+		const RiverCourseDef* rc = nullptr;
+		for (const RiverCourseDef& r : g.master.riverCourses) if (r.id == "cours_liaison_lacs") rc = &r;
+		Check(rc && rc->widenings.size() == 1 && rc->widenings[0].widthM >= 55.0 && rc->widenings[0].valleyM > 0.0,
+			"feyhin v1.0.144 : riviere elargie sous le pont, plaine basse");
+		if (!rc || rc->widenings.empty()) return;
+		const Vec2 W = rc->widenings[0].center;
+		Check(std::fabs(ValleyLowered(g.master, W.x, W.z, 200.0) - rc->widenings[0].floorY) < 1e-6
+				&& std::fabs(ValleyLowered(g.master, a.summit.x, a.summit.z, 200.0) - 200.0) < 1e-6,
+			"feyhin v1.0.144 : plaine basse au pont, butte jamais entamee");
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		auto w = std::make_unique<World>();
+		InitCell(*w, g, { fm->n, fm->e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w);
+		const CityDef* c = nullptr;
+		for (const CityDef& x : w->cities) if (x.id == "ville_feyhin_lokcthat") c = &x;
+		Check(c != nullptr && std::fabs(c->radiusM - 150.0) < 1e-9, "feyhin v1.0.144 : ville dans la cellule, rayon 150 m");
+		if (c == nullptr) return;
+		Check(std::fabs(w->HeightAt(a.summit) - (c->plateauY + 90.0)) < 2.0, "feyhin v1.0.144 : sommet a +90 m au-dessus de la ville basse");
+		// La rivière garde sa boucle autour de l'éperon (pas de lit dans la ville) et passe au pied du revers.
+		double near = 1e9, widest = 0.0;
+		for (const River& r : w->rivers)
+			for (size_t k = 0; k < r.points.size(); ++k)
+			{
+				near = std::min(near, std::hypot(r.points[k].x - a.summit.x, r.points[k].z - a.summit.z));
+				if (std::hypot(r.points[k].x - W.x, r.points[k].z - W.z) < 30.0) widest = std::max(widest, r.widthM[k]);
+			}
+		Check(near > a.topRadiusM + 120.0 && near < 450.0 && widest >= 55.0, "feyhin v1.0.144 : riviere au pied du revers, elargie au pont");
+		auto count = [&](const char* mesh, Vec2 at, double radius) {
+			int n = 0;
+			for (const ScatterDef& sd : w->scatter)
+				n += (sd.mesh.find(mesh) != std::string::npos && std::hypot(sd.position.x - at.x, sd.position.z - at.z) < radius) ? 1 : 0;
+			return n;
+		};
+		Check(count("Bridge_Stone_Pier_1", W, 120.0) >= 4 && count("Bridge_Stone_Deck_1", W, 120.0) >= 40,
+			"feyhin v1.0.144 : long pont de pierre (piles a avant-becs, tablier)");
+		// Arène et geôles.
+		const PoiDef* ar = nullptr;
+		const PoiDef* ca = nullptr;
+		const PoiDef* p2 = nullptr;
+		for (const PoiDef& p : w->pois)
+		{
+			if (p.id == "poi_arene_feyhin_lokcthat") ar = &p;
+			if (p.id == "poi_cathedrale_feyhin_lokcthat") ca = &p;
+			if (p.id == "poi_porte_2") p2 = &p;
+		}
+		Check(ar && ca && p2 && ar->kind == "arene" && ca->kind == "cathedrale", "feyhin v1.0.144 : arene, cathedrale et Porte 2 dans la cellule");
+		if (!ar || !ca || !p2) return;
+		const Vec2 A = ar->center;
+		Check(count("Arena_Stands_1", A, 40.0) == 23 && count("Arena_Gate_1", A, 40.0) == 1 && count("Arena_Post_Brazier_1", A, 30.0) == 11
+				&& count("Arena_Foundation_1", A, 40.0) == 5 && count("Sign_Service_arene", A, 60.0) == 1,
+			"feyhin v1.0.144 : arene batie (23 modules de gradins, entree, 11 braseros, fondations, enseigne)");
+		Vec2 vault{ 0.0, 0.0 };
+		int vaults = 0;
+		for (const ScatterDef& sd : w->scatter)
+			if (sd.mesh.find("Dungeon_Vault_1") != std::string::npos && std::hypot(sd.position.x - A.x, sd.position.z - A.z) < 60.0) { vault = vault + sd.position; ++vaults; }
+		Check(vaults == 3, "feyhin v1.0.144 : galerie des geoles (3 travees voutees)");
+		if (vaults == 3)
+		{
+			vault = vault * (1.0 / 3.0);
+			const double y0 = w->HeightAt(A);
+			Check(std::fabs(w->HeightAt(vault) - (y0 - 4.6)) < 0.3 && count("Floor_UnevenBrick", A, 70.0) >= 100,
+				"feyhin v1.0.144 : geoles creusees a 4,6 m sous la piste, fosse couverte de dalles");
+		}
+		bool clearA = true, clearP = true;
+		for (const BuildingPlacementDef& b : w->buildings)
+		{
+			clearA = clearA && std::hypot(b.position.x - A.x, b.position.z - A.z) > ArenaFootprintM(*ar);
+			clearP = clearP && std::hypot(b.position.x - p2->center.x, b.position.z - p2->center.z) > 20.0;
+		}
+		Check(clearA && clearP, "feyhin v1.0.144 : aucune maison sur l'arene ni sur la Porte 2");
+		// Cathédrale au sommet, services portés par les lieux bâtis (une seule enseigne chacun).
+		Check(std::hypot(ca->center.x - a.summit.x, ca->center.z - a.summit.z) < 1.0 && count("Church_Nave_1", a.summit, 40.0) == 1
+				&& count("Spire_Church_1", a.summit, 40.0) == 1 && count("Gargoyle_1", a.summit, 40.0) == 4,
+			"feyhin v1.0.144 : cathedrale au sommet (nef, clocher a fleche, gargouilles)");
+		Check(count("Sign_Service_temple", a.summit, 40.0) == 1 && count("Sign_Service_temple", c->center, 2000.0) == 1
+				&& count("Sign_Service_arene", c->center, 2000.0) == 1, "feyhin v1.0.144 : enseignes du temple et de l'arene sur leurs lieux seulement");
+		Check(count("Stairs_Street_1", a.summit, 160.0) >= 20 && count("Stairs_Monumental_1", a.summit, 160.0) == 0 && count("Arch_Stone_1", c->center, 20.0) >= 2,
+			"feyhin v1.0.144 : escalier de rue jusqu'au sommet, place a colonnade");
+		// Ville dense sur la butte et ville basse au pied du revers (137 bâtiments avant v1.0.144).
+		int houses = 0, low = 0;
+		for (const BuildingPlacementDef& b : w->buildings)
+		{
+			if (b.cityId != "ville_feyhin_lokcthat") continue;
+			++houses;
+			const Vec2 d = b.position - a.summit;
+			const double l = std::hypot(d.x, d.z);
+			if (l > 100.0 && (d.x * a.stairDir.x + d.z * a.stairDir.z) / l < -0.35) ++low;
+		}
+		Check(houses >= 400 && low >= 25, "feyhin v1.0.144 : ville dense (au moins 400 batiments), ville basse au pied de la falaise");
+		std::ifstream cat(std::string(LCDLLN_CONTENT_DIR) + "/collision/building_pieces.json");
+		const std::string txt((std::istreambuf_iterator<char>(cat)), std::istreambuf_iterator<char>());
+		bool cataloged = true;
+		for (const char* k : { "\"arena_stands_1\"", "\"arena_gate_1\"", "\"bridge_stone_pier_1\"", "\"church_nave_1\"", "\"spire_church_1\"", "\"dungeon_vault_1\"" })
+			cataloged = cataloged && txt.find(k) != std::string::npos;
+		Check(cataloged, "feyhin v1.0.144 : gradins, entree, pile de pont, cathedrale et voute au catalogue de collision");
 	}
 
 	/// v1.0.133 (remarque du 21/11/2026 : « je me suis collé à la muraille de Lhynn ») : sur terrain en
@@ -5252,6 +5377,7 @@ int main()
 	TestOracleV1136();
 	TestAcropoleLhynnV1140();
 	TestVilleTourMagistryaV1143();
+	TestFeyhinLokcthatV1144();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

@@ -400,6 +400,67 @@
     "keep_timber_spire_site_1": {
       "box_count": 1,
       "box_0": { "cx": 0.0, "cy": 9.50, "cz": 0.0, "hx": 7.25, "hy": 9.50, "hz": 7.25 }
+    },
+
+    "_comment_feyhin": "v1.0.144 : Feyhin Lokcthat (BD-T2). Gradins d'arene (module de 15 deg, pivot au milieu du secteur, +Z vers l'exterieur) : palissade, neuf rangs a dessus marchable (boites a la corde du rayon moyen), mur exterieur. Entree : parois du passage de 5 m (X [-2,5 ; 2,5] libre), rangs lateraux, piliers de blocs. Pile de pont (dessus = tablier), nef et clocher de la cathedrale (murs pleins, non visitables), travee de cachot (deux murs lateraux, voute au-dessus des tetes). Bornes mesurees sur les .gltf (validate_decor.py).",
+    "arena_stands_1": {
+      "walkable": true,
+      "box_count": 11,
+      "box_0": { "cx": 0, "cy": 1.38, "cz": -7.6, "hx": 2.89, "hy": 1.38, "hz": 0.18 },
+      "box_1": { "cx": 0, "cy": 1.38, "cz": -6.35, "hx": 3.05, "hy": 1.38, "hz": 1.1 },
+      "box_2": { "cx": 0, "cy": 1.85, "cz": -4.5, "hx": 3.3, "hy": 1.85, "hz": 0.75 },
+      "box_3": { "cx": 0, "cy": 2.33, "cz": -3.0, "hx": 3.49, "hy": 2.33, "hz": 0.75 },
+      "box_4": { "cx": 0, "cy": 2.8, "cz": -1.5, "hx": 3.69, "hy": 2.8, "hz": 0.75 },
+      "box_5": { "cx": 0, "cy": 3.27, "cz": 0.0, "hx": 3.88, "hy": 3.27, "hz": 0.75 },
+      "box_6": { "cx": 0, "cy": 3.75, "cz": 1.5, "hx": 4.08, "hy": 3.75, "hz": 0.75 },
+      "box_7": { "cx": 0, "cy": 4.22, "cz": 3.0, "hx": 4.27, "hy": 4.22, "hz": 0.75 },
+      "box_8": { "cx": 0, "cy": 4.7, "cz": 4.5, "hx": 4.47, "hy": 4.7, "hz": 0.75 },
+      "box_9": { "cx": 0, "cy": 5.17, "cz": 6.0, "hx": 4.67, "hy": 5.17, "hz": 0.75 },
+      "box_10": { "cx": 0, "cy": 6.25, "cz": 7.25, "hx": 4.83, "hy": 6.25, "hz": 0.5 }
+    },
+    "arena_gate_1": {
+      "walkable": true,
+      "box_count": 22,
+      "box_0": { "cx": -2.8, "cy": 3.3, "cz": 0, "hx": 0.3, "hy": 3.3, "hz": 7.75 },
+      "box_1": { "cx": 2.8, "cy": 3.3, "cz": 0, "hx": 0.3, "hy": 3.3, "hz": 7.75 },
+      "box_2": { "cx": -3.34, "cy": 2.33, "cz": -3.0, "hx": 0.15, "hy": 2.33, "hz": 0.75 },
+      "box_3": { "cx": 3.34, "cy": 2.33, "cz": -3.0, "hx": 0.15, "hy": 2.33, "hz": 0.75 },
+      "box_4": { "cx": -3.44, "cy": 2.8, "cz": -1.5, "hx": 0.25, "hy": 2.8, "hz": 0.75 },
+      "box_5": { "cx": 3.44, "cy": 2.8, "cz": -1.5, "hx": 0.25, "hy": 2.8, "hz": 0.75 },
+      "box_6": { "cx": -3.53, "cy": 3.27, "cz": 0.0, "hx": 0.35, "hy": 3.27, "hz": 0.75 },
+      "box_7": { "cx": 3.53, "cy": 3.27, "cz": 0.0, "hx": 0.35, "hy": 3.27, "hz": 0.75 },
+      "box_8": { "cx": -3.63, "cy": 3.75, "cz": 1.5, "hx": 0.45, "hy": 3.75, "hz": 0.75 },
+      "box_9": { "cx": 3.63, "cy": 3.75, "cz": 1.5, "hx": 0.45, "hy": 3.75, "hz": 0.75 },
+      "box_10": { "cx": -3.72, "cy": 4.22, "cz": 3.0, "hx": 0.55, "hy": 4.22, "hz": 0.75 },
+      "box_11": { "cx": 3.72, "cy": 4.22, "cz": 3.0, "hx": 0.55, "hy": 4.22, "hz": 0.75 },
+      "box_12": { "cx": -3.82, "cy": 4.7, "cz": 4.5, "hx": 0.65, "hy": 4.7, "hz": 0.75 },
+      "box_13": { "cx": 3.82, "cy": 4.7, "cz": 4.5, "hx": 0.65, "hy": 4.7, "hz": 0.75 },
+      "box_14": { "cx": -3.92, "cy": 5.17, "cz": 6.0, "hx": 0.75, "hy": 5.17, "hz": 0.75 },
+      "box_15": { "cx": 3.92, "cy": 5.17, "cz": 6.0, "hx": 0.75, "hy": 5.17, "hz": 0.75 },
+      "box_16": { "cx": -3.94, "cy": 6.25, "cz": 7.25, "hx": 0.89, "hy": 6.25, "hz": 0.5 },
+      "box_17": { "cx": 3.94, "cy": 6.25, "cz": 7.25, "hx": 0.89, "hy": 6.25, "hz": 0.5 },
+      "box_18": { "cx": -3.35, "cy": 4.0, "cz": -8.55, "hx": 0.85, "hy": 4.0, "hz": 0.8 },
+      "box_19": { "cx": -3.35, "cy": 7.0, "cz": 8.55, "hx": 0.85, "hy": 7.0, "hz": 0.8 },
+      "box_20": { "cx": 3.35, "cy": 4.0, "cz": -8.55, "hx": 0.85, "hy": 4.0, "hz": 0.8 },
+      "box_21": { "cx": 3.35, "cy": 7.0, "cz": 8.55, "hx": 0.85, "hy": 7.0, "hz": 0.8 }
+    },
+    "bridge_stone_pier_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0, "cy": 3, "cz": 0, "hx": 0.8, "hy": 3, "hz": 3.2 }
+    },
+    "church_nave_1": {
+      "box_count": 2,
+      "box_0": { "cx": 0, "cy": 7.5, "cz": 2.0, "hx": 7.2, "hy": 7.5, "hz": 13.0 },
+      "box_1": { "cx": 0, "cy": 7.5, "cz": -13.0, "hx": 5.5, "hy": 7.5, "hz": 2.0 }
+    },
+    "spire_church_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0, "cy": 12.3, "cz": 0, "hx": 3.8, "hy": 12.3, "hz": 3.8 }
+    },
+    "dungeon_vault_1": {
+      "box_count": 2,
+      "box_0": { "cx": -2.2, "cy": 1.0, "cz": 0, "hx": 0.2, "hy": 1.0, "hz": 2.0 },
+      "box_1": { "cx": 2.2, "cy": 1.0, "cz": 0, "hx": 0.2, "hy": 1.0, "hz": 2.0 }
     }
   }
 }

@@ -80,6 +80,15 @@ namespace tools::world_gen
 		/// plateforme, les distances y sont multipliées par backFactor (1 = butte ronde) ; la
 		/// butte s'arrête donc plus tôt et ses talus y sont plus raides (falaise, non praticable).
 		double backFactor = 1.0;
+		/// v1.0.144 (Feyhin Lokcthat, BD-T2 p.7) — rayon de la ville (m, clé `city_radius_m` du
+		/// relief, 0 = rayon de son genre) : une ville moyenne perchée couvre toute sa butte.
+		double cityRadiusM = 0.0;
+		/// v1.0.144 — ville basse au pied du revers (clé `back_town`, défaut false) : rues en
+		/// arc et maisons entre le pied de la falaise et l'eau (« beaucoup de maisons en bas »).
+		bool backTown = false;
+		/// v1.0.144 — escalier de rue (clé `stair_style` = "rue") : volées Stairs_Street_1 de 2,5 m
+		/// côte à côte sur la largeur du couloir, au lieu de l'escalier monumental (Lhynn).
+		bool streetStairs = false;
 		/// Rayon (m) du pied de la butte (fin du dernier talus).
 		double FootRadiusM() const { return topRadiusM + terraces * bankM + (terraces - 1) * terraceM; }
 	};
@@ -215,7 +224,7 @@ namespace tools::world_gen
 		std::string id;
 		std::string name;
 		std::string cell;
-		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre|temple|sanctuaire|port|cite|defile|salle ; v1.0.132 : tour|chateau|phare|cascade|pont (forme bâtie, Landmarks.cpp) ; v1.0.140 : palais (sommet d'une acropole)
+		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre|temple|sanctuaire|port|cite|defile|salle ; v1.0.132 : tour|chateau|phare|cascade|pont (forme bâtie, Landmarks.cpp) ; v1.0.140 : palais (sommet d'une acropole) ; v1.0.144 : cathedrale (sommet d'une acropole), arene (arène et ses geôles creusées)
 		/// v1.0.132 — état bâti (clé `state` : "" = intact, "ruine") et échelle (clé `scale`, défaut 1,
 		/// 0,5 à 2) des formes générées (tour, château, phare, pont).
 		std::string state;
@@ -410,6 +419,14 @@ namespace tools::world_gen
 		/// descend jusqu'à la mer ; false = il s'arrête dans la dernière case (lac d'arrivée).
 		bool toSea = true;
 		std::string loreId;               ///< identifiant de la rivière du lore (hydrography.rivers), informatif
+		/// v1.0.144 — élargissements locaux du lit (clé `widenings` : `cell`, `x_m`, `z_m`
+		/// depuis le centre de la case, `width_m`, `length_m`) : la rivière s'étale sur
+		/// length_m autour du point (BD-T2 p.7 : rivière élargie sous le pont de Feyhin).
+		/// Plaine basse optionnelle (`valley_m` > 0, `floor_y_m` altitude absolue) : le relief
+		/// macro descend vers floor_y_m sur la moitié de length_m autour du point, puis remonte
+		/// sur valley_m (la rivière ne coule plus en gorge ; route à niveau, long pont bas).
+		struct Widening { Vec2 center; double widthM = 0.0; double lengthM = 0.0; double valleyM = 0.0; double floorY = 0.0; };
+		std::vector<Widening> widenings;
 	};
 
 	/// Route du lore (section `lore_roads`, v1.0.105), recopiée de la collection `routes`

@@ -274,6 +274,16 @@ voisines raccord au mètre près :
    (`CityRoadAnchor`) ; geôles ; graphe des PNJ en **3D** (altitude de chaque nœud) ; un POI de
    genre `palais` au centre est bâti par `Landmarks.cpp` sur le dallage du sommet (palais du
    Magister). Ex. : Magistrya (LORE_BD §16.69).
+   Depuis la v1.0.144 (Feyhin Lokcthat, LORE_BD §16.70), une acropole peut aussi porter
+   `city_radius_m` (rayon de la ville sur la butte, 60 à 260 m), `back_town` (ville basse
+   au pied du revers : trois rues en arc au-delà du pied de la falaise, hors de l'eau) et
+   `stair_style` = `rue` (volées `Stairs_Street_1` au lieu de l'escalier monumental) ; un
+   POI de genre `cathedrale` sur le sommet y est bâti (nef, clocher à flèche, gargouilles,
+   enseigne du temple). Un POI de genre `arene` est bâti par `Landmarks.cpp` (gradins en
+   24 modules, entrée face à la route, braseros, enseigne de l'arène) avec ses **geôles
+   creusées** sous les gradins : fosse creusée puis couverte (voûtes `Dungeon_Vault_1`,
+   dalles marchables au niveau du sol, descente à ciel ouvert), sans masque de trous.
+   Un service porté par un lieu bâti (arène, cathédrale) n'est plus posé sur une maison.
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
    départ ou ancrée sur un relief ; **position manuelle** `position`
@@ -288,7 +298,11 @@ voisines raccord au mètre près :
    contourne les autres villes, prend de grands méandres (~7 km) puis descend
    vers la mer ; elle remplace la rivière automatique de sa composante.
    `island_city` : le lit se divise en deux bras qui entourent la ville (île
-   fluviale de Sysigie). Un cours qui part de la case d'une ville perchée sur une
+   fluviale de Sysigie). `widenings` (v1.0.144) élargit le lit autour d'un point (Feyhin
+   Lokcthat : 60 m sous le pont d'arrivée) ; avec `valley_m` et `floor_y_m`, le terrain de la
+   cellule et le profil des routes y descendent en plaine basse (pas le relief macro : le tracé
+   ne change pas ; une acropole voisine n'est jamais entamée) ; une route y franchit le lit
+   élargi par un **long pont** à arches et piles à avant-becs. Un cours qui part de la case d'une ville perchée sur une
    `colline` naît au pied de la colline (sans méandre sur le flanc). POI : au centre
    de leur case, ou décalés (`offset_x_m`, `offset_z_m`, v1.0.72) ; plusieurs POI
    d'une même case sont écartés d'un quart de tour autour de la ville de la case.

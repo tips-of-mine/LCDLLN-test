@@ -1079,6 +1079,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.67](#1667-camp-de-loracle--salles-intérieures-portes-de-cristal-et-camp-extérieur-v10141) | v1.0.141 | Camp de l'Oracle : salles intérieures, portes de cristal et camp extérieur | Rocher de cristal bleu, 8 grandes portes peintes sur socle de brique, escaliers de 6 m ; salle de l'Oracle (porte SO, quête) et salle des Échos (porte E, raid de 3+) ; passages conditionnels du shard ; tentes agrandies et de couleur, fanions, feux, bassins, menhirs de 3-5 m. |
 | [16.68](#1668-kendrhir-daprès-le-tome-1-v10142) | v1.0.142 | Kendrhir d'après le tome 1 | Rempart de rondins de 20 m en reconstruction (pans d'origine, neufs, calcinés, brèches), tours, portes, contreforts obliques, donjon à flèche en chantier, maisons de planches, restes du siège (decor_231 à decor_237) ; clé `apparence` ; références du tome 1 réalignées sur le PDF. |
 | [16.69](#1669-magistrya-ville-tour-v10143) | v1.0.143 | Magistrya, ville-tour | Aiguille de 600 m au milieu d'un lac, bâtiments distincts empilés et cages d'escalier du socle au palais du Magister (salle du trône, laboratoire) ; ponton, geôles ; habitants à altitude réelle. |
+| [16.70](#1670-feyhin-lokcthat-daprès-le-tome-2-v10144) | v1.0.144 | Feyhin Lokcthat d'après le Tome 2 | Éperon de 3 gradins (+90 m) dans la boucle de la rivière, ville basse au pied de la falaise, long pont de pierre sur la rivière élargie, arène et geôles creusées, cathédrale au sommet, Porte 2 au pied de la falaise ; 7 objets (n° 242 à 248). |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5706,6 +5707,46 @@ dans le vide d'une cage, ponton, geôles, palais posé à plat, routes arrêtée
 au palais, habitants à altitude réelle, collision) ; `ambient_routine_tests`, `spawner_routine_format_tests`
 (aller-retour du format), `walkable_surface_probe_tests` ; `validate_decor.py` ; contrôles du lore.
 
+### 16.70 Feyhin Lokcthat d'après le Tome 2 (v1.0.144)
+
+**Demande du propriétaire** (26/11/2026, prompt « Atelier LCDLLN », niveau 2) : améliorer les décors de Feyhin Lokcthat
+d'après le Tome 2 — p.7 (la ville au loin sur la montagne, la rivière, le pont, beaucoup de maisons sur la montagne et
+en bas), p.8, p.10 bas et p.12 haut (intérieur de la ville), p.10 haut (l'arène), p.12 bas (la prison). Pages du PDF =
+pages imprimées. Arbitrages : **Q1 a** (éperon en gradins, revers en falaise sur la rivière), **Q2 a** (ville posée au
+bord de la rivière, le relief suit), **Q3 a** (long pont de pierre à arches), **Q4 a** (arène dans la ville basse, près
+du pont), **Q5 b** (geôles en vrai sous-sol ; méthode « creuser et couvrir » retenue ensuite : le serveur ne contrôle pas
+la hauteur du sol, le masque de trous n'est pas branché sur les cellules), **Q6 a** (cathédrale au sommet, service
+temple), **Q7 a** (Porte 2 au pied de la falaise, à l'opposé de la ville haute), **Q8 a** (bannières unies, sans
+blason), **Q9 b** (chaînes et anneaux, pas de croix de contention), **Q10 a** (gargouilles génériques), **Q11 a**
+(partir de main, conflits des branches ouvertes signalés).
+
+| Élément | Avant | Après |
+|---|---|---|
+| Relief | ville sur un replat à 105 m, dans une cuvette (le relief monte à 150-350 m autour) | relief `acropole_feyhin` : **3 gradins de 30 m** (talus de 36 m praticables), sommet à **+90 m** au-dessus de la ville basse, plateforme de 40 m, revers en falaise au nord (`back_factor` 3) |
+| Position | site choisi par le générateur, à 1,2 km de la rivière | ville posée à la main (−495, −320) dans la boucle de la Rivière des deux lacs : la rivière entoure l'éperon et passe au pied du revers |
+| Ville | 137 bâtiments sur un disque de 100 m | ville haute de **150 m de rayon** sur la butte (`city_radius_m`), rues en arc sur les replats, faubourgs ; **ville basse** au pied du revers (`back_town` : trois rues en arc entre la falaise et l'eau) ; environ 565 bâtiments ; escalier de rue de la grand-place au sommet (`stair_style` = `rue`, volées `Stairs_Street_1`) ; place à colonnade (arcs `Arch_Stone_1`, n° 93) et fontaine |
+| Rivière et pont | rivière de 24 m en gorge, aucun pont près de la ville | lit élargi à **60 m sur 140 m** sous le pont d'arrivée (`widenings`), **plaine basse** autour (terrain de la cellule et profil des routes, pas le relief macro) ; **long pont** de 60 m : six travées, arches à l'échelle de la travée, piles à avant-becs `Bridge_Stone_Pier_1` |
+| Arène | enseigne « arène » sur une maison | POI `poi_arene_feyhin_lokcthat` (genre `arene`, fiche `lieu_arene_feyhin_lokcthat`, type `arena_poi`) dans la ville basse, entrée face à la route du pont : piste de terre battue de 44 m, palissade de planches, 11 poteaux à braseros, 23 modules de gradins `Arena_Stands_1` (neuf rangs, mur à arcades de 12,5 m), entrée `Arena_Gate_1` (piliers de gros blocs), enseigne et braseros devant l'entrée |
+| Geôles | — | fosse creusée à **4,6 m** sous la piste, sous les gradins du côté le plus éloigné de l'eau : galerie de trois travées voûtées `Dungeon_Vault_1` (n° 97, désormais posé par le générateur), cachot du fond, portes à barreaux, torches, chaînes ; descente à ciel ouvert (rampe à 0,5, murs de soutènement) ; dalles marchables au niveau du sol sur le reste de la fosse ; fondations `Arena_Foundation_1` ; zone d'ambiance sombre |
+| Sommet | — | POI `poi_cathedrale_feyhin_lokcthat` (genre `cathedrale`, type `cathedral_poi`) : nef `Church_Nave_1` (30 × 14 m), clocher-porche à flèche `Spire_Church_1` (52 m), 4 gargouilles `Gargoyle_1`, parvis, enseigne du temple |
+| Porte 2 des enfers | centre de la case | cercle de pierres au pied de la falaise, côté de la rivière (−600, −560), emprise réservée (aucune maison) |
+
+**Assets** (atelier décors, n° 242 à 248, `decor_specs.json`, procéduraux, 3 LOD, ORM) : `Arena_Stands_1`,
+`Arena_Foundation_1`, `Arena_Gate_1`, `Arena_Post_Brazier_1`, `Bridge_Stone_Pier_1`, `Church_Nave_1`, `Spire_Church_1`,
+`Gargoyle_1` ; collisions dans `building_pieces.json` (rangs de gradins marchables, passage de l'entrée libre, pile,
+murs de la nef et du clocher, murs latéraux des voûtes de cachot). Juriste PI : éléments **génériques** (arène,
+cathédrale, pont, gargouille) ; blasons des bannières de la p.8 non reproduits ; pas de croix de contention.
+
+**Quêtes** : l'étape « recevoir 500 couronnes » de `quest_t2_arene_feyhin` et l'étape « calmer Goum » de
+`quest_t2_liberation_goum` sont rattachées à `lieu_arene_feyhin_lokcthat`.
+
+**Inchangé** : case, services, PNJ de service (non instanciés en jeu), routes du lore, Hameau de Marn (ancienne zone de
+test « feyhin »), les autres villes (Lhynn garde son escalier monumental et ses règles).
+
+**Contrôles** : `world_gen_tests` (`TestFeyhinLokcthatV1144` ; `TestAcropoleLhynnV1140` et le test des positions
+manuelles mis à jour) ; `world_places_tests` (libellés « Arène », « Cathédrale ») ; `validate_decor.py` ; contrôles du
+lore.
+
 ## 17. Questions ouvertes
 
 - **Liste consolidée (v1.0.108)** de tous les points encore ouverts ou à valider, branche carte comprise : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) §4.
@@ -5725,6 +5766,7 @@ au palais, habitants à altitude réelle, collision) ; `ambient_routine_tests`, 
 - Fiches complètes (v1.0.100) : niveaux par faction à définir (`niveau_par_faction` vide), niveaux des 8 régions et 33 raids sans repère, étapes situées des 71 quêtes non pré-remplies (16.29).
 - Magistrya (v1.0.143) : rôle du Magister dans les quêtes (donneur de quêtes ou adversaire, Q8) ; intérieurs des bâtiments de la tour non construits (Q3 a : portes décoratives) ; ponts entre bâtiments (p.20) non posés : les cages d'escalier assurent la montée ; salles du palais autres que la salle du trône et le laboratoire non construites ; geôles bâties sur le socle (pas de souterrain) ; vue lointaine de la p.27 (la tour vue de la plaine) à vérifier en jeu (chargement des cellules, HLOD) (16.69).
 - Palais impérial de Lhynn (v1.0.140) : intérieur limité à la salle du trône ; salles du conseil, appartements, atelier de Shamballeau et salle cachée sous le trône (T11 p.12-13) non construits ; monument signature réinterprété en attente de la réponse de Mediatoon (16.66).
+- Feyhin Lokcthat (v1.0.144) : intérieurs de la cathédrale non construits ; rue marchande en balcon, galeries et escaliers de bois des façades (p.8) non posés (les modèles de maisons sont paramétriques) ; tranchée de la route d'arrivée au-delà de la plaine basse ; noms [GD] de l'arène et de la cathédrale à valider (16.70).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

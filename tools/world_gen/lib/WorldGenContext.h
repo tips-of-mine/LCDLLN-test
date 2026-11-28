@@ -489,6 +489,15 @@ namespace tools::world_gen
 	/// sauf pour une ville-tour (au milieu d'un lac) : sur la rive, dans la direction du
 	/// ponton, kTowerRoadReachM au-delà du rayon du lac. Fonction pure. Terrain.cpp
 	Vec2 CityRoadAnchor(const CityDef& c);
+	/// v1.0.144 — plaines basses des élargissements de rivière (clés `valley_m`, `floor_y_m`) :
+	/// altitude \p h (m) en (x, z) abaissée vers floor_y_m autour de l'élargissement (moitié de
+	/// length_m), raccord sur valley_m ; inchangée ailleurs. Appliquée au terrain de la cellule
+	/// et au profil des routes, PAS au relief macro (le tracé des rivières n'en dépend pas).
+	double ValleyLowered(const WorldMaster& m, double x, double z, double h);
+	/// v1.0.144 — rayon d'emprise (m) d'une arène (POI de genre `arene`, Landmarks.cpp) :
+	/// gradins, rampe des geôles et dégagement compris, à l'échelle du POI. Sert à la
+	/// réservation de l'emprise dans la ville (Settlements.cpp) et au plateau (Terrain.cpp).
+	double ArenaFootprintM(const PoiDef& p);
 
 	struct GlobalWorld
 	{

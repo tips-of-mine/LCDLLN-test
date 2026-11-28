@@ -385,6 +385,30 @@ namespace tools::world_gen
 					}
 					d.cellNE.push_back({ n, e });
 				}
+				// v1.0.144 — élargissements locaux du lit (Feyhin Lokcthat, BD-T2 p.7) : point (m depuis
+				// le centre d'une case du cours), largeur 1 à 6 fois celle du cours, sur 40 à 600 m.
+				if (const JsonValue* wl = FindObjectMember(v, "widenings"); wl && wl->type == JsonType::Array)
+					for (const JsonValue& q : wl->arrayValue)
+					{
+						RiverCourseDef::Widening wd;
+						const std::string cell = GetStr(q, "cell");
+						int n = 0, e = 0;
+						const bool inCourse = ParseCellId(cell, n, e) && std::find(d.cells.begin(), d.cells.end(), cell) != d.cells.end();
+						const double x = GetNum(q, "x_m", 0.0), z = GetNum(q, "z_m", 0.0);
+						wd.widthM = GetNum(q, "width_m", 0.0);
+						wd.lengthM = GetNum(q, "length_m", 0.0);
+						wd.valleyM = GetNum(q, "valley_m", 0.0);
+						wd.floorY = GetNum(q, "floor_y_m", 0.0);
+						if (!inCourse || std::fabs(x) > 4500.0 || std::fabs(z) > 4500.0 || wd.widthM < d.widthM || wd.widthM > 6.0 * d.widthM
+							|| wd.lengthM < 40.0 || wd.lengthM > 600.0 || wd.valleyM < 0.0 || wd.valleyM > 600.0
+							|| (wd.valleyM > 0.0 && wd.floorY < out.scale.seaLevelM + 1.0))
+						{
+							err = "master: river_courses '" + d.id + "' : elargissement invalide (case du cours, position dans la case, largeur 1 a 6 fois le cours, longueur 40 a 600 m, plaine 0 a 600 m au-dessus de la mer)"; return false;
+						}
+						const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ n, e });
+						wd.center = { ctr.x + x, ctr.z + z };
+						d.widenings.push_back(wd);
+					}
 				if (!d.islandCity.empty())
 				{
 					const auto it = std::find_if(out.cities.begin(), out.cities.end(), [&](const CityDef& c) { return c.id == d.islandCity; });
@@ -524,6 +548,9 @@ namespace tools::world_gen
 					a.stairHalfWidthM = GetNum(v, "stair_half_width_m", 0.0);
 					a.stairBottomM = GetNum(v, "stair_bottom_m", 0.0);
 					a.backFactor = GetNum(v, "back_factor", 1.0);
+					a.cityRadiusM = GetNum(v, "city_radius_m", 0.0); // v1.0.144 (0 = rayon du genre)
+					a.backTown = GetBool(v, "back_town", false);     // v1.0.144 : ville basse au pied du revers
+					a.streetStairs = GetStr(v, "stair_style") == "rue"; // v1.0.144 : escalier de rue (Feyhin)
 					if (off > 1e-6) a.stairDir = { -d.offsetXM / off, -d.offsetZM / off };
 					d.center = a.summit;
 					// Talus praticables (pente ≤ 40° : bank ≥ 1,19 × hauteur d'un gradin), sommet dans
@@ -533,13 +560,14 @@ namespace tools::world_gen
 					const bool shapeOk = a.heightM >= 20.0 && a.heightM <= 200.0 && a.terraces >= 2 && a.terraces <= 8
 						&& a.topRadiusM >= 20.0 && a.topRadiusM <= 120.0 && a.terraceM >= 15.0 && a.terraceM <= 80.0
 						&& a.bankM >= 1.19 * stepH && a.bankM <= 80.0 && a.backFactor >= 1.0 && a.backFactor <= 3.0 && a.stairHalfWidthM >= 3.0 && a.stairHalfWidthM <= 10.0
+						&& (a.cityRadiusM == 0.0 || (a.cityRadiusM >= 60.0 && a.cityRadiusM <= 260.0))
 						&& off >= a.topRadiusM + 10.0 && off <= 400.0
 						&& a.stairBottomM >= a.topRadiusM + 5.0 && a.stairBottomM <= off
 						&& a.heightM - 0.6 * (a.stairBottomM - a.topRadiusM) <= AcropoleTerrace(a, a.stairBottomM) + 1e-6
 						&& std::fabs(a.summit.x - ctr.x) + a.FootRadiusM() <= 4700.0 && std::fabs(a.summit.z - ctr.z) + a.FootRadiusM() <= 4700.0;
 					if (!shapeOk)
 					{
-						err = "master: relief '" + d.id + "' : acropole invalide (hauteur, gradins, talus <= 40 deg, revers 1 a 3, sommet, escalier jusqu'a la grand-place, butte dans la case)"; return false;
+						err = "master: relief '" + d.id + "' : acropole invalide (hauteur, gradins, talus <= 40 deg, revers 1 a 3, sommet, escalier jusqu'a la grand-place, butte dans la case, rayon de ville 60 a 260 m)"; return false;
 					}
 					d.footRadiusM = a.FootRadiusM();
 					city->acropole = a;

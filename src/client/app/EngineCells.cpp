@@ -660,6 +660,8 @@ namespace engine
 		tile.biomeGrid = assets.zoneOnly.GetString("audio.biome_grid", "");
 		tile.biomeGridSize = static_cast<int>(assets.zoneOnly.GetInt("audio.biome_grid_size", 0));
 		tile.scatter = std::make_unique<engine::world::scatter::ScatterField>();
+		// v1.0.145 — silhouettes lointaines du bâti (grille large : vues de loin).
+		tile.farProxy = std::make_unique<engine::world::scatter::ScatterField>(engine::world::scatter::kFarProxyGridM);
 		tile.collider = std::make_unique<engine::gameplay::CompositeWorldCollider>(nullptr);
 		tile.forestMask = assets.forestMask; // FORET.1 — forêt de remplissage (UpdateForestFiller)
 		const cells::CellPoint center = cells::CellCenter(cell);
@@ -693,6 +695,7 @@ namespace engine
 			InstanceTarget target;
 			target.field = tile.scatter.get();
 			target.collider = tile.collider.get();
+			target.farProxy = tile.farProxy.get();
 			target.originX = center.x;
 			target.originZ = center.z;
 			target.ground = [this, center](float lx, float lz) {
@@ -716,8 +719,8 @@ namespace engine
 			}
 			if (tile.scatterNext >= scatterTotal && tile.buildingNext >= a.buildings.size())
 			{
-				LOG_INFO(Render, "[Cells] {} : decor={} instance(s), {} batiment(s) poses ; collisions={} cyl / {} boites",
-					dir, tile.scatter->Count(), a.buildings.size(),
+				LOG_INFO(Render, "[Cells] {} : decor={} instance(s), {} batiment(s) poses, {} silhouette(s) lointaine(s) ; collisions={} cyl / {} boites",
+					dir, tile.scatter->Count(), a.buildings.size(), tile.farProxy ? tile.farProxy->Count() : 0u,
 					tile.collider->CylinderCount(), tile.collider->BoxCount());
 				tile.pending.reset();
 			}

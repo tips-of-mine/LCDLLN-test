@@ -10810,6 +10810,86 @@
       "billboard": false,
       "replaces": null,
       "ref": "T2-P010-C2 (gargouille accroupie sur un toit, générique)"
+    },
+    {
+      "id": "Door_Throne_Imperial_1",
+      "num": 250,
+      "family": "monument",
+      "builder": "door_throne_imperial",
+      "seed": 25001,
+      "budget": "monument",
+      "exact": true,
+      "width_m": [
+        11.0,
+        11.4
+      ],
+      "height_m": [
+        18.0,
+        18.4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P022-C1 (planche 20, PDF p.22 : porte de la salle du trône, vantaux sculptés en caissons à médaillons dorés) ; arbitrage Q5 b du propriétaire (27/11/2026 : reproduction plus fidèle, à soumettre à Mediatoon) ; vantaux ouverts (passage franchissable)"
+    },
+    {
+      "id": "Throne_Dais_Imperial_1",
+      "num": 251,
+      "family": "monument",
+      "builder": "throne_dais_imperial",
+      "seed": 25101,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        16.0,
+        16.1
+      ],
+      "height_m": [
+        4.9,
+        4.95
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P022-C2, C6, C8 (planche 20 : trône au sommet d'une pyramide à degrés couverte du tapis rouge) ; T3-P024-C7 (tapis rouge) ; demande du propriétaire (27/11/2026 : « le trône est en hauteur »)"
+    },
+    {
+      "id": "Statue_Hall_Hooded_1",
+      "num": 252,
+      "family": "monument",
+      "builder": "statue_hall_hooded",
+      "seed": 25201,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        4.3,
+        4.6
+      ],
+      "height_m": [
+        11.9,
+        12.1
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P022-C2, C7, C8 (planche 20 : rangées de grandes figures encapuchonnées le long des murs de la salle du trône) ; sujet neutre (sans visage ni héraldique)"
+    },
+    {
+      "id": "Palace_Hall_Roof_1",
+      "num": 253,
+      "family": "monument",
+      "builder": "palace_hall_roof",
+      "seed": 25301,
+      "budget": "monument",
+      "exact": true,
+      "width_m": [
+        29.4,
+        30.2
+      ],
+      "height_m": [
+        14.4,
+        14.7
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P022-C2 (voûte de la salle du trône) ; T3-P026-C1 (toits d'ardoise du palais sous la lune) ; nef allongée de la salle du trône (demande du propriétaire, 27/11/2026)"
     }
   ]
 }

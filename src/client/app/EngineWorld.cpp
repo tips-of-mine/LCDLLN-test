@@ -241,6 +241,70 @@ namespace engine
 		target.collider->AddCylinder(cyl);
 	}
 
+	void Engine::AddFarProxyBox(engine::world::scatter::FarProxyShape shape, const char* family,
+		const engine::math::Mat4& frame, const engine::math::Vec3& lo, const engine::math::Vec3& hi,
+		const InstanceTarget& target)
+	{
+		namespace sc = engine::world::scatter;
+		if (target.farProxy == nullptr || shape == sc::FarProxyShape::None) return;
+		const float ex = hi.x - lo.x, ey = hi.y - lo.y, ez = hi.z - lo.z;
+		if (std::max({ ex, ey, ez }) < sc::kFarProxyMinExtentM || ex <= 0.0f || ey <= 0.0f || ez <= 0.0f) return;
+		const uint32_t meshId = m_scatterField.InternMesh(sc::FarProxyMeshPath(shape, family));
+		if (!EnsureScatterMesh(meshId)) return;
+		// Mesh unitaire (X, Z ∈ [-0,5 ; 0,5], Y ∈ [0 ; 1]) mis à l'échelle de la boîte, posé
+		// sur sa base ; faîtage du toit le long du plus grand côté (X local du mesh).
+		float sx = ex, sz = ez, yaw = 0.0f;
+		if (shape == sc::FarProxyShape::Gable && ez > ex) { yaw = 1.5707963f; std::swap(sx, sz); }
+		engine::math::Mat4 scale = engine::math::Mat4::Identity();
+		scale.m[0] = sx * sc::kFarProxyInset;
+		scale.m[5] = ey * sc::kFarProxyInset;
+		scale.m[10] = sz * sc::kFarProxyInset;
+		const engine::math::Mat4 model = frame
+			* engine::math::Mat4::Translate(engine::math::Vec3{ 0.5f * (lo.x + hi.x), lo.y, 0.5f * (lo.z + hi.z) })
+			* engine::math::Mat4::RotateY(yaw) * scale;
+		const ScatterMeshGpu& mesh = m_scatterMeshes[meshId];
+		sc::ScatterItem item;
+		item.model = model;
+		item.meshId = meshId;
+		item.cullClass = 0;
+		item.flags = sc::kScatterItemFlagFarProxy;
+		engine::math::Vec3 wMin{}, wMax{};
+		sc::TransformBounds(model, mesh.localMin, mesh.localMax, item.center, item.radius, wMin, wMax);
+		(void)target.farProxy->Add(item);
+	}
+
+	void Engine::AddFarProxyForPiece(uint32_t meshId, const engine::math::Mat4& model, uint8_t cullClass,
+		uint8_t flags, const InstanceTarget& target)
+	{
+		namespace sc = engine::world::scatter;
+		if (target.farProxy == nullptr || cullClass != 0) return;
+		if (meshId >= m_scatterMeshes.size() || !m_scatterMeshes[meshId].valid) return;
+		const ScatterMeshGpu& mesh = m_scatterMeshes[meshId];
+		const bool piece = (flags & engine::world::instances::kScatterFlagBuildingPiece) != 0u;
+		const std::string& path = m_scatterField.MeshPaths()[meshId];
+		const sc::FarProxyShape shape = sc::ClassifyFarProxy(path);
+		// Arbres, rochers, mobilier : rien (les arbres ont leur propre horizon boisé).
+		if (!piece && shape == sc::FarProxyShape::None) return;
+		if (!mesh.lodParts[2].empty())
+		{
+			// Bâti doté d'un billboard (façade, flèche, tour de l'atelier décors) : sa copie
+			// lointaine prend le relais du billboard au-delà de cull_billboard_m (même mesh,
+			// ScatterPartsForDistance choisit le BB).
+			sc::ScatterItem item;
+			item.model = model;
+			item.meshId = meshId;
+			item.cullClass = 0;
+			item.flags = sc::kScatterItemFlagFarBillboard;
+			engine::math::Vec3 wMin{}, wMax{};
+			sc::TransformBounds(model, mesh.localMin, mesh.localMax, item.center, item.radius, wMin, wMax);
+			(void)target.farProxy->Add(item);
+			return;
+		}
+		// Murs, tours, remparts et toitures sans billboard : bloc, toit ou flèche.
+		if (shape == sc::FarProxyShape::None) return;
+		AddFarProxyBox(shape, sc::FarProxyFamily(path, shape), model, mesh.localMin, mesh.localMax, target);
+	}
+
 	Engine::InstanceTarget Engine::LegacyInstanceTarget()
 	{
 		InstanceTarget t;
@@ -326,6 +390,7 @@ namespace engine
 				{ px, y, pz }, in.yawDeg, in.tiltDeg, in.scale);
 			AddScatterInstance(meshId, model, in.cullClass, in.flags,
 				(in.flags & kScatterFlagSolid) != 0u, piece, in.collisionRadius, target);
+			AddFarProxyForPiece(meshId, model, in.cullClass, in.flags, target); // v1.0.145
 			++placed;
 		}
 		if (skipped > 0)
@@ -448,6 +513,16 @@ namespace engine
 				| (static_cast<std::uint32_t>(tile.cell.e) & 7u));
 			out.push_back({ tile.filler.get(), static_cast<float>(c.x), static_cast<float>(c.z), id, kScatterFillerItemBase });
 		}
+		// v1.0.145 — silhouettes lointaines du bâti (dessinées seulement au-delà du culling du bâti).
+		for (const CellRenderTile& tile : m_cellTiles)
+		{
+			if (!tile.farProxy || tile.farProxy->Count() == 0)
+				continue;
+			const engine::world::cells::CellPoint c = m_renderFrame.CellCenterRender(tile.cell);
+			const std::uint32_t id = 1u + ((static_cast<std::uint32_t>(tile.cell.n) & 7u) << 3
+				| (static_cast<std::uint32_t>(tile.cell.e) & 7u));
+			out.push_back({ tile.farProxy.get(), static_cast<float>(c.x), static_cast<float>(c.z), id, kScatterFarProxyItemBase, true });
+		}
 	}
 
 	void Engine::CollectScatterOccluders(const engine::math::Vec3& camera, const engine::math::Vec3& focus,
@@ -512,6 +587,15 @@ namespace engine
 		const bool billboardHorizon = billboardM > dist.largeM;
 		if (billboardHorizon)
 			gatherDist.largeM = billboardM;
+		// v1.0.145 — silhouettes lointaines : dessinées au-delà de la distance où le bâti
+		// réel s'arrête (dist.largeM ; billboardM pour les monuments à billboard) et jusqu'à
+		// world.scatter.far_proxy_m (défaut : plan lointain de la caméra du préréglage).
+		const float billboardLimitM = billboardHorizon ? billboardM : dist.largeM;
+		float farProxyM = static_cast<float>(m_cfg.GetDouble("world.scatter.far_proxy_m", 0.0));
+		if (farProxyM <= 0.0f) farProxyM = m_viewDistance.cameraFarM;
+		farProxyM = std::min(farProxyM, std::max(m_viewDistance.cameraFarM, 1.0f));
+		const bool farProxyEnabled = m_cellWorld && m_cfg.GetBool("world.scatter.far_proxy", true);
+		const engine::world::scatter::CullDistances proxyGatherDist{ farProxyM, farProxyM, farProxyM };
 
 		// Une entrée par (instance × partie) : clé de lot = (mesh GPU, matériau, fondu).
 		struct DrawRef { const engine::render::MeshAsset* mesh; uint32_t material; uint32_t fadeQ; uint32_t layer; uint32_t item; };
@@ -532,15 +616,25 @@ namespace engine
 				* engine::math::Mat4::Translate(engine::math::Vec3{ layer.offsetX, 0.0f, layer.offsetZ });
 			const engine::world::scatter::Frustum frustum =
 				engine::world::scatter::Frustum::FromViewProj(vpLocal.m);
-			layer.field->Gather(eyeL, frustum, gatherDist, m_scatterVisible);
+			if (layer.farProxy && !farProxyEnabled) continue;
+			layer.field->Gather(eyeL, frustum, layer.farProxy ? proxyGatherDist : gatherDist, m_scatterVisible);
 			for (uint32_t idx : m_scatterVisible)
 			{
 				const auto& it = layer.field->Item(idx);
 				if (it.meshId >= m_scatterMeshes.size()) continue;
 				const ScatterMeshGpu& meshGpu = m_scatterMeshes[it.meshId];
+				if (layer.farProxy)
+				{
+					// Silhouette : seulement là où les pièces qu'elle remplace ne sont plus dessinées.
+					const float hx = it.center.x - eyeL.x, hz = it.center.z - eyeL.z;
+					const float limit = (it.flags & engine::world::scatter::kScatterItemFlagFarBillboard) != 0u
+						? billboardLimitM : dist.largeM;
+					if (!engine::world::scatter::FarProxyVisible(std::sqrt(hx * hx + hz * hz), it.radius, limit, farProxyM))
+						continue;
+				}
 				// Au-delà de cull_large_m (même mesure que ScatterField::Gather : distance
 				// horizontale au bord de la sphère), seuls les meshes à billboard restent.
-				if (billboardHorizon && it.cullClass == 0 && meshGpu.lodParts[2].empty())
+				if (!layer.farProxy && billboardHorizon && it.cullClass == 0 && meshGpu.lodParts[2].empty())
 				{
 					const float hx = it.center.x - eyeL.x, hz = it.center.z - eyeL.z;
 					const float lim = dist.largeM + it.radius;

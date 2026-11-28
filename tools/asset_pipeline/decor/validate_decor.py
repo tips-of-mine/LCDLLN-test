@@ -6,6 +6,9 @@
 # hauteur et largeur (axe X, glTF Y-up) du LOD0 dans la cote prévue ±10 % ; origine au
 # sol au centre de la base (min Y ∈ [-0,4 ; 0,05] m, centre XZ à moins de 15 % de la
 # largeur) ; textures référencées présentes ; alphaMode MASK sur les matériaux à alpha.
+# v1.0.145 : sur TOUS les props (registre ou non), aucun matériau « sans couleur » — ni
+# texture de base, ni baseColorFactor, ni couleur de sommet COLOR_0, ni convention du kit
+# (préfixe MI_, textures résolues par le moteur) : le moteur le rendrait en blanc uni.
 #
 # Lancement : python tools/asset_pipeline/decor/validate_decor.py
 # Code retour : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
@@ -44,6 +47,34 @@ def stats(g):
             mx = [max(a, b) for a, b in zip(mx, acc["max"])]
             tris += g["accessors"][p["indices"]]["count"] // 3 if "indices" in p else acc["count"] // 3
     return tris, mn, mx
+
+
+def uncoloured_materials():
+    """Liste les matériaux de props rendus en blanc uni faute de toute source de couleur.
+
+    Parcourt game/data/meshes/props/**/*.gltf. Un matériau est accepté s'il a une texture de
+    base, un baseColorFactor, un nom du kit (préfixe « MI_ », textures résolues par
+    PropMaterialRules côté client) ou si TOUTES les primitives qui l'utilisent portent
+    COLOR_0. Retourne une liste de messages d'écart (vide si conforme)."""
+    errors = []
+    for root, _dirs, files in os.walk(PROPS):
+        for fn in sorted(files):
+            if not fn.endswith(".gltf"):
+                continue
+            path = os.path.join(root, fn)
+            with open(path, encoding="utf-8") as f:
+                g = json.load(f)
+            prims = [p for m in g.get("meshes", []) for p in m.get("primitives", [])]
+            for mi, mat in enumerate(g.get("materials", [])):
+                pbr = mat.get("pbrMetallicRoughness", {})
+                if "baseColorTexture" in pbr or "baseColorFactor" in pbr or mat.get("name", "").startswith("MI_"):
+                    continue
+                users = [p for p in prims if p.get("material") == mi]
+                if users and all("COLOR_0" in p.get("attributes", {}) for p in users):
+                    continue
+                rel = os.path.relpath(path, PROPS).replace(os.sep, "/")
+                errors.append(f"{rel} : matériau {mat.get('name')} sans couleur (ni texture, ni facteur, ni COLOR_0)")
+    return errors
 
 
 def main():
@@ -98,6 +129,7 @@ def main():
             g, err = load(sid + "_BB")
             if err:
                 errors.append(err)
+    errors += uncoloured_materials()
     for e in errors:
         print("[validate_decor] ECHEC", e)
     print(f"[validate_decor] {len(reg['assets'])} assets contrôlés, {len(errors)} écart(s)")

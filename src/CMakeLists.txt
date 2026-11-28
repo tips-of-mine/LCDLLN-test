@@ -1339,6 +1339,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(view_distance_preset_tests
     ${CMAKE_SOURCE_DIR}/src/client/settings/tests/ViewDistancePresetTests.cpp)
 
+  # v1.0.145 — silhouettes lointaines du bâti : classement des pièces, teintes, meshes
+  # unitaires présents, règle d'affichage, Gather d'un champ à grille large.
+  lcdlln_add_simple_test(far_proxy_rules_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/scatter/ScatterField.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/scatter/tests/FarProxyRulesTests.cpp)
+
   # Catalogue de collision des bâtiments : parse JSON (via Config), passable,
   # multi-boîtes, mesh absent -> nullptr, JSON invalide -> echec.
   lcdlln_add_simple_test(building_collision_catalog_tests

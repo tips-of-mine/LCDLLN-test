@@ -124,21 +124,25 @@ float lavaFbm(vec2 p)
 }
 
 // v1.0.141 — cristal du rocher de l'Oracle (T2-P044, T3-P005) : grandes facettes de
-// tons bleu-gris, ardoise et violet (cellules de bruit en 3D, pas de bleu saturé ni de
-// monochrome), arêtes claires. Couleur linéaire, ~ texture T_Decor_Crystal_Blue.
+// tons bleu-gris, ardoise et violet (cellules de bruit en 3D, pas de monochrome).
+// v1.0.145 (BD-T2 p.44 case 1 : un bloc nettement BLEU) : bleu plus franc et plus clair
+// (le gris-bleu sombre virait au gris sous la perspective aérienne), cellules déformées par
+// un bruit (plus de quadrillage régulier visible de loin) et arêtes en FISSURES sombres au
+// lieu de lignes claires. Couleur linéaire, ~ texture T_Decor_Crystal_Blue.
 vec3 crystalColor(vec3 p)
 {
-    vec3 q = p * 0.06;
+    vec2 warp = vec2(lavaNoise(p.xz * 0.013 + p.y * 0.007), lavaNoise(p.zx * 0.011 - p.y * 0.009));
+    vec3 q = p * 0.045 + vec3(warp.x, 0.6 * (warp.x - warp.y), warp.y) * 1.4;
     vec3 c = floor(q);
     float f = lavaHash(c.xz + c.y * 17.31);
     float g = lavaHash(c.zy + c.x * 7.13);
-    vec3 base = mix(vec3(0.075, 0.115, 0.215), vec3(0.135, 0.17, 0.29), f);
-    base = mix(base, vec3(0.13, 0.12, 0.25), step(0.78, g));      // facettes violettes
-    base = mix(base, vec3(0.08, 0.15, 0.19), step(0.86, f) * 0.8); // facettes sarcelle
+    vec3 base = mix(vec3(0.055, 0.12, 0.36), vec3(0.09, 0.19, 0.46), f);
+    base = mix(base, vec3(0.10, 0.11, 0.33), step(0.82, g));      // facettes violacées
+    base = mix(base, vec3(0.06, 0.17, 0.30), step(0.88, f) * 0.7); // facettes sarcelle
     vec3 e = abs(fract(q) - 0.5);
-    float edge = smoothstep(0.43, 0.49, max(e.x, max(e.y, e.z)));
+    float crack = smoothstep(0.44, 0.495, max(e.x, max(e.y, e.z)));
     float n = lavaNoise(p.xz * 0.25 + p.y * 0.11);
-    return mix(base * (0.85 + 0.3 * n), vec3(0.42, 0.5, 0.6), edge * 0.6);
+    return mix(base * (0.85 + 0.3 * n), base * 0.45, crack * 0.75);
 }
 
 // Couleur de la lave au point (m, repère de rendu) et part en fusion (0..1, émissive).

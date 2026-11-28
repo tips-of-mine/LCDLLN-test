@@ -4348,19 +4348,19 @@ namespace
 		const auto ctr = engine::world::cells::CellCenter({ lm->n, lm->e });
 		const Vec2 cityC{ ctr.x + lm->positionXM, ctr.z + lm->positionZM };
 		Check(std::fabs(a.summit.x - (cityC.x - 104.0)) < 1e-6 && std::fabs(a.summit.z - cityC.z) < 1e-6
-				&& std::fabs(a.stairDir.x - 1.0) < 1e-9 && std::fabs(a.FootRadiusM() - 296.0) < 1e-9,
-			"acropole v1.0.140 : sommet 104 m a l'ouest de la ville, escalier vers l'est, pied a 296 m");
-		Check(std::fabs(AcropoleTerrace(a, 0.0) - 80.0) < 1e-9 && std::fabs(AcropoleTerrace(a, 68.0) - 70.0) < 1e-9
-				&& std::fabs(AcropoleTerrace(a, 104.0) - 60.0) < 1e-9 && std::fabs(AcropoleTerrace(a, 178.0) - 40.0) < 1e-9
-				&& AcropoleTerrace(a, 310.0) == 0.0,
-			"acropole v1.0.140 : profil des gradins (80, talus, 60, 40, pied)");
+				&& std::fabs(a.stairDir.x - 1.0) < 1e-9 && std::fabs(a.FootRadiusM() - 310.0) < 1e-9,
+			"acropole v1.0.145 : sommet 104 m a l'ouest de la ville, escalier vers l'est, pied a 310 m (plateforme de 70 m)");
+		Check(std::fabs(AcropoleTerrace(a, 0.0) - 80.0) < 1e-9 && std::fabs(AcropoleTerrace(a, 69.0) - 80.0) < 1e-9
+				&& std::fabs(AcropoleTerrace(a, 82.0) - 70.0) < 1e-9 && std::fabs(AcropoleTerrace(a, 118.0) - 60.0) < 1e-9
+				&& std::fabs(AcropoleTerrace(a, 192.0) - 40.0) < 1e-9 && AcropoleTerrace(a, 372.0) == 0.0,
+			"acropole v1.0.145 : profil des gradins (plateforme de 70 m a 80, talus, 60, 40, pied)");
 		bool walkable = true;
 		for (double d = 0.0; d < 300.0; d += 0.5)
 			walkable = walkable && std::fabs(AcropoleTerrace(a, d + 0.5) - AcropoleTerrace(a, d)) <= 0.5 * 0.84 + 1e-9;
 		Check(walkable, "acropole v1.0.140 : talus a 40 deg au plus (praticables)");
-		const Vec2 s64 = a.summit + a.stairDir * 72.0;
-		Check(std::fabs(AcropoleOffset(a, s64) - (80.0 - 0.6 * 16.0)) < 1e-6 && std::fabs(AcropoleOffset(a, a.summit + a.stairDir * 92.0) - 60.0) < 1e-6,
-			"acropole v1.0.140 : rampe de l'escalier (pente 0,6 jusqu'au niveau de la grand-place)");
+		const Vec2 s84 = a.summit + a.stairDir * 84.0;
+		Check(std::fabs(AcropoleOffset(a, s84) - (80.0 - 0.6 * 14.0)) < 1e-6 && std::fabs(AcropoleOffset(a, a.summit + a.stairDir * 104.0) - 60.0) < 1e-6,
+			"acropole v1.0.145 : rampe de l'escalier (pente 0,6 jusqu'au niveau de la grand-place, pied a 104 m)");
 		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g); BuildMacroSeaRoutes(g); // pleine mer (port)
 		auto w = std::make_unique<World>();
 		InitCell(*w, g, { lm->n, lm->e });
@@ -4388,6 +4388,29 @@ namespace
 		Check(count("Palace_Imperial_Facade_1", 7u) == 1 && count("Palace_Imperial_Spire_1", 7u) == 4 && count("Throne_Wood_1", 1u) == 1
 				&& count("Stairs_Monumental_1", 0u) == 11,
 			"acropole v1.0.140 : palais bati (facade, 4 fleches, trone) et 11 volees d'escalier");
+		// v1.0.145 (BD-T1 p.28, BD-T3 p.24) : salle du trône en longue nef couverte, porte
+		// sculptée, estrade pyramidale, statues colossales, trône en hauteur sur l'estrade.
+		{
+			double throneY = -1.0, daisY = -1.0;
+			Vec2 doorP{}, daisP{};
+			for (const ScatterDef& s : w->scatter)
+			{
+				if (s.mesh.find("/Throne_Wood_1.gltf") != std::string::npos) throneY = s.yOffset;
+				if (s.mesh.find("/Throne_Dais_Imperial_1.gltf") != std::string::npos) { daisY = s.yOffset; daisP = s.position; }
+				if (s.mesh.find("/Door_Throne_Imperial_1.gltf") != std::string::npos) doorP = s.position;
+			}
+			const double nave = std::hypot(doorP.x - daisP.x, doorP.z - daisP.z);
+			int naveWin = 0;
+			for (const ScatterDef& s : w->scatter)
+				naveWin += (s.mesh.find("Wall_UnevenBrick_Window_Thin_Round") != std::string::npos
+					&& std::hypot(s.position.x - a.summit.x, s.position.z - a.summit.z) < a.topRadiusM) ? 1 : 0;
+			std::fprintf(stderr, "  lhynn v1.0.145 : porte -> estrade %.1f m, trone a +%.2f m, baies %d\n", nave, throneY, naveWin);
+			Check(count("Door_Throne_Imperial_1", 3u) == 1 && count("Throne_Dais_Imperial_1", 3u) == 1
+					&& count("Statue_Hall_Hooded_1", 3u) >= 8 && count("Palace_Hall_Roof_1", 0u) == 1 && count("Window_Rose_1", 0u) >= 1,
+				"lhynn v1.0.145 : nef de la salle du trone (porte sculptee, estrade, statues, toiture, rosace)");
+			Check(nave > 50.0 && daisY >= 0.0 && throneY > 3.5 && naveWin >= 20,
+				"lhynn v1.0.145 : nef de plus de 50 m, trone sur l'estrade (> 3,5 m), hautes baies");
+		}
 		bool clear = true;
 		for (const BuildingPlacementDef& b : w->buildings)
 			clear = clear && std::hypot(b.position.x - a.summit.x, b.position.z - a.summit.z) > a.topRadiusM;
@@ -4412,6 +4435,9 @@ namespace
 		const std::string txt((std::istreambuf_iterator<char>(cat)), std::istreambuf_iterator<char>());
 		Check(txt.find("\"palace_imperial_facade_1\"") != std::string::npos && txt.find("\"palace_imperial_spire_1\"") != std::string::npos,
 			"acropole v1.0.140 : facade et fleche au catalogue de collision");
+		Check(txt.find("\"door_throne_imperial_1\"") != std::string::npos && txt.find("\"throne_dais_imperial_1\"") != std::string::npos
+				&& txt.find("\"statue_hall_hooded_1\"") != std::string::npos,
+			"lhynn v1.0.145 : porte, estrade et statues de la nef au catalogue de collision");
 	}
 
 	/// v1.0.143 — Magistrya, ville-tour (BD-T2 p.19-27, LORE_BD §16.69) : aiguille de
@@ -4997,8 +5023,8 @@ namespace
 
 	/// Lot carte v1.0.136 (plan « Plan de l'Oracle, extérieur ») : le Camp de l'Oracle (N000_E000,
 	/// `layout: "oracle"`) n'est plus un village générique : aucun bâtiment (maison européenne)
-	/// dans le camp, au moins 40 tentes de pèlerins (océan de tentes, 240-350 m), 8 escaliers et
-	/// 8 portes, au moins 18 menhirs sur le grand cercle (420-560 m) dont des lueurs bleues, rocher
+	/// dans le camp, au moins 40 tentes de pèlerins (océan de tentes, 240-350 m), 2 escaliers et
+	/// 2 portes (v1.0.145 ; 8 avant), au moins 18 menhirs épars (420-900 m) dont des lueurs bleues, rocher
 	/// d'au moins 50 m au-dessus de la plaine (parois au-delà de 45°), aucune route sur le rocher,
 	/// échoppes le long du chemin du sud-ouest, services gardés (auberge et aubergiste, étals et
 	/// marchands, un seul cimetière du camp), ni faune ni monstre dans le camp.
@@ -5030,7 +5056,7 @@ namespace
 		auto dist = [&](Vec2 p) { return std::hypot(p.x - o.x, p.z - o.z); };
 		int houses = 0;
 		for (const BuildingPlacementDef& b : w->buildings) houses += (b.cityId == c->id || dist(b.position) < 700.0) ? 1 : 0;
-		int tents = 0, stairs = 0, doors = 0, stones = 0, stallsSw = 0, blueStones = 0;
+		int tents = 0, stairs = 0, doors = 0, stones = 0, farStones = 0, stallsSw = 0, blueStones = 0;
 		const double aSw = 3.0 * 3.141592653589793 / 4.0;
 		const Vec2 sw{ std::cos(aSw), std::sin(aSw) };
 		for (const ScatterDef& s : w->scatter)
@@ -5040,7 +5066,8 @@ namespace
 			if (s.mesh.find("Stairs_Exterior_Straight") != std::string::npos && d < 210.0) ++stairs;
 			// v1.0.141 : grandes portes peintes (8 dehors + 2 portes intérieures des salles).
 			if (s.mesh.find("Oracle_Door_Grand") != std::string::npos && d < 170.0) ++doors;
-			if (s.mesh.find("Oracle_Menhir_") != std::string::npos && d > 420.0 && d < 560.0) ++stones;
+			// v1.0.145 : menhirs épars dans la plaine (430-860 m, BD-T2 p.44).
+			if (s.mesh.find("Oracle_Menhir_") != std::string::npos && d > 420.0 && d < 900.0) { ++stones; farStones += d > 610.0 ? 1 : 0; }
 			if (s.mesh.find("Stall_") != std::string::npos && d > 340.0 && d < 760.0)
 			{
 				const Vec2 q{ s.position.x - o.x, s.position.z - o.z };
@@ -5055,9 +5082,10 @@ namespace
 		Check(houses == 0, "oracle v1.0.136 : aucune maison europeenne dans le camp");
 		// Retour propriétaire du 23/11/2026 : « pas assez de tentes autour » -> quinze rangs.
 		Check(tents >= 1200, "oracle : ocean de tentes de pelerins (1200 tentes au moins)");
-		// v1.0.141 : escaliers de 6 m (15 rangs de 2 pièces de 3 m), 8 portes + 2 portes intérieures.
-		Check(stairs == 8 * 30 && doors == 10, "oracle v1.0.141 : 8 escaliers de 6 m, 8 grandes portes et 2 portes interieures");
-		Check(stones >= 18 && blueStones >= 9, "oracle v1.0.136 : menhirs bleus sur le grand cercle");
+		// v1.0.141 : escaliers de 6 m (15 rangs de 2 pièces de 3 m). v1.0.145 (arbitrage Q6 b, forme
+		// BD stricte) : deux portes visibles seulement (SO et E) + 2 portes intérieures.
+		Check(stairs == 2 * 30 && doors == 4, "oracle v1.0.145 : 2 escaliers de 6 m (SO, E), 2 grandes portes et 2 portes interieures");
+		Check(stones >= 18 && blueStones >= 9 && farStones >= 4, "oracle v1.0.145 : menhirs bleus epars dans la plaine (dont au loin)");
 		Check(stallsSw >= 8, "oracle v1.0.136 : echoppes des faux devins le long du chemin du sud-ouest");
 		// Rocher : sommet ≥ 50 m au-dessus de la plaine, paroi raide, plaine plate.
 		const double plain = w->HeightAt(o + Vec2{ 0.0, 400.0 });
@@ -5139,7 +5167,25 @@ namespace
 		std::fprintf(stderr, "  oracle v1.0.141 : parois %d, voutes %d, tentes rouges %d, bleues %d, fanions %d, abreuvoirs %d, dalles %d\n",
 			walls, vaults, colored4, colored5, pennants, troughs, slabs);
 		Check(walls == 32 && vaults == 2 && dais == 1 && pillar == 1, "oracle v1.0.141 : salles habillees (parois, voutes, dais, colonne de brume)");
-		Check(slabs >= 40 && w->crystalLayer, "oracle v1.0.141 : rocher de cristal (dalles et couche de cristal du terrain)");
+		// v1.0.145 : rien sur le rocher (BD-T2 p.44) : plus de dalles de cristal, couche de cristal gardée.
+		Check(slabs == 0 && w->crystalLayer, "oracle v1.0.145 : rocher de cristal nu (couche de cristal du terrain, sans dalles)");
+		// v1.0.145 : bloc arrondi (pas de couronne plate) : le dessus est plus haut au centre qu'à
+		// mi-pente, sur un grand axe SE-NO plus long que l'axe SO-NE.
+		{
+			const double se = 3.141592653589793 / 4.0, so = 3.0 * 3.141592653589793 / 4.0;
+			auto footAlong = [&](double ang) {
+				double r = 60.0;
+				while (r < 260.0 && w->HeightAt(o + Vec2{ std::cos(ang), std::sin(ang) } * r) - plain > 0.5) r += 1.0;
+				return r;
+			};
+			const double hMid = w->HeightAt(o + Vec2{ std::cos(so + 3.14159), std::sin(so + 3.14159) } * 70.0) - plain;
+			const double hSlope = w->HeightAt(o + Vec2{ std::cos(so + 3.14159), std::sin(so + 3.14159) } * 120.0) - plain;
+			std::fprintf(stderr, "  oracle v1.0.145 : pied SE %.0f m, pied SO %.0f m, hauteur 70 m %.1f, 120 m %.1f\n",
+				footAlong(se), footAlong(so + 0.15), hMid, hSlope);
+			// (pied du SO mesuré à côté de l'escalier, dont la rampe prolonge le relief)
+			Check(footAlong(se) > footAlong(so + 0.15) + 10.0 && hMid > hSlope + 8.0 && hMid > 80.0,
+				"oracle v1.0.145 : bloc arrondi allonge (grand axe SE-NO, dome plus haut au centre)");
+		}
 		Check(colored4 >= 100 && colored5 >= 100 && pennants >= 20, "oracle v1.0.141 : tentes de couleur et mats a fanion");
 		int ponds = 0;
 		for (const Lake& l : w->lakes) ponds += l.name.find(c->id + "_bassin_") == 0 ? 1 : 0;
@@ -5163,7 +5209,9 @@ namespace
 		// PNJ de quête, raid, ambiances.
 		int npcs = 0, boss = 0, echoes = 0;
 		for (const InteractableDef& d : w->interactables)
-			npcs += (d.npcTargetId == "npc:oracle_veilleur" && dist({ d.x, d.z }) > 200.0)
+			// v1.0.145 : le pied du bloc arrondi est plus proche au SO (≈ 136 m au lieu de 150) :
+			// le veilleur, au pied de l'escalier, est à ≈ 189 m du centre (dehors : > 170 m).
+			npcs += (d.npcTargetId == "npc:oracle_veilleur" && dist({ d.x, d.z }) > 170.0)
 				|| (d.npcTargetId == "npc:oracle_pretresse" && dist({ d.x, d.z }) < 30.0) ? 1 : 0;
 		for (const SpawnerDef& s : w->spawners)
 		{

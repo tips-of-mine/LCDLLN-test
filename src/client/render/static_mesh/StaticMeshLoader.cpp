@@ -73,6 +73,13 @@ std::optional<StaticMeshCpuData> StaticMeshLoader::LoadCpuOnlyForTests(const std
             out.vertices.resize(baseVertex + nv);
             // Nombre de composantes de COLOR_0 (vec3 ou vec4) ; l'alpha reste à 1 si vec3.
             const int colComps = aCol ? static_cast<int>(cgltf_num_components(aCol->type)) : 0;
+            // v1.0.145 — matériau sans texture de base NI couleur de sommet : la couleur
+            // vient de baseColorFactor, recopiée dans la couleur de sommet (albedo du chemin
+            // VertexColorAlbedo). Avant, ce facteur était ignoré et le mesh rendu en blanc.
+            const float* factor = nullptr;
+            if (!aCol && prim->material && prim->material->has_pbr_metallic_roughness
+                && prim->material->pbr_metallic_roughness.base_color_texture.texture == nullptr)
+                factor = prim->material->pbr_metallic_roughness.base_color_factor;
             for (size_t v = 0; v < nv; ++v)
             {
                 StaticVertex& sv = out.vertices[baseVertex + v];
@@ -80,6 +87,7 @@ std::optional<StaticMeshCpuData> StaticMeshLoader::LoadCpuOnlyForTests(const std
                 if (aNor) cgltf_accessor_read_float(aNor, v, sv.normal, 3);
                 if (aUv)  cgltf_accessor_read_float(aUv, v, sv.uv, 2);
                 if (aCol) cgltf_accessor_read_float(aCol, v, sv.color, colComps > 4 ? 4 : colComps);
+                else if (factor) { sv.color[0] = factor[0]; sv.color[1] = factor[1]; sv.color[2] = factor[2]; sv.color[3] = factor[3]; }
             }
 
             const uint32_t subFirstIndex = static_cast<uint32_t>(out.indices.size());

@@ -10939,16 +10939,16 @@
       "type": "acropole",
       "city": "ville_lhynn",
       "height_m": 80,
-      "top_radius_m": 56,
+      "top_radius_m": 70,
       "terraces": 4,
       "terrace_m": 48,
       "bank_m": 24,
       "offset_x_m": -104,
       "offset_z_m": 0,
       "stair_half_width_m": 7,
-      "stair_bottom_m": 92,
+      "stair_bottom_m": 104,
       "back_factor": 2.2,
-      "source": "[DÉCISION] v1.0.140 (proprietaire, 25/11/2026) : Lhynn est une ville en gradins, le palais imperial au sommet (BD-T3 p.23, T10 p.37) ; sommet avance vers la mer de l'ouest (revers en falaise, back_factor 2,2), ville basse vers l'est ; 4 gradins de 20 m (talus de 24 m, praticables), escalier monumental direct de la grand-place au palais (poi_palais_imperial_lhynn). Le relief suit la ville (position manuelle admise)."
+      "source": "[DÉCISION] v1.0.140 (proprietaire, 25/11/2026) : Lhynn est une ville en gradins, le palais imperial au sommet (BD-T3 p.23, T10 p.37) ; sommet avance vers la mer de l'ouest (revers en falaise, back_factor 2,2), ville basse vers l'est ; 4 gradins de 20 m (talus de 24 m, praticables), escalier monumental direct de la grand-place au palais (poi_palais_imperial_lhynn). [DÉCISION] v1.0.145 (proprietaire, 27/11/2026, arbitrage Q4 b) : plateforme du sommet elargie de 56 a 70 m de rayon pour la longue nef de la salle du trone (BD-T1 p.28) ; pied de l'escalier a 104 m (grand-place au centre de la ville). Le relief suit la ville (position manuelle admise)."
     },
     {
       "id": "pic_magistrya",
@@ -11167,9 +11167,10 @@
     "_comment": "Fusionne PAR-DESSUS les reglages importes (zone_config) dans chaque zone.json de cellule. Distances adaptees au monde ouvert.",
     "world": {
       "fog": {
-        "_comment": "Horizon boise (22/11/2026) : fondu total repousse de 185 a 420 m pour laisser voir les arbres a billboard jusqu'a scatter.cull_billboard_m.",
+        "_comment": "Horizon boise (22/11/2026) : fondu total repousse de 185 a 420 m pour laisser voir les arbres a billboard jusqu'a scatter.cull_billboard_m. v1.0.145 : end_m 420 -> 1400 et horizon_m 1100 (x facteur du preset) : le fondu total suit max(arbres, horizon_m), borne par la distance du terrain du preset, pour voir une ville en entier (silhouettes lointaines du bati).",
         "start_m": 140.0,
-        "end_m": 420.0
+        "end_m": 1400.0,
+        "horizon_m": 1100.0
       },
       "props": {
         "cull_distance_m": 140.0
@@ -11180,7 +11181,10 @@
         "cull_medium_m": 100.0,
         "cull_small_m": 42.0,
         "_comment_billboard": "Horizon boise (22/11/2026) : les grands objets dotes d'un billboard (<mesh>_BB.gltf, arbres de l'atelier decors) restent affiches jusqu'a cull_billboard_m (m, x facteur du preset) ; bati et arbres sans billboard s'arretent a cull_large_m. La foret de remplissage est posee jusqu'a cette distance + 30 m (sous-bois : cull_medium_m + 30 m).",
-        "cull_billboard_m": 350.0
+        "cull_billboard_m": 450.0,
+        "_comment_far_proxy": "v1.0.145 : silhouettes lointaines du bati (blocs, toits, fleches ; monuments a billboard) au-dela de cull_large_m, jusqu'a far_proxy_m (0 = plan lointain du preset). far_proxy : false pour les couper. cull_billboard_m 350 -> 450 m (foret visible plus loin avec l'horizon allonge).",
+        "far_proxy": true,
+        "far_proxy_m": 0.0
       },
       "forest": {
         "_comment": "FORET.1 - foret de remplissage posee par le client autour du joueur (densite zones/<c>/terrain_forest.frms). filler : active ; rebuild_step_m : deplacement (m) avant reconstruction ; filler_radius_m (optionnel) : rayon (m) des arbres, par defaut max(scatter.cull_large_m, scatter.cull_billboard_m) x facteur du preset + 30 m ; under_radius_m (optionnel) : rayon du sous-bois, par defaut scatter.cull_medium_m x facteur + 30 m.",

@@ -20,20 +20,28 @@
 	],
 	"materials":[
 		{
-			"alphaMode":"BLEND",
+			"alphaMode":"MASK",
 			"doubleSided":true,
 			"name":"Leaves",
 			"pbrMetallicRoughness":{
-				"metallicFactor":0
-			}
+				"metallicFactor":0,
+				"baseColorTexture":{
+					"index":0
+				}
+			},
+			"alphaCutoff":0.5
 		},
 		{
-			"alphaMode":"BLEND",
+			"alphaMode":"MASK",
 			"doubleSided":true,
 			"name":"Flowers",
 			"pbrMetallicRoughness":{
-				"metallicFactor":0
-			}
+				"metallicFactor":0,
+				"baseColorTexture":{
+					"index":1
+				}
+			},
+			"alphaCutoff":0.5
 		}
 	],
 	"meshes":[
@@ -241,6 +249,34 @@
 		{
 			"byteLength":25808,
 			"uri":"Flower_4_Single.bin"
+		}
+	],
+	"images":[
+		{
+			"mimeType":"image/png",
+			"name":"Leaves",
+			"uri":"Leaves.png"
+		},
+		{
+			"mimeType":"image/png",
+			"name":"Flowers",
+			"uri":"Flowers.png"
+		}
+	],
+	"textures":[
+		{
+			"sampler":0,
+			"source":0
+		},
+		{
+			"sampler":0,
+			"source":1
+		}
+	],
+	"samplers":[
+		{
+			"magFilter":9729,
+			"minFilter":9987
 		}
 	]
 }
